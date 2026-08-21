@@ -44,13 +44,7 @@ const routeData = {
       "warnings": [
         "听音频需脱离画面、靠声音回忆，牛4前孩子语法未通有难度",
         "孩子不必完全专注，环境安静且无频繁动脑事件即可算有效输入"
-      ],
-      "time_calculation": {
-        "parent_child_reading_and_animation": "按1:1计算",
-        "audio_before_niu3": "乘以0.5",
-        "audio_after_niu4": "乘以0.8",
-        "invalid": "难度超两级则直接无效不计入"
-      }
+      ]
     }
   },
   "stages": [
@@ -236,8 +230,21 @@ const methodList = [
   }
 ]
 
+// 时间计算（与三大方法同级独立模块）
+const timeCalculation = {
+  formula: '亲子共读×1 + 动画×1 + 音频×(0.5或0.8)',
+  rules: [
+    { label: '亲子共读 / 看动画', value: '按 1:1 计算' },
+    { label: '牛1-2 阶段', value: '可听音频但不计入' },
+    { label: '牛3 阶段', value: '× 0.5' },
+    { label: '牛4 阶段及以后', value: '× 0.8' },
+    { label: '难度超 2 级', value: '无效不计入' }
+  ]
+}
+
 module.exports = {
   routeData,
   resourceLabels,
-  methodList
+  methodList,
+  timeCalculation
 }

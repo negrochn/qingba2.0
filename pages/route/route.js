@@ -1,10 +1,9 @@
-const { routeData, methodList } = require('../../utils/data.js')
+const { routeData } = require('../../utils/data.js')
 
 Page({
   data: {
-    route: routeData,
-    methods: methodList,
-    stages: routeData.stages
+    stages: routeData.stages,
+    stageCount: routeData.stages.length
   },
 
   toStage(e) {

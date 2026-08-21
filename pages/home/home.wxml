@@ -1,0 +1,73 @@
+<view class="container">
+  <!-- Hero -->
+  <view class="hero">
+    <view class="hero-eyebrow">英语听力训练</view>
+    <view class="hero-title">{{route.route_name}}</view>
+    <view class="hero-stats">
+      <view class="hstat">
+        <view class="hstat-num">7</view>
+        <view class="hstat-label">训练阶段</view>
+      </view>
+      <view class="hstat-sep"></view>
+      <view class="hstat">
+        <view class="hstat-num">3-4</view>
+        <view class="hstat-label">岁适用</view>
+      </view>
+      <view class="hstat-sep"></view>
+      <view class="hstat">
+        <view class="hstat-num">400H+</view>
+        <view class="hstat-label">常规累计</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 核心提醒 -->
+  <view class="card highlight-card">
+    <view class="section-title">晋级核心标准</view>
+    <view class="core-standard">{{route.overview.core_standard}}</view>
+  </view>
+
+  <!-- 三大原则 -->
+  <view class="card">
+    <view class="section-title">三大核心原则</view>
+    <view class="principle" wx:for="{{route.overview.key_principles}}" wx:key="*this">
+      <view class="principle-no">{{index + 1}}</view>
+      <view class="principle-text">{{item}}</view>
+    </view>
+  </view>
+
+  <!-- 三大方法 -->
+  <view class="card">
+    <view class="section-title">三大方法</view>
+    <view class="method" wx:for="{{methods}}" wx:key="key">
+      <view class="method-name">{{item.name}}</view>
+      <view class="method-op">操作：{{item.standard_operation}}</view>
+      <view class="method-warn" wx:if="{{item.warnings.length}}">
+        <view class="warn-title">注意：</view>
+        <view class="warn-item" wx:for="{{item.warnings}}" wx:for-item="w" wx:key="*this">· {{w}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 时间计算 -->
+  <view class="card">
+    <view class="section-title">时间计算</view>
+    <view class="calc-formula">公式：{{timeCalc.formula}}</view>
+    <view class="calc-rules">
+      <view class="calc-rule" wx:for="{{timeCalc.rules}}" wx:for-item="r" wx:key="label">
+        <text class="calc-label">{{r.label}}</text>
+        <text class="calc-arrow">→</text>
+        <text class="calc-value">{{r.value}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 入口 -->
+  <view class="entry-card" bindtap="goRoute">
+    <view class="entry-body">
+      <view class="entry-title">查看完整路线</view>
+      <view class="entry-sub">7个阶段 · 主线/辅线资源 · 进入与晋级标准</view>
+    </view>
+    <view class="entry-arrow">›</view>
+  </view>
+</view>

@@ -1,6 +1,8 @@
 {
   "pages": [
-    "pages/index/index",
+    "pages/home/home",
+    "pages/route/route",
+    "pages/mine/mine",
     "pages/stage/stage"
   ],
   "window": {
@@ -9,6 +11,32 @@
     "navigationBarTitleText": "庆爸2.0",
     "navigationBarTextStyle": "white",
     "backgroundColor": "#f5f6f8"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#4a90d9",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "首页",
+        "iconPath": "images/tabbar/home.png",
+        "selectedIconPath": "images/tabbar/home_active.png"
+      },
+      {
+        "pagePath": "pages/route/route",
+        "text": "路线",
+        "iconPath": "images/tabbar/route.png",
+        "selectedIconPath": "images/tabbar/route_active.png"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的",
+        "iconPath": "images/tabbar/mine.png",
+        "selectedIconPath": "images/tabbar/mine_active.png"
+      }
+    ]
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json"
