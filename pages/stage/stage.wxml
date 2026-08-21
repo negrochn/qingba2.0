@@ -1,0 +1,53 @@
+<view class="container" wx:if="{{stage}}">
+  <!-- 阶段头部 -->
+  <view class="stage-hero">
+    <view class="stage-name">{{stage.stage_name}}</view>
+    <view class="stage-target">目标：{{stage.target_phase}}</view>
+  </view>
+
+  <!-- 关键指标 -->
+  <view class="metrics">
+    <view class="metric">
+      <view class="metric-label">词汇目标</view>
+      <view class="metric-value">{{stage.vocabulary_target}}</view>
+    </view>
+    <view class="metric">
+      <view class="metric-label">时间投入</view>
+      <view class="metric-value">{{stage.time_investment}}</view>
+    </view>
+    <view class="metric">
+      <view class="metric-label">目标级别</view>
+      <view class="metric-value">{{stage.target_phase}}</view>
+    </view>
+  </view>
+
+  <!-- 进入与晋级 -->
+  <view class="card">
+    <view class="section-title">进入条件</view>
+    <view class="info-text">{{stage.entry_requirement}}</view>
+  </view>
+  <view class="card highlight-card">
+    <view class="section-title">晋级标准</view>
+    <view class="info-text strong">{{stage.promotion_standard}}</view>
+  </view>
+
+  <!-- 关键要点 -->
+  <view class="card" wx:if="{{stage.key_points.length}}">
+    <view class="section-title">关键要点</view>
+    <view class="point {{item.highlighted ? 'point-hi' : ''}}" wx:for="{{stage.key_points}}" wx:key="index">
+      <view class="point-dot {{item.highlighted ? 'dot-hi' : ''}}"></view>
+      <view class="point-text">{{item.text}}</view>
+    </view>
+  </view>
+
+  <!-- 资源 -->
+  <view class="card">
+    <view class="section-title">阶段资源</view>
+    <view class="res-group" wx:for="{{resourceGroups}}" wx:for-item="g" wx:key="key">
+      <view class="res-label">{{g.label}}</view>
+      <view class="res-tags">
+        <text class="res-tag" wx:for="{{g.items}}" wx:for-item="t" wx:key="*this">{{t}}</text>
+      </view>
+    </view>
+  </view>
+</view>
