@@ -40,14 +40,82 @@
     </view>
   </view>
 
-  <!-- 资源 -->
-  <view class="card">
-    <view class="section-title">阶段资源</view>
-    <view class="res-group" wx:for="{{resourceGroups}}" wx:for-item="g" wx:key="key">
-      <view class="res-label">{{g.label}}</view>
-      <view class="res-tags">
-        <text class="res-tag" wx:for="{{g.items}}" wx:for-item="t" wx:key="*this">{{t}}</text>
+  <!-- 资源(核心功能:打卡) -->
+  <view class="card res-card">
+    <view class="section-title section-title-main">
+      <text class="title-main">阶段资源</text>
+      <text class="title-sub">点击下方资源行进行打卡</text>
+    </view>
+    <view class="res-list" wx:for="{{resourceGroups}}" wx:for-item="g" wx:for-index="gidx" wx:key="key">
+      <view class="rg-head {{g.clickable ? 'rg-head-active' : ''}}">
+        <view class="rg-dot {{g.clickable ? 'rg-dot-blue' : 'rg-dot-gray'}}"></view>
+        <view class="rg-label">{{g.label}}</view>
+        <view class="rg-tag" wx:if="{{g.clickable}}">可打卡</view>
+        <view class="rg-count">{{g.items.length}} 项</view>
       </view>
+      <view class="rg-body">
+        <view
+          class="r-row {{g.clickable ? 'r-row-click' : ''}} {{resTotals[g.key + '|' + g.items[ridx]] ? 'r-row-done' : ''}}"
+          wx:for="{{g.items}}"
+          wx:for-item="rname"
+          wx:for-index="ridx"
+          wx:key="*this"
+          data-group-key="{{g.key}}"
+          data-group-label="{{g.label}}"
+          data-resource="{{rname}}"
+          bindtap="onResourceTap"
+        >
+          <view class="r-no">{{ridx + 1}}</view>
+          <view class="r-body">
+            <view class="r-name">{{rname}}</view>
+            <view class="r-sub" wx:if="{{resTotals[g.key + '|' + rname]}}">今日已打卡 {{resTotals[g.key + '|' + rname]}} 分钟 · 可继续追加</view>
+            <view class="r-sub r-sub-hint" wx:elif="{{g.clickable}}">点击即可输入学习时长并打卡</view>
+          </view>
+          <view class="r-right">
+            <view class="r-badge" wx:if="{{resTotals[g.key + '|' + rname]}}">{{resTotals[g.key + '|' + rname]}}m</view>
+            <view class="r-arrow" wx:if="{{g.clickable}}">›</view>
+            <view class="r-arrow r-arrow-gray" wx:else>·</view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 打卡弹窗(底部半屏) -->
+<view class="ci-mask {{showCheckin ? 'ci-mask-show' : ''}}" bindtap="closeCheckin" catchtouchmove="noop">
+  <view class="ci-sheet" catchtap="noop" catchtouchmove="noop">
+    <view class="ci-handle"></view>
+
+    <view class="ci-head">
+      <view class="ci-title">{{currentResource}}</view>
+      <view class="ci-sort">{{currentGroup.label}}</view>
+      <view class="ci-close" catchtap="closeCheckin">×</view>
+    </view>
+
+    <view class="ci-dur-row-full">
+      <text class="ci-label-inline">学习时长</text>
+      <input
+        class="ci-input ci-input-inline"
+        type="number"
+        placeholder="请输入分钟数"
+        value="{{durationInput}}"
+        bindinput="onDurationInput"
+        focus="{{showCheckin}}"
+      />
+      <text class="ci-unit-fix">分钟</text>
+    </view>
+
+    <view class="ci-quick">
+      <view class="ci-quick-item" data-val="10" bindtap="quickDuration">10 分钟</view>
+      <view class="ci-quick-item" data-val="20" bindtap="quickDuration">20 分钟</view>
+      <view class="ci-quick-item" data-val="30" bindtap="quickDuration">30 分钟</view>
+      <view class="ci-quick-item" data-val="60" bindtap="quickDuration">60 分钟</view>
+    </view>
+
+    <view class="ci-actions">
+      <button class="ci-btn ci-btn-cancel" bindtap="closeCheckin">取消</button>
+      <button class="ci-btn ci-btn-ok" bindtap="submitCheckin">打卡</button>
     </view>
   </view>
 </view>
