@@ -99,6 +99,17 @@
       <view class="ci-quick-item" data-val="60" bindtap="quickDuration">60 分钟</view>
     </view>
 
+    <view class="ci-remark-row">
+      <text class="ci-label-inline">备注</text>
+      <input
+        class="ci-input ci-input-remark"
+        placeholder="如：第1-2册（下次自动填充）"
+        value="{{remarkInput}}"
+        bindinput="onRemarkInput"
+        maxlength="50"
+      />
+    </view>
+
     <view class="ci-actions">
       <button class="ci-btn ci-btn-cancel" bindtap="closeCheckin">取消</button>
       <button class="ci-btn ci-btn-ok" bindtap="submitCheckin">打卡</button>

@@ -3,6 +3,7 @@
 // Checkin: { id, stageId, stageName, groupKey, groupLabel, resourceName, durationMinutes, timestamp }
 
 const STORAGE_KEY = 'qingba_checkins'
+const DEFAULT_REMARK_KEY = 'qingba_default_remarks'
 
 function todayStr(d = new Date()) {
   const y = d.getFullYear()
@@ -30,7 +31,7 @@ function saveAll(data) {
 }
 
 // 新增打卡记录
-// opts: { stageId, stageName, groupKey, groupLabel, resourceName, durationMinutes }
+// opts: { stageId, stageName, groupKey, groupLabel, resourceName, durationMinutes, remark }
 function addCheckin(opts) {
   const all = getAll()
   const day = todayStr()
@@ -44,12 +45,51 @@ function addCheckin(opts) {
     groupLabel: opts.groupLabel || '',
     resourceName: opts.resourceName || '',
     durationMinutes: Number(opts.durationMinutes) || 0,
+    remark: opts.remark || '',
     timestamp: Date.now()
   }
   list.push(record)
   all[day] = list
   saveAll(all)
   return record
+}
+
+// 默认备注存储: { "stageId|groupKey|resourceName": remark }
+function _getDefaultRemarks() {
+  try {
+    return wx.getStorageSync(DEFAULT_REMARK_KEY) || {}
+  } catch (e) {
+    return {}
+  }
+}
+
+function _saveDefaultRemarks(data) {
+  try {
+    wx.setStorageSync(DEFAULT_REMARK_KEY, data)
+  } catch (e) {}
+}
+
+function _remarkKey(stageId, groupKey, resourceName) {
+  return `${stageId}|${groupKey}|${resourceName}`
+}
+
+// 获取某资源的默认备注
+function getDefaultRemark(stageId, groupKey, resourceName) {
+  const all = _getDefaultRemarks()
+  return all[_remarkKey(stageId, groupKey, resourceName)] || ''
+}
+
+// 保存某资源的默认备注
+function saveDefaultRemark(stageId, groupKey, resourceName, remark) {
+  const all = _getDefaultRemarks()
+  const key = _remarkKey(stageId, groupKey, resourceName)
+  const text = String(remark || '').trim()
+  if (text) {
+    all[key] = text
+  } else {
+    delete all[key]
+  }
+  _saveDefaultRemarks(all)
 }
 
 // 获取某天所有打卡
@@ -153,6 +193,7 @@ function fmtMinutes(totalMin) {
 
 module.exports = {
   STORAGE_KEY,
+  DEFAULT_REMARK_KEY,
   todayStr,
   addCheckin,
   deleteCheckin,
@@ -164,5 +205,7 @@ module.exports = {
   todayTotalByStage,
   todayTotalMinutes,
   recentDays,
-  fmtMinutes
+  fmtMinutes,
+  getDefaultRemark,
+  saveDefaultRemark
 }

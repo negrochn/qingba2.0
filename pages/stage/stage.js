@@ -20,6 +20,7 @@ Page({
     currentGroup: null,   // { key, label }
     currentResource: '',  // 资源名
     durationInput: '',    // 输入框(分钟数值文本)
+    remarkInput: '',      // 备注输入
     // 资源今日累计打卡(展示徽标用) { "groupKey|资源名": 分钟 }
     resTotals: {}
   },
@@ -75,11 +76,14 @@ Page({
     const { groupKey, groupLabel, resource } = e.currentTarget.dataset
     const clickable = CLICKABLE_GROUPS.indexOf(groupKey) >= 0
     if (!clickable) return
+    const stage = this.data.stage
+    const defaultRemark = checkin.getDefaultRemark(stage.stage_id, groupKey, resource)
     this.setData({
       showCheckin: true,
       currentGroup: { key: groupKey, label: groupLabel },
       currentResource: resource,
-      durationInput: '20'
+      durationInput: '20',
+      remarkInput: defaultRemark
     })
   },
 
@@ -100,8 +104,12 @@ Page({
     this.setData({ durationInput: String(val) })
   },
 
+  onRemarkInput(e) {
+    this.setData({ remarkInput: e.detail.value })
+  },
+
   submitCheckin() {
-    const { currentGroup, currentResource, durationInput, stage } = this.data
+    const { currentGroup, currentResource, durationInput, remarkInput, stage } = this.data
     if (!currentGroup || !currentResource) return
 
     const raw = String(durationInput || '').trim()
@@ -124,14 +132,20 @@ Page({
       return
     }
 
+    const remarkText = String(remarkInput || '').trim()
+
     checkin.addCheckin({
       stageId: stage.stage_id,
       stageName: stage.stage_name,
       groupKey: currentGroup.key,
       groupLabel: currentGroup.label,
       resourceName: currentResource,
-      durationMinutes: minutes
+      durationMinutes: minutes,
+      remark: remarkText
     })
+
+    // 保存备注为默认值
+    checkin.saveDefaultRemark(stage.stage_id, currentGroup.key, currentResource, remarkText)
 
     // 通知首页数据已变更
     try {

@@ -215,6 +215,11 @@
   flex-wrap: wrap;
 }
 
+.record-remark-sub {
+  font-size: 22rpx;
+  color: #d48806;
+}
+
 .record-stage {
   font-size: 22rpx;
   color: #999;

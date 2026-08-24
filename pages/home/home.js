@@ -69,6 +69,7 @@ Page({
             resourceName: r.resourceName,
             durationText: checkin.fmtMinutes(r.durationMinutes),
             timeText: this._fmtTime(r.timestamp),
+            remark: r.remark || '',
             _dx: 0,
             _anim: false
           }))

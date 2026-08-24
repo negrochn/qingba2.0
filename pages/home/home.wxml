@@ -57,6 +57,7 @@
                 <view class="record-sub">
                   <text class="record-stage">{{r.stageName}}</text>
                   <text class="record-group">{{r.groupLabel}}</text>
+                  <text class="record-remark-sub" wx:if="{{r.remark}}">{{r.remark}}</text>
                 </view>
               </view>
               <view class="record-right">
