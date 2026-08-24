@@ -3,7 +3,8 @@
     "pages/home/home",
     "pages/route/route",
     "pages/mine/mine",
-    "pages/stage/stage"
+    "pages/stage/stage",
+    "pages/about/about"
   ],
   "window": {
     "backgroundTextStyle": "dark",

@@ -1,33 +1,8 @@
 <view class="container">
-  <!-- 头部 -->
-  <view class="profile">
-    <view class="avatar">庆</view>
-    <view class="profile-info">
-      <view class="profile-name">庆爸2.0</view>
-      <view class="profile-sub">英语听力训练路线助手</view>
+  <view class="menu">
+    <view class="menu-item" bindtap="goAbout">
+      <view class="menu-label">关于庆爸2.0</view>
+      <view class="menu-arrow">›</view>
     </view>
   </view>
-
-  <!-- 关于 -->
-  <view class="card">
-    <view class="section-title">关于本程序</view>
-    <view class="row">
-      <text class="row-label">路线名称</text>
-      <text class="row-value">{{route.route_name}}</text>
-    </view>
-    <view class="row">
-      <text class="row-label">适用年龄</text>
-      <text class="row-value">{{route.age_group}}</text>
-    </view>
-    <view class="row">
-      <text class="row-label">阶段总数</text>
-      <text class="row-value">{{route.total_stages}}个</text>
-    </view>
-    <view class="row">
-      <text class="row-label">数据来源</text>
-      <text class="row-value">qingba_listening_route.json</text>
-    </view>
-  </view>
-
-  <view class="footer">本程序仅作路线参考，具体进度请结合孩子实际情况调整</view>
 </view>

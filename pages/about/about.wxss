@@ -1,0 +1,192 @@
+/* 关于庆爸2.0 详情页样式 */
+
+.container {
+  padding: 0 0 40rpx;
+}
+
+/* 顶部 banner */
+.page-banner {
+  padding: 48rpx 32rpx 36rpx;
+  text-align: center;
+}
+
+.banner-text {
+  display: inline-block;
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #5a3e1b;
+  background: #fde8b0;
+  padding: 16rpx 48rpx;
+  border-radius: 12rpx;
+  letter-spacing: 4rpx;
+  position: relative;
+}
+
+/* 通用 section */
+.section {
+  padding: 0 32rpx;
+  margin-bottom: 48rpx;
+}
+
+.section-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 28rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 2rpx solid #f0e6d2;
+  display: inline-block;
+  position: relative;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2rpx;
+  width: 60%;
+  height: 4rpx;
+  background: #f0b849;
+  border-radius: 2rpx;
+}
+
+/* 段落 */
+.para {
+  font-size: 30rpx;
+  line-height: 1.5;
+  color: #333;
+  margin-bottom: 28rpx;
+  text-align: justify;
+}
+
+.para.highlight {
+  color: #c0392b;
+  font-weight: 500;
+}
+
+/* 列表 */
+.bullets {
+  margin: 24rpx 0 32rpx;
+  padding-left: 12rpx;
+}
+
+.bullet {
+  font-size: 30rpx;
+  line-height: 1.5;
+  color: #333;
+}
+
+/* 阶段块 */
+.stage-block {
+  background: #fffdf5;
+  border-radius: 16rpx;
+  padding: 28rpx 32rpx;
+  border: 2rpx solid #f0e6d2;
+}
+
+.stage-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+  margin-top: 20rpx;
+  margin-bottom: 12rpx;
+}
+
+.stage-name:first-child {
+  margin-top: 0;
+}
+
+.stage-detail {
+  margin-bottom: 12rpx;
+}
+
+.stage-line {
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.hl {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+/* 方法块 */
+.method-block {
+  margin-bottom: 40rpx;
+}
+
+.method-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.method-op {
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+/* 注意点块 */
+.warn-block {
+  background: #fff4f4;
+  border-radius: 12rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 16rpx;
+}
+
+.warn-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #c0392b;
+  margin-bottom: 12rpx;
+}
+
+.warn-item {
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.warn-item:last-child {
+  margin-bottom: 0;
+}
+
+.warn-num {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+/* 子块（小小优趣等） */
+.sub-block {
+  background: #fffdf5;
+  border-radius: 12rpx;
+  padding: 20rpx 24rpx;
+  border: 2rpx solid #f0e6d2;
+  margin-top: 16rpx;
+}
+
+.sub-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #5a3e1b;
+  margin-bottom: 12rpx;
+}
+
+.para-sm {
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: #333;
+  margin-bottom: 12rpx;
+}
+
+.para-sm:last-child {
+  margin-bottom: 0;
+}
+
+/* 时间计算已改为 warn-block 布局，复用注意点样式 */

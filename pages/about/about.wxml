@@ -1,0 +1,135 @@
+<view class="container">
+  <!-- 顶部标题 -->
+  <view class="page-banner">
+    <view class="banner-text">3-4岁 · 常规路径</view>
+  </view>
+
+  <!-- 01 总思路 -->
+  <view class="section">
+    <view class="section-title">01 总思路</view>
+
+    <view class="para">3-4岁的孩子，一般来说，只能走常规路径，因为大循环第一阶段横跨了6个难度，年龄越小的孩子，越容易出现卡认知的情况，表现为：到了牛5-6级别，专注度明显下滑或情节理解困难等等。</view>
+
+    <view class="para highlight">所以，对于3-4岁的孩子，常规路线才是更优选择。这个阶段的孩子，往往能普遍接受低级别素材，对低级别素材能保持较好的兴趣度和较高的专注度。家长们只需把握好以下三个核心要点，几乎可确保100%的成功率。</view>
+
+    <view class="bullets">
+      <view class="bullet">· 把握住孩子的听力水平</view>
+      <view class="bullet">· 匹配好符合孩子水平的素材</view>
+      <view class="bullet">· 方法用对的前提下，将时间投入到位</view>
+    </view>
+
+    <view class="para">常规路径共分7个阶段，分为常规1-6阶段+准桥梁阶段，每个阶段庆爸都给出了对应的投入时间和晋级标准。</view>
+  </view>
+
+  <!-- 02 时间晋级标准 -->
+  <view class="section">
+    <view class="section-title">02 时间晋级标准</view>
+
+    <view class="stage-block">
+      <view class="stage-name">常规一阶段：</view>
+      <view class="stage-detail">
+        <view class="stage-line">· 时间投入建议：<text class="hl">60-80H</text> ｜ 准入标准：<text class="hl">零基础</text> ｜ 晋级标准：<text class="hl">时间满足且小小优趣稳定新版phase5</text></view>
+      </view>
+      <view class="stage-name">常规二阶段：</view>
+      <view class="stage-detail">
+        <view class="stage-line">· 时间投入建议：<text class="hl">60-80H</text> ｜ 准入标准：<text class="hl">phase5</text> ｜ 晋级标准：<text class="hl">时间满足且小小优趣稳定新版phase8</text></view>
+      </view>
+
+      <view class="stage-name">常规三阶段：</view>
+      <view class="stage-detail">
+        <view class="stage-line">· 时间投入建议：<text class="hl">60-80H</text> ｜ 准入标准：<text class="hl">phase8</text> ｜ 晋级标准：<text class="hl">时间满足且小小优趣稳定新版phase12</text></view>
+      </view>
+
+      <view class="stage-name">常规四阶段：</view>
+      <view class="stage-detail">
+        <view class="stage-line">· 时间投入建议：<text class="hl">60H</text> ｜ 准入标准：<text class="hl">phase12</text> ｜ 晋级标准：<text class="hl">时间满足且小小优趣稳定新版phase14</text></view>
+      </view>
+
+      <view class="stage-name">常规五阶段：</view>
+      <view class="stage-detail">
+        <view class="stage-line">· 时间投入建议：<text class="hl">60H</text> ｜ 准入标准：<text class="hl">phase14</text> ｜ 晋级标准：<text class="hl">时间满足且小小优趣稳定新版phase16</text></view>
+      </view>
+
+      <view class="stage-name">常规六阶段：</view>
+      <view class="stage-detail">
+        <view class="stage-line">· 时间投入建议：<text class="hl">60H</text> ｜ 准入标准：<text class="hl">phase16</text></view>
+        <view class="stage-line">· 晋级标准：<text class="hl">佩奇可初步裸听</text>且从常规1累计投入时间不低于<text class="hl">400H</text>，最好小小优趣测试稳定<text class="hl">phase18</text>，到不了也没事，但不应低于<text class="hl">phase16</text></view>
+      </view>
+
+      <view class="stage-name">准桥梁阶段：</view>
+      <view class="stage-detail">
+        <view class="stage-line">· 时间投入建议：<text class="hl">80-100H</text> ｜ 准入标准：<text class="hl">佩奇可初步裸听</text>且常规1-6累计投入时间不低于<text class="hl">400H</text></view>
+        <view class="stage-line">· 晋级标准：<text class="hl">佩奇可裸听</text>且从常规1累计总投入时间不低于<text class="hl">480H</text>，小小优趣可不测（因为有科普词汇）。</view>
+      </view>
+    </view>
+
+    <view class="para highlight">其中，时间投入是最核心的标准，甚至可以当作唯一的晋级标准。当时间投入不够时，孩子的听力水平大概率是到不了对应水平的。若时间投入不够，哪怕测试结果达标，晋级也需谨慎，因为时间投入是实打实的，但测试结果可能存在误差。如果时间投入到位，且测试结果也达标，则可放心晋级。</view>
+  </view>
+
+  <!-- 03 核心方法介绍 -->
+  <view class="section">
+    <view class="section-title">03 核心方法介绍</view>
+
+    <!-- 方法一：亲子共读 -->
+    <view class="method-block">
+      <view class="method-name">方法一：亲子共读</view>
+      <view class="method-op">· 标准操作：<text class="hl">孩子专注的看图和听，家长读英文（也可用点读笔点英文）</text></view>
+
+      <view class="warn-block">
+        <view class="warn-title">⚠ 注意点</view>
+        <view class="warn-item"><text class="warn-num">1.</text>不能让孩子跟读，不要给孩子指读，不能让孩子复述，也不要问孩子问题。</view>
+        <view class="warn-item"><text class="warn-num">2.</text>如果孩子已经认字，<text class="hl">一定要把文字遮住</text>，不然孩子看字时，是无法同时理解声音的。</view>
+        <view class="warn-item"><text class="warn-num">3.</text>亲子共读时，尽量选放松场景，并时刻关注孩子的状态，<text class="hl">「无压+高兴趣+高专注度」对内化至关重要！</text></view>
+        <view class="warn-item"><text class="warn-num">4.</text>若家长非常担心孩子不懂或纯英文共读时，孩子专注度不够，可考虑用<text class="hl">汪培珽亲子共读法</text>（搜：亲子共读法），然后逐步撤掉。但每阶段时间投入需按<text class="hl">80H</text>来算。</view>
+        <view class="warn-item"><text class="warn-num">5.</text>不同于常规路线1.0版，2.0版<text class="hl">不再要求某一个素材一定重复3遍</text>，而是只要孩子喜欢，就可多重复，不设上限，若孩子重复腻了，则可横向级别其他素材。</view>
+      </view>
+    </view>
+
+    <!-- 方法二：看动画 -->
+    <view class="method-block">
+      <view class="method-name">方法二：看动画</view>
+      <view class="method-op">· 标准操作：选择和孩子难度贴近的动画，<text class="hl">每天20-30分钟！常规4之前，动画可只看不听或少量听，如果孩子接受重复看，可多看多听，不用限制孩子喜欢素材的重复遍数！</text></view>
+
+      <view class="warn-block">
+        <view class="warn-title">⚠ 注意点1：</view>
+        <view class="warn-item">如果孩子已对文字敏感，<text class="hl">看动画时一定要选无字幕版本</text>，如果找不到无字幕版本，一定要物理遮挡字幕。</view>
+      </view>
+
+      <view class="warn-block">
+        <view class="warn-title">⚠ 注意点2：</view>
+        <view class="warn-item">在孩子看动画时，<text class="hl">尽量不要打断孩子，也不要逐句翻译</text>，更不要询问或考察孩子是否懂（比如让孩子复述）。只要选择的动画难度和孩子水平符合，内化就不会有问题。若孩子听音频时表示听不太懂，可考虑过一下<text class="hl">动画台词本</text>，有静态画面支撑，再去联想动态画面，会更轻松一些。</view>
+      </view>
+
+      <!-- 小小优趣成长计划 -->
+      <view class="sub-block">
+        <view class="sub-title">小小优趣成长计划：</view>
+        <view class="para-sm">有不少家长办理了小小优趣Svip的会员，里面有一个成长计划，可以看动画，然后玩一玩里面自带的游戏，可用来加强和巩固！</view>
+        <view class="para-sm">目前在<text class="hl">phase13及之前</text>的成长计划（小猪佩奇之前），推荐的动画都还比较合理，<text class="hl">phase13以后</text>的成长计划不少动画难度突然拔高太多。所以如果家长想跟成长计划的话，<text class="hl">phase13及以前的可以参考下文素材篇中推荐的级别去对应使用。</text></view>
+        <view class="para-sm">注意：若孩子已对文字敏感，看动画时一定要选无字幕版本，如果找不到无字幕版本，一定要物理遮挡字幕。</view>
+      </view>
+    </view>
+
+    <!-- 方法三：听音频 -->
+    <view class="method-block">
+      <view class="method-name">方法三：听音频</view>
+      <view class="method-op">· 标准操作：<text class="hl">读过的分级，看过的动画，如果孩子不排斥，都可让孩子听一听（动画音频的切入成功率会更高一些）！</text></view>
+
+      <view class="warn-block">
+        <view class="warn-title">⚠ 注意点1：</view>
+        <view class="warn-item">听音频需要脱离画面，仅靠声音去回忆画面，在<text class="hl">牛4以前</text>，孩子的语法结构尚未打通，所以难度是存在的，甚至有些孩子会排斥听，可慢慢引导，不要操之过急。</view>
+      </view>
+
+      <view class="warn-block">
+        <view class="warn-title">⚠ 注意点2：</view>
+        <view class="warn-item">大部分孩子做不到坐那完全专注听音频，一般只需确保<text class="hl">听音频环境相对安静</text>，然后没有频繁合并其他动脑事件，就可算有效听力输入时间。不过孩子水平越低，听音频内化效果越差，不同阶段，有效时间要打折。</view>
+      </view>
+
+      <!-- 时间计算 -->
+      <view class="warn-block">
+        <view class="warn-title">⚠ 时间计算：</view>
+        <view class="warn-item"><text class="hl">亲子共读×1 + 动画×1 + 音频×(0.5或0.8)</text></view>
+        <view class="warn-item">亲子共读和看动画（或用融合app）时间可按1:1计算，听音频时间需在有效时间基础上进一步打折，<text class="hl">牛1-2阶段，可听音频但不计入；牛3阶段，×0.5；牛4阶段及以后，×0.8</text>。当素材难度级别超出孩子水平2个级别+，直接无效，不计入！</view>
+      </view>
+    </view>
+  </view>
+</view>

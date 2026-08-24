@@ -1,7 +1,5 @@
-const { routeData } = require('../../utils/data.js')
-
 Page({
-  data: {
-    route: routeData
+  goAbout() {
+    wx.navigateTo({ url: '/pages/about/about' })
   }
 })
