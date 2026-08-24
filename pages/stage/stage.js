@@ -133,6 +133,12 @@ Page({
       durationMinutes: minutes
     })
 
+    // 通知首页数据已变更
+    try {
+      const app = getApp()
+      if (app && app.globalData) app.globalData.checkinDirty = true
+    } catch (e) {}
+
     const resKey = `${currentGroup.key}|${currentResource}`
     const newTotal = checkin.todayTotalByResource(stage.stage_id, currentGroup.key, currentResource)
     this.setData({

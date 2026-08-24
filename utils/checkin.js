@@ -93,6 +93,54 @@ function recentDays(n) {
   return days
 }
 
+// 获取某月所有打卡记录
+// ym: 'YYYY-MM'
+function getByMonth(ym) {
+  const all = getAll()
+  const list = []
+  for (const day in all) {
+    if (day.startsWith(ym)) {
+      list.push(...all[day])
+    }
+  }
+  return list
+}
+
+// 汇总某月总时长（分钟）
+function monthTotalMinutes(ym) {
+  return getByMonth(ym).reduce((s, c) => s + c.durationMinutes, 0)
+}
+
+// 统计某月打卡天数
+function monthDaysCount(ym) {
+  const all = getAll()
+  let count = 0
+  for (const day in all) {
+    if (day.startsWith(ym) && all[day].length > 0) count++
+  }
+  return count
+}
+
+// 根据 id 删除打卡记录
+function deleteCheckin(id) {
+  const all = getAll()
+  for (const day in all) {
+    const list = all[day]
+    const idx = list.findIndex(c => c.id === id)
+    if (idx >= 0) {
+      list.splice(idx, 1)
+      if (list.length === 0) {
+        delete all[day]
+      } else {
+        all[day] = list
+      }
+      saveAll(all)
+      return true
+    }
+  }
+  return false
+}
+
 // 格式化分钟: >=60 自动换算 XhYm, <60 直接 Xm
 function fmtMinutes(totalMin) {
   const m = Math.round(Number(totalMin) || 0)
@@ -107,7 +155,11 @@ module.exports = {
   STORAGE_KEY,
   todayStr,
   addCheckin,
+  deleteCheckin,
   getByDay,
+  getByMonth,
+  monthTotalMinutes,
+  monthDaysCount,
   todayTotalByResource,
   todayTotalByStage,
   todayTotalMinutes,

@@ -1,3 +1,75 @@
 <view class="container">
-  <!-- TODO: 后续补充首页内容 -->
+  <!-- 打卡记录（按月汇总） -->
+  <view class="section">
+    <!-- 月份选择器 -->
+    <view class="month-bar">
+      <view class="month-nav" bindtap="prevMonth">‹</view>
+      <view class="month-label">{{monthLabel}}</view>
+      <view class="month-nav" bindtap="nextMonth">›</view>
+    </view>
+
+    <!-- 月度汇总 -->
+    <view class="month-summary">
+      <view class="ms-item">
+        <view class="ms-val">{{monthTotalText}}</view>
+        <view class="ms-label">总时长</view>
+      </view>
+      <view class="ms-divider"></view>
+      <view class="ms-item">
+        <view class="ms-val">{{monthDays}}</view>
+        <view class="ms-label">打卡天数</view>
+      </view>
+      <view class="ms-divider"></view>
+      <view class="ms-item">
+        <view class="ms-val">{{monthCount}}</view>
+        <view class="ms-label">累计次数</view>
+      </view>
+    </view>
+
+    <!-- 按月分组的记录 -->
+    <view class="record-list" wx:if="{{groupedRecords.length}}">
+      <block wx:for="{{groupedRecords}}" wx:key="day" wx:for-item="g">
+        <!-- 日期分组头 -->
+        <view class="date-header">
+          <view class="date-label">{{g.dayLabel}}</view>
+          <view class="date-total">{{g.totalText}}</view>
+        </view>
+
+        <!-- 该日期下的记录 -->
+        <view class="swipe-wrap" wx:for="{{g.list}}" wx:key="id" wx:for-item="r" wx:for-index="idx">
+          <view class="swipe-bg">
+            <view class="swipe-del" catchtap="deleteRecord" data-id="{{r.id}}">删除</view>
+          </view>
+          <view
+            class="swipe-fg"
+            style="transform: translateX({{r._dx || 0}}px); transition: {{r._anim ? 'transform 0.25s' : 'none'}};"
+            data-id="{{r.id}}"
+            bindtouchstart="onTouchStart"
+            bindtouchmove="onTouchMove"
+            bindtouchend="onTouchEnd"
+          >
+            <view class="record-item">
+              <view class="record-left">
+                <view class="record-time">{{r.timeText}}</view>
+              </view>
+              <view class="record-body">
+                <view class="record-res">{{r.resourceName}}</view>
+                <view class="record-sub">
+                  <text class="record-stage">{{r.stageName}}</text>
+                  <text class="record-group">{{r.groupLabel}}</text>
+                </view>
+              </view>
+              <view class="record-right">
+                <view class="record-duration">{{r.durationText}}</view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <view class="no-month" wx:else>
+      <view class="no-month-text">本月暂无打卡记录</view>
+    </view>
+  </view>
 </view>
