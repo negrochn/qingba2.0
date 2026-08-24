@@ -1,51 +1,23 @@
 <view class="container" wx:if="{{stage}}">
-  <!-- 阶段头部 -->
-  <view class="stage-hero">
-    <view class="stage-name">{{stage.stage_name}}</view>
-    <view class="stage-target">目标：{{stage.target_phase}}</view>
-  </view>
+  <!-- 阶段资源（核心：打卡）放在上半区，突出入口 -->
+  <view class="res-wrap" wx:if="{{resourceGroups.length}}">
+    <view class="res-head">
+      <view class="res-head-left">
+        <view class="res-head-accent"></view>
+        <view class="res-hl-stage">{{stage.stage_name}}</view>
+      </view>
+      <view class="res-head-sub">
+        <text class="res-hl-text">积累</text>
+        <text class="res-hl-bold">{{stage.vocabulary_target}}</text>
+        <text class="res-hl-paren">（</text>
+        <text class="res-hl-time">{{stage.time_investment}}</text>
+        <text class="res-hl-sep">｜</text>
+        <text class="res-hl-phase">{{stage.target_phase}}</text>
+        <text class="res-hl-paren">）</text>
+      </view>
+    </view>
+    <view class="res-divider"></view>
 
-  <!-- 关键指标 -->
-  <view class="metrics">
-    <view class="metric">
-      <view class="metric-label">词汇目标</view>
-      <view class="metric-value">{{stage.vocabulary_target}}</view>
-    </view>
-    <view class="metric">
-      <view class="metric-label">时间投入</view>
-      <view class="metric-value">{{stage.time_investment}}</view>
-    </view>
-    <view class="metric">
-      <view class="metric-label">目标级别</view>
-      <view class="metric-value">{{stage.target_phase}}</view>
-    </view>
-  </view>
-
-  <!-- 进入与晋级 -->
-  <view class="card">
-    <view class="section-title">进入条件</view>
-    <view class="info-text">{{stage.entry_requirement}}</view>
-  </view>
-  <view class="card highlight-card">
-    <view class="section-title">晋级标准</view>
-    <view class="info-text strong">{{stage.promotion_standard}}</view>
-  </view>
-
-  <!-- 关键要点 -->
-  <view class="card" wx:if="{{stage.key_points.length}}">
-    <view class="section-title">关键要点</view>
-    <view class="point {{item.highlighted ? 'point-hi' : ''}}" wx:for="{{stage.key_points}}" wx:key="index">
-      <view class="point-dot {{item.highlighted ? 'dot-hi' : ''}}"></view>
-      <view class="point-text">{{item.text}}</view>
-    </view>
-  </view>
-
-  <!-- 资源(核心功能:打卡) -->
-  <view class="card res-card">
-    <view class="section-title section-title-main">
-      <text class="title-main">阶段资源</text>
-      <text class="title-sub">点击下方资源行进行打卡</text>
-    </view>
     <view class="res-list" wx:for="{{resourceGroups}}" wx:for-item="g" wx:for-index="gidx" wx:key="key">
       <view class="rg-head {{g.clickable ? 'rg-head-active' : ''}}">
         <view class="rg-dot {{g.clickable ? 'rg-dot-blue' : 'rg-dot-gray'}}"></view>
@@ -69,7 +41,8 @@
           <view class="r-body">
             <view class="r-name">{{rname}}</view>
             <view class="r-sub" wx:if="{{resTotals[g.key + '|' + rname]}}">今日已打卡 {{resTotals[g.key + '|' + rname]}} 分钟 · 可继续追加</view>
-            <view class="r-sub r-sub-hint" wx:elif="{{g.clickable}}">点击即可输入学习时长并打卡</view>
+            <view class="r-sub r-sub-hint" wx:elif="{{g.clickable}}">点击输入学习时长并打卡</view>
+            <view class="r-sub r-sub-note" wx:else>仅供参考，不参与打卡</view>
           </view>
           <view class="r-right">
             <view class="r-badge" wx:if="{{resTotals[g.key + '|' + rname]}}">{{resTotals[g.key + '|' + rname]}}m</view>
@@ -77,6 +50,19 @@
             <view class="r-arrow r-arrow-gray" wx:else>·</view>
           </view>
         </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 关键要点（移动到底部） -->
+  <view class="card key-point-card" wx:if="{{stage.key_points.length}}">
+    <view class="section-title section-title-kp">关键要点</view>
+    <view class="kp-summary">执行 {{stage.stage_name}} 时的重点提醒，共 {{stage.key_points.length}} 条</view>
+    <view class="point {{item.highlighted ? 'point-hi' : ''}}" wx:for="{{stage.key_points}}" wx:key="index">
+      <view class="point-idx"><text>{{index + 1}}</text></view>
+      <view class="point-body">
+        <view class="point-text">{{item.text}}</view>
+        <view class="point-tag {{item.highlighted ? 'point-tag-hi' : ''}}" wx:if="{{item.highlighted}}">重要</view>
       </view>
     </view>
   </view>

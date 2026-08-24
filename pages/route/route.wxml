@@ -18,10 +18,11 @@
           <text class="target {{index === stageCount - 1 ? 'target-end' : ''}}">{{item.target_phase}}</text>
         </view>
         <view class="chips">
-          <text class="chip">词汇 {{item.vocabulary_target}}</text>
+          <text class="chip">{{item.vocabulary_target}}</text>
           <text class="chip">{{item.time_investment}}</text>
+          <text class="chip">{{item.entry_requirement}}</text>
+          <text class="chip">{{item.promotion_standard}}</text>
         </view>
-        <view class="entry">进入条件：{{item.entry_requirement}}</view>
       </view>
     </view>
   </view>

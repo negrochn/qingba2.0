@@ -6,11 +6,11 @@
     "pages/stage/stage"
   ],
   "window": {
-    "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#4a90d9",
+    "backgroundTextStyle": "dark",
+    "navigationBarBackgroundColor": "#ffffff",
     "navigationBarTitleText": "庆爸2.0",
-    "navigationBarTextStyle": "white",
-    "backgroundColor": "#f5f6f8"
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#ffffff"
   },
   "tabBar": {
     "color": "#999999",
