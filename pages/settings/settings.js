@@ -16,8 +16,7 @@ Page({
     stageOptions,
     currentStageIndex: -1,
     currentStage: null,
-    currentStageDisplay: '',
-    stagePickerShow: false
+    currentStageDisplay: ''
   },
 
   onLoad() {
@@ -49,19 +48,9 @@ Page({
     }
   },
 
-  // 打开阶段选择器
-  onOpenStagePicker() {
-    this.setData({ stagePickerShow: true });
-  },
-
-  // 关闭阶段选择器
-  onCloseStagePicker() {
-    this.setData({ stagePickerShow: false });
-  },
-
-  // 选择阶段
-  onSelectStage(e) {
-    const index = parseInt(e.currentTarget.dataset.index);
+  // 切换阶段
+  onStageChange(e) {
+    const index = parseInt(e.detail.value);
     if (index < 0 || index >= stageOptions.length) return;
 
     // 获取完整阶段数据
@@ -80,8 +69,7 @@ Page({
     this.setData({
       currentStageIndex: index,
       currentStage: stageData,
-      currentStageDisplay: stageData.name,
-      stagePickerShow: false
+      currentStageDisplay: stageData.name
     });
 
     wx.showToast({
