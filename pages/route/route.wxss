@@ -156,3 +156,40 @@
   color: #1a5fb0;
   background: #e8f1fb;
 }
+
+/* 当前阶段 */
+.route-current {
+  display: inline-block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #fff;
+  background: linear-gradient(135deg, #4a90d9 0%, #6ab0f3 100%);
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  font-weight: 500;
+}
+
+.stage-current .stage-node {
+  background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+  box-shadow: 0 0 0 6rpx #fff, 0 4rpx 16rpx rgba(76, 175, 80, 0.4);
+}
+
+.stage-current .node-current-dot {
+  position: absolute;
+  width: 16rpx;
+  height: 16rpx;
+  background: #fff;
+  border-radius: 50%;
+  top: -6rpx;
+  right: -6rpx;
+  border: 3rpx solid #4caf50;
+}
+
+.stage-current .stage-name {
+  color: #4caf50;
+}
+
+.stage-current .stage-body {
+  background: linear-gradient(90deg, #f0faf3 0%, transparent 100%);
+  border-radius: 0 12rpx 12rpx 0;
+}

@@ -5,6 +5,7 @@
 const STORAGE_KEY = 'qingba_checkins'
 const DEFAULT_REMARK_KEY = 'qingba_default_remarks'
 const READ_COUNT_KEY = 'qingba_read_counts'
+const CURRENT_STAGE_KEY = 'qingba_current_stage'
 
 function todayStr(d = new Date()) {
   const y = d.getFullYear()
@@ -272,10 +273,29 @@ function getReadCountByStage(stageId) {
   return result
 }
 
+// 当前阶段相关
+function getCurrentStage() {
+  try {
+    return wx.getStorageSync(CURRENT_STAGE_KEY) || null
+  } catch (e) {
+    return null
+  }
+}
+
+function setCurrentStage(stageData) {
+  try {
+    wx.setStorageSync(CURRENT_STAGE_KEY, stageData)
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
 module.exports = {
   STORAGE_KEY,
   DEFAULT_REMARK_KEY,
   READ_COUNT_KEY,
+  CURRENT_STAGE_KEY,
   todayStr,
   addCheckin,
   deleteCheckin,
@@ -297,5 +317,7 @@ module.exports = {
   saveDefaultRemark,
   getReadCount,
   incrementReadCount,
-  getReadCountByStage
+  getReadCountByStage,
+  getCurrentStage,
+  setCurrentStage
 }

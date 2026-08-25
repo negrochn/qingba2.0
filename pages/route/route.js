@@ -1,9 +1,27 @@
 const { routeData } = require('../../utils/data.js')
+const checkin = require('../../utils/checkin.js')
 
 Page({
   data: {
     stages: routeData.stages,
-    stageCount: routeData.stages.length
+    stageCount: routeData.stages.length,
+    currentStageId: ''
+  },
+
+  onLoad() {
+    this.loadCurrentStage();
+  },
+
+  onShow() {
+    this.loadCurrentStage();
+  },
+
+  // 加载当前阶段
+  loadCurrentStage() {
+    const current = checkin.getCurrentStage();
+    this.setData({
+      currentStageId: current ? current.id : ''
+    });
   },
 
   toStage(e) {

@@ -1,5 +1,31 @@
 <view class="container">
 
+  <!-- 学习进度卡片 -->
+  <view class="card">
+    <view class="card-head">
+      <view class="card-accent"></view>
+      <view class="card-title">学习进度</view>
+    </view>
+
+    <picker mode="selector" range="{{stageOptions}}" range-key="name" value="{{currentStageIndex}}" bindchange="onStageChange">
+      <view class="picker-item">
+        <view class="picker-label">当前阶段</view>
+        <view class="picker-value-wrap">
+          <view class="picker-value">{{currentStageDisplay || '未设置'}}</view>
+          <view class="picker-arrow">›</view>
+        </view>
+      </view>
+    </picker>
+
+    <view class="stage-preview" wx:if="{{currentStage}}">
+      <view class="stage-preview-title">{{currentStage.name}} · {{currentStage.targetPhase}}</view>
+      <view class="stage-preview-desc">积累 {{currentStage.vocabularyTarget}} · {{currentStage.timeInvestment}}</view>
+    </view>
+    <view class="stage-preview empty" wx:else>
+      请选择当前学习阶段
+    </view>
+  </view>
+
   <!-- 数据管理卡片 -->
   <view class="card">
     <view class="card-head">

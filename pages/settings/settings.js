@@ -1,19 +1,81 @@
 // 设置页
 const checkin = require('../../utils/checkin.js');
+const { routeData } = require('../../utils/data.js');
+
+// 构建阶段选项
+const stageOptions = routeData.stages.map(s => ({
+  id: s.stage_id,
+  name: s.stage_name
+}));
 
 Page({
   data: {
     totalCount: 0,
     totalDays: 0,
-    totalHours: '0'
+    totalHours: '0',
+    stageOptions,
+    currentStageIndex: -1,
+    currentStage: null,
+    currentStageDisplay: ''
   },
 
   onLoad() {
     this.loadStats();
+    this.loadCurrentStage();
   },
 
   onShow() {
     this.loadStats();
+    this.loadCurrentStage();
+  },
+
+  // 加载当前阶段
+  loadCurrentStage() {
+    const saved = checkin.getCurrentStage();
+    if (saved) {
+      const index = stageOptions.findIndex(s => s.id === saved.id);
+      this.setData({
+        currentStageIndex: index >= 0 ? index : -1,
+        currentStage: saved,
+        currentStageDisplay: saved.name
+      });
+    } else {
+      this.setData({
+        currentStageIndex: -1,
+        currentStage: null,
+        currentStageDisplay: ''
+      });
+    }
+  },
+
+  // 切换阶段
+  onStageChange(e) {
+    const index = parseInt(e.detail.value);
+    if (index < 0 || index >= stageOptions.length) return;
+
+    // 获取完整阶段数据
+    const stage = routeData.stages[index];
+    const stageData = {
+      id: stage.stage_id,
+      name: stage.stage_name,
+      targetPhase: stage.target_phase,
+      vocabularyTarget: stage.vocabulary_target,
+      timeInvestment: stage.time_investment
+    };
+
+    // 保存
+    checkin.setCurrentStage(stageData);
+
+    this.setData({
+      currentStageIndex: index,
+      currentStage: stageData,
+      currentStageDisplay: stageData.name
+    });
+
+    wx.showToast({
+      title: `已设置：${stageData.name}`,
+      icon: 'success'
+    });
   },
 
   // 加载统计数据
