@@ -31,6 +31,8 @@
 
         <view class="stage-tags">
           <view class="tag tag-entry">进入 {{item.entry_requirement}}</view>
+        </view>
+        <view class="stage-tags">
           <view class="tag tag-promote">晋级 {{item.promotion_standard}}</view>
         </view>
       </view>

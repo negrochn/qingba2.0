@@ -133,6 +133,10 @@ page {
   gap: 8rpx;
 }
 
+.stage-body .stage-tags + .stage-tags {
+  margin-top: 8rpx;
+}
+
 .tag {
   font-size: 20rpx;
   padding: 4rpx 12rpx;
