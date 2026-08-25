@@ -1,101 +1,90 @@
 <view class="container">
 
-  <!-- Hero：累计学习时长 -->
-  <view class="hero-card">
-    <view class="hero-top">
-      <text class="hero-label">累计学习时长</text>
-      <view class="hero-arrow">›</view>
-    </view>
-    <view class="hero-bottom">
-      <view class="hero-num-wrap">
-        <text class="hero-num">{{heroHours}}</text>
-        <text class="hero-dot">.</text>
-        <text class="hero-num hero-num-decimal">{{heroDecimal}}</text>
-        <text class="hero-unit">h</text>
+  <!-- 方案A：单卡式汇总 -->
+  <view class="summary-card">
+    <!-- 卡片头部：标题 + 月份选择 -->
+    <view class="sum-head">
+      <view class="sum-title">
+        <view class="sum-accent"></view>
+        <text class="sum-title-text">学习概览</text>
       </view>
-      <view class="hero-illus">
-        <view class="illus-circle"></view>
-        <view class="illus-book">📖</view>
-        <view class="illus-star">✦</view>
+      <view class="sum-picker" bindtap="onToggleMonthPicker">
+        <text class="sum-month">{{monthDisplay}}</text>
+        <text class="sum-arrow {{monthPickerOpen ? 'up' : ''}}">▾</text>
       </view>
     </view>
-  </view>
+    <view class="sum-year">{{yearText}}</view>
 
-  <!-- 三栏统计 -->
-  <view class="stats-row">
-    <view class="stat-card">
-      <view class="stat-num">{{totalCount}}</view>
-      <view class="stat-label">累计次数</view>
-    </view>
-    <view class="stat-card">
-      <view class="stat-num">{{totalDays}}</view>
-      <view class="stat-label">累计天数</view>
-    </view>
-    <view class="stat-card">
-      <view class="stat-num">{{totalHoursText}}</view>
-      <view class="stat-label">总时长(h)</view>
-    </view>
-  </view>
-
-  <!-- 月份汇总 -->
-  <view class="month-header">
-    <view class="month-left">
-      <view class="month-picker" bindtap="onToggleMonthPicker">
-        <text class="month-text">{{monthDisplay}}</text>
-        <text class="month-arrow {{monthPickerOpen ? 'up' : ''}}">▾</text>
-      </view>
-      <view class="year-text">{{yearText}}</view>
-    </view>
-    <view class="month-right">
-      <view class="month-total-num">
-        <text>{{monthTotalHours}}</text>
-        <text class="month-total-unit">h</text>
-      </view>
-      <view class="month-total-sub">累计{{monthCount}}次，共{{monthDays}}天</view>
-    </view>
-  </view>
-
-  <!-- 记录列表（扁平，无分组） -->
-  <view class="record-list" wx:if="{{records.length > 0}}">
-    <block wx:for="{{records}}" wx:key="id" wx:for-item="r" wx:for-index="idx">
-      <view
-        class="swipe-wrap"
-        data-idx="{{idx}}"
-        bindtouchstart="onTouchStart"
-        bindtouchmove="onTouchMove"
-        bindtouchend="onTouchEnd"
-      >
-        <view class="swipe-bg">
-          <view
-            class="swipe-del"
-            catchtap="deleteRecord"
-            data-id="{{r.id}}"
-          >删除</view>
+    <!-- 对比区：本月 vs 累计 -->
+    <view class="sum-compare">
+      <view class="sum-col">
+        <view class="sum-col-label">本月时长</view>
+        <view class="sum-col-num">
+          <text class="sum-col-val">{{monthTotalHours}}</text>
+          <text class="sum-col-unit">h</text>
         </view>
+        <view class="sum-col-sub">{{monthCount}}次 · {{monthDays}}天</view>
+      </view>
+
+      <view class="sum-divider"></view>
+
+      <view class="sum-col">
+        <view class="sum-col-label">累计时长</view>
+        <view class="sum-col-num">
+          <text class="sum-col-val">{{totalHoursText}}</text>
+          <text class="sum-col-unit">h</text>
+        </view>
+        <view class="sum-col-sub">{{totalCount}}次 · {{totalDays}}天</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 记录列表（紧凑，无卡片包裹） -->
+  <view class="record-section" wx:if="{{records.length > 0}}">
+    <view class="section-head">
+      <text class="section-title">学习记录</text>
+      <text class="section-count">共 {{records.length}} 条</text>
+    </view>
+
+    <view class="record-list">
+      <block wx:for="{{records}}" wx:key="id" wx:for-item="r" wx:for-index="idx">
         <view
-          class="swipe-fg record-row"
-          style="transform: translateX({{r._dx}}rpx); transition: {{r._anim ? 'transform 0.25s ease' : 'none'}};"
+          class="swipe-wrap"
+          data-idx="{{idx}}"
+          bindtouchstart="onTouchStart"
+          bindtouchmove="onTouchMove"
+          bindtouchend="onTouchEnd"
         >
-          <view class="record-avatar">{{r.firstChar}}</view>
-          <view class="record-main">
-            <view class="record-line1">
-              <view class="record-title">
+          <view class="swipe-bg">
+            <view
+              class="swipe-del"
+              catchtap="deleteRecord"
+              data-id="{{r.id}}"
+            >删除</view>
+          </view>
+          <view
+            class="swipe-fg record-row"
+            style="transform: translateX({{r._dx}}rpx); transition: {{r._anim ? 'transform 0.25s ease' : 'none'}};"
+          >
+            <view class="record-avatar">{{r.firstChar}}</view>
+            <view class="record-main">
+              <view class="record-line1">
                 <text class="record-res-name">{{r.resourceName}}</text>
+                <text class="record-date">{{r.dateText}}</text>
               </view>
-              <text class="record-date">{{r.dateText}}</text>
-            </view>
-            <view class="record-line2">
-              <view class="record-tags">
-                <text class="tag-stage">{{r.stageName}}</text>
-                <text class="tag-group tag-group-{{r.groupKey}}">{{r.groupLabel}}</text>
-                <text class="record-remark" wx:if="{{r.remark}}">{{r.remark}}</text>
+              <view class="record-line2">
+                <view class="record-tags">
+                  <text class="tag-stage">{{r.stageName}}</text>
+                  <text class="tag-group tag-group-{{r.groupKey}}">{{r.groupLabel}}</text>
+                  <text class="record-remark" wx:if="{{r.remark}}">{{r.remark}}</text>
+                </view>
+                <view class="record-duration">{{r.durationText}}</view>
               </view>
-              <text class="record-duration">{{r.durationText}}</text>
             </view>
           </view>
         </view>
-      </view>
-    </block>
+      </block>
+    </view>
   </view>
 
   <view class="empty-wrap" wx:else>

@@ -1,0 +1,156 @@
+/* 设置页样式 */
+
+page {
+  background: #f5f6f8;
+}
+
+.container {
+  padding: 24rpx 28rpx calc(env(safe-area-inset-bottom) + 40rpx);
+}
+
+/* ===== 卡片 ===== */
+.card {
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 28rpx 28rpx 12rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(60, 90, 140, 0.06);
+  border: 2rpx solid #e8eef7;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.card-accent {
+  width: 6rpx;
+  height: 32rpx;
+  border-radius: 3rpx;
+  background: linear-gradient(180deg, #4a90d9 0%, #6ab0f3 100%);
+}
+
+.card-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+/* ===== 操作项 ===== */
+.action-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 16rpx;
+  border-bottom: 1rpx solid #f0f2f5;
+}
+
+.action-item:last-child {
+  border-bottom: none;
+}
+
+.action-item.danger .action-title {
+  color: #e74c3c;
+}
+
+.action-icon {
+  flex-shrink: 0;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  margin-right: 20rpx;
+}
+
+.action-icon.backup {
+  background: #e8f5e9;
+}
+
+.action-icon.import {
+  background: #e3f2fd;
+}
+
+.action-icon.delete {
+  background: #ffebee;
+}
+
+.action-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.action-title {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin-bottom: 6rpx;
+}
+
+.action-desc {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.action-arrow {
+  font-size: 32rpx;
+  color: #c0c8d0;
+}
+
+/* ===== 数据统计 ===== */
+.stat-grid {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 0;
+}
+
+.stat-item {
+  flex: 1;
+  text-align: center;
+}
+
+.stat-num {
+  font-size: 44rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  font-family: 'DIN Alternate', -apple-system, Helvetica, Arial, sans-serif;
+  margin-bottom: 8rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #888;
+}
+
+.stat-divider {
+  width: 1rpx;
+  height: 60rpx;
+  background: #e8eef7;
+}
+
+/* ===== 信息项 ===== */
+.info-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 16rpx;
+  border-bottom: 1rpx solid #f0f2f5;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.info-value {
+  font-size: 28rpx;
+  color: #888;
+}
+

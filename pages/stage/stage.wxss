@@ -1,4 +1,4 @@
-/* ====== 关键要点（与整体风格统一） ====== */
+/* ====== 关键要点（方案A：紧凑列表） ====== */
 .key-point-card {
   background: #ffffff;
   border-radius: 20rpx;
@@ -9,53 +9,59 @@
   position: relative;
 }
 
-.point {
+/* 要点列表 */
+.kp-list {
+  margin-top: 8rpx;
+}
+
+/* 单条要点 */
+.kp-item {
   display: flex;
   align-items: flex-start;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid #eef2f7;
+  padding: 16rpx 16rpx;
+  border-radius: 12rpx;
+  margin-bottom: 8rpx;
+  background: #fafbfc;
 }
 
-.point:last-child {
-  border-bottom: none;
+.kp-item:last-child {
+  margin-bottom: 0;
 }
 
-.point-idx {
+/* 重要条目高亮 */
+.kp-item-hi {
+  background: linear-gradient(90deg, #fff8f0 0%, #fff 100%);
+  border-left: 4rpx solid #ff7a45;
+}
+
+/* 小圆点 */
+.kp-dot {
   flex-shrink: 0;
-  width: 36rpx;
-  height: 36rpx;
-  line-height: 36rpx;
+  width: 12rpx;
+  height: 12rpx;
   border-radius: 50%;
-  background: #eaf2ff;
-  color: #2e6bb8;
-  text-align: center;
-  font-size: 22rpx;
-  font-weight: 600;
+  background: #c0c8d0;
   margin-right: 16rpx;
-  margin-top: 4rpx;
+  margin-top: 12rpx;
 }
 
-.point-body {
+.kp-dot-hi {
+  background: #ff7a45;
+  box-shadow: 0 0 8rpx rgba(255, 122, 69, 0.4);
+}
+
+/* 内容区 */
+.kp-body {
   flex: 1;
   min-width: 0;
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: 8rpx;
+  gap: 10rpx;
 }
 
-.point-hi .point-idx {
-  background: linear-gradient(135deg, #4a90d9 0%, #6ab0f3 100%);
-  color: #fff;
-  box-shadow: 0 2rpx 8rpx rgba(74, 144, 217, 0.35);
-}
-
-.point-hi .point-text {
-  color: #153b72;
-  font-weight: 500;
-}
-
-.point-text {
+/* 文本 */
+.kp-text {
   flex: 1;
   min-width: 0;
   font-size: 26rpx;
@@ -63,19 +69,29 @@
   color: #4a5870;
 }
 
-.point-tag {
-  display: inline-block;
-  font-size: 20rpx;
-  color: #4a90d9;
-  background: #eaf2ff;
-  padding: 2rpx 12rpx;
-  border-radius: 14rpx;
-  line-height: 1.5;
+.kp-item-hi .kp-text {
+  color: #8a4a20;
+  font-weight: 500;
 }
 
-.point-tag-hi {
+/* 重要标签 */
+.kp-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 20rpx;
+  color: #ff7a45;
+  background: #fff2e8;
+  padding: 2rpx 12rpx;
+  border-radius: 10rpx;
+  line-height: 1.5;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.kp-tag-hi {
   color: #fff;
-  background: linear-gradient(135deg, #4a90d9 0%, #6ab0f3 100%);
+  background: linear-gradient(135deg, #ff7a45 0%, #ff9c6e 100%);
+  box-shadow: 0 2rpx 6rpx rgba(255, 122, 69, 0.3);
 }
 
 /* 资源行里不可打卡的提示（灰色说明行） */
@@ -188,8 +204,31 @@
 .rg-head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 18rpx 20rpx 14rpx;
   margin-bottom: 8rpx;
+}
+
+.rg-head-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.rg-head-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.rg-head-active {
+  cursor: pointer;
+}
+
+.rg-head-active:active {
+  background: #f8fafc;
+  border-radius: 12rpx;
 }
 
 .rg-dot {
@@ -255,6 +294,72 @@
 .rg-count {
   font-size: 22rpx;
   color: #99a;
+}
+
+/* 分组进度摘要 */
+.rg-progress {
+  display: flex;
+  align-items: center;
+  font-size: 22rpx;
+  color: #3fae68;
+  margin-right: 12rpx;
+  background: #f0faf4;
+  padding: 4rpx 14rpx;
+  border-radius: 16rpx;
+}
+
+.rg-progress-empty {
+  color: #bbb;
+  background: #f5f6f8;
+}
+
+.rg-progress-val {
+  font-weight: 600;
+  color: #2a9a5a;
+}
+
+.rg-progress-sep {
+  margin: 0 6rpx;
+  color: #ccc;
+}
+
+.rg-progress-read {
+  color: #666;
+}
+
+/* 展开/折叠箭头 */
+.rg-arrow {
+  font-size: 32rpx;
+  color: #c0c8d0;
+  font-weight: 300;
+  transition: transform 0.2s;
+}
+
+.rg-arrow-open {
+  transform: rotate(90deg);
+}
+
+/* 折叠状态提示 */
+.rg-body-collapsed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx;
+  min-height: 64rpx;
+  background: #fafbfc;
+  border-radius: 12rpx;
+  border: 2rpx dashed #e5e8ee;
+}
+
+.rg-collapsed-hint {
+  font-size: 24rpx;
+  color: #99a;
+  text-align: center;
+}
+
+.rg-collapsed-note {
+  color: #b0b9c5;
+  font-style: italic;
 }
 
 .rg-body {

@@ -19,12 +19,25 @@
     <view class="res-divider"></view>
 
     <view class="res-list" wx:for="{{resourceGroups}}" wx:for-item="g" wx:for-index="gidx" wx:key="key">
-      <view class="rg-head {{g.clickable ? 'rg-head-active' : ''}}">
-        <view class="rg-dot rg-dot-{{g.key}}"></view>
-        <view class="rg-label rg-label-{{g.key}}">{{g.label}}</view>
-        <view class="rg-count">{{g.items.length}} 项</view>
+      <view class="rg-head {{g.clickable ? 'rg-head-active' : ''}}" data-group-key="{{g.key}}" bindtap="onToggleGroup">
+        <view class="rg-head-left">
+          <view class="rg-dot rg-dot-{{g.key}}"></view>
+          <view class="rg-label rg-label-{{g.key}}">{{g.label}}</view>
+          <view class="rg-count">{{g.items.length}} 项</view>
+        </view>
+        <view class="rg-head-right">
+          <view class="rg-progress" wx:if="{{g.clickable && groupProgress[g.key].todayMin > 0}}">
+            <text class="rg-progress-val">{{groupProgress[g.key].todayMin}}m</text>
+            <text class="rg-progress-sep">·</text>
+            <text class="rg-progress-read">已读 {{groupProgress[g.key].readCount}}</text>
+          </view>
+          <view class="rg-progress rg-progress-empty" wx:elif="{{g.clickable}}">
+            <text>待学习</text>
+          </view>
+          <view class="rg-arrow {{expandedGroups[g.key] ? 'rg-arrow-open' : ''}}">›</view>
+        </view>
       </view>
-      <view class="rg-body">
+      <view class="rg-body" wx:if="{{expandedGroups[g.key]}}">
         <view
           class="r-row {{g.clickable ? 'r-row-click' : ''}} {{resTotals[g.key + '|' + g.items[ridx]] ? 'r-row-done' : ''}}"
           wx:for="{{g.items}}"
@@ -51,6 +64,10 @@
           </view>
         </view>
       </view>
+      <view class="rg-body rg-body-collapsed" wx:else>
+        <view class="rg-collapsed-hint" wx:if="{{g.clickable}}">{{g.items.length}} 项资源，点击展开</view>
+        <view class="rg-collapsed-hint rg-collapsed-note" wx:else>{{g.items.length}} 项资源，仅供参考</view>
+      </view>
     </view>
   </view>
 
@@ -70,11 +87,15 @@
       </view>
     </view>
     <view class="res-divider"></view>
-    <view class="point {{item.highlighted ? 'point-hi' : ''}}" wx:for="{{stage.key_points}}" wx:key="index">
-      <view class="point-idx"><text>{{index + 1}}</text></view>
-      <view class="point-body">
-        <view class="point-text">{{item.text}}</view>
-        <view class="point-tag {{item.highlighted ? 'point-tag-hi' : ''}}" wx:if="{{item.highlighted}}">重要</view>
+    
+    <!-- 方案A：紧凑列表 -->
+    <view class="kp-list">
+      <view class="kp-item {{item.highlighted ? 'kp-item-hi' : ''}}" wx:for="{{stage.key_points}}" wx:key="index">
+        <view class="kp-dot {{item.highlighted ? 'kp-dot-hi' : ''}}"></view>
+        <view class="kp-body">
+          <text class="kp-text">{{item.text}}</text>
+          <view class="kp-tag kp-tag-hi" wx:if="{{item.highlighted}}">重要</view>
+        </view>
       </view>
     </view>
   </view>

@@ -1,12 +1,16 @@
 <view class="container">
-  <!-- 顶部标题 -->
+
+  <!-- 顶部 banner -->
   <view class="page-banner">
     <view class="banner-text">3-4岁 · 常规路径</view>
   </view>
 
   <!-- 01 总思路 -->
-  <view class="section">
-    <view class="section-title">01 总思路</view>
+  <view class="chapter-card">
+    <view class="chapter-head">
+      <view class="chapter-accent"></view>
+      <view class="chapter-title">总思路</view>
+    </view>
 
     <view class="para">3-4岁的孩子，一般来说，只能走常规路径，因为大循环第一阶段横跨了6个难度，年龄越小的孩子，越容易出现卡认知的情况，表现为：到了牛5-6级别，专注度明显下滑或情节理解困难等等。</view>
 
@@ -22,53 +26,58 @@
   </view>
 
   <!-- 02 时间晋级标准 -->
-  <view class="section">
-    <view class="section-title">02 时间晋级标准</view>
+  <view class="chapter-card">
+    <view class="chapter-head">
+      <view class="chapter-accent"></view>
+      <view class="chapter-title">时间晋级标准</view>
+    </view>
 
     <view class="stage-block">
-      <view class="stage-name">常规一阶段：</view>
-      <view class="stage-detail">
-        <view class="stage-line">· 时间投入建议：<text class="hl">60-80H</text> ｜ 准入标准：<text class="hl">零基础</text> ｜ 晋级标准：<text class="hl">时间满足且小小优趣稳定新版phase5</text></view>
-      </view>
-      <view class="stage-name">常规二阶段：</view>
-      <view class="stage-detail">
-        <view class="stage-line">· 时间投入建议：<text class="hl">60-80H</text> ｜ 准入标准：<text class="hl">phase5</text> ｜ 晋级标准：<text class="hl">时间满足且小小优趣稳定新版phase8</text></view>
-      </view>
+      <view class="stage-name">常规一阶段</view>
+      <view class="stage-line">· 时间投入建议：<text class="hl">60-80H</text> ｜ 准入标准：<text class="hl">零基础</text> ｜ 晋级标准：<text class="hl">时间满足且小小优趣稳定新版phase5</text></view>
+    </view>
 
-      <view class="stage-name">常规三阶段：</view>
-      <view class="stage-detail">
-        <view class="stage-line">· 时间投入建议：<text class="hl">60-80H</text> ｜ 准入标准：<text class="hl">phase8</text> ｜ 晋级标准：<text class="hl">时间满足且小小优趣稳定新版phase12</text></view>
-      </view>
+    <view class="stage-block">
+      <view class="stage-name">常规二阶段</view>
+      <view class="stage-line">· 时间投入建议：<text class="hl">60-80H</text> ｜ 准入标准：<text class="hl">phase5</text> ｜ 晋级标准：<text class="hl">时间满足且小小优趣稳定新版phase8</text></view>
+    </view>
 
-      <view class="stage-name">常规四阶段：</view>
-      <view class="stage-detail">
-        <view class="stage-line">· 时间投入建议：<text class="hl">60H</text> ｜ 准入标准：<text class="hl">phase12</text> ｜ 晋级标准：<text class="hl">时间满足且小小优趣稳定新版phase14</text></view>
-      </view>
+    <view class="stage-block">
+      <view class="stage-name">常规三阶段</view>
+      <view class="stage-line">· 时间投入建议：<text class="hl">60-80H</text> ｜ 准入标准：<text class="hl">phase8</text> ｜ 晋级标准：<text class="hl">时间满足且小小优趣稳定新版phase12</text></view>
+    </view>
 
-      <view class="stage-name">常规五阶段：</view>
-      <view class="stage-detail">
-        <view class="stage-line">· 时间投入建议：<text class="hl">60H</text> ｜ 准入标准：<text class="hl">phase14</text> ｜ 晋级标准：<text class="hl">时间满足且小小优趣稳定新版phase16</text></view>
-      </view>
+    <view class="stage-block">
+      <view class="stage-name">常规四阶段</view>
+      <view class="stage-line">· 时间投入建议：<text class="hl">60H</text> ｜ 准入标准：<text class="hl">phase12</text> ｜ 晋级标准：<text class="hl">时间满足且小小优趣稳定新版phase14</text></view>
+    </view>
 
-      <view class="stage-name">常规六阶段：</view>
-      <view class="stage-detail">
-        <view class="stage-line">· 时间投入建议：<text class="hl">60H</text> ｜ 准入标准：<text class="hl">phase16</text></view>
-        <view class="stage-line">· 晋级标准：<text class="hl">佩奇可初步裸听</text>且从常规1累计投入时间不低于<text class="hl">400H</text>，最好小小优趣测试稳定<text class="hl">phase18</text>，到不了也没事，但不应低于<text class="hl">phase16</text></view>
-      </view>
+    <view class="stage-block">
+      <view class="stage-name">常规五阶段</view>
+      <view class="stage-line">· 时间投入建议：<text class="hl">60H</text> ｜ 准入标准：<text class="hl">phase14</text> ｜ 晋级标准：<text class="hl">时间满足且小小优趣稳定新版phase16</text></view>
+    </view>
 
-      <view class="stage-name">准桥梁阶段：</view>
-      <view class="stage-detail">
-        <view class="stage-line">· 时间投入建议：<text class="hl">80-100H</text> ｜ 准入标准：<text class="hl">佩奇可初步裸听</text>且常规1-6累计投入时间不低于<text class="hl">400H</text></view>
-        <view class="stage-line">· 晋级标准：<text class="hl">佩奇可裸听</text>且从常规1累计总投入时间不低于<text class="hl">480H</text>，小小优趣可不测（因为有科普词汇）。</view>
-      </view>
+    <view class="stage-block">
+      <view class="stage-name">常规六阶段</view>
+      <view class="stage-line">· 时间投入建议：<text class="hl">60H</text> ｜ 准入标准：<text class="hl">phase16</text></view>
+      <view class="stage-line">· 晋级标准：<text class="hl">佩奇可初步裸听</text>且从常规1累计投入时间不低于<text class="hl">400H</text>，最好小小优趣测试稳定<text class="hl">phase18</text>，到不了也没事，但不应低于<text class="hl">phase16</text></view>
+    </view>
+
+    <view class="stage-block">
+      <view class="stage-name">准桥梁阶段</view>
+      <view class="stage-line">· 时间投入建议：<text class="hl">80-100H</text> ｜ 准入标准：<text class="hl">佩奇可初步裸听</text>且常规1-6累计投入时间不低于<text class="hl">400H</text></view>
+      <view class="stage-line">· 晋级标准：<text class="hl">佩奇可裸听</text>且从常规1累计总投入时间不低于<text class="hl">480H</text>，小小优趣可不测（因为有科普词汇）。</view>
     </view>
 
     <view class="para highlight">其中，时间投入是最核心的标准，甚至可以当作唯一的晋级标准。当时间投入不够时，孩子的听力水平大概率是到不了对应水平的。若时间投入不够，哪怕测试结果达标，晋级也需谨慎，因为时间投入是实打实的，但测试结果可能存在误差。如果时间投入到位，且测试结果也达标，则可放心晋级。</view>
   </view>
 
   <!-- 03 核心方法介绍 -->
-  <view class="section">
-    <view class="section-title">03 核心方法介绍</view>
+  <view class="chapter-card">
+    <view class="chapter-head">
+      <view class="chapter-accent"></view>
+      <view class="chapter-title">核心方法介绍</view>
+    </view>
 
     <!-- 方法一：亲子共读 -->
     <view class="method-block">
@@ -132,4 +141,5 @@
       </view>
     </view>
   </view>
+
 </view>

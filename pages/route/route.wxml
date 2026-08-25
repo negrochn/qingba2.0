@@ -1,27 +1,39 @@
 <view class="container">
-  <view class="route-card">
+  <view class="route-header">
+    <view class="route-title">常规路线</view>
+    <view class="route-sub">{{stageCount}} 个阶段 · 约 400H 累计</view>
+  </view>
+
+  <view class="timeline">
     <view
-      class="stage {{index === stageCount - 1 ? 'stage-end' : ''}}"
+      class="stage-item"
       wx:for="{{stages}}"
       wx:key="stage_id"
       data-index="{{index}}"
       bindtap="toStage"
       hover-class="stage-hover"
     >
-      <view class="rail">
-        <view class="node {{index === stageCount - 1 ? 'node-end' : ''}}">{{index + 1}}</view>
-        <view class="line" wx:if="{{index < stageCount - 1}}"></view>
-      </view>
-      <view class="content">
-        <view class="head">
-          <text class="name">{{item.stage_name}}</text>
-          <text class="target {{index === stageCount - 1 ? 'target-end' : ''}}">{{item.target_phase}}</text>
+      <view class="stage-rail">
+        <view class="stage-node">
+          <text class="node-num">{{index + 1}}</text>
         </view>
-        <view class="chips">
-          <text class="chip">{{item.vocabulary_target}}</text>
-          <text class="chip">{{item.time_investment}}</text>
-          <text class="chip">{{item.entry_requirement}}</text>
-          <text class="chip">{{item.promotion_standard}}</text>
+        <view class="stage-line" wx:if="{{index < stageCount - 1}}"></view>
+      </view>
+
+      <view class="stage-body">
+        <view class="stage-head">
+          <view class="stage-title-row">
+            <text class="stage-name">{{item.stage_name}}</text>
+            <text class="stage-phase">{{item.target_phase}}</text>
+          </view>
+          <text class="stage-arrow">›</text>
+        </view>
+
+        <view class="stage-desc">{{item.vocabulary_target}} · {{item.time_investment}}</view>
+
+        <view class="stage-tags">
+          <view class="tag tag-entry">进入 {{item.entry_requirement}}</view>
+          <view class="tag tag-promote">晋级 {{item.promotion_standard}}</view>
         </view>
       </view>
     </view>

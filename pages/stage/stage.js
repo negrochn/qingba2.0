@@ -17,6 +17,19 @@ Page({
   data: {
     stage: null,
     resourceGroups: [],
+    // 分组展开状态：默认只展开主线绘本
+    expandedGroups: {
+      main_picture_books: true,
+      main_graded_readers: false,
+      main_animations: false,
+      sub_graded_readers: false,
+      sub_animations: false,
+      fun_extensions: false,
+      science_extensions: false,
+      fusion_apps: false
+    },
+    // 分组进度摘要 { groupKey: { todayMin, readCount } }
+    groupProgress: {},
     // 打卡弹窗
     showCheckin: false,
     currentGroup: null,   // { key, label }
@@ -69,14 +82,27 @@ Page({
     const stage = this.data.stage
     if (!stage) return
     const totals = {}
+    const groupProgress = {}
     this.data.resourceGroups.forEach(g => {
       if (!g.clickable) return
+      let groupToday = 0
+      let groupReadCount = 0
       g.items.forEach(name => {
         const min = checkin.todayTotalByResource(stage.stage_id, g.key, name)
-        if (min > 0) totals[`${g.key}|${name}`] = min
+        if (min > 0) {
+          totals[`${g.key}|${name}`] = min
+          groupToday += min
+        }
+        // 统计该组已读总数
+        const rc = checkin.getReadCount(stage.stage_id, g.key, name)
+        groupReadCount += rc
       })
+      groupProgress[g.key] = {
+        todayMin: groupToday,
+        readCount: groupReadCount
+      }
     })
-    this.setData({ resTotals: totals })
+    this.setData({ resTotals: totals, groupProgress })
   },
 
   _refreshReadCounts() {
@@ -104,6 +130,14 @@ Page({
     })
   },
 
+  // 切换分组展开/折叠
+  onToggleGroup(e) {
+    const { groupKey } = e.currentTarget.dataset
+    const expandedGroups = { ...this.data.expandedGroups }
+    expandedGroups[groupKey] = !expandedGroups[groupKey]
+    this.setData({ expandedGroups })
+  },
+
   // 读完：二次确认后已读次数+1
   onReadFinish() {
     const { currentGroup, currentResource, stage } = this.data
@@ -117,9 +151,19 @@ Page({
       success: (res) => {
         if (!res.confirm) return
         const count = checkin.incrementReadCount(stage.stage_id, currentGroup.key, currentResource)
+        
+        // 更新分组进度中的已读数
+        const groupProgress = { ...this.data.groupProgress }
+        const prev = groupProgress[currentGroup.key] || { todayMin: 0, readCount: 0 }
+        groupProgress[currentGroup.key] = {
+          todayMin: prev.todayMin,
+          readCount: prev.readCount + 1
+        }
+        
         this.setData({
           currentReadCount: count,
-          [`readCounts.${currentGroup.key}|${currentResource}`]: count
+          [`readCounts.${currentGroup.key}|${currentResource}`]: count,
+          groupProgress
         })
         wx.showToast({ title: `已读完(${count}次)`, icon: 'success' })
       }
@@ -194,9 +238,19 @@ Page({
 
     const resKey = `${currentGroup.key}|${currentResource}`
     const newTotal = checkin.todayTotalByResource(stage.stage_id, currentGroup.key, currentResource)
+    
+    // 更新分组进度
+    const groupProgress = { ...this.data.groupProgress }
+    const prev = groupProgress[currentGroup.key] || { todayMin: 0, readCount: 0 }
+    groupProgress[currentGroup.key] = {
+      todayMin: prev.todayMin + minutes,
+      readCount: prev.readCount
+    }
+    
     this.setData({
       showCheckin: false,
-      [`resTotals.${resKey}`]: newTotal
+      [`resTotals.${resKey}`]: newTotal,
+      groupProgress
     })
 
     wx.showToast({

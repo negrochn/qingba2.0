@@ -279,6 +279,7 @@ module.exports = {
   todayStr,
   addCheckin,
   deleteCheckin,
+  getAll,
   getByDay,
   getByMonth,
   monthTotalMinutes,

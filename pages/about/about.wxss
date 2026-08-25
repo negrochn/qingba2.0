@@ -1,10 +1,14 @@
-/* 关于庆爸2.0 详情页样式 */
+/* 关于庆爸2.0 详情页 - 方案A：章节卡片 */
 
-.container {
-  padding: 0 0 40rpx;
+page {
+  background: #f5f6f8;
 }
 
-/* 顶部 banner */
+.container {
+  padding: 0 0 calc(env(safe-area-inset-bottom) + 40rpx);
+}
+
+/* ===== 顶部 banner ===== */
 .page-banner {
   padding: 48rpx 32rpx 36rpx;
   text-align: center;
@@ -12,99 +16,110 @@
 
 .banner-text {
   display: inline-block;
-  font-size: 44rpx;
+  font-size: 40rpx;
   font-weight: 700;
-  color: #5a3e1b;
-  background: #fde8b0;
+  color: #fff;
+  background: linear-gradient(135deg, #4a90d9 0%, #6ab0f3 100%);
   padding: 16rpx 48rpx;
-  border-radius: 12rpx;
+  border-radius: 16rpx;
   letter-spacing: 4rpx;
-  position: relative;
+  box-shadow: 0 6rpx 24rpx rgba(74, 144, 217, 0.3);
 }
 
-/* 通用 section */
-.section {
-  padding: 0 32rpx;
-  margin-bottom: 48rpx;
+/* ===== 章节卡片 ===== */
+.chapter-card {
+  margin: 0 28rpx 28rpx;
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 28rpx 28rpx 32rpx;
+  box-shadow: 0 4rpx 20rpx rgba(60, 90, 140, 0.06);
+  border: 2rpx solid #e8eef7;
 }
 
-.section-title {
-  font-size: 34rpx;
+/* 章节标题行 */
+.chapter-head {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 24rpx;
+}
+
+.chapter-accent {
+  width: 6rpx;
+  height: 36rpx;
+  border-radius: 3rpx;
+  background: linear-gradient(180deg, #4a90d9 0%, #6ab0f3 100%);
+}
+
+.chapter-title {
+  font-size: 32rpx;
   font-weight: 700;
-  color: #333;
-  margin-bottom: 28rpx;
-  padding-bottom: 16rpx;
-  border-bottom: 2rpx solid #f0e6d2;
-  display: inline-block;
-  position: relative;
+  color: #1a1a1a;
+  letter-spacing: 2rpx;
 }
 
-.section-title::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -2rpx;
-  width: 60%;
-  height: 4rpx;
-  background: #f0b849;
-  border-radius: 2rpx;
-}
-
-/* 段落 */
+/* ===== 段落 ===== */
 .para {
-  font-size: 30rpx;
-  line-height: 1.5;
-  color: #333;
-  margin-bottom: 28rpx;
+  font-size: 28rpx;
+  line-height: 1.65;
+  color: #3a4556;
+  margin-bottom: 24rpx;
   text-align: justify;
 }
 
 .para.highlight {
   color: #c0392b;
   font-weight: 500;
+  background: #fff8f6;
+  padding: 16rpx 20rpx;
+  border-radius: 12rpx;
+  border-left: 4rpx solid #ff7a45;
 }
 
-/* 列表 */
+/* ===== 列表 ===== */
 .bullets {
-  margin: 24rpx 0 32rpx;
-  padding-left: 12rpx;
+  margin: 20rpx 0 28rpx;
+  padding-left: 8rpx;
+  background: #f8fafd;
+  border-radius: 12rpx;
+  padding: 20rpx 24rpx;
 }
 
 .bullet {
-  font-size: 30rpx;
-  line-height: 1.5;
-  color: #333;
+  font-size: 28rpx;
+  line-height: 1.8;
+  color: #3a4556;
 }
 
-/* 阶段块 */
+/* ===== 阶段块（卡片风格） ===== */
 .stage-block {
-  background: #fffdf5;
-  border-radius: 16rpx;
-  padding: 28rpx 32rpx;
-  border: 2rpx solid #f0e6d2;
+  background: #f8fafd;
+  border-radius: 14rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 16rpx;
+  border: 2rpx solid #e8eef7;
+}
+
+.stage-block:last-child {
+  margin-bottom: 12rpx;
 }
 
 .stage-name {
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
-  color: #333;
-  margin-top: 20rpx;
-  margin-bottom: 12rpx;
-}
-
-.stage-name:first-child {
-  margin-top: 0;
-}
-
-.stage-detail {
-  margin-bottom: 12rpx;
+  color: #1a3b72;
+  margin-bottom: 10rpx;
 }
 
 .stage-line {
-  font-size: 28rpx;
-  line-height: 1.5;
-  color: #333;
-  margin-bottom: 8rpx;
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: #4a5568;
+  margin-bottom: 6rpx;
+}
+
+.stage-line:last-child {
+  margin-bottom: 0;
 }
 
 .hl {
@@ -112,45 +127,56 @@
   font-weight: 600;
 }
 
-/* 方法块 */
+/* ===== 方法块 ===== */
 .method-block {
-  margin-bottom: 40rpx;
+  margin-bottom: 32rpx;
+  padding-bottom: 24rpx;
+  border-bottom: 1rpx solid #eef2f7;
+}
+
+.method-block:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 .method-name {
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: 700;
-  color: #333;
-  margin-bottom: 16rpx;
+  color: #1a3b72;
+  margin-bottom: 14rpx;
+  padding-left: 14rpx;
+  border-left: 4rpx solid #4a90d9;
 }
 
 .method-op {
-  font-size: 28rpx;
-  line-height: 1.5;
-  color: #333;
+  font-size: 26rpx;
+  line-height: 1.65;
+  color: #3a4556;
   margin-bottom: 16rpx;
 }
 
-/* 注意点块 */
+/* ===== 注意点块 ===== */
 .warn-block {
-  background: #fff4f4;
-  border-radius: 12rpx;
-  padding: 20rpx 24rpx;
-  margin-bottom: 16rpx;
+  background: #fff6f2;
+  border-radius: 14rpx;
+  padding: 18rpx 22rpx;
+  margin-bottom: 14rpx;
+  border-left: 4rpx solid #ff7a45;
 }
 
 .warn-title {
-  font-size: 28rpx;
+  font-size: 26rpx;
   font-weight: 600;
   color: #c0392b;
-  margin-bottom: 12rpx;
+  margin-bottom: 10rpx;
 }
 
 .warn-item {
-  font-size: 28rpx;
-  line-height: 1.5;
-  color: #333;
-  margin-bottom: 8rpx;
+  font-size: 26rpx;
+  line-height: 1.65;
+  color: #3a4556;
+  margin-bottom: 6rpx;
 }
 
 .warn-item:last-child {
@@ -158,35 +184,33 @@
 }
 
 .warn-num {
-  color: #c0392b;
+  color: #ff7a45;
   font-weight: 600;
 }
 
-/* 子块（小小优趣等） */
+/* ===== 子块（小小优趣等） ===== */
 .sub-block {
-  background: #fffdf5;
-  border-radius: 12rpx;
-  padding: 20rpx 24rpx;
-  border: 2rpx solid #f0e6d2;
+  background: #f0f7ff;
+  border-radius: 14rpx;
+  padding: 18rpx 22rpx;
   margin-top: 16rpx;
+  border: 2rpx solid #d6e8fc;
 }
 
 .sub-title {
-  font-size: 28rpx;
+  font-size: 26rpx;
   font-weight: 600;
-  color: #5a3e1b;
-  margin-bottom: 12rpx;
+  color: #1a5fb0;
+  margin-bottom: 10rpx;
 }
 
 .para-sm {
-  font-size: 28rpx;
-  line-height: 1.5;
-  color: #333;
-  margin-bottom: 12rpx;
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: #3a4556;
+  margin-bottom: 10rpx;
 }
 
 .para-sm:last-child {
   margin-bottom: 0;
 }
-
-/* 时间计算已改为 warn-block 布局，复用注意点样式 */

@@ -8,16 +8,15 @@
 .menu-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 32rpx 28rpx;
+  padding: 28rpx 28rpx;
   position: relative;
 }
 
 .menu-item::after {
   content: '';
   position: absolute;
-  left: 28rpx;
-  right: 0;
+  left: 80rpx;
+  right: 28rpx;
   bottom: 0;
   height: 1rpx;
   background: #f0f0f0;
@@ -27,12 +26,24 @@
   display: none;
 }
 
+.menu-icon {
+  flex-shrink: 0;
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  margin-right: 20rpx;
+}
+
 .menu-label {
+  flex: 1;
   font-size: 30rpx;
   color: #333;
 }
 
 .menu-arrow {
-  font-size: 36rpx;
-  color: #c8c8c8;
+  font-size: 32rpx;
+  color: #c0c8d0;
 }

@@ -1,0 +1,87 @@
+<view class="container">
+
+  <!-- 数据管理卡片 -->
+  <view class="card">
+    <view class="card-head">
+      <view class="card-accent"></view>
+      <view class="card-title">数据管理</view>
+    </view>
+
+    <!-- 备份 -->
+    <view class="action-item" bindtap="onBackup">
+      <view class="action-icon backup">📤</view>
+      <view class="action-info">
+        <view class="action-title">导出备份</view>
+        <view class="action-desc">生成 JSON 文件，保存到本地或分享给好友</view>
+      </view>
+      <view class="action-arrow">›</view>
+    </view>
+
+    <!-- 导入 -->
+    <view class="action-item" bindtap="onImport">
+      <view class="action-icon import">📥</view>
+      <view class="action-info">
+        <view class="action-title">导入备份</view>
+        <view class="action-desc">从微信聊天记录中选择 JSON 文件</view>
+      </view>
+      <view class="action-arrow">›</view>
+    </view>
+
+    <!-- 清空数据 -->
+    <view class="action-item danger" bindtap="onClearData">
+      <view class="action-icon delete">🗑️</view>
+      <view class="action-info">
+        <view class="action-title">清空数据</view>
+        <view class="action-desc" wx:if="{{totalCount > 0}}">共 {{totalCount}} 条记录将被删除</view>
+        <view class="action-desc" wx:else>暂无数据</view>
+      </view>
+      <view class="action-arrow">›</view>
+    </view>
+  </view>
+
+  <!-- 数据统计 -->
+  <view class="card">
+    <view class="card-head">
+      <view class="card-accent"></view>
+      <view class="card-title">数据统计</view>
+    </view>
+
+    <view class="stat-grid">
+      <view class="stat-item">
+        <view class="stat-num">{{totalCount}}</view>
+        <view class="stat-label">打卡次数</view>
+      </view>
+      <view class="stat-divider"></view>
+
+      <view class="stat-item">
+        <view class="stat-num">{{totalDays}}</view>
+        <view class="stat-label">学习天数</view>
+      </view>
+
+      <view class="stat-divider"></view>
+
+      <view class="stat-item">
+        <view class="stat-num">{{totalHours}}</view>
+        <view class="stat-label">累计时长(h)</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 关于版本 -->
+  <view class="card">
+    <view class="card-head">
+      <view class="card-accent"></view>
+      <view class="card-title">关于</view>
+    </view>
+
+    <view class="info-item">
+      <view class="info-label">版本号</view>
+      <view class="info-value">2.0.0</view>
+    </view>
+    <view class="info-item">
+      <view class="info-label">数据存储</view>
+      <view class="info-value">本地存储</view>
+    </view>
+  </view>
+
+</view>
