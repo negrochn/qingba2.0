@@ -213,12 +213,6 @@
   font-weight: 600;
 }
 
-.stage-done-tag {
-  color: #2a9a5a !important;
-  background: #f0faf4 !important;
-  border-color: #b8e0c5 !important;
-}
-
 /* 锁定阶段样式（之后） */
 .stage-locked .stage-body {
   opacity: 0.6;
