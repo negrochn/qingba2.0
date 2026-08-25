@@ -1,10 +1,4 @@
 <view class="container" wx:if="{{stage}}">
-  <!-- 锁定提示条 -->
-  <view class="lock-bar" wx:if="{{stageLocked}}">
-    <view class="lock-icon">🔒</view>
-    <view class="lock-text">当前阶段之后的资源，仅可查看，不可打卡</view>
-  </view>
-
   <!-- 阶段资源（核心：打卡）放在上半区，突出入口 -->
   <view class="res-wrap" wx:if="{{resourceGroups.length}}">
     <view class="res-head">
