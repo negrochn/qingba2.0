@@ -194,13 +194,38 @@
   border-radius: 0 12rpx 12rpx 0;
 }
 
-/* 锁定阶段样式（之前/之后） */
+/* 已完成阶段样式（之前） */
+.stage-done .stage-node {
+  background: linear-gradient(135deg, #81c784 0%, #a5d6a7 100%);
+  color: #fff;
+}
+
+.stage-done .stage-name {
+  color: #555;
+}
+
+.stage-done .stage-body {
+  background: linear-gradient(90deg, #f9fbf9 0%, transparent 100%);
+}
+
+.node-icon {
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.stage-done-tag {
+  color: #2a9a5a !important;
+  background: #f0faf4 !important;
+  border-color: #b8e0c5 !important;
+}
+
+/* 锁定阶段样式（之后） */
 .stage-locked .stage-body {
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 .stage-locked .stage-name {
-  color: #999;
+  color: #aaa;
 }
 
 .node-locked {
@@ -216,10 +241,4 @@
   border-radius: 8rpx;
   padding: 2rpx 10rpx;
   margin-left: 12rpx;
-}
-
-.stage-lock-tag.stage-done {
-  color: #2a9a5a;
-  background: #f0faf4;
-  border-color: #b8e0c5;
 }
