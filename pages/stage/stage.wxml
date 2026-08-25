@@ -1,4 +1,10 @@
 <view class="container" wx:if="{{stage}}">
+  <!-- 锁定提示条 -->
+  <view class="lock-bar" wx:if="{{stageLocked}}">
+    <view class="lock-icon">🔒</view>
+    <view class="lock-text">当前阶段之后的资源，仅可查看，不可打卡</view>
+  </view>
+
   <!-- 阶段资源（核心：打卡）放在上半区，突出入口 -->
   <view class="res-wrap" wx:if="{{resourceGroups.length}}">
     <view class="res-head">
@@ -34,6 +40,9 @@
           <view class="rg-progress rg-progress-empty" wx:elif="{{g.clickable}}">
             <text>待学习</text>
           </view>
+          <view class="rg-progress rg-progress-locked" wx:elif="{{stageLocked}}">
+            <text>未开始</text>
+          </view>
           <view class="rg-arrow {{expandedGroups[g.key] ? 'rg-arrow-open' : ''}}">›</view>
         </view>
       </view>
@@ -66,6 +75,7 @@
       </view>
       <view class="rg-body rg-body-collapsed" wx:else>
         <view class="rg-collapsed-hint" wx:if="{{g.clickable}}">{{g.items.length}} 项资源，点击展开</view>
+        <view class="rg-collapsed-hint rg-collapsed-locked" wx:elif="{{stageLocked}}">{{g.items.length}} 项资源，仅可查看</view>
         <view class="rg-collapsed-hint rg-collapsed-note" wx:else>{{g.items.length}} 项资源，仅供参考</view>
       </view>
     </view>

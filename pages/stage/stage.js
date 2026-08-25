@@ -16,6 +16,8 @@ const CLICKABLE_GROUPS = [
 Page({
   data: {
     stage: null,
+    stageIndex: -1,
+    stageLocked: false,
     resourceGroups: [],
     // 分组展开状态：默认全部展开
     expandedGroups: {
@@ -52,6 +54,16 @@ Page({
       'sub_graded_readers', 'sub_animations',
       'fun_extensions', 'science_extensions', 'fusion_apps'
     ]
+
+    // 计算当前阶段索引，判断是否锁定
+    const currentStage = checkin.getCurrentStage()
+    let currentIndex = -1
+    routeData.stages.forEach((s, i) => {
+      if (currentStage && s.stage_id === currentStage.id) currentIndex = i
+    })
+    const stageLocked = currentIndex >= 0 && index > currentIndex
+
+    // 锁定时所有分组不可点击打卡
     const groups = []
     order.forEach(k => {
       const list = stage.resources[k]
@@ -60,19 +72,31 @@ Page({
           key: k,
           label: resourceLabels[k] || k,
           items: list,
-          clickable: CLICKABLE_GROUPS.indexOf(k) >= 0
+          clickable: !stageLocked && CLICKABLE_GROUPS.indexOf(k) >= 0
         })
       }
     })
 
     wx.setNavigationBarTitle({ title: stage.stage_name })
-    this.setData({ stage, resourceGroups: groups })
+    this.setData({ stage, stageIndex: index, stageLocked, resourceGroups: groups })
     this._refreshResTotals()
     this._refreshReadCounts()
   },
 
   onShow() {
     if (this.data.stage) {
+      // 重新计算锁定状态（当前阶段可能在设置页改变）
+      const currentStage = checkin.getCurrentStage()
+      let currentIndex = -1
+      routeData.stages.forEach((s, i) => {
+        if (currentStage && s.stage_id === currentStage.id) currentIndex = i
+      })
+      const stageLocked = currentIndex >= 0 && this.data.stageIndex > currentIndex
+      const groups = this.data.resourceGroups.map(g => ({
+        ...g,
+        clickable: !stageLocked && CLICKABLE_GROUPS.indexOf(g.key) >= 0
+      }))
+      this.setData({ stageLocked, resourceGroups: groups })
       this._refreshResTotals()
       this._refreshReadCounts()
     }

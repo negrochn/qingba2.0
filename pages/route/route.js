@@ -5,7 +5,8 @@ Page({
   data: {
     stages: routeData.stages,
     stageCount: routeData.stages.length,
-    currentStageId: ''
+    currentStageId: '',
+    currentStageIndex: -1
   },
 
   onLoad() {
@@ -19,8 +20,13 @@ Page({
   // 加载当前阶段
   loadCurrentStage() {
     const current = checkin.getCurrentStage();
+    let currentIndex = -1
+    routeData.stages.forEach((s, i) => {
+      if (current && s.stage_id === current.id) currentIndex = i
+    })
     this.setData({
-      currentStageId: current ? current.id : ''
+      currentStageId: current ? current.id : '',
+      currentStageIndex: currentIndex
     });
   },
 

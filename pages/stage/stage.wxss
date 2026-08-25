@@ -313,6 +313,38 @@
   background: #f5f6f8;
 }
 
+.rg-progress-locked {
+  color: #c8cdd4;
+  background: #f5f6f8;
+}
+
+/* 锁定提示条 */
+.lock-bar {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, #fdf6ec, #f9efe1);
+  border: 2rpx solid #f5d99a;
+  border-radius: 12rpx;
+  padding: 16rpx 24rpx;
+  margin-bottom: 20rpx;
+}
+
+.lock-icon {
+  margin-right: 12rpx;
+  font-size: 24rpx;
+}
+
+.lock-text {
+  font-size: 26rpx;
+  color: #8b6914;
+  line-height: 1.5;
+}
+
+.rg-collapsed-locked {
+  color: #b0b4bb !important;
+  font-style: italic;
+}
+
 .rg-progress-val {
   font-weight: 600;
   color: #2a9a5a;
