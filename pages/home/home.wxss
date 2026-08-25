@@ -411,7 +411,9 @@ page {
 .mp-btn {
   width: 45%;
   height: 80rpx;
-  line-height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 40rpx;
   font-size: 28rpx;
   border: none;
