@@ -17,16 +17,16 @@ Page({
   data: {
     stage: null,
     resourceGroups: [],
-    // 分组展开状态：默认只展开主线绘本
+    // 分组展开状态：默认全部展开
     expandedGroups: {
       main_picture_books: true,
-      main_graded_readers: false,
-      main_animations: false,
-      sub_graded_readers: false,
-      sub_animations: false,
-      fun_extensions: false,
-      science_extensions: false,
-      fusion_apps: false
+      main_graded_readers: true,
+      main_animations: true,
+      sub_graded_readers: true,
+      sub_animations: true,
+      fun_extensions: true,
+      science_extensions: true,
+      fusion_apps: true
     },
     // 分组进度摘要 { groupKey: { todayMin, readCount } }
     groupProgress: {},
