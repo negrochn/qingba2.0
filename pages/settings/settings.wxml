@@ -7,15 +7,13 @@
       <view class="card-title">学习进度</view>
     </view>
 
-    <picker mode="selector" range="{{stageOptions}}" range-key="name" value="{{currentStageIndex}}" bindchange="onStageChange">
-      <view class="picker-item">
-        <view class="picker-label">当前阶段</view>
-        <view class="picker-value-wrap">
-          <view class="picker-value">{{currentStageDisplay || '未设置'}}</view>
-          <view class="picker-arrow">›</view>
-        </view>
+    <view class="picker-item" bindtap="onOpenStagePicker">
+      <view class="picker-label">当前阶段</view>
+      <view class="picker-value-wrap">
+        <view class="picker-value">{{currentStageDisplay || '未设置'}}</view>
+        <view class="picker-arrow">›</view>
       </view>
-    </picker>
+    </view>
 
     <view class="stage-preview" wx:if="{{currentStage}}">
       <view class="stage-preview-title">{{currentStage.name}} · {{currentStage.targetPhase}}</view>
@@ -23,6 +21,33 @@
     </view>
     <view class="stage-preview empty" wx:else>
       请选择当前学习阶段
+    </view>
+  </view>
+
+  <!-- 阶段选择弹窗 -->
+  <view class="modal-mask {{stagePickerShow ? 'show' : ''}}" bindtap="onCloseStagePicker" wx:if="{{stagePickerShow}}">
+    <view class="modal-sheet stage-sheet" catchtap="">
+      <view class="modal-title">选择当前阶段</view>
+      <view class="modal-desc">选择正在学习的阶段，路线页会自动高亮</view>
+      <view class="stage-list">
+        <view
+          class="stage-option {{index === currentStageIndex ? 'active' : ''}}"
+          wx:for="{{stageOptions}}"
+          wx:key="id"
+          data-index="{{index}}"
+          bindtap="onSelectStage"
+        >
+          <view class="stage-option-check" wx:if="{{index === currentStageIndex}}">✓</view>
+          <view class="stage-option-check" wx:else></view>
+          <view class="stage-option-info">
+            <view class="stage-option-name">{{item.name}}</view>
+            <view class="stage-option-phase">{{item.id === 'regular_1' ? 'phase5' : item.id === 'regular_2' ? 'phase6' : item.id === 'regular_3' ? 'phase7' : item.id === 'regular_4' ? 'phase8' : item.id === 'regular_5' ? 'phase9' : item.id === 'regular_6' ? 'phase10' : 'phase10+'}}</view>
+          </view>
+        </view>
+      </view>
+      <view class="modal-actions">
+        <button class="modal-btn cancel" bindtap="onCloseStagePicker">取消</button>
+      </view>
     </view>
   </view>
 
