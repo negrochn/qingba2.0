@@ -25,22 +25,22 @@
     <view class="res-divider"></view>
 
     <view class="res-list" wx:for="{{resourceGroups}}" wx:for-item="g" wx:for-index="gidx" wx:key="key">
-      <view class="rg-head {{g.clickable ? 'rg-head-active' : ''}}" data-group-key="{{g.key}}" bindtap="onToggleGroup">
+      <view class="rg-head {{g.clickable && !stageLocked ? 'rg-head-active' : ''}}" data-group-key="{{g.key}}" bindtap="onToggleGroup">
         <view class="rg-head-left">
           <view class="rg-dot rg-dot-{{g.key}}"></view>
           <view class="rg-label rg-label-{{g.key}}">{{g.label}}</view>
           <view class="rg-count">{{g.items.length}} 项</view>
         </view>
         <view class="rg-head-right">
-          <view class="rg-progress" wx:if="{{g.clickable && groupProgress[g.key].todayMin > 0}}">
+          <view class="rg-progress" wx:if="{{g.clickable && !stageLocked && groupProgress[g.key].todayMin > 0}}">
             <text class="rg-progress-val">{{groupProgress[g.key].todayMin}}m</text>
             <text class="rg-progress-sep">·</text>
             <text class="rg-progress-read">已读 {{groupProgress[g.key].readCount}}</text>
           </view>
-          <view class="rg-progress rg-progress-empty" wx:elif="{{g.clickable}}">
+          <view class="rg-progress rg-progress-empty" wx:elif="{{g.clickable && !stageLocked}}">
             <text>待学习</text>
           </view>
-          <view class="rg-progress rg-progress-locked" wx:elif="{{stageLocked}}">
+          <view class="rg-progress rg-progress-locked" wx:elif="{{g.clickable && stageLocked}}">
             <text>未开始</text>
           </view>
           <view class="rg-arrow {{expandedGroups[g.key] ? 'rg-arrow-open' : ''}}">›</view>
@@ -48,7 +48,7 @@
       </view>
       <view class="rg-body" wx:if="{{expandedGroups[g.key]}}">
         <view
-          class="r-row {{g.clickable ? 'r-row-click' : ''}} {{resTotals[g.key + '|' + g.items[ridx]] ? 'r-row-done' : ''}}"
+          class="r-row {{g.clickable && !stageLocked ? 'r-row-click' : ''}} {{resTotals[g.key + '|' + g.items[ridx]] ? 'r-row-done' : ''}}"
           wx:for="{{g.items}}"
           wx:for-item="rname"
           wx:for-index="ridx"
@@ -63,19 +63,19 @@
           <view class="r-body">
             <view class="r-name">{{rname}}</view>
             <view class="r-sub" wx:if="{{resTotals[g.key + '|' + rname]}}">今日已打卡 {{resTotals[g.key + '|' + rname]}} 分钟 · 可继续追加</view>
-            <view class="r-sub r-sub-hint" wx:elif="{{g.clickable}}">点击输入学习时长并打卡</view>
+            <view class="r-sub r-sub-hint" wx:elif="{{g.clickable && !stageLocked}}">点击输入学习时长并打卡</view>
+            <view class="r-sub r-sub-locked" wx:elif="{{g.clickable && stageLocked}}">当前阶段未解锁，仅可查看</view>
             <view class="r-sub r-sub-note" wx:else>仅供参考，不参与打卡</view>
           </view>
           <view class="r-right">
             <view class="r-badge" wx:if="{{resTotals[g.key + '|' + rname]}}">{{resTotals[g.key + '|' + rname]}}m</view>
-            <view class="r-arrow" wx:if="{{g.clickable}}">›</view>
+            <view class="r-arrow" wx:if="{{g.clickable && !stageLocked}}">›</view>
             <view class="r-arrow r-arrow-gray" wx:else>·</view>
           </view>
         </view>
       </view>
       <view class="rg-body rg-body-collapsed" wx:else>
         <view class="rg-collapsed-hint" wx:if="{{g.clickable}}">{{g.items.length}} 项资源，点击展开</view>
-        <view class="rg-collapsed-hint rg-collapsed-locked" wx:elif="{{stageLocked}}">{{g.items.length}} 项资源，仅可查看</view>
         <view class="rg-collapsed-hint rg-collapsed-note" wx:else>{{g.items.length}} 项资源，仅供参考</view>
       </view>
     </view>

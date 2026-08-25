@@ -345,6 +345,11 @@
   font-style: italic;
 }
 
+.r-sub-locked {
+  color: #b0b4bb;
+  font-size: 24rpx;
+}
+
 .rg-progress-val {
   font-weight: 600;
   color: #2a9a5a;

@@ -72,7 +72,7 @@ Page({
           key: k,
           label: resourceLabels[k] || k,
           items: list,
-          clickable: !stageLocked && CLICKABLE_GROUPS.indexOf(k) >= 0
+          clickable: CLICKABLE_GROUPS.indexOf(k) >= 0
         })
       }
     })
@@ -92,11 +92,7 @@ Page({
         if (currentStage && s.stage_id === currentStage.id) currentIndex = i
       })
       const stageLocked = currentIndex >= 0 && this.data.stageIndex > currentIndex
-      const groups = this.data.resourceGroups.map(g => ({
-        ...g,
-        clickable: !stageLocked && CLICKABLE_GROUPS.indexOf(g.key) >= 0
-      }))
-      this.setData({ stageLocked, resourceGroups: groups })
+      this.setData({ stageLocked })
       this._refreshResTotals()
       this._refreshReadCounts()
     }
@@ -139,6 +135,10 @@ Page({
   // 点击资源标签
   onResourceTap(e) {
     const { groupKey, groupLabel, resource } = e.currentTarget.dataset
+    if (this.data.stageLocked) {
+      wx.showToast({ title: '当前阶段未解锁，不可打卡', icon: 'none' })
+      return
+    }
     const clickable = CLICKABLE_GROUPS.indexOf(groupKey) >= 0
     if (!clickable) return
     const stage = this.data.stage
