@@ -55,13 +55,13 @@ Page({
       'fun_extensions', 'science_extensions', 'fusion_apps'
     ]
 
-    // 计算当前阶段索引，判断是否锁定
+    // 计算当前阶段索引，判断是否锁定（只有当前阶段可打卡）
     const currentStage = checkin.getCurrentStage()
     let currentIndex = -1
     routeData.stages.forEach((s, i) => {
       if (currentStage && s.stage_id === currentStage.id) currentIndex = i
     })
-    const stageLocked = currentIndex >= 0 && index > currentIndex
+    const stageLocked = currentIndex >= 0 && index !== currentIndex
 
     // 锁定时所有分组不可点击打卡
     const groups = []
@@ -91,7 +91,7 @@ Page({
       routeData.stages.forEach((s, i) => {
         if (currentStage && s.stage_id === currentStage.id) currentIndex = i
       })
-      const stageLocked = currentIndex >= 0 && this.data.stageIndex > currentIndex
+      const stageLocked = currentIndex >= 0 && this.data.stageIndex !== currentIndex
       this.setData({ stageLocked })
       this._refreshResTotals()
       this._refreshReadCounts()

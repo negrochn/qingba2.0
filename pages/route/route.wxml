@@ -9,7 +9,7 @@
 
   <view class="timeline">
     <view
-      class="stage-item {{index > currentStageIndex && currentStageIndex >= 0 ? 'stage-future' : ''}} {{item.stage_id === currentStageId ? 'stage-current' : ''}}"
+      class="stage-item {{index !== currentStageIndex && currentStageIndex >= 0 ? 'stage-locked' : ''}} {{item.stage_id === currentStageId ? 'stage-current' : ''}}"
       wx:for="{{stages}}"
       wx:key="stage_id"
       data-index="{{index}}"
@@ -17,7 +17,7 @@
       hover-class="stage-hover"
     >
       <view class="stage-rail">
-        <view class="stage-node {{item.stage_id === currentStageId ? 'node-current' : ''}} {{index > currentStageIndex && currentStageIndex >= 0 ? 'node-future' : ''}}">
+        <view class="stage-node {{item.stage_id === currentStageId ? 'node-current' : ''}} {{index !== currentStageIndex && currentStageIndex >= 0 ? 'node-locked' : ''}}">
           <text class="node-num">{{index + 1}}</text>
           <view class="node-current-dot" wx:if="{{item.stage_id === currentStageId}}"></view>
         </view>
@@ -29,7 +29,7 @@
           <view class="stage-title-row">
             <text class="stage-name">{{item.stage_name}}</text>
             <text class="stage-phase">{{item.target_phase}}</text>
-            <view class="stage-lock-tag" wx:if="{{index > currentStageIndex && currentStageIndex >= 0}}">🔒 未解锁</view>
+            <view class="stage-lock-tag {{index < currentStageIndex ? 'stage-done' : ''}}" wx:if="{{index !== currentStageIndex && currentStageIndex >= 0}}">{{index < currentStageIndex ? '✓ 已完成' : '🔒 未解锁'}}</view>
           </view>
           <text class="stage-arrow">›</text>
         </view>

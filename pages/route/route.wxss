@@ -194,16 +194,16 @@
   border-radius: 0 12rpx 12rpx 0;
 }
 
-/* 未来（未解锁）阶段样式 */
-.stage-future .stage-body {
+/* 锁定阶段样式（之前/之后） */
+.stage-locked .stage-body {
   opacity: 0.7;
 }
 
-.stage-future .stage-name {
+.stage-locked .stage-name {
   color: #999;
 }
 
-.stage-future .stage-node {
+.node-locked {
   background: #ddd;
   color: #999;
 }
@@ -216,4 +216,10 @@
   border-radius: 8rpx;
   padding: 2rpx 10rpx;
   margin-left: 12rpx;
+}
+
+.stage-lock-tag.stage-done {
+  color: #2a9a5a;
+  background: #f0faf4;
+  border-color: #b8e0c5;
 }
