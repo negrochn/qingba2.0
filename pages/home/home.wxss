@@ -1,244 +1,520 @@
+/* 首页：仿 Keep 骑行页样式 */
+
+page {
+  background: #f5f6f8;
+}
+
 .container {
-  padding: 24rpx 0 40rpx;
+  padding: 24rpx 28rpx calc(env(safe-area-inset-bottom) + 32rpx);
+  box-sizing: border-box;
+  min-height: 100vh;
 }
 
-/* Section */
-.section {
-  padding: 0 24rpx;
-  margin-bottom: 32rpx;
+/* ===== Hero 卡片：累计学习时长 ===== */
+.hero-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f3f8ff 100%);
+  border-radius: 28rpx;
+  padding: 36rpx 36rpx 32rpx;
+  box-shadow: 0 6rpx 24rpx rgba(60, 90, 140, 0.06);
+  margin-bottom: 24rpx;
 }
 
-/* 记录列表 */
-.record-list {
-  background: #fff;
-  border-radius: 16rpx;
-  overflow: hidden;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
-}
-
-/* 月份选择器 */
-.month-bar {
+.hero-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 20rpx 24rpx;
-  margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
+  margin-bottom: 24rpx;
 }
 
-.month-nav {
-  width: 56rpx;
-  height: 56rpx;
+.hero-label {
+  font-size: 30rpx;
+  color: #666;
+  font-weight: 500;
+}
+
+.hero-arrow {
+  font-size: 44rpx;
+  color: #bbb;
+  line-height: 1;
+  margin-top: -8rpx;
+}
+
+.hero-bottom {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40rpx;
-  color: #4a90d9;
-  border-radius: 50%;
-  background: #eef4fb;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.hero-num-wrap {
+  display: flex;
+  align-items: baseline;
+  font-family: 'DIN Alternate', -apple-system, Helvetica, Arial, sans-serif;
+  letter-spacing: -2rpx;
+}
+
+.hero-num {
+  font-size: 120rpx;
+  font-weight: 400;
+  color: #222;
   line-height: 1;
 }
 
-.month-nav:active {
-  background: #dce8f7;
+.hero-num-decimal {
+  font-size: 80rpx;
 }
 
-.month-label {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #333;
+.hero-dot {
+  font-size: 80rpx;
+  font-weight: 400;
+  color: #222;
+  line-height: 1;
 }
 
-/* 月度汇总 */
-.month-summary {
+.hero-unit {
+  font-size: 36rpx;
+  font-weight: 500;
+  color: #555;
+  margin-left: 8rpx;
+}
+
+/* 装饰插图 */
+.hero-illus {
+  position: relative;
+  width: 200rpx;
+  height: 160rpx;
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 28rpx 16rpx;
-  margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
+  justify-content: center;
+  margin-right: 8rpx;
+  margin-bottom: 12rpx;
 }
 
-.ms-item {
+.illus-circle {
+  position: absolute;
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffe9c7 0%, #ffc98a 100%);
+  opacity: 0.9;
+}
+
+.illus-book {
+  position: relative;
+  font-size: 96rpx;
+  z-index: 2;
+}
+
+.illus-star {
+  position: absolute;
+  top: 8rpx;
+  right: 20rpx;
+  font-size: 28rpx;
+  color: #ff9a3c;
+  z-index: 3;
+}
+
+/* ===== 三栏统计 ===== */
+.stats-row {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 36rpx;
+}
+
+.stat-card {
   flex: 1;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 28rpx 12rpx;
+  text-align: center;
+  box-shadow: 0 4rpx 16rpx rgba(60, 90, 140, 0.05);
+}
+
+.stat-num {
+  font-size: 54rpx;
+  font-weight: 400;
+  color: #222;
+  letter-spacing: -1rpx;
+  font-family: 'DIN Alternate', -apple-system, Helvetica, Arial, sans-serif;
+  line-height: 1.1;
+  margin-bottom: 12rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #888;
+}
+
+/* ===== 月份汇总头 ===== */
+.month-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 8rpx;
+  margin-bottom: 24rpx;
+}
+
+.month-left {
   display: flex;
   flex-direction: column;
-  align-items: center;
 }
 
-.ms-val {
-  font-size: 36rpx;
-  font-weight: 700;
-  color: #4a90d9;
-  margin-bottom: 6rpx;
-}
-
-.ms-label {
-  font-size: 22rpx;
-  color: #999;
-}
-
-.ms-divider {
-  width: 1rpx;
-  height: 60rpx;
-  background: #eee;
-}
-
-/* 日期分组头 */
-.date-header {
+.month-picker {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 20rpx 28rpx 12rpx;
-  background: #f7f9fc;
-  border-top: 1rpx solid #eef1f5;
+  gap: 10rpx;
 }
 
-.date-header:first-child {
-  border-top: none;
+.month-text {
+  font-size: 44rpx;
+  font-weight: 500;
+  color: #222;
+  line-height: 1.1;
 }
 
-.date-label {
-  font-size: 26rpx;
-  font-weight: 600;
-  color: #555;
-}
-
-.date-total {
+.month-arrow {
   font-size: 24rpx;
-  color: #4a90d9;
-  font-weight: 600;
+  color: #888;
+  transition: transform 0.2s;
 }
 
-/* 本月空状态 */
-.no-month {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 60rpx 40rpx;
-  text-align: center;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.03);
+.month-arrow.up {
+  transform: rotate(180deg);
 }
 
-.no-month-text {
+.year-text {
   font-size: 28rpx;
-  color: #aaa;
+  color: #888;
+  margin-top: 8rpx;
 }
 
-/* 滑动删除 */
+.month-right {
+  text-align: right;
+}
+
+.month-total-num {
+  font-size: 60rpx;
+  font-weight: 400;
+  color: #222;
+  letter-spacing: -1rpx;
+  font-family: 'DIN Alternate', -apple-system, Helvetica, Arial, sans-serif;
+  line-height: 1;
+}
+
+.month-total-unit {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #555;
+  margin-left: 4rpx;
+}
+
+.month-total-sub {
+  font-size: 26rpx;
+  color: #888;
+  margin-top: 8rpx;
+}
+
+/* ===== 记录列表 ===== */
+.record-list {
+  background: #fff;
+  border-radius: 28rpx;
+  padding: 0;
+  box-shadow: 0 4rpx 16rpx rgba(60, 90, 140, 0.04);
+  overflow: hidden;
+}
+
+/* 滑动删除 + 分隔线 */
 .swipe-wrap {
   position: relative;
   overflow: hidden;
-  border-bottom: 1rpx solid #f5f5f5;
 }
 
-.swipe-wrap:last-child {
-  border-bottom: none;
+.swipe-wrap:not(:last-child) .record-row::after {
+  content: '';
+  position: absolute;
+  left: 28rpx;
+  right: 28rpx;
+  bottom: 0;
+  height: 1rpx;
+  background: #ececec;
+}
+
+.record-row {
+  position: relative;
 }
 
 .swipe-bg {
   position: absolute;
   top: 0;
-  right: 0;
   bottom: 0;
+  right: 0;
   width: 150rpx;
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding-right: 0;
+  align-items: stretch;
 }
 
 .swipe-del {
-  width: 150rpx;
+  width: 100%;
   height: 100%;
-  background: #e74c3c;
+  background: #ff4d4f;
   color: #fff;
-  font-size: 30rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 28rpx;
+  font-weight: 500;
 }
 
 .swipe-fg {
   position: relative;
   background: #fff;
-  z-index: 2;
-  will-change: transform;
+  z-index: 1;
 }
 
-.swipe-fg.swipe-open {
-  /* 保持打开视觉提示 */
-}
-
-/* 记录项 */
-.record-item {
+/* 单行记录 */
+.record-row {
   display: flex;
   align-items: center;
-  padding: 24rpx 28rpx;
-  background: #fff;
+  padding: 14rpx 28rpx;
+  gap: 16rpx;
+  min-height: 92rpx;
+  box-sizing: border-box;
 }
 
-.record-left {
+/* 首字小图标 */
+.record-avatar {
   flex-shrink: 0;
-  width: 96rpx;
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 14rpx;
+  background: linear-gradient(135deg, #5a9af0 0%, #7fb4f7 100%);
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
-.record-time {
-  font-size: 26rpx;
-  color: #aaa;
-  font-variant-numeric: tabular-nums;
-}
-
-.record-body {
+.record-main {
   flex: 1;
   min-width: 0;
-  margin: 0 20rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
 }
 
-.record-res {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 8rpx;
-  white-space: nowrap;
+/* 第一行：绘本名（主） + 时间（右） */
+.record-line1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.record-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
   overflow: hidden;
+}
+
+.record-res-name {
+  font-size: 34rpx;
+  font-weight: 500;
+  color: #111;
+  display: inline-block;
+  vertical-align: middle;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* 备注标签（移至第二行） */
+.record-remark {
+  flex-shrink: 1;
+  font-size: 20rpx;
+  color: #52c41a;
+  background: #f0fff0;
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+  overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-.record-sub {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  flex-wrap: wrap;
-}
-
-.record-remark-sub {
-  font-size: 22rpx;
-  color: #d48806;
-}
-
-.record-stage {
-  font-size: 22rpx;
+.record-date {
+  flex-shrink: 0;
+  font-size: 24rpx;
   color: #999;
 }
 
-.record-group {
-  font-size: 20rpx;
-  color: #4a90d9;
-  background: #eef4fb;
-  padding: 2rpx 10rpx;
-  border-radius: 6rpx;
+/* 第二行：常规X、主线绘本（左） + 时长（右） */
+.record-line2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
 }
 
-.record-right {
+.record-tags {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  flex-wrap: wrap;
+}
+
+.tag-stage {
   flex-shrink: 0;
+  font-size: 22rpx;
+  color: #7a5200;
+  background: #fff7e6;
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+}
+
+.tag-group {
+  flex-shrink: 0;
+  font-size: 20rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+}
+
+/* 各分类标签颜色（与常规X详情页一致） */
+.tag-group-main_picture_books { color: #1a5fb0; background: #e8f1fb; }
+.tag-group-main_graded_readers { color: #4a26a8; background: #f0eafc; }
+.tag-group-main_animations { color: #c4390e; background: #fff1ea; }
+.tag-group-sub_graded_readers { color: #006d75; background: #e6fffb; }
+.tag-group-sub_animations { color: #b0156e; background: #fff0f6; }
+.tag-group-fun_extensions { color: #389e0d; background: #f0ffe0; }
+.tag-group-science_extensions { color: #ad6800; background: #fffbe6; }
+.tag-group-fusion_apps { color: #531dab; background: #f5f0ff; }
+.tag-group-default { color: #888; background: #f5f5f5; }
+
+.record-remark {
+  flex-shrink: 1;
+  font-size: 20rpx;
+  color: #52c41a;
+  background: #f0fff0;
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .record-duration {
+  flex-shrink: 0;
+  font-size: 36rpx;
+  font-weight: 500;
+  color: #222;
+  letter-spacing: -0.5rpx;
+  font-family: 'DIN Alternate', -apple-system, Helvetica, Arial, sans-serif;
+  line-height: 1;
+}
+
+/* ===== 空状态 ===== */
+.empty-wrap {
+  padding: 120rpx 40rpx;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 100rpx;
+  opacity: 0.6;
+  margin-bottom: 24rpx;
+}
+
+.empty-text {
+  font-size: 30rpx;
+  color: #666;
+  font-weight: 500;
+  margin-bottom: 12rpx;
+}
+
+.empty-hint {
+  font-size: 26rpx;
+  color: #aaa;
+}
+
+/* ===== 月份选择器弹层 ===== */
+.mp-mask {
+  position: fixed;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(0,0,0,0);
+  z-index: 2000;
+  pointer-events: none;
+  transition: background 0.2s;
+  display: flex;
+  align-items: flex-end;
+}
+
+.mp-mask.show {
+  background: rgba(0,0,0,0.45);
+  pointer-events: auto;
+}
+
+.mp-sheet {
+  width: 100%;
+  background: #fff;
+  border-top-left-radius: 24rpx;
+  border-top-right-radius: 24rpx;
+  padding: 24rpx 32rpx calc(env(safe-area-inset-bottom) + 24rpx);
+  box-sizing: border-box;
+}
+
+.mp-title {
+  text-align: center;
+  font-size: 30rpx;
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+}
+
+.mp-pv {
+  width: 100%;
+  height: 400rpx;
+}
+
+.mp-item {
+  line-height: 80rpx;
+  text-align: center;
+  font-size: 30rpx;
+  color: #333;
+}
+
+.mp-actions {
+  display: flex;
+  justify-content: center;
+  gap: 20rpx;
+  margin-top: 16rpx;
+}
+
+.mp-btn {
+  width: 45%;
+  height: 80rpx;
+  line-height: 80rpx;
+  border-radius: 40rpx;
   font-size: 28rpx;
-  font-weight: 700;
-  color: #4a90d9;
+  border: none;
+}
+
+.mp-btn::after {
+  border: none;
+}
+
+.mp-cancel {
+  background: #f2f4f7;
+  color: #556;
+}
+
+.mp-ok {
+  background: linear-gradient(135deg, #4a90d9 0%, #6ab0f3 100%);
+  color: #fff;
+  font-weight: 600;
 }

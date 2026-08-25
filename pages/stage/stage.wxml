@@ -20,9 +20,8 @@
 
     <view class="res-list" wx:for="{{resourceGroups}}" wx:for-item="g" wx:for-index="gidx" wx:key="key">
       <view class="rg-head {{g.clickable ? 'rg-head-active' : ''}}">
-        <view class="rg-dot {{g.clickable ? 'rg-dot-blue' : 'rg-dot-gray'}}"></view>
-        <view class="rg-label">{{g.label}}</view>
-        <view class="rg-tag" wx:if="{{g.clickable}}">可打卡</view>
+        <view class="rg-dot rg-dot-{{g.key}}"></view>
+        <view class="rg-label rg-label-{{g.key}}">{{g.label}}</view>
         <view class="rg-count">{{g.items.length}} 项</view>
       </view>
       <view class="rg-body">

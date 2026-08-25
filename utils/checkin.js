@@ -161,6 +161,37 @@ function monthDaysCount(ym) {
   return count
 }
 
+// 统计某月打卡次数
+function monthCheckinCount(ym) {
+  return getByMonth(ym).length
+}
+
+// 累计总时长（分钟）
+function totalMinutesAll() {
+  const all = getAll()
+  let sum = 0
+  for (const day in all) {
+    for (const c of all[day]) sum += c.durationMinutes
+  }
+  return sum
+}
+
+// 累计打卡次数
+function totalCountAll() {
+  const all = getAll()
+  let n = 0
+  for (const day in all) n += all[day].length
+  return n
+}
+
+// 累计打卡天数
+function totalDaysAll() {
+  const all = getAll()
+  let n = 0
+  for (const day in all) if (all[day].length > 0) n++
+  return n
+}
+
 // 根据 id 删除打卡记录
 function deleteCheckin(id) {
   const all = getAll()
@@ -201,6 +232,10 @@ module.exports = {
   getByMonth,
   monthTotalMinutes,
   monthDaysCount,
+  monthCheckinCount,
+  totalMinutesAll,
+  totalCountAll,
+  totalDaysAll,
   todayTotalByResource,
   todayTotalByStage,
   todayTotalMinutes,

@@ -1,76 +1,126 @@
 <view class="container">
-  <!-- 打卡记录（按月汇总） -->
-  <view class="section">
-    <!-- 月份选择器 -->
-    <view class="month-bar">
-      <view class="month-nav" bindtap="prevMonth">‹</view>
-      <view class="month-label">{{monthLabel}}</view>
-      <view class="month-nav" bindtap="nextMonth">›</view>
-    </view>
 
-    <!-- 月度汇总 -->
-    <view class="month-summary">
-      <view class="ms-item">
-        <view class="ms-val">{{monthTotalText}}</view>
-        <view class="ms-label">总时长</view>
+  <!-- Hero：累计学习时长 -->
+  <view class="hero-card">
+    <view class="hero-top">
+      <text class="hero-label">累计学习时长</text>
+      <view class="hero-arrow">›</view>
+    </view>
+    <view class="hero-bottom">
+      <view class="hero-num-wrap">
+        <text class="hero-num">{{heroHours}}</text>
+        <text class="hero-dot">.</text>
+        <text class="hero-num hero-num-decimal">{{heroDecimal}}</text>
+        <text class="hero-unit">h</text>
       </view>
-      <view class="ms-divider"></view>
-      <view class="ms-item">
-        <view class="ms-val">{{monthDays}}</view>
-        <view class="ms-label">打卡天数</view>
-      </view>
-      <view class="ms-divider"></view>
-      <view class="ms-item">
-        <view class="ms-val">{{monthCount}}</view>
-        <view class="ms-label">累计次数</view>
+      <view class="hero-illus">
+        <view class="illus-circle"></view>
+        <view class="illus-book">📖</view>
+        <view class="illus-star">✦</view>
       </view>
     </view>
+  </view>
 
-    <!-- 按月分组的记录 -->
-    <view class="record-list" wx:if="{{groupedRecords.length}}">
-      <block wx:for="{{groupedRecords}}" wx:key="day" wx:for-item="g">
-        <!-- 日期分组头 -->
-        <view class="date-header">
-          <view class="date-label">{{g.dayLabel}}</view>
-          <view class="date-total">{{g.totalText}}</view>
-        </view>
+  <!-- 三栏统计 -->
+  <view class="stats-row">
+    <view class="stat-card">
+      <view class="stat-num">{{totalCount}}</view>
+      <view class="stat-label">累计次数</view>
+    </view>
+    <view class="stat-card">
+      <view class="stat-num">{{totalDays}}</view>
+      <view class="stat-label">累计天数</view>
+    </view>
+    <view class="stat-card">
+      <view class="stat-num">{{totalHoursText}}</view>
+      <view class="stat-label">总时长(h)</view>
+    </view>
+  </view>
 
-        <!-- 该日期下的记录 -->
-        <view class="swipe-wrap" wx:for="{{g.list}}" wx:key="id" wx:for-item="r" wx:for-index="idx">
-          <view class="swipe-bg">
-            <view class="swipe-del" catchtap="deleteRecord" data-id="{{r.id}}">删除</view>
-          </view>
+  <!-- 月份汇总 -->
+  <view class="month-header">
+    <view class="month-left">
+      <view class="month-picker" bindtap="onToggleMonthPicker">
+        <text class="month-text">{{monthDisplay}}</text>
+        <text class="month-arrow {{monthPickerOpen ? 'up' : ''}}">▾</text>
+      </view>
+      <view class="year-text">{{yearText}}</view>
+    </view>
+    <view class="month-right">
+      <view class="month-total-num">
+        <text>{{monthTotalHours}}</text>
+        <text class="month-total-unit">h</text>
+      </view>
+      <view class="month-total-sub">累计{{monthCount}}次，共{{monthDays}}天</view>
+    </view>
+  </view>
+
+  <!-- 记录列表（扁平，无分组） -->
+  <view class="record-list" wx:if="{{records.length > 0}}">
+    <block wx:for="{{records}}" wx:key="id" wx:for-item="r" wx:for-index="idx">
+      <view
+        class="swipe-wrap"
+        data-idx="{{idx}}"
+        bindtouchstart="onTouchStart"
+        bindtouchmove="onTouchMove"
+        bindtouchend="onTouchEnd"
+      >
+        <view class="swipe-bg">
           <view
-            class="swipe-fg"
-            style="transform: translateX({{r._dx || 0}}px); transition: {{r._anim ? 'transform 0.25s' : 'none'}};"
+            class="swipe-del"
+            catchtap="deleteRecord"
             data-id="{{r.id}}"
-            bindtouchstart="onTouchStart"
-            bindtouchmove="onTouchMove"
-            bindtouchend="onTouchEnd"
-          >
-            <view class="record-item">
-              <view class="record-left">
-                <view class="record-time">{{r.timeText}}</view>
+          >删除</view>
+        </view>
+        <view
+          class="swipe-fg record-row"
+          style="transform: translateX({{r._dx}}rpx); transition: {{r._anim ? 'transform 0.25s ease' : 'none'}};"
+        >
+          <view class="record-avatar">{{r.firstChar}}</view>
+          <view class="record-main">
+            <view class="record-line1">
+              <view class="record-title">
+                <text class="record-res-name">{{r.resourceName}}</text>
               </view>
-              <view class="record-body">
-                <view class="record-res">{{r.resourceName}}</view>
-                <view class="record-sub">
-                  <text class="record-stage">{{r.stageName}}</text>
-                  <text class="record-group">{{r.groupLabel}}</text>
-                  <text class="record-remark-sub" wx:if="{{r.remark}}">{{r.remark}}</text>
-                </view>
+              <text class="record-date">{{r.dateText}}</text>
+            </view>
+            <view class="record-line2">
+              <view class="record-tags">
+                <text class="tag-stage">{{r.stageName}}</text>
+                <text class="tag-group tag-group-{{r.groupKey}}">{{r.groupLabel}}</text>
+                <text class="record-remark" wx:if="{{r.remark}}">{{r.remark}}</text>
               </view>
-              <view class="record-right">
-                <view class="record-duration">{{r.durationText}}</view>
-              </view>
+              <text class="record-duration">{{r.durationText}}</text>
             </view>
           </view>
         </view>
-      </block>
-    </view>
+      </view>
+    </block>
+  </view>
 
-    <view class="no-month" wx:else>
-      <view class="no-month-text">本月暂无打卡记录</view>
+  <view class="empty-wrap" wx:else>
+    <view class="empty-icon">📖</view>
+    <view class="empty-text">本月暂无打卡记录</view>
+    <view class="empty-hint">在「路线」中点击资源即可开始打卡</view>
+  </view>
+
+</view>
+
+<!-- 简易月份选择器弹层 -->
+<view class="mp-mask {{monthPickerOpen ? 'show' : ''}}" bindtap="onCloseMonthPicker" wx:if="{{monthPickerOpen}}">
+  <view class="mp-sheet" catchtap="">
+    <view class="mp-title">选择月份</view>
+    <picker-view indicator-style="height: 80rpx;" class="mp-pv" value="{{pickerValue}}" bindchange="onPickerChange">
+      <picker-view-column>
+        <view wx:for="{{yearRange}}" wx:key="*this" class="mp-item">{{item}}年</view>
+      </picker-view-column>
+      <picker-view-column>
+        <view wx:for="{{monthRange}}" wx:key="*this" class="mp-item">{{item}}月</view>
+      </picker-view-column>
+    </picker-view>
+    <view class="mp-actions">
+      <button class="mp-btn mp-cancel" bindtap="onCloseMonthPicker">取消</button>
+      <button class="mp-btn mp-ok" bindtap="onConfirmMonthPicker">确定</button>
     </view>
   </view>
 </view>

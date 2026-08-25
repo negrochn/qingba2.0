@@ -1,235 +1,268 @@
 const checkin = require('../../utils/checkin.js')
+const app = getApp()
 
-// 删除按钮宽度（px），与样式保持一致
-const DELETE_W = 75
+// 删除按钮宽度（rpx），与样式保持一致
+const DELETE_W = 150
 
 Page({
   data: {
-    // 月视图
-    selectedMonth: '', // 'YYYY-MM'
-    monthLabel: '',    // '2026年8月'
-    monthTotalText: '0m',
-    monthDays: 0,
+    // Hero 总时长（整数部分.小数部分，单位 h）
+    heroHours: '0',
+    heroDecimal: '00',
+    // 三栏统计
+    totalCount: 0,
+    totalDays: 0,
+    totalHoursText: '0',
+    // 当前月
+    curYm: '',              // 'YYYY-MM'
+    monthDisplay: '',       // '8月'
+    yearText: '',           // '2026年'
+    monthTotalHours: '0.0', // '386.44' 格式
     monthCount: 0,
-    // 按日期分组的记录: [{ day, dayLabel, totalText, list: [...] }]
-    groupedRecords: [],
-    swipedId: '',
-    _startX: 0,
-    _startDx: 0,
-    _curId: ''
+    monthDays: 0,
+    // 记录列表（扁平）
+    records: [],
+    // 月份选择器
+    monthPickerOpen: false,
+    yearRange: [],
+    monthRange: [],
+    pickerValue: [0, 0],
+    _pendingYear: 0,
+    _pendingMonth: 0,
+    // 滑动状态
+    _touchStartX: 0,
+    _touchStartY: 0,
+    _curSwipeIdx: -1
+  },
+
+  onLoad() {
+    const now = new Date()
+    const curYm = this._toYm(now)
+
+    // 年份范围：今年 ±3
+    const y = now.getFullYear()
+    const yearRange = []
+    for (let i = y - 3; i <= y + 3; i++) yearRange.push(i)
+    const monthRange = []
+    for (let i = 1; i <= 12; i++) monthRange.push(i)
+
+    this.setData({
+      curYm,
+      yearRange,
+      monthRange
+    })
+    this._refresh()
   },
 
   onShow() {
+    // 若其他页面有打卡/删除操作，刷新
+    let dirty = false
     try {
-      const app = getApp()
       if (app && app.globalData && app.globalData.checkinDirty) {
         app.globalData.checkinDirty = false
-        this._refresh()
-      } else {
-        this._refresh()
+        dirty = true
       }
-    } catch (e) {
-      this._refresh()
-    }
+    } catch (e) {}
+    this._refresh(dirty)
   },
 
+  // 主刷新
   _refresh() {
-    let month = this.data.selectedMonth
-    if (!month) {
-      const now = new Date()
-      month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-    }
-    this._loadMonth(month)
-  },
+    const ym = this.data.curYm || this._toYm(new Date())
+    const [y, m] = ym.split('-').map(Number)
 
-  _loadMonth(ym) {
-    const list = checkin.getByMonth(ym)
-    const totalMin = list.reduce((s, c) => s + c.durationMinutes, 0)
+    // ---- Hero：累计总时长 ----
+    const totalMin = checkin.totalMinutesAll()
+    const totalHoursFloat = totalMin / 60
+    const heroH = Math.floor(totalHoursFloat)
+    const heroDec = Math.round((totalHoursFloat - heroH) * 100)
+    const heroDecimal = heroDec < 10 ? `0${heroDec}` : `${heroDec}`
 
-    // 按日期分组
-    const groups = {}
-    list.forEach(r => {
-      if (!groups[r.day]) groups[r.day] = []
-      groups[r.day].push(r)
-    })
+    // ---- 三栏统计 ----
+    const totalCount = checkin.totalCountAll()
+    const totalDays = checkin.totalDaysAll()
+    // 总时长显示整数小时（与参考图风格一致）
+    const totalHoursText = String(Math.floor(totalHoursFloat))
 
-    const grouped = Object.keys(groups)
-      .sort((a, b) => b.localeCompare(a)) // 日期倒序
-      .map(day => {
-        const dayList = groups[day].slice().sort((a, b) => b.timestamp - a.timestamp)
-        const dayTotal = dayList.reduce((s, c) => s + c.durationMinutes, 0)
-        return {
-          day,
-          dayLabel: this._fmtDayLabel(day),
-          totalText: checkin.fmtMinutes(dayTotal),
-          list: dayList.map(r => ({
-            id: r.id,
-            stageName: r.stageName,
-            groupLabel: r.groupLabel,
-            resourceName: r.resourceName,
-            durationText: checkin.fmtMinutes(r.durationMinutes),
-            timeText: this._fmtTime(r.timestamp),
-            remark: r.remark || '',
-            _dx: 0,
-            _anim: false
-          }))
-        }
-      })
+    // ---- 本月 ----
+    const mTotalMin = checkin.monthTotalMinutes(ym)
+    const mHoursFloat = mTotalMin / 60
+    const mTotalHoursStr = mHoursFloat.toFixed(2).replace(/\.?0+$/, '') || '0'
+    const mCount = checkin.monthCheckinCount(ym)
+    const mDays = checkin.monthDaysCount(ym)
 
-    // 月份标签
-    const [y, m] = ym.split('-')
-    const monthLabel = `${y}年${parseInt(m, 10)}月`
+    // ---- 记录列表 ----
+    const monthRecords = checkin.getByMonth(ym)
+    // 时间倒序
+    monthRecords.sort((a, b) => b.timestamp - a.timestamp)
+    const records = monthRecords.map(r => ({
+      id: r.id,
+      stageName: r.stageName,
+      groupKey: r.groupKey,
+      groupLabel: r.groupLabel,
+      resourceName: r.resourceName,
+      firstChar: (r.resourceName || '').trim().charAt(0) || '📖',
+      remark: r.remark || '',
+      durationText: checkin.fmtMinutes(r.durationMinutes),
+      dateText: this._fmtDate(r.timestamp),
+      _dx: 0,
+      _anim: false
+    }))
+
+    const idx = this.data.yearRange.indexOf(y)
+    const pickerValue = [idx >= 0 ? idx : 0, m - 1]
 
     this.setData({
-      selectedMonth: ym,
-      monthLabel,
-      monthTotalText: checkin.fmtMinutes(totalMin),
-      monthDays: Object.keys(groups).filter(d => groups[d].length > 0).length,
-      monthCount: list.length,
-      groupedRecords: grouped,
-      swipedId: ''
+      heroHours: String(heroH),
+      heroDecimal,
+      totalCount,
+      totalDays,
+      totalHoursText,
+      monthDisplay: `${m}月`,
+      yearText: `${y}年`,
+      monthTotalHours: mTotalHoursStr,
+      monthCount: mCount,
+      monthDays: mDays,
+      records,
+      pickerValue
     })
   },
 
-  _fmtDayLabel(day) {
-    const today = checkin.todayStr()
-    const yesterday = this._yesterdayStr()
-    if (day === today) return '今天'
-    if (day === yesterday) return '昨天'
-    const d = new Date(day)
-    const weekdays = ['日', '一', '二', '三', '四', '五', '六']
-    return `${parseInt(day.slice(-2), 10)}日 周${weekdays[d.getDay()]}`
+  _toYm(d) {
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    return `${y}-${m}`
   },
 
-  _yesterdayStr() {
-    const d = new Date()
-    d.setDate(d.getDate() - 1)
-    return checkin.todayStr(d)
-  },
-
-  _fmtTime(ts) {
+  // 参考图风格：08/24 07:27
+  _fmtDate(ts) {
     const d = new Date(ts)
-    const h = String(d.getHours()).padStart(2, '0')
-    const m = String(d.getMinutes()).padStart(2, '0')
-    return `${h}:${m}`
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    const hh = String(d.getHours()).padStart(2, '0')
+    const mm = String(d.getMinutes()).padStart(2, '0')
+    return `${m}/${day} ${hh}:${mm}`
   },
 
-  // -------- 月份切换 --------
-
-  prevMonth() {
-    const [y, m] = this.data.selectedMonth.split('-').map(Number)
-    const d = new Date(y, m - 2, 1) // 上一月
-    const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    this._loadMonth(ym)
+  // ===== 月份选择器 =====
+  onToggleMonthPicker() {
+    const ym = this.data.curYm
+    const [y, m] = ym.split('-').map(Number)
+    const idx = this.data.yearRange.indexOf(y)
+    this.setData({
+      monthPickerOpen: true,
+      pickerValue: [idx >= 0 ? idx : 0, m - 1],
+      _pendingYear: y,
+      _pendingMonth: m
+    })
   },
 
-  nextMonth() {
-    const [y, m] = this.data.selectedMonth.split('-').map(Number)
-    const d = new Date(y, m, 1) // 下一月
-    const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    // 不允许超过当前月
+  onCloseMonthPicker() {
+    this.setData({ monthPickerOpen: false })
+  },
+
+  onPickerChange(e) {
+    const val = e.detail.value // [yearIdx, monthIdx]
+    const y = this.data.yearRange[val[0]]
+    const m = this.data.monthRange[val[1]]
+    this.setData({ _pendingYear: y, _pendingMonth: m })
+  },
+
+  onConfirmMonthPicker() {
+    const y = this.data._pendingYear
+    const m = this.data._pendingMonth
+    const ym = `${y}-${String(m).padStart(2, '0')}`
+
+    // 不能超过当前月
     const now = new Date()
-    const curYm = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-    if (ym > curYm) return
-    this._loadMonth(ym)
+    const nowYm = this._toYm(now)
+    if (ym > nowYm) {
+      wx.showToast({ title: '不能选择未来月份', icon: 'none' })
+      return
+    }
+    this.setData({
+      curYm: ym,
+      monthPickerOpen: false
+    })
+    this._refresh()
   },
 
-  // -------- 滑动删除 --------
+  // ===== 滑动删除 =====
+  _snapDx(dx) {
+    if (dx <= -DELETE_W / 2) return -DELETE_W
+    return 0
+  },
 
   onTouchStart(e) {
-    const id = e.currentTarget.dataset.id
-    const touch = e.touches[0]
-    const startX = touch.clientX
-
-    const curDx = this.data.swipedId === id ? -DELETE_W : 0
-
+    const idx = Number(e.currentTarget.dataset.idx)
+    const t = e.touches[0]
     this.setData({
-      _startX: startX,
-      _startDx: curDx,
-      _curId: id
+      _touchStartX: t.clientX,
+      _touchStartY: t.clientY,
+      _curSwipeIdx: idx
     })
-
-    // 关闭其他已打开的项
-    const grouped = this.data.groupedRecords.map(g => ({
-      ...g,
-      list: g.list.map(r => {
-        if (r.id !== id && r._dx !== 0) {
-          return { ...r, _dx: 0, _anim: true }
-        }
-        return r
-      })
-    }))
-    this.setData({ groupedRecords: grouped })
+    // 关闭其他已打开的
+    const records = this.data.records
+    let changed = false
+    for (let i = 0; i < records.length; i++) {
+      if (i !== idx && records[i]._dx !== 0) {
+        records[i]._dx = 0
+        records[i]._anim = true
+        changed = true
+      }
+    }
+    if (changed) {
+      this.setData({ records })
+    }
+    // 开始拖动：关闭动画
+    records[idx]._anim = false
+    this.setData({ [`records[${idx}]`]: records[idx] })
   },
 
   onTouchMove(e) {
-    const touch = e.touches[0]
-    const dx = this.data._startDx + (touch.clientX - this.data._startX)
-
-    const minX = -DELETE_W - 20
-    const clamped = Math.max(minX, Math.min(10, dx))
-
-    const grouped = this.data.groupedRecords.map(g => ({
-      ...g,
-      list: g.list.map(r => {
-        if (r.id === this.data._curId) {
-          return { ...r, _dx: clamped, _anim: false }
-        }
-        return r
-      })
-    }))
-    this.setData({ groupedRecords: grouped })
+    const idx = this.data._curSwipeIdx
+    if (idx < 0) return
+    const t = e.touches[0]
+    const dxPx = t.clientX - this.data._touchStartX
+    // px → rpx (约 2 倍，简单换算)
+    const dxRpx = dxPx * 2
+    const prev = 0
+    let newDx = prev + dxRpx
+    if (newDx < -(DELETE_W + 20)) newDx = -(DELETE_W + 20)
+    if (newDx > 10) newDx = 10
+    this.setData({ [`records[${idx}]._dx`]: newDx })
   },
 
   onTouchEnd() {
-    const id = this.data._curId
-    let found = null
-    for (const g of this.data.groupedRecords) {
-      const r = g.list.find(x => x.id === id)
-      if (r) { found = r; break }
-    }
-    if (!found) return
-
-    const shouldOpen = found._dx < -DELETE_W / 2
-    const targetDx = shouldOpen ? -DELETE_W : 0
-
-    const grouped = this.data.groupedRecords.map(g => ({
-      ...g,
-      list: g.list.map(r => {
-        if (r.id === id) {
-          return { ...r, _dx: targetDx, _anim: true }
-        }
-        return r
-      })
-    }))
-
+    const idx = this.data._curSwipeIdx
+    if (idx < 0) return
+    const r = this.data.records[idx]
+    const targetDx = this._snapDx(r._dx)
     this.setData({
-      groupedRecords: grouped,
-      swipedId: shouldOpen ? id : ''
+      [`records[${idx}]._dx`]: targetDx,
+      [`records[${idx}]._anim`]: true,
+      _curSwipeIdx: -1
     })
   },
 
-  // -------- 删除 --------
-
+  // 删除记录
   deleteRecord(e) {
-    const id = e.currentTarget.dataset.id
+    const { id } = e.currentTarget.dataset
     wx.showModal({
-      title: '删除打卡记录',
-      content: '确定要删除这条打卡记录吗？',
+      title: '删除记录',
+      content: '确认删除这条打卡记录？',
       success: (res) => {
-        if (res.confirm) {
-          const ok = checkin.deleteCheckin(id)
-          if (ok) {
-            try {
-              const app = getApp()
-              if (app && app.globalData) app.globalData.checkinDirty = true
-            } catch (e) {}
-            this._refresh()
-            wx.showToast({ title: '已删除', icon: 'success' })
-          } else {
-            wx.showToast({ title: '删除失败', icon: 'none' })
-          }
+        if (!res.confirm) return
+        const ok = checkin.deleteCheckin(id)
+        if (!ok) {
+          wx.showToast({ title: '删除失败', icon: 'none' })
+          return
         }
+        try {
+          if (app && app.globalData) app.globalData.checkinDirty = true
+        } catch (ee) {}
+        wx.showToast({ title: '已删除', icon: 'success' })
+        this._refresh()
       }
     })
   }

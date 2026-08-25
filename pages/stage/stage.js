@@ -1,13 +1,15 @@
 const { routeData, resourceLabels } = require('../../utils/data.js')
 const checkin = require('../../utils/checkin.js')
 
-// 可点击打卡的资源分类(6 类)
+// 可点击打卡的资源分类(8 类)
 const CLICKABLE_GROUPS = [
   'main_picture_books',   // 主线绘本
   'main_graded_readers',  // 主线分级
   'main_animations',      // 主线动画
   'sub_graded_readers',   // 辅线分级
   'sub_animations',       // 辅线动画
+  'fun_extensions',       // 趣味拓展
+  'science_extensions',   // 科普拓展
   'fusion_apps'           // 融合APP
 ]
 

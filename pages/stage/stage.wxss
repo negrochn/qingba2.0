@@ -202,13 +202,47 @@
 }
 
 .rg-dot {
-  width: 10rpx;
-  height: 10rpx;
+  width: 14rpx;
+  height: 14rpx;
   border-radius: 50%;
   margin-right: 12rpx;
+  flex-shrink: 0;
 }
-.rg-dot-blue { background: #4a90d9; }
-.rg-dot-gray { background: #c2cbd7; }
+/* 主线绘本 */
+.rg-dot-main_picture_books { background: #4a90d9; box-shadow: 0 0 8rpx rgba(74,144,217,0.5); }
+.rg-label-main_picture_books { color: #1a5fb0; }
+
+/* 主线分级 */
+.rg-dot-main_graded_readers { background: #7b5fd6; box-shadow: 0 0 8rpx rgba(123,95,214,0.5); }
+.rg-label-main_graded_readers { color: #4a26a8; }
+
+/* 主线动画 */
+.rg-dot-main_animations { background: #ff7a45; box-shadow: 0 0 8rpx rgba(255,122,69,0.5); }
+.rg-label-main_animations { color: #c4390e; }
+
+/* 辅线分级 */
+.rg-dot-sub_graded_readers { background: #13c2c2; box-shadow: 0 0 8rpx rgba(19,194,194,0.5); }
+.rg-label-sub_graded_readers { color: #006d75; }
+
+/* 辅线动画 */
+.rg-dot-sub_animations { background: #f759ab; box-shadow: 0 0 8rpx rgba(247,89,171,0.5); }
+.rg-label-sub_animations { color: #b0156e; }
+
+/* 趣味拓展 */
+.rg-dot-fun_extensions { background: #73d13d; box-shadow: 0 0 8rpx rgba(115,209,61,0.5); }
+.rg-label-fun_extensions { color: #389e0d; }
+
+/* 科普拓展 */
+.rg-dot-science_extensions { background: #ffc53d; box-shadow: 0 0 8rpx rgba(255,197,61,0.5); }
+.rg-label-science_extensions { color: #ad6800; }
+
+/* 融合APP */
+.rg-dot-fusion_apps { background: #9254de; box-shadow: 0 0 8rpx rgba(146,84,222,0.5); }
+.rg-label-fusion_apps { color: #531dab; }
+
+/* 默认 */
+.rg-dot-default { background: #bfbfbf; }
+.rg-label-default { color: #8c8c8c; }
 
 .rg-label {
   flex: 1;
