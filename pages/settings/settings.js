@@ -11,8 +11,6 @@ const stageOptions = routeData.stages.map(s => ({
 Page({
   data: {
     totalCount: 0,
-    totalDays: 0,
-    totalHours: '0',
     stageOptions,
     currentStageIndex: -1,
     currentStage: null,
@@ -78,19 +76,11 @@ Page({
     });
   },
 
-  // 加载统计数据
+  // 加载统计数据（目前只需要 totalCount，用于清空数据提示）
   loadStats() {
     try {
       const count = checkin.totalCountAll();
-      const days = checkin.totalDaysAll();
-      const totalMin = checkin.totalMinutesAll();
-      const totalHours = (totalMin / 60).toFixed(1).replace(/\.0$/, '');
-
-      this.setData({
-        totalCount: count,
-        totalDays: days,
-        totalHours
-      });
+      this.setData({ totalCount: count });
     } catch (e) {
       console.error('加载统计失败', e);
     }

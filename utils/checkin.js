@@ -194,6 +194,27 @@ function totalDaysAll() {
   return n
 }
 
+// 某阶段累计总时长（分钟）
+function totalMinutesByStage(stageId) {
+  if (!stageId) return 0
+  const all = getAll()
+  let sum = 0
+  for (const day in all) {
+    for (const c of all[day]) {
+      if (c.stageId === stageId) sum += c.durationMinutes
+    }
+  }
+  return sum
+}
+
+// 某阶段累计读完次数（所有资源读完次数之和）
+function totalReadCountByStage(stageId) {
+  const byStage = getReadCountByStage(stageId)
+  let total = 0
+  for (const k in byStage) total += byStage[k]
+  return total
+}
+
 // 根据 id 删除打卡记录
 function deleteCheckin(id) {
   const all = getAll()
@@ -308,6 +329,8 @@ module.exports = {
   totalMinutesAll,
   totalCountAll,
   totalDaysAll,
+  totalMinutesByStage,
+  totalReadCountByStage,
   todayTotalByResource,
   todayTotalByStage,
   todayTotalMinutes,

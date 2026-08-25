@@ -1,40 +1,49 @@
 <view class="container">
 
-  <!-- 方案A：单卡式汇总 -->
-  <view class="summary-card">
-    <!-- 卡片头部：标题 + 月份选择 -->
-    <view class="sum-head">
-      <view class="sum-title">
-        <view class="sum-accent"></view>
-        <text class="sum-title-text">学习概览</text>
-      </view>
-      <view class="sum-picker" bindtap="onToggleMonthPicker">
-        <text class="sum-month">{{monthDisplay}}</text>
-        <text class="sum-arrow {{monthPickerOpen ? 'up' : ''}}">▾</text>
+  <!-- 打卡概览：头部在外（与打卡记录同结构） -->
+  <view class="overview-section">
+    <view class="section-head">
+      <text class="section-title">打卡概览</text>
+      <view class="overview-right">
+        <text class="overview-year">{{yearText}}</text>
+        <view class="overview-picker" bindtap="onToggleMonthPicker">
+          <text class="overview-month">{{monthDisplay}}</text>
+          <text class="overview-arrow {{monthPickerOpen ? 'up' : ''}}">▾</text>
+        </view>
       </view>
     </view>
-    <view class="sum-year">{{yearText}}</view>
 
-    <!-- 对比区：本月 vs 累计 -->
-    <view class="sum-compare">
-      <view class="sum-col">
-        <view class="sum-col-label">本月时长</view>
-        <view class="sum-col-num">
-          <text class="sum-col-val">{{monthTotalHours}}</text>
-          <text class="sum-col-unit">h</text>
+    <view class="summary-card">
+      <!-- 4 指标 2×2 紧凑网格：本月 / 累计 / 常规X / 已读完次数 -->
+      <view class="sum-grid">
+        <view class="sg-cell sg-tl">
+          <view class="sg-label">本月</view>
+          <view class="sg-num">
+            <text class="sg-val">{{monthTotalHours}}</text>
+            <text class="sg-unit">h</text>
+          </view>
         </view>
-        <view class="sum-col-sub">{{monthCount}}次 · {{monthDays}}天</view>
-      </view>
-
-      <view class="sum-divider"></view>
-
-      <view class="sum-col">
-        <view class="sum-col-label">累计时长</view>
-        <view class="sum-col-num">
-          <text class="sum-col-val">{{totalHoursText}}</text>
-          <text class="sum-col-unit">h</text>
+        <view class="sg-cell sg-tr">
+          <view class="sg-label">累计</view>
+          <view class="sg-num">
+            <text class="sg-val">{{totalHoursText}}</text>
+            <text class="sg-unit">h</text>
+          </view>
         </view>
-        <view class="sum-col-sub">{{totalCount}}次 · {{totalDays}}天</view>
+        <view class="sg-cell sg-bl">
+          <view class="sg-label">{{currentStageName || '未设置'}}</view>
+          <view class="sg-num">
+            <text class="sg-val">{{stageHours}}</text>
+            <text class="sg-unit">h</text>
+          </view>
+        </view>
+        <view class="sg-cell sg-br">
+          <view class="sg-label">已读完</view>
+          <view class="sg-num">
+            <text class="sg-val sg-read">{{stageReadCount}}</text>
+            <text class="sg-unit">次</text>
+          </view>
+        </view>
       </view>
     </view>
   </view>
@@ -42,7 +51,7 @@
   <!-- 记录列表（紧凑，无卡片包裹） -->
   <view class="record-section" wx:if="{{records.length > 0}}">
     <view class="section-head">
-      <text class="section-title">学习记录</text>
+      <text class="section-title">打卡记录</text>
       <text class="section-count">共 {{records.length}} 条</text>
     </view>
 

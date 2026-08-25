@@ -100,37 +100,6 @@ page {
   color: #c0c8d0;
 }
 
-/* ===== 数据统计 ===== */
-.stat-grid {
-  display: flex;
-  align-items: center;
-  padding: 16rpx 0;
-}
-
-.stat-item {
-  flex: 1;
-  text-align: center;
-}
-
-.stat-num {
-  font-size: 44rpx;
-  font-weight: 600;
-  color: #1a1a1a;
-  font-family: 'DIN Alternate', -apple-system, Helvetica, Arial, sans-serif;
-  margin-bottom: 8rpx;
-}
-
-.stat-label {
-  font-size: 24rpx;
-  color: #888;
-}
-
-.stat-divider {
-  width: 1rpx;
-  height: 60rpx;
-  background: #e8eef7;
-}
-
 /* ===== 信息项 ===== */
 .info-item {
   display: flex;

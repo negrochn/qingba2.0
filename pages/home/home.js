@@ -20,6 +20,10 @@ Page({
     monthTotalHours: '0.0', // '386.44' 格式
     monthCount: 0,
     monthDays: 0,
+    // 当前阶段
+    currentStageName: '',
+    stageHours: '0.00',
+    stageReadCount: 0,
     // 记录列表（扁平）
     records: [],
     // 月份选择器
@@ -81,8 +85,8 @@ Page({
     // ---- 三栏统计 ----
     const totalCount = checkin.totalCountAll()
     const totalDays = checkin.totalDaysAll()
-    // 总时长显示整数小时（与参考图风格一致）
-    const totalHoursText = String(Math.floor(totalHoursFloat))
+    // 总时长保留2位小数
+    const totalHoursText = totalHoursFloat.toFixed(2)
 
     // ---- 本月 ----
     const mTotalMin = checkin.monthTotalMinutes(ym)
@@ -90,6 +94,18 @@ Page({
     const mTotalHoursStr = mHoursFloat.toFixed(2).replace(/\.?0+$/, '') || '0'
     const mCount = checkin.monthCheckinCount(ym)
     const mDays = checkin.monthDaysCount(ym)
+
+    // ---- 当前阶段（常规X）时长 / 读完次数 ----
+    const curStage = checkin.getCurrentStage()
+    let currentStageName = ''
+    let stageHours = '0.00'
+    let stageReadCount = 0
+    if (curStage) {
+      currentStageName = curStage.name || ''
+      const stageMin = checkin.totalMinutesByStage(curStage.id)
+      stageHours = (stageMin / 60).toFixed(2)
+      stageReadCount = checkin.totalReadCountByStage(curStage.id)
+    }
 
     // ---- 记录列表 ----
     const monthRecords = checkin.getByMonth(ym)
@@ -123,6 +139,9 @@ Page({
       monthTotalHours: mTotalHoursStr,
       monthCount: mCount,
       monthDays: mDays,
+      currentStageName,
+      stageHours,
+      stageReadCount,
       records,
       pickerValue
     })

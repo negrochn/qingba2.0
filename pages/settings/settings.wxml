@@ -1,10 +1,10 @@
 <view class="container">
 
-  <!-- 学习进度卡片 -->
+  <!-- 打卡进度卡片 -->
   <view class="card">
     <view class="card-head">
       <view class="card-accent"></view>
-      <view class="card-title">学习进度</view>
+      <view class="card-title">打卡进度</view>
     </view>
 
     <picker mode="selector" range="{{stageOptions}}" range-key="name" value="{{currentStageIndex}}" bindchange="onStageChange" class="stage-picker">
@@ -62,34 +62,6 @@
         <view class="action-desc" wx:else>暂无数据</view>
       </view>
       <view class="action-arrow">›</view>
-    </view>
-  </view>
-
-  <!-- 数据统计 -->
-  <view class="card">
-    <view class="card-head">
-      <view class="card-accent"></view>
-      <view class="card-title">数据统计</view>
-    </view>
-
-    <view class="stat-grid">
-      <view class="stat-item">
-        <view class="stat-num">{{totalCount}}</view>
-        <view class="stat-label">打卡次数</view>
-      </view>
-      <view class="stat-divider"></view>
-
-      <view class="stat-item">
-        <view class="stat-num">{{totalDays}}</view>
-        <view class="stat-label">学习天数</view>
-      </view>
-
-      <view class="stat-divider"></view>
-
-      <view class="stat-item">
-        <view class="stat-num">{{totalHours}}</view>
-        <view class="stat-label">累计时长(h)</view>
-      </view>
     </view>
   </view>
 
