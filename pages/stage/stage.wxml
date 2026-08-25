@@ -36,7 +36,8 @@
           data-resource="{{rname}}"
           bindtap="onResourceTap"
         >
-          <view class="r-no">{{ridx + 1}}</view>
+          <view class="r-no" wx:if="{{readCounts[g.key + '|' + rname] >= 1}}">{{readCounts[g.key + '|' + rname]}}</view>
+          <view class="r-no r-no-char" wx:else>{{rname[0]}}</view>
           <view class="r-body">
             <view class="r-name">{{rname}}</view>
             <view class="r-sub" wx:if="{{resTotals[g.key + '|' + rname]}}">今日已打卡 {{resTotals[g.key + '|' + rname]}} 分钟 · 可继续追加</view>
@@ -55,8 +56,20 @@
 
   <!-- 关键要点（移动到底部） -->
   <view class="card key-point-card" wx:if="{{stage.key_points.length}}">
-    <view class="section-title section-title-kp">关键要点</view>
-    <view class="kp-summary">执行 {{stage.stage_name}} 时的重点提醒，共 {{stage.key_points.length}} 条</view>
+    <view class="res-head">
+      <view class="res-head-left">
+        <view class="res-head-accent"></view>
+        <view class="res-hl-stage">关键要点</view>
+      </view>
+      <view class="res-head-sub">
+        <text class="res-hl-text">执行</text>
+        <text class="res-hl-bold">{{stage.stage_name}}</text>
+        <text class="res-hl-text">时的重点提醒，共</text>
+        <text class="res-hl-bold">{{stage.key_points.length}}</text>
+        <text class="res-hl-text">条</text>
+      </view>
+    </view>
+    <view class="res-divider"></view>
     <view class="point {{item.highlighted ? 'point-hi' : ''}}" wx:for="{{stage.key_points}}" wx:key="index">
       <view class="point-idx"><text>{{index + 1}}</text></view>
       <view class="point-body">
@@ -74,39 +87,53 @@
 
     <view class="ci-head">
       <view class="ci-title">{{currentResource}}</view>
-      <view class="ci-sort">{{currentGroup.label}}</view>
       <view class="ci-close" catchtap="closeCheckin">×</view>
     </view>
 
-    <view class="ci-dur-row-full">
-      <text class="ci-label-inline">学习时长</text>
-      <input
-        class="ci-input ci-input-inline"
-        type="number"
-        placeholder="请输入分钟数"
-        value="{{durationInput}}"
-        bindinput="onDurationInput"
-        focus="{{showCheckin}}"
-      />
-      <text class="ci-unit-fix">分钟</text>
+    <view class="ci-form">
+      <view class="ci-form-item">
+        <text class="ci-form-label">学习时长</text>
+        <view class="ci-form-control">
+          <input
+            class="ci-num-input"
+            type="number"
+            placeholder="请输入"
+            value="{{durationInput}}"
+            bindinput="onDurationInput"
+            focus="{{showCheckin}}"
+          />
+          <text class="ci-form-unit">分钟</text>
+        </view>
+      </view>
+
+      <view class="ci-quick-row">
+        <view class="ci-quick-btn" data-val="10" bindtap="quickDuration">10</view>
+        <view class="ci-quick-btn" data-val="15" bindtap="quickDuration">15</view>
+        <view class="ci-quick-btn" data-val="20" bindtap="quickDuration">20</view>
+        <view class="ci-quick-btn" data-val="30" bindtap="quickDuration">30</view>
+      </view>
     </view>
 
-    <view class="ci-quick">
-      <view class="ci-quick-item" data-val="10" bindtap="quickDuration">10 分钟</view>
-      <view class="ci-quick-item" data-val="20" bindtap="quickDuration">20 分钟</view>
-      <view class="ci-quick-item" data-val="30" bindtap="quickDuration">30 分钟</view>
-      <view class="ci-quick-item" data-val="60" bindtap="quickDuration">60 分钟</view>
-    </view>
+    <view class="ci-form">
+      <view class="ci-form-item">
+        <text class="ci-form-label">备注</text>
+        <input
+          class="ci-text-input"
+          placeholder="如：第1-2册（下次自动填充）"
+          value="{{remarkInput}}"
+          bindinput="onRemarkInput"
+          maxlength="50"
+        />
+      </view>
 
-    <view class="ci-remark-row">
-      <text class="ci-label-inline">备注</text>
-      <input
-        class="ci-input ci-input-remark"
-        placeholder="如：第1-2册（下次自动填充）"
-        value="{{remarkInput}}"
-        bindinput="onRemarkInput"
-        maxlength="50"
-      />
+      <view class="ci-form-item" bindtap="onReadFinish">
+        <text class="ci-form-label">已读完</text>
+        <view class="ci-form-control">
+          <text class="ci-read-count">{{currentReadCount}} 次</text>
+          <view class="ci-read-tag">读完</view>
+          <text class="ci-form-arrow">›</text>
+        </view>
+      </view>
     </view>
 
     <view class="ci-actions">

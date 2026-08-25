@@ -23,8 +23,10 @@ Page({
     currentResource: '',  // 资源名
     durationInput: '',    // 输入框(分钟数值文本)
     remarkInput: '',      // 备注输入
+    currentReadCount: 0,  // 当前资源已读次数
     // 资源今日累计打卡(展示徽标用) { "groupKey|资源名": 分钟 }
-    resTotals: {}
+    resTotals: {},
+    readCounts: {}
   },
 
   onLoad(options) {
@@ -53,10 +55,14 @@ Page({
     wx.setNavigationBarTitle({ title: stage.stage_name })
     this.setData({ stage, resourceGroups: groups })
     this._refreshResTotals()
+    this._refreshReadCounts()
   },
 
   onShow() {
-    if (this.data.stage) this._refreshResTotals()
+    if (this.data.stage) {
+      this._refreshResTotals()
+      this._refreshReadCounts()
+    }
   },
 
   _refreshResTotals() {
@@ -73,6 +79,13 @@ Page({
     this.setData({ resTotals: totals })
   },
 
+  _refreshReadCounts() {
+    const stage = this.data.stage
+    if (!stage) return
+    const counts = checkin.getReadCountByStage(stage.stage_id)
+    this.setData({ readCounts: counts })
+  },
+
   // 点击资源标签
   onResourceTap(e) {
     const { groupKey, groupLabel, resource } = e.currentTarget.dataset
@@ -80,12 +93,36 @@ Page({
     if (!clickable) return
     const stage = this.data.stage
     const defaultRemark = checkin.getDefaultRemark(stage.stage_id, groupKey, resource)
+    const readCount = checkin.getReadCount(stage.stage_id, groupKey, resource)
     this.setData({
       showCheckin: true,
       currentGroup: { key: groupKey, label: groupLabel },
       currentResource: resource,
       durationInput: '20',
-      remarkInput: defaultRemark
+      remarkInput: defaultRemark,
+      currentReadCount: readCount
+    })
+  },
+
+  // 读完：二次确认后已读次数+1
+  onReadFinish() {
+    const { currentGroup, currentResource, stage } = this.data
+    if (!currentGroup || !currentResource) return
+    wx.showModal({
+      title: '确认已读完',
+      content: `《${currentResource}》标记为已读完？`,
+      confirmText: '确认',
+      cancelText: '取消',
+      confirmColor: '#ff7a45',
+      success: (res) => {
+        if (!res.confirm) return
+        const count = checkin.incrementReadCount(stage.stage_id, currentGroup.key, currentResource)
+        this.setData({
+          currentReadCount: count,
+          [`readCounts.${currentGroup.key}|${currentResource}`]: count
+        })
+        wx.showToast({ title: `已读完(${count}次)`, icon: 'success' })
+      }
     })
   },
 
@@ -162,6 +199,9 @@ Page({
       [`resTotals.${resKey}`]: newTotal
     })
 
-    wx.showToast({ title: `已打卡 ${checkin.fmtMinutes(minutes)}`, icon: 'success' })
+    wx.showToast({
+      title: `已打卡 ${checkin.fmtMinutes(minutes)}`,
+      icon: 'success'
+    })
   }
 })

@@ -4,6 +4,7 @@
 
 const STORAGE_KEY = 'qingba_checkins'
 const DEFAULT_REMARK_KEY = 'qingba_default_remarks'
+const READ_COUNT_KEY = 'qingba_read_counts'
 
 function todayStr(d = new Date()) {
   const y = d.getFullYear()
@@ -222,9 +223,59 @@ function fmtMinutes(totalMin) {
   return rm ? `${h}h${rm}m` : `${h}h`
 }
 
+// ===== 读完次数 =====
+// 存储结构: { "stageId|groupKey|resourceName": count }
+
+function _getReadCounts() {
+  try {
+    return wx.getStorageSync(READ_COUNT_KEY) || {}
+  } catch (e) {
+    return {}
+  }
+}
+
+function _saveReadCounts(data) {
+  try {
+    wx.setStorageSync(READ_COUNT_KEY, data)
+  } catch (e) {}
+}
+
+function _readCountKey(stageId, groupKey, resourceName) {
+  return `${stageId}|${groupKey}|${resourceName}`
+}
+
+// 获取某资源的已读次数
+function getReadCount(stageId, groupKey, resourceName) {
+  const all = _getReadCounts()
+  return all[_readCountKey(stageId, groupKey, resourceName)] || 0
+}
+
+// 某资源已读次数 +1
+function incrementReadCount(stageId, groupKey, resourceName) {
+  const all = _getReadCounts()
+  const key = _readCountKey(stageId, groupKey, resourceName)
+  all[key] = (all[key] || 0) + 1
+  _saveReadCounts(all)
+  return all[key]
+}
+
+// 获取某阶段所有资源的已读次数 { "groupKey|resourceName": count }
+function getReadCountByStage(stageId) {
+  const all = _getReadCounts()
+  const result = {}
+  for (const key in all) {
+    const parts = key.split('|')
+    if (parts[0] === stageId) {
+      result[`${parts[1]}|${parts[2]}`] = all[key]
+    }
+  }
+  return result
+}
+
 module.exports = {
   STORAGE_KEY,
   DEFAULT_REMARK_KEY,
+  READ_COUNT_KEY,
   todayStr,
   addCheckin,
   deleteCheckin,
@@ -242,5 +293,8 @@ module.exports = {
   recentDays,
   fmtMinutes,
   getDefaultRemark,
-  saveDefaultRemark
+  saveDefaultRemark,
+  getReadCount,
+  incrementReadCount,
+  getReadCountByStage
 }
