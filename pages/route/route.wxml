@@ -1,12 +1,4 @@
 <view class="container">
-  <view class="route-header">
-    <view class="route-title">常规路线</view>
-    <view class="route-sub">{{stageCount}} 个阶段 · 约 400H 累计</view>
-    <view class="route-current" wx:if="{{currentStageId}}">
-      当前：{{currentStageId === 'regular_1' ? '常规1' : currentStageId === 'regular_2' ? '常规2' : currentStageId === 'regular_3' ? '常规3' : currentStageId === 'regular_4' ? '常规4' : currentStageId === 'regular_5' ? '常规5' : currentStageId === 'regular_6' ? '常规6' : '准桥梁'}}
-    </view>
-  </view>
-
   <view class="timeline">
     <view
       class="stage-item {{index < currentStageIndex && currentStageIndex >= 0 ? 'stage-done' : ''}} {{index > currentStageIndex && currentStageIndex >= 0 ? 'stage-locked' : ''}} {{item.stage_id === currentStageId ? 'stage-current' : ''}}"

@@ -6,23 +6,6 @@
   min-height: 100vh;
 }
 
-/* 头部 */
-.route-header {
-  padding: 32rpx 0 28rpx;
-}
-
-.route-title {
-  font-size: 40rpx;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin-bottom: 8rpx;
-}
-
-.route-sub {
-  font-size: 26rpx;
-  color: #888;
-}
-
 /* 时间线容器 */
 .timeline {
   background: #fff;
@@ -155,18 +138,6 @@
 .tag-promote {
   color: #1a5fb0;
   background: #e8f1fb;
-}
-
-/* 当前阶段 */
-.route-current {
-  display: inline-block;
-  margin-top: 12rpx;
-  font-size: 24rpx;
-  color: #fff;
-  background: linear-gradient(135deg, #4a90d9 0%, #6ab0f3 100%);
-  padding: 8rpx 20rpx;
-  border-radius: 20rpx;
-  font-weight: 500;
 }
 
 .stage-current .stage-node {
