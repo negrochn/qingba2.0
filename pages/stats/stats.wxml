@@ -1,0 +1,55 @@
+<view class="container">
+
+  <!-- 顶部控制区 -->
+  <view class="top-bar">
+    <!-- Tab 切换 -->
+    <view class="tabs-container">
+      <view class="tab-item {{currentIndex === 0 ? 'active' : ''}}" bindtap="onTabChange" data-index="0">周</view>
+      <view class="tab-item {{currentIndex === 1 ? 'active' : ''}}" bindtap="onTabChange" data-index="1">月</view>
+      <view class="tab-item {{currentIndex === 2 ? 'active' : ''}}" bindtap="onTabChange" data-index="2">年</view>
+      <view class="tab-item {{currentIndex === 3 ? 'active' : ''}}" bindtap="onTabChange" data-index="3">全部</view>
+    </view>
+
+    <!-- 周期导航 -->
+    <view class="period-nav {{currentIndex === 3 ? 'nav-hidden' : ''}}">
+      <view class="nav-btn" bindtap="onPrevPeriod">‹</view>
+      <view class="nav-label">{{periodLabel}}</view>
+      <view class="nav-btn" bindtap="onNextPeriod">›</view>
+    </view>
+  </view>
+
+  <!-- 数据卡片 -->
+  <view class="stats-card">
+    <view class="sum-grid">
+      <view class="sg-cell sg-tl">
+        <view class="sg-label">{{totalLabel}}</view>
+        <view class="sg-num">
+          <text class="sg-val">{{totalHours}}</text>
+          <text class="sg-unit">h</text>
+        </view>
+      </view>
+      <view class="sg-cell sg-tr">
+        <view class="sg-label">{{avgLabel}}</view>
+        <view class="sg-num">
+          <text class="sg-val">{{avgHours}}</text>
+          <text class="sg-unit">h</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 图表卡片 -->
+  <view class="chart-card" wx:if="{{hasData}}">
+    <canvas canvas-id="statsChart" class="chart-canvas"
+      bindtouchstart="onChartTouchStart"
+      bindtouchmove="onChartTouchMove"
+      bindtouchend="onChartTouchEnd"
+      bindtouchcancel="onChartTouchEnd"></canvas>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:else>
+    <text>暂无数据，快去打卡吧～</text>
+  </view>
+
+</view>

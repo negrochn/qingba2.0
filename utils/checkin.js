@@ -168,6 +168,23 @@ function monthCheckinCount(ym) {
   return getByMonth(ym).length
 }
 
+// 汇总本周总时长（分钟），以周一为起点
+function weekTotalMinutes() {
+  const now = new Date()
+  const dayOfWeek = now.getDay()
+  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday)
+  const all = getAll()
+  let sum = 0
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const list = all[key] || []
+    for (const c of list) sum += c.durationMinutes
+  }
+  return sum
+}
+
 // 累计总时长（分钟）
 function totalMinutesAll() {
   const all = getAll()
@@ -281,6 +298,19 @@ function incrementReadCount(stageId, groupKey, resourceName) {
   return all[key]
 }
 
+// 获取所有已读次数原始数据
+function getAllReadCounts() {
+  return _getReadCounts()
+}
+
+// 累计所有阶段的已读次数
+function totalReadCountAll() {
+  const all = _getReadCounts()
+  let total = 0
+  for (const k in all) total += all[k]
+  return total
+}
+
 // 获取某阶段所有资源的已读次数 { "groupKey|resourceName": count }
 function getReadCountByStage(stageId) {
   const all = _getReadCounts()
@@ -312,6 +342,91 @@ function setCurrentStage(stageData) {
   }
 }
 
+// ===== 周期统计接口 =====
+// periodType: 'week' | 'month' | 'year' | 'all'
+// 返回: [{ id, period, label, minutes, isToday }]
+function getPeriodStats(periodType) {
+  const now = new Date()
+  const all = getAll()
+  const result = []
+
+  if (periodType === 'week') {
+    // 最近7天
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i)
+      const day = todayStr(d)
+      const list = all[day] || []
+      const minutes = list.reduce((s, c) => s + c.durationMinutes, 0)
+      const weekday = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()]
+      result.push({
+        id: day,
+        period: day,
+        label: i === 0 ? '今天' : weekday,
+        minutes,
+        isToday: i === 0
+      })
+    }
+  } else if (periodType === 'month') {
+    // 最近30天
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i)
+      const day = todayStr(d)
+      const list = all[day] || []
+      const minutes = list.reduce((s, c) => s + c.durationMinutes, 0)
+      result.push({
+        id: day,
+        period: day,
+        label: `${d.getMonth() + 1}/${d.getDate()}`,
+        minutes,
+        isToday: i === 0
+      })
+    }
+  } else if (periodType === 'year') {
+    // 最近12个月
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      let minutes = 0
+      for (const day in all) {
+        if (day.startsWith(ym)) {
+          minutes += all[day].reduce((s, c) => s + c.durationMinutes, 0)
+        }
+      }
+      result.push({
+        id: ym,
+        period: ym,
+        label: `${d.getMonth() + 1}月`,
+        minutes,
+        isToday: false
+      })
+    }
+  } else if (periodType === 'all') {
+    // 全部数据按年分组
+    const years = new Set()
+    for (const day in all) {
+      years.add(day.substring(0, 4))
+    }
+    const sortedYears = Array.from(years).sort().reverse()
+    for (const year of sortedYears) {
+      let minutes = 0
+      for (const day in all) {
+        if (day.startsWith(year)) {
+          minutes += all[day].reduce((s, c) => s + c.durationMinutes, 0)
+        }
+      }
+      result.push({
+        id: year,
+        period: year,
+        label: `${year}年`,
+        minutes,
+        isToday: false
+      })
+    }
+  }
+
+  return result
+}
+
 module.exports = {
   STORAGE_KEY,
   DEFAULT_REMARK_KEY,
@@ -324,6 +439,7 @@ module.exports = {
   getByDay,
   getByMonth,
   monthTotalMinutes,
+  weekTotalMinutes,
   monthDaysCount,
   monthCheckinCount,
   totalMinutesAll,
@@ -341,6 +457,9 @@ module.exports = {
   getReadCount,
   incrementReadCount,
   getReadCountByStage,
+  getAllReadCounts,
+  totalReadCountAll,
   getCurrentStage,
-  setCurrentStage
+  setCurrentStage,
+  getPeriodStats
 }

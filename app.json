@@ -5,7 +5,10 @@
     "pages/mine/mine",
     "pages/stage/stage",
     "pages/about/about",
-    "pages/settings/settings"
+    "pages/settings/settings",
+    "pages/stats/stats",
+    "pages/stage-stats/stage-stats",
+    "pages/reading-stats/reading-stats"
   ],
   "window": {
     "backgroundTextStyle": "dark",

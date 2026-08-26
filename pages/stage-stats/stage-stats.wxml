@@ -1,0 +1,37 @@
+<view class="container">
+
+  <!-- 数据卡片 -->
+  <view class="stats-card">
+    <view class="sum-grid">
+      <view class="sg-cell sg-tl">
+        <view class="sg-label">累计</view>
+        <view class="sg-num">
+          <text class="sg-val">{{totalHours}}</text>
+          <text class="sg-unit">h</text>
+        </view>
+      </view>
+      <view class="sg-cell sg-tr">
+        <view class="sg-label">阶段均</view>
+        <view class="sg-num">
+          <text class="sg-val">{{avgHours}}</text>
+          <text class="sg-unit">h</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 图表卡片 -->
+  <view class="chart-card" wx:if="{{hasData}}">
+    <canvas canvas-id="stageChart" class="chart-canvas"
+      bindtouchstart="onChartTouchStart"
+      bindtouchmove="onChartTouchMove"
+      bindtouchend="onChartTouchEnd"
+      bindtouchcancel="onChartTouchEnd"></canvas>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:else>
+    <text>暂无数据，快去打卡吧～</text>
+  </view>
+
+</view>

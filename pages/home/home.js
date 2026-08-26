@@ -18,6 +18,7 @@ Page({
     monthDisplay: '',       // '8月'
     yearText: '',           // '2026年'
     monthTotalHours: '0.0', // '386.44' 格式
+    weekTotalHours: '0',
     monthCount: 0,
     monthDays: 0,
     // 当前阶段
@@ -95,6 +96,11 @@ Page({
     const mCount = checkin.monthCheckinCount(ym)
     const mDays = checkin.monthDaysCount(ym)
 
+    // ---- 本周 ----
+    const wTotalMin = checkin.weekTotalMinutes()
+    const wHoursFloat = wTotalMin / 60
+    const weekTotalHours = wHoursFloat.toFixed(2).replace(/\.?0+$/, '') || '0'
+
     // ---- 当前阶段（常规X）时长 / 读完次数 ----
     const curStage = checkin.getCurrentStage()
     let currentStageName = ''
@@ -137,6 +143,7 @@ Page({
       monthDisplay: `${m}月`,
       yearText: `${y}年`,
       monthTotalHours: mTotalHoursStr,
+      weekTotalHours,
       monthCount: mCount,
       monthDays: mDays,
       currentStageName,
@@ -204,6 +211,20 @@ Page({
       monthPickerOpen: false
     })
     this._refresh()
+  },
+
+  // ===== 跳转统计页 =====
+  goToStats(e) {
+    const tab = e.currentTarget.dataset.tab || 0;
+    wx.navigateTo({ url: `/pages/stats/stats?tab=${tab}` });
+  },
+
+  goToStageStats() {
+    wx.navigateTo({ url: '/pages/stage-stats/stage-stats' });
+  },
+
+  goToReadingStats() {
+    wx.navigateTo({ url: '/pages/reading-stats/reading-stats' });
   },
 
   // ===== 滑动删除 =====

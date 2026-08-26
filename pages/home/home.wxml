@@ -16,28 +16,28 @@
     <view class="summary-card">
       <!-- 4 指标 2×2 紧凑网格：本月 / 累计 / 常规X / 已读完次数 -->
       <view class="sum-grid">
-        <view class="sg-cell sg-tl">
-          <view class="sg-label">本月</view>
+        <view class="sg-cell sg-tl clickable" bindtap="goToStats" data-tab="0">
+          <view class="sg-label">本周</view>
           <view class="sg-num">
-            <text class="sg-val">{{monthTotalHours}}</text>
+            <text class="sg-val">{{weekTotalHours}}</text>
             <text class="sg-unit">h</text>
           </view>
         </view>
-        <view class="sg-cell sg-tr">
+        <view class="sg-cell sg-tr clickable" bindtap="goToStats" data-tab="3">
           <view class="sg-label">累计</view>
           <view class="sg-num">
             <text class="sg-val">{{totalHoursText}}</text>
             <text class="sg-unit">h</text>
           </view>
         </view>
-        <view class="sg-cell sg-bl">
+        <view class="sg-cell sg-bl clickable" bindtap="goToStageStats">
           <view class="sg-label">{{currentStageName || '未设置'}}</view>
           <view class="sg-num">
             <text class="sg-val">{{stageHours}}</text>
             <text class="sg-unit">h</text>
           </view>
         </view>
-        <view class="sg-cell sg-br">
+        <view class="sg-cell sg-br clickable" bindtap="goToReadingStats">
           <view class="sg-label">已读完</view>
           <view class="sg-num">
             <text class="sg-val sg-read">{{stageReadCount}}</text>

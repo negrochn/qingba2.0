@@ -202,34 +202,34 @@ page {
 
 /* 锁定阶段 - 灰色 */
 .stage-locked {
-  opacity: 0.7;
+  opacity: 0.85;
 }
 
 .stage-locked .stage-name {
-  color: #b2b2b2;
+  color: #595959;
 }
 
 .stage-locked .stage-desc {
-  color: #c8c8c8;
+  color: #8c8c8c;
 }
 
 .stage-locked .tag {
-  opacity: 0.6;
+  opacity: 0.85;
 }
 
 .node-locked {
-  background: #d8d8d8;
-  color: #b2b2b2;
+  background: #bfbfbf;
+  color: #8c8c8c;
 }
 
 .stage-locked .stage-line {
-  background: #ececec;
+  background: #d9d9d9;
 }
 
 .stage-lock-tag {
   font-size: 18rpx;
-  color: #b2b2b2;
-  background: #f5f5f5;
+  color: #8c6d1f;
+  background: #fffbe6;
   border-radius: 6rpx;
   padding: 2rpx 8rpx;
   margin-left: 4rpx;
