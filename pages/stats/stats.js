@@ -155,8 +155,7 @@ Page({
     // 必须按实际尺寸渲染，否则右侧被裁剪，最后一根柱子显示不全
     const query = wx.createSelectorQuery().in(this);
     query.select('.chart-canvas').boundingClientRect(rect => {
-      const sysInfo = wx.getSystemInfoSync();
-      const chartWidth = (rect && rect.width) || sysInfo.windowWidth;
+      const chartWidth = (rect && rect.width) || wx.getWindowInfo().windowWidth;
       const chartHeight = (rect && rect.height) || 200;
 
       // 如果已存在图表实例，先销毁

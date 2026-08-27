@@ -9,16 +9,42 @@ const stageOptions = routeData.stages.map(s => ({
   name: s.stage_name
 }));
 
+// 本地兜底版本号（正式版会自动读取线上版本号，开发/体验版为空时使用此值）
+const FALLBACK_VERSION = '2.0.0';
+
+// 获取显示版本号
+function getAppVersion() {
+  try {
+    const info = wx.getAccountInfoSync();
+    const version = info.miniProgram.version;
+    const envVersion = info.miniProgram.envVersion; // develop | trial | release
+    if (version) return version;
+    if (envVersion === 'develop') return `${FALLBACK_VERSION}(开发版)`;
+    if (envVersion === 'trial') return `${FALLBACK_VERSION}(体验版)`;
+    return FALLBACK_VERSION;
+  } catch (e) {
+    return FALLBACK_VERSION;
+  }
+}
+
 Page({
   data: {
     totalCount: 0,
     stageOptions,
+    appVersion: getAppVersion(),
+    // 开发者工具（压力测试）仅在开发版显示
+    showDevTools: false,
     currentStageIndex: -1,
     currentStage: null,
     currentStageDisplay: ''
   },
 
   onLoad() {
+    // 正式版/体验版隐藏开发者工具入口
+    let env = '';
+    try { env = wx.getAccountInfoSync().miniProgram.envVersion || '' } catch (e) {}
+    this.setData({ showDevTools: env === 'develop' });
+
     this.loadStats();
     this.loadCurrentStage();
   },
@@ -148,6 +174,17 @@ Page({
 
       // 写入临时文件
       const fs = wx.getFileSystemManager();
+
+      // 清理历史备份临时文件，避免多次备份后在本地目录累积
+      try {
+        const oldFiles = fs.readdirSync(wx.env.USER_DATA_PATH);
+        oldFiles.forEach(f => {
+          if (f.indexOf('qingba_backup_') === 0) {
+            try { fs.unlinkSync(`${wx.env.USER_DATA_PATH}/${f}`) } catch (e) {}
+          }
+        });
+      } catch (e) {}
+
       const filePath = `${wx.env.USER_DATA_PATH}/${fileName}`;
 
       fs.writeFile({
@@ -322,10 +359,22 @@ Page({
 
     try {
       // 将扁平数组转换为按日期分组的对象
+      // 过滤无效记录：无合法 day 且 timestamp 无法解析的脏数据直接丢弃
       const grouped = {};
       if (data.checkin_records) {
         for (const record of data.checkin_records) {
-          const day = record.day || checkin.todayStr(new Date(record.timestamp));
+          if (!record || typeof record !== 'object') continue;
+          let day = '';
+          if (typeof record.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(record.day)) {
+            day = record.day;
+          } else {
+            const ts = Number(record.timestamp);
+            if (ts > 0) {
+              const d = new Date(ts);
+              if (!isNaN(d.getTime())) day = checkin.todayStr(d);
+            }
+          }
+          if (!day) continue;
           if (!grouped[day]) {
             grouped[day] = [];
           }

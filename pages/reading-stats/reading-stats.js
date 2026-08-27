@@ -90,44 +90,48 @@ Page({
   },
 
   _renderChart(stageData) {
-    const sysInfo = wx.getSystemInfoSync();
-    const windowWidth = sysInfo.windowWidth;
-    const chartHeight = 200;
+    // 获取 canvas 真实显示尺寸（受容器/卡片 padding 影响，小于 windowWidth）
+    // 按实际尺寸渲染，避免右侧被裁剪
+    const query = wx.createSelectorQuery().in(this);
+    query.select('.chart-canvas').boundingClientRect(rect => {
+      const chartWidth = (rect && rect.width) || wx.getWindowInfo().windowWidth;
+      const chartHeight = (rect && rect.height) || 200;
 
-    const categories = stageData.map(d => d.stageName);
-    const seriesData = stageData.map(d => d.count);
+      const categories = stageData.map(d => d.stageName);
+      const seriesData = stageData.map(d => d.count);
 
-    this.chart = null;
+      this.chart = null;
 
-    this.chart = new wxCharts({
-      canvasId: 'readChart',
-      type: 'column',
-      categories: categories,
-      series: [{
-        name: '次数',
-        data: seriesData,
-        color: '#4a90d9'
-      }],
-      yAxis: {
-        format: function (val) {
-          return Math.round(val) + '';
-        }
-      },
-      xAxis: {
-        disableGrid: true
-      },
-      enableScroll: true,
-      extra: {
-        column: {
-          width: 28
-        }
-      },
-      width: windowWidth,
-      height: chartHeight,
-      dataLabel: true,
-      legend: false,
-      animation: true
-    });
+      this.chart = new wxCharts({
+        canvasId: 'readChart',
+        type: 'column',
+        categories: categories,
+        series: [{
+          name: '次数',
+          data: seriesData,
+          color: '#4a90d9'
+        }],
+        yAxis: {
+          format: function (val) {
+            return Math.round(val) + '';
+          }
+        },
+        xAxis: {
+          disableGrid: true
+        },
+        enableScroll: true,
+        extra: {
+          column: {
+            width: 28
+          }
+        },
+        width: chartWidth,
+        height: chartHeight,
+        dataLabel: true,
+        legend: false,
+        animation: true
+      });
+    }).exec();
   },
 
   onChartTouchStart(e) {

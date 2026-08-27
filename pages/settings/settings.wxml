@@ -65,8 +65,8 @@
     </view>
   </view>
 
-  <!-- 开发者工具（压力测试） -->
-  <view class="card">
+  <!-- 开发者工具（压力测试）仅开发版显示 -->
+  <view class="card" wx:if="{{showDevTools}}">
     <view class="card-head">
       <view class="card-accent"></view>
       <view class="card-title">开发者工具</view>
@@ -91,7 +91,7 @@
 
     <view class="info-item">
       <view class="info-label">版本号</view>
-      <view class="info-value">2.0.0</view>
+      <view class="info-value">{{appVersion}}</view>
     </view>
     <view class="info-item">
       <view class="info-label">数据存储</view>

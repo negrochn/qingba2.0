@@ -42,7 +42,7 @@ Page({
         id: stage.stage_id,
         label: stage.stage_name,
         minutes,
-        isCurrent: curStage && curStage.stage_id === stage.stage_id
+        isCurrent: !!(curStage && curStage.id === stage.stage_id)
       });
     }
 
@@ -77,8 +77,7 @@ Page({
     // 按实际尺寸渲染，避免右侧被裁剪
     const query = wx.createSelectorQuery().in(this);
     query.select('.chart-canvas').boundingClientRect(rect => {
-      const sysInfo = wx.getSystemInfoSync();
-      const chartWidth = (rect && rect.width) || sysInfo.windowWidth;
+      const chartWidth = (rect && rect.width) || wx.getWindowInfo().windowWidth;
       const chartHeight = (rect && rect.height) || 250;
 
       const categories = data.map(d => d.label);

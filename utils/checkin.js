@@ -66,6 +66,19 @@ function _chunkKey(ym) {
   return CHUNK_PREFIX + ym
 }
 
+// 清理所有分片 key（月度分片 + 极端单日分片），用于存储模式切换/重写时清理旧数据
+// 否则 getAll 合并时旧分片会覆盖主 key，导致已删除/已修改的记录"复活"
+function _removeChunkKeys() {
+  try {
+    const info = wx.getStorageInfoSync()
+    ;(info.keys || []).forEach(k => {
+      if (k.startsWith(CHUNK_PREFIX)) {
+        try { wx.removeStorageSync(k) } catch (e) {}
+      }
+    })
+  } catch (e) {}
+}
+
 // 估算 JSON 序列化后的字节数（UTF-8）
 function _estimateBytes(obj) {
   try {
@@ -145,12 +158,15 @@ function saveAll(data) {
     // 数据量小且条目少：直接存主 key（兼容旧版）
     if (bytes <= MAX_ITEM_BYTES && itemCount < 500) {
       try { wx.setStorageSync(STORAGE_KEY, data) } catch (e) { _onSaveFail() }
+      // 若此前处于分片态，必须同步删除旧分片（先写后删：写入失败时保留旧分片兜底）
+      _removeChunkKeys()
       return
     }
 
     // 数据量大：按月分片存储
-    // 先清空主 key（避免残留）
+    // 先清空主 key 和旧分片（避免残留）
     try { wx.removeStorageSync(STORAGE_KEY) } catch(e) {}
+    _removeChunkKeys()
 
     const months = {}
     for (const day in data) {
