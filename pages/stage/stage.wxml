@@ -35,7 +35,8 @@
             <text>待学习</text>
           </view>
           <view class="rg-progress rg-progress-locked" wx:elif="{{g.clickable && stageLocked}}">
-            <text>未开始</text>
+            <text wx:if="{{stageStatus === 'completed'}}">已完成</text>
+            <text wx:else>未开始</text>
           </view>
           <view class="rg-arrow {{expandedGroups[g.key] ? 'rg-arrow-open' : ''}}">›</view>
         </view>
@@ -58,7 +59,10 @@
             <view class="r-name">{{rname}}</view>
             <view class="r-sub" wx:if="{{resTotals[g.key + '|' + rname]}}">今日已打卡 {{resTotals[g.key + '|' + rname]}} 分钟 · 可继续追加</view>
             <view class="r-sub r-sub-hint" wx:elif="{{g.clickable && !stageLocked}}">点击输入学习时长并打卡</view>
-            <view class="r-sub r-sub-locked" wx:elif="{{g.clickable && stageLocked}}">当前阶段未解锁，仅可查看</view>
+            <view class="r-sub r-sub-locked" wx:elif="{{g.clickable && stageLocked}}">
+              <text wx:if="{{stageStatus === 'completed'}}">本阶段已完成，仅可查看</text>
+              <text wx:else>当前阶段未解锁，仅可查看</text>
+            </view>
             <view class="r-sub r-sub-note" wx:else>仅供参考，不参与打卡</view>
           </view>
           <view class="r-right">

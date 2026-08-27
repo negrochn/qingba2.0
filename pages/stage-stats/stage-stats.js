@@ -73,44 +73,49 @@ Page({
   },
 
   _renderChart(data) {
-    const sysInfo = wx.getSystemInfoSync();
-    const windowWidth = sysInfo.windowWidth;
-    const chartHeight = 250;
+    // 获取 canvas 真实显示尺寸（受容器/卡片 padding 影响，小于 windowWidth）
+    // 按实际尺寸渲染，避免右侧被裁剪
+    const query = wx.createSelectorQuery().in(this);
+    query.select('.chart-canvas').boundingClientRect(rect => {
+      const sysInfo = wx.getSystemInfoSync();
+      const chartWidth = (rect && rect.width) || sysInfo.windowWidth;
+      const chartHeight = (rect && rect.height) || 250;
 
-    const categories = data.map(d => d.label);
-    const seriesData = data.map(d => +(d.minutes / 60).toFixed(2));
+      const categories = data.map(d => d.label);
+      const seriesData = data.map(d => +(d.minutes / 60).toFixed(2));
 
-    this.chart = null;
+      this.chart = null;
 
-    this.chart = new wxCharts({
-      canvasId: 'stageChart',
-      type: 'column',
-      categories: categories,
-      series: [{
-        name: '时长',
-        data: seriesData,
-        color: '#4a90d9'
-      }],
-      yAxis: {
-        format: function (val) {
-          return val.toFixed(1) + 'h';
-        }
-      },
-      xAxis: {
-        disableGrid: true
-      },
-      enableScroll: true,
-      extra: {
-        column: {
-          width: 40
-        }
-      },
-      width: windowWidth,
-      height: chartHeight,
-      dataLabel: true,
-      legend: false,
-      animation: true
-    });
+      this.chart = new wxCharts({
+        canvasId: 'stageChart',
+        type: 'column',
+        categories: categories,
+        series: [{
+          name: '时长',
+          data: seriesData,
+          color: '#4a90d9'
+        }],
+        yAxis: {
+          format: function (val) {
+            return val.toFixed(1) + 'h';
+          }
+        },
+        xAxis: {
+          disableGrid: true
+        },
+        enableScroll: false,
+        extra: {
+          column: {
+            width: 28
+          }
+        },
+        width: chartWidth,
+        height: chartHeight,
+        dataLabel: true,
+        legend: false,
+        animation: true
+      });
+    }).exec();
   },
 
   onChartTouchStart(e) {

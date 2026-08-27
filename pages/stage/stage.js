@@ -18,6 +18,7 @@ Page({
     stage: null,
     stageIndex: -1,
     stageLocked: false,
+    stageStatus: 'locked', // 'current' | 'completed' | 'locked'
     resourceGroups: [],
     // 分组展开状态：默认全部展开
     expandedGroups: {
@@ -55,13 +56,16 @@ Page({
       'fun_extensions', 'science_extensions', 'fusion_apps'
     ]
 
-    // 计算当前阶段索引，判断是否锁定（只有当前阶段可打卡）
+    // 计算当前阶段索引，判断状态
     const currentStage = checkin.getCurrentStage()
     let currentIndex = -1
     routeData.stages.forEach((s, i) => {
       if (currentStage && s.stage_id === currentStage.id) currentIndex = i
     })
-    const stageLocked = currentIndex >= 0 && index !== currentIndex
+    const stageStatus = currentIndex < 0 ? 'locked' :
+      (index === currentIndex ? 'current' :
+        (index < currentIndex ? 'completed' : 'locked'))
+    const stageLocked = stageStatus !== 'current'
 
     // 锁定时所有分组不可点击打卡
     const groups = []
@@ -78,21 +82,25 @@ Page({
     })
 
     wx.setNavigationBarTitle({ title: stage.stage_name })
-    this.setData({ stage, stageIndex: index, stageLocked, resourceGroups: groups })
+    this.setData({ stage, stageIndex: index, stageLocked, stageStatus, resourceGroups: groups })
     this._refreshResTotals()
     this._refreshReadCounts()
   },
 
   onShow() {
     if (this.data.stage) {
-      // 重新计算锁定状态（当前阶段可能在设置页改变）
+      // 重新计算状态（当前阶段可能在设置页改变）
       const currentStage = checkin.getCurrentStage()
       let currentIndex = -1
       routeData.stages.forEach((s, i) => {
         if (currentStage && s.stage_id === currentStage.id) currentIndex = i
       })
-      const stageLocked = currentIndex >= 0 && this.data.stageIndex !== currentIndex
-      this.setData({ stageLocked })
+      const idx = this.data.stageIndex
+      const stageStatus = currentIndex < 0 ? 'locked' :
+        (idx === currentIndex ? 'current' :
+          (idx < currentIndex ? 'completed' : 'locked'))
+      const stageLocked = stageStatus !== 'current'
+      this.setData({ stageLocked, stageStatus })
       this._refreshResTotals()
       this._refreshReadCounts()
     }
@@ -135,8 +143,12 @@ Page({
   // 点击资源标签
   onResourceTap(e) {
     const { groupKey, groupLabel, resource } = e.currentTarget.dataset
-    if (this.data.stageLocked) {
+    if (this.data.stageStatus === 'locked') {
       wx.showToast({ title: '当前阶段未解锁，不可打卡', icon: 'none' })
+      return
+    }
+    if (this.data.stageStatus === 'completed') {
+      wx.showToast({ title: '本阶段已完成，仅可查看', icon: 'none' })
       return
     }
     const clickable = CLICKABLE_GROUPS.indexOf(groupKey) >= 0

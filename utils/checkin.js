@@ -3,9 +3,49 @@
 // Checkin: { id, stageId, stageName, groupKey, groupLabel, resourceName, durationMinutes, timestamp }
 
 const STORAGE_KEY = 'qingba_checkins'
+const CHUNK_PREFIX = 'qingba_checkins_' // 按月分片: qingba_checkins_2021-06
 const DEFAULT_REMARK_KEY = 'qingba_default_remarks'
 const READ_COUNT_KEY = 'qingba_read_counts'
 const CURRENT_STAGE_KEY = 'qingba_current_stage'
+
+// 单条 storage 上限（字节），留余量
+const MAX_ITEM_BYTES = 900 * 1024 // 约 900KB，微信上限 1MB
+
+// 存储总量预警阈值（占总上限 10MB 的比例）
+const STORAGE_WARN_RATIO = 0.8
+// 会话级开关：避免重复弹窗
+let _storageWarned = false
+let _saveFailedWarned = false
+
+// 检查本地存储总量，超过阈值则弹一次提醒
+function _checkStorageQuota() {
+  try {
+    const info = wx.getStorageInfoSync()
+    const limit = info.limitSize || 10240 // KB，微信上限 10MB
+    const current = info.currentSize || 0
+    if (current >= limit * STORAGE_WARN_RATIO && !_storageWarned) {
+      _storageWarned = true
+      wx.showModal({
+        title: '本地存储空间提醒',
+        content: `打卡数据已占用约 ${(current / 1024).toFixed(1)}MB / 10MB。建议前往"设置"页导出备份，避免后续数据因超限而丢失。`,
+        showCancel: false,
+        confirmText: '知道了'
+      })
+    }
+  } catch (e) {}
+}
+
+// 实际保存失败时弹一次提醒（空间已满）
+function _onSaveFail() {
+  if (_saveFailedWarned) return
+  _saveFailedWarned = true
+  wx.showModal({
+    title: '保存失败',
+    content: '本地存储空间已满，部分打卡数据可能未能保存。请到"设置"页导出备份后清理旧数据。',
+    showCancel: false,
+    confirmText: '知道了'
+  })
+}
 
 function todayStr(d = new Date()) {
   const y = d.getFullYear()
@@ -18,9 +58,77 @@ function genId() {
   return 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8)
 }
 
+function _dayToMonth(dayStr) {
+  return dayStr.substring(0, 7) // "2021-06-01" -> "2021-06"
+}
+
+function _chunkKey(ym) {
+  return CHUNK_PREFIX + ym
+}
+
+// 估算 JSON 序列化后的字节数（UTF-8）
+function _estimateBytes(obj) {
+  try {
+    const str = JSON.stringify(obj)
+    if (typeof TextEncoder !== 'undefined') {
+      return new TextEncoder().encode(str).length
+    }
+    // Fallback: 手动计算 UTF-8 字节数
+    let bytes = 0
+    for (let i = 0; i < str.length; i++) {
+      const code = str.charCodeAt(i)
+      if (code < 0x80) bytes += 1
+      else if (code < 0x800) bytes += 2
+      else bytes += 3
+    }
+    return bytes
+  } catch(e) {
+    try { return JSON.stringify(obj).length } catch(e2) { return 0 }
+  }
+}
+
+// 估算数据条目数（用于判断是否需要分片）
+function _estimateItemCount(data) {
+  let count = 0
+  for (const day in data) {
+    if (Array.isArray(data[day])) count += data[day].length
+    else count++
+  }
+  return count
+}
+
+// ===== 分片读写 =====
+
 function getAll() {
   try {
-    return wx.getStorageSync(STORAGE_KEY) || {}
+    const main = wx.getStorageSync(STORAGE_KEY) || {}
+    let allKeys = []
+    try {
+      const info = wx.getStorageInfoSync()
+      allKeys = info.keys || []
+    } catch(e) {}
+
+    // 检查是否存在分片 key
+    const hasChunks = allKeys.some(k => k.startsWith(CHUNK_PREFIX))
+    if (!hasChunks && Object.keys(main).length > 0) return main
+
+    // 合并主 key + 所有分片
+    const merged = { ...main }
+    allKeys.forEach(k => {
+      if (k.startsWith(CHUNK_PREFIX)) {
+        try {
+          const chunk = wx.getStorageSync(k)
+          if (chunk && typeof chunk === 'object') {
+            for (const day in chunk) {
+              if (Array.isArray(chunk[day]) && chunk[day].length > 0) {
+                merged[day] = chunk[day]
+              }
+            }
+          }
+        } catch(e) {}
+      }
+    })
+    return merged
   } catch (e) {
     return {}
   }
@@ -28,8 +136,48 @@ function getAll() {
 
 function saveAll(data) {
   try {
-    wx.setStorageSync(STORAGE_KEY, data)
-  } catch (e) {}
+    // 保存前检查总量，超阈值弹一次提醒
+    _checkStorageQuota()
+
+    const bytes = _estimateBytes(data)
+    const itemCount = _estimateItemCount(data)
+
+    // 数据量小且条目少：直接存主 key（兼容旧版）
+    if (bytes <= MAX_ITEM_BYTES && itemCount < 500) {
+      try { wx.setStorageSync(STORAGE_KEY, data) } catch (e) { _onSaveFail() }
+      return
+    }
+
+    // 数据量大：按月分片存储
+    // 先清空主 key（避免残留）
+    try { wx.removeStorageSync(STORAGE_KEY) } catch(e) {}
+
+    const months = {}
+    for (const day in data) {
+      const ym = _dayToMonth(day)
+      if (!months[ym]) months[ym] = {}
+      months[ym][day] = data[day]
+    }
+
+    for (const ym in months) {
+      const chunkData = months[ym]
+      const chunkBytes = _estimateBytes(chunkData)
+      const chunkItems = _estimateItemCount(chunkData)
+
+      // 单月仍超限则继续拆分到单日
+      if (chunkBytes <= MAX_ITEM_BYTES && chunkItems < 500) {
+        try { wx.setStorageSync(_chunkKey(ym), chunkData) } catch (e) { _onSaveFail() }
+      } else {
+        // 极端情况：某月数据量极大，按天逐条存
+        for (const day in chunkData) {
+          const dayData = { [day]: chunkData[day] }
+          try { wx.setStorageSync(_chunkKey(ym + '_' + day.substring(8)), dayData) } catch (e) { _onSaveFail() }
+        }
+      }
+    }
+  } catch (e) {
+    console.error('saveAll failed:', e)
+  }
 }
 
 // 新增打卡记录
@@ -252,6 +400,36 @@ function deleteCheckin(id) {
   return false
 }
 
+// 清除所有打卡数据（包括分片）
+function clearAllCheckins() {
+  try {
+    let allKeys = []
+    try {
+      const info = wx.getStorageInfoSync()
+      allKeys = info.keys || []
+    } catch(e) {}
+
+    const toRemove = []
+
+    // 收集所有相关的 key
+    allKeys.forEach(k => {
+      if (k === STORAGE_KEY ||
+          k.startsWith(CHUNK_PREFIX)) {
+        toRemove.push(k)
+      }
+    })
+
+    // 批量删除
+    toRemove.forEach(k => {
+      try { wx.removeStorageSync(k) } catch (e) {}
+    })
+
+    return toRemove.length
+  } catch (e) {
+    return 0
+  }
+}
+
 // 格式化分钟: >=60 自动换算 XhYm, <60 直接 Xm
 function fmtMinutes(totalMin) {
   const m = Math.round(Number(totalMin) || 0)
@@ -324,13 +502,17 @@ function getReadCountByStage(stageId) {
   return result
 }
 
+// 默认当前阶段：常规1
+const DEFAULT_STAGE = { id: 'regular_1', name: '常规1' }
+
 // 当前阶段相关
 function getCurrentStage() {
   try {
-    return wx.getStorageSync(CURRENT_STAGE_KEY) || null
-  } catch (e) {
-    return null
-  }
+    const saved = wx.getStorageSync(CURRENT_STAGE_KEY)
+    if (saved) return saved
+  } catch (e) {}
+  // 无存储时返回默认值：常规1
+  return { ...DEFAULT_STAGE }
 }
 
 function setCurrentStage(stageData) {
@@ -429,12 +611,14 @@ function getPeriodStats(periodType) {
 
 module.exports = {
   STORAGE_KEY,
+  CHUNK_PREFIX,
   DEFAULT_REMARK_KEY,
   READ_COUNT_KEY,
   CURRENT_STAGE_KEY,
   todayStr,
   addCheckin,
   deleteCheckin,
+  clearAllCheckins,
   getAll,
   getByDay,
   getByMonth,
@@ -461,5 +645,6 @@ module.exports = {
   totalReadCountAll,
   getCurrentStage,
   setCurrentStage,
+  saveAll,
   getPeriodStats
 }

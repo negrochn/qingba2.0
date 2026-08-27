@@ -234,3 +234,12 @@ page {
   padding: 2rpx 8rpx;
   margin-left: 4rpx;
 }
+
+.stage-done-tag {
+  font-size: 18rpx;
+  color: #389e0d;
+  background: #f6fffa;
+  border-radius: 6rpx;
+  padding: 2rpx 8rpx;
+  margin-left: 4rpx;
+}

@@ -1,6 +1,7 @@
 // 设置页
 const checkin = require('../../utils/checkin.js');
 const { routeData } = require('../../utils/data.js');
+const { generateStressData } = require('../../utils/stress-test.js');
 
 // 构建阶段选项
 const stageOptions = routeData.stages.map(s => ({
@@ -31,11 +32,21 @@ Page({
   loadCurrentStage() {
     const saved = checkin.getCurrentStage();
     if (saved) {
+      // 从 routeData 补全完整字段（兼容旧存储或默认值只有 id/name 的情况）
+      const routeStage = routeData.stages.find(s => s.stage_id === saved.id);
+      const fullData = routeStage ? {
+        id: routeStage.stage_id,
+        name: routeStage.stage_name,
+        targetPhase: routeStage.target_phase,
+        vocabularyTarget: routeStage.vocabulary_target,
+        timeInvestment: routeStage.time_investment
+      } : saved;
+
       const index = stageOptions.findIndex(s => s.id === saved.id);
       this.setData({
         currentStageIndex: index >= 0 ? index : -1,
-        currentStage: saved,
-        currentStageDisplay: saved.name
+        currentStage: fullData,
+        currentStageDisplay: fullData.name
       });
     } else {
       this.setData({
@@ -112,6 +123,12 @@ Page({
       const readCounts = wx.getStorageSync(checkin.READ_COUNT_KEY);
       if (readCounts) {
         data.read_count_data = readCounts;
+      }
+
+      // 当前阶段
+      const currentStage = checkin.getCurrentStage();
+      if (currentStage) {
+        data.current_stage = currentStage;
       }
 
       // 添加版本信息
@@ -314,7 +331,7 @@ Page({
           }
           grouped[day].push(record);
         }
-        wx.setStorageSync(checkin.STORAGE_KEY, grouped);
+        checkin.saveAll(grouped);
       }
 
       // 保存默认备注
@@ -325,6 +342,11 @@ Page({
       // 保存已读次数
       if (data.read_count_data) {
         wx.setStorageSync(checkin.READ_COUNT_KEY, data.read_count_data);
+      }
+
+      // 恢复当前阶段
+      if (data.current_stage) {
+        wx.setStorageSync(checkin.CURRENT_STAGE_KEY, data.current_stage);
       }
 
       wx.hideLoading();
@@ -375,12 +397,21 @@ Page({
 
     setTimeout(() => {
       try {
-        wx.removeStorageSync(checkin.STORAGE_KEY);
+        // 使用 clearAllCheckins 清除主 key + 所有分片 key
+        const removed = checkin.clearAllCheckins();
         wx.removeStorageSync(checkin.DEFAULT_REMARK_KEY);
         wx.removeStorageSync(checkin.READ_COUNT_KEY);
+        wx.removeStorageSync(checkin.CURRENT_STAGE_KEY);
+
+        // 重置当前阶段为常规1
+        const firstStage = routeData.stages[0];
+        if (firstStage) {
+          checkin.setCurrentStage({ id: firstStage.stage_id, name: firstStage.stage_name });
+        }
 
         wx.hideLoading();
         this.loadStats();
+        this.loadCurrentStage();
 
         wx.showToast({
           title: '已清空',
@@ -400,5 +431,66 @@ Page({
         });
       }
     }, 300);
+  },
+
+  // ===== 压力测试 =====
+  onStressTest() {
+    wx.showModal({
+      title: '压力测试',
+      content: '将生成从2021年6月至今的模拟打卡数据（约1900天，每天3-10条），会覆盖现有数据，是否继续？',
+      confirmText: '生成',
+      cancelText: '取消',
+      confirmColor: '#4a90d9',
+      success: (res) => {
+        if (res.confirm) {
+          this.doStressTest();
+        }
+      }
+    });
+  },
+
+  doStressTest() {
+    wx.showLoading({ title: '生成中...', mask: true });
+
+    // 分步执行，避免阻塞 UI
+    setTimeout(() => {
+      try {
+        const result = generateStressData((current, total, msg) => {
+          wx.showLoading({ title: `${current}/${total}`, mask: true });
+        });
+
+        wx.hideLoading();
+
+        // 构建结果摘要
+        let stageSummary = '';
+        for (const name in result.stageStats) {
+          const s = result.stageStats[name];
+          stageSummary += `${name}: ${s.days}天 ${s.records}条 ${s.hours}h\n`;
+        }
+
+        wx.showModal({
+          title: '生成完成',
+          content: `总天数: ${result.totalDays}\n总记录: ${result.totalRecords}条\n总时长: ${result.totalHours}h\n已读完: ${result.totalReadCounts}次\n\n${stageSummary}`,
+          showCancel: false,
+          confirmText: '确定'
+        });
+
+        this.loadStats();
+        this.loadCurrentStage();
+
+        const app = getApp();
+        if (app) {
+          app.globalData.checkinDirty = true;
+        }
+      } catch (e) {
+        wx.hideLoading();
+        console.error('压力测试失败', e);
+        wx.showModal({
+          title: '生成失败',
+          content: e.message || '未知错误',
+          showCancel: false
+        });
+      }
+    }, 100);
   }
 });

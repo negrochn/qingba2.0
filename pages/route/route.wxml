@@ -23,6 +23,7 @@
             <text class="stage-name">{{item.stage_name}}</text>
             <text class="stage-phase">{{item.target_phase}}</text>
             <view class="stage-lock-tag" wx:if="{{index > currentStageIndex && currentStageIndex >= 0}}">🔒 未解锁</view>
+            <view class="stage-done-tag" wx:if="{{index < currentStageIndex && currentStageIndex >= 0}}">✓ 已完成</view>
           </view>
           <text class="stage-arrow">›</text>
         </view>

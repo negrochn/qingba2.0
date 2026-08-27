@@ -65,6 +65,23 @@
     </view>
   </view>
 
+  <!-- 开发者工具（压力测试） -->
+  <view class="card">
+    <view class="card-head">
+      <view class="card-accent"></view>
+      <view class="card-title">开发者工具</view>
+    </view>
+
+    <view class="action-item" bindtap="onStressTest">
+      <view class="action-icon">🧪</view>
+      <view class="action-info">
+        <view class="action-title">生成测试数据</view>
+        <view class="action-desc">从2021年6月至今，生成模拟打卡记录</view>
+      </view>
+      <view class="action-arrow">›</view>
+    </view>
+  </view>
+
   <!-- 关于版本 -->
   <view class="card">
     <view class="card-head">

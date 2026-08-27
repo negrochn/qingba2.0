@@ -151,47 +151,47 @@ Page({
   },
 
   _renderChart(data, periodType) {
-    const sysInfo = wx.getSystemInfoSync();
-    const windowWidth = sysInfo.windowWidth;
-    // 图表高度（px）
-    const chartHeight = 200;
+    // 获取 canvas 真实显示尺寸（受卡片 margin/padding 影响，小于 windowWidth）
+    // 必须按实际尺寸渲染，否则右侧被裁剪，最后一根柱子显示不全
+    const query = wx.createSelectorQuery().in(this);
+    query.select('.chart-canvas').boundingClientRect(rect => {
+      const sysInfo = wx.getSystemInfoSync();
+      const chartWidth = (rect && rect.width) || sysInfo.windowWidth;
+      const chartHeight = (rect && rect.height) || 200;
 
-    // categories 和 series data
-    const categories = data.map(d => d.label);
-    const seriesData = data.map(d => +(d.minutes / 60).toFixed(2));
+      // 如果已存在图表实例，先销毁
+      this.chart = null;
 
-    // 如果已存在图表实例，先销毁
-    this.chart = null;
-
-    this.chart = new wxCharts({
-      canvasId: 'statsChart',
-      type: 'column',
-      categories: categories,
-      series: [{
-        name: '时长',
-        data: seriesData,
-        color: '#4a90d9'
-      }],
-      yAxis: {
-        format: function (val) {
-          return val.toFixed(1) + 'h';
-        }
-      },
-      xAxis: {
-        disableGrid: true
-      },
-      enableScroll: periodType !== 'week',
-      extra: {
-        column: {
-          width: 28
-        }
-      },
-      width: windowWidth,
-      height: chartHeight,
-      dataLabel: true,
-      legend: false,
-      animation: true
-    });
+      this.chart = new wxCharts({
+        canvasId: 'statsChart',
+        type: 'column',
+        categories: data.map(d => d.label),
+        series: [{
+          name: '时长',
+          data: data.map(d => +(d.minutes / 60).toFixed(2)),
+          color: '#4a90d9'
+        }],
+        yAxis: {
+          format: function (val) {
+            return val.toFixed(1) + 'h';
+          }
+        },
+        xAxis: {
+          disableGrid: true
+        },
+        enableScroll: periodType !== 'week',
+        extra: {
+          column: {
+            width: 28
+          }
+        },
+        width: chartWidth,
+        height: chartHeight,
+        dataLabel: true,
+        legend: false,
+        animation: true
+      });
+    }).exec();
   },
 
   _getMonday(now, offset) {
