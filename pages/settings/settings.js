@@ -127,7 +127,7 @@ Page({
       // 生成文件名
       const now = new Date();
       const pad = (n) => String(n).padStart(2, '0');
-      const fileName = `qingba_backup_${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.json`;
+      const fileName = `qingba_backup_${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.txt`;
 
       // 写入临时文件
       const fs = wx.getFileSystemManager();
@@ -138,22 +138,8 @@ Page({
         data: json,
         encoding: 'utf8',
         success: () => {
-          // 打开文件，让用户保存/分享
-          wx.openDocument({
-            filePath,
-            fileType: 'json',
-            showMenu: true,
-            success: () => {
-              wx.showToast({
-                title: '备份成功',
-                icon: 'success'
-              });
-            },
-            fail: () => {
-              // openDocument 失败时，尝试分享
-              this.shareFile(filePath, fileName);
-            }
-          });
+          // 直接转发给好友（或文件传输助手）
+          this.shareFile(filePath, fileName);
         },
         fail: (err) => {
           console.error('写入文件失败', err);
@@ -172,35 +158,84 @@ Page({
     }
   },
 
-  // 分享文件（作为备选方案）
+  // 转发文件给好友
   shareFile(filePath, fileName) {
     if (wx.shareFileMessage) {
       wx.shareFileMessage({
         filePath,
         fileName,
-        fail: () => {
+        success: () => {
+          wx.showToast({
+            title: '备份已发送',
+            icon: 'success'
+          });
+        },
+        fail: (err) => {
+          console.error('shareFileMessage fail', err);
+          // 转发失败时，回退到复制到剪贴板
           wx.showModal({
-            title: '备份文件已生成',
-            content: `文件已保存至：${filePath}\n请通过文件管理器分享`,
-            showCancel: false
+            title: '转发失败',
+            content: '无法直接转发文件，是否复制备份内容到剪贴板？粘贴到聊天即可保存。',
+            confirmText: '复制',
+            cancelText: '取消',
+            success: (res) => {
+              if (res.confirm) {
+                this._copyBackupToClipboard(filePath);
+              }
+            }
           });
         }
       });
     } else {
+      // 不支持转发API，直接复制到剪贴板
       wx.showModal({
-        title: '备份文件已生成',
-        content: `文件已保存至：${filePath}\n请通过文件管理器分享`,
-        showCancel: false
+        title: '复制备份',
+        content: '当前微信版本不支持文件转发，将备份内容复制到剪贴板，粘贴到聊天即可保存。',
+        confirmText: '复制',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            this._copyBackupToClipboard(filePath);
+          }
+        }
       });
     }
   },
 
-  // ===== 导入（从JSON文件） =====
+  // 复制备份内容到剪贴板（备选方案）
+  _copyBackupToClipboard(filePath) {
+    const fs = wx.getFileSystemManager();
+    fs.readFile({
+      filePath,
+      encoding: 'utf8',
+      success: (res) => {
+        wx.setClipboardData({
+          data: res.data,
+          success: () => {
+            wx.showModal({
+              title: '已复制',
+              content: '备份内容已复制到剪贴板，打开微信聊天粘贴即可保存。',
+              showCancel: false,
+              confirmText: '我知道了'
+            });
+          }
+        });
+      },
+      fail: () => {
+        wx.showToast({
+          title: '读取文件失败',
+          icon: 'none'
+        });
+      }
+    });
+  },
+
+  // ===== 导入（从备份文件） =====
   onImport() {
     wx.chooseMessageFile({
       count: 1,
       type: 'file',
-      extension: ['json'],
+      extension: ['txt', 'json'],
       success: (res) => {
         const file = res.tempFiles[0];
         this.readAndImport(file.path);

@@ -214,3 +214,16 @@ page {
 .para-sm:last-child {
   margin-bottom: 0;
 }
+
+/* ===== 声明条 ===== */
+.disclaimer {
+  margin: 0 28rpx 24rpx;
+  background: #eef6ff;
+  border: 2rpx solid #cfe4fb;
+  border-radius: 14rpx;
+  padding: 18rpx 22rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #4a6b8a;
+  text-align: justify;
+}

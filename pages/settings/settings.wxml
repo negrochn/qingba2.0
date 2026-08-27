@@ -38,7 +38,7 @@
       <view class="action-icon backup">📤</view>
       <view class="action-info">
         <view class="action-title">导出备份</view>
-        <view class="action-desc">生成 JSON 文件，保存到本地或分享给好友</view>
+        <view class="action-desc">生成备份文件，转发给好友或复制到剪贴板</view>
       </view>
       <view class="action-arrow">›</view>
     </view>
@@ -48,7 +48,7 @@
       <view class="action-icon import">📥</view>
       <view class="action-info">
         <view class="action-title">导入备份</view>
-        <view class="action-desc">从微信聊天记录中选择 JSON 文件</view>
+        <view class="action-desc">从微信聊天记录中选择备份文件</view>
       </view>
       <view class="action-arrow">›</view>
     </view>

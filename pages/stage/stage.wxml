@@ -125,7 +125,6 @@
             placeholder="请输入"
             value="{{durationInput}}"
             bindinput="onDurationInput"
-            focus="{{showCheckin}}"
           />
           <text class="ci-form-unit">分钟</text>
         </view>
