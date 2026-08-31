@@ -54,12 +54,6 @@
 - **文件操作**：wx.getFileSystemManager / wx.shareFileMessage
 - **剪贴板**：wx.setClipboardData（备份内容复制）
 
-## 打赏支持
-
-如果这个项目对你有所帮助，欢迎打赏支持，感谢鼓励！
-
-![微信收款码](assets/donate/wechat-donate.jpg)
-
 ## 项目结构
 
 ```
@@ -110,3 +104,9 @@
 ## 许可
 
 本项目仅供学习交流使用。
+
+## 打赏支持
+
+如果这个项目对你有所帮助，欢迎打赏支持，感谢鼓励！
+
+![微信收款码](assets/donate/wechat-donate.jpg)
