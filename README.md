@@ -54,6 +54,12 @@
 - **文件操作**：wx.getFileSystemManager / wx.shareFileMessage
 - **剪贴板**：wx.setClipboardData（备份内容复制）
 
+## 打赏支持
+
+如果这个项目对你有所帮助，欢迎打赏支持，感谢鼓励！
+
+![微信收款码](assets/donate/wechat-donate.jpg)
+
 ## 项目结构
 
 ```
@@ -74,6 +80,8 @@
 │   └── stress-test.js        # 数据体检（测试/工具）
 ├── images/
 │   └── tabbar/               # tabBar 图标
+├── assets/
+│   └── donate/               # 打赏收款码
 └── qingba_listening_route.json  # 路线原始数据
 ```
 
