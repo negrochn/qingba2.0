@@ -1,0 +1,79 @@
+<view class="container">
+  <view class="record-section" wx:if="{{records.length > 0}}">
+    <view class="section-head">
+      <text class="section-title">打卡记录</text>
+      <view class="overview-right">
+        <text class="overview-year">{{yearText}}</text>
+        <view class="overview-picker" bindtap="onToggleMonthPicker">
+          <text class="overview-month">{{monthDisplay}}</text>
+          <text class="overview-arrow {{monthPickerOpen ? 'up' : ''}}">▾</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="record-list">
+      <block wx:for="{{records}}" wx:key="id" wx:for-item="r" wx:for-index="idx">
+        <view
+          class="swipe-wrap"
+          data-idx="{{idx}}"
+          bindtouchstart="onTouchStart"
+          bindtouchmove="onTouchMove"
+          bindtouchend="onTouchEnd"
+        >
+          <view class="swipe-bg">
+            <view
+              class="swipe-del"
+              catchtap="deleteRecord"
+              data-id="{{r.id}}"
+            >删除</view>
+          </view>
+          <view
+            class="swipe-fg record-row"
+            style="transform: translateX({{r._dx}}rpx); transition: {{r._anim ? 'transform 0.25s ease' : 'none'}};"
+          >
+            <view class="record-avatar">{{r.firstChar}}</view>
+            <view class="record-main">
+              <view class="record-line1">
+                <text class="record-res-name">{{r.resourceName}}</text>
+                <text class="record-date">{{r.dateText}}</text>
+              </view>
+              <view class="record-line2">
+                <view class="record-tags">
+                  <text class="tag-stage">{{r.stageName}}</text>
+                  <text class="tag-group tag-group-{{r.groupKey}}">{{r.groupLabel}}</text>
+                  <text class="record-remark" wx:if="{{r.remark}}">{{r.remark}}</text>
+                </view>
+                <view class="record-duration">{{r.durationText}}</view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <view class="empty-wrap" wx:else>
+    <view class="empty-icon">📖</view>
+    <view class="empty-text">本月暂无打卡记录</view>
+    <view class="empty-hint">在「路线」中点击资源即可开始打卡</view>
+  </view>
+</view>
+
+<!-- 简易月份选择器弹层 -->
+<view class="mp-mask {{monthPickerOpen ? 'show' : ''}}" bindtap="onCloseMonthPicker" wx:if="{{monthPickerOpen}}">
+  <view class="mp-sheet" catchtap="">
+    <view class="mp-title">选择月份</view>
+    <picker-view indicator-style="height: 80rpx;" class="mp-pv" value="{{pickerValue}}" bindchange="onPickerChange">
+      <picker-view-column>
+        <view wx:for="{{yearRange}}" wx:key="*this" class="mp-item">{{item}}年</view>
+      </picker-view-column>
+      <picker-view-column>
+        <view wx:for="{{monthRange}}" wx:key="*this" class="mp-item">{{item}}月</view>
+      </picker-view-column>
+    </picker-view>
+    <view class="mp-actions">
+      <button class="mp-btn mp-cancel" bindtap="onCloseMonthPicker">取消</button>
+      <button class="mp-btn mp-ok" bindtap="onConfirmMonthPicker">确定</button>
+    </view>
+  </view>
+</view>

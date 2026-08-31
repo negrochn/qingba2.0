@@ -1,7 +1,6 @@
 .menu {
   background: #fff;
   border-radius: 16rpx;
-  margin: 24rpx 0;
   overflow: hidden;
 }
 

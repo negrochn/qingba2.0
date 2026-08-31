@@ -1,7 +1,7 @@
 // 压力测试数据生成
 // 从指定日期到今天，逐级分阶段生成打卡记录
 const { routeData, resourceLabels } = require('./data.js')
-const { STORAGE_KEY, READ_COUNT_KEY, CURRENT_STAGE_KEY, saveAll } = require('./checkin.js')
+const { READ_COUNT_KEY, CURRENT_STAGE_KEY, saveAll } = require('./checkin.js')
 
 function genId() {
   return 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8)

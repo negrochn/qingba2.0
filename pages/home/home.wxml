@@ -1,62 +1,98 @@
 <view class="container">
 
-  <!-- 打卡概览：头部在外（与打卡记录同结构） -->
-  <view class="overview-section">
-    <view class="section-head">
-      <text class="section-title">打卡概览</text>
-      <view class="overview-right">
-        <text class="overview-year">{{yearText}}</text>
-        <view class="overview-picker" bindtap="onToggleMonthPicker">
-          <text class="overview-month">{{monthDisplay}}</text>
-          <text class="overview-arrow {{monthPickerOpen ? 'up' : ''}}">▾</text>
+  <!-- 阶段 Hero 卡 -->
+  <view class="hero-card">
+    <view class="hero-name-row">
+      <text class="hero-name">{{stageName || '未设置阶段'}}</text>
+      <text class="hero-badge" wx:if="{{stageDone}}">✓ 已达标</text>
+      <text class="hero-tag" wx:elif="{{stageName}}">当前阶段</text>
+    </view>
+    <view class="hero-desc" wx:if="{{stageDesc}}">{{stageDesc}}</view>
+    <block wx:if="{{hasTarget}}">
+      <view class="progress-track">
+        <view class="progress-fill" style="width: {{stagePercent}}%"></view>
+      </view>
+      <view class="progress-meta">
+        <text>{{stageHoursText}}h / {{targetHoursText}}</text>
+        <text>{{stagePercent}}%</text>
+      </view>
+    </block>
+    <view class="hero-hint" wx:if="{{!stageName}}">在「路线」页设置当前阶段后开始打卡</view>
+  </view>
+
+  <!-- 今日状态条 -->
+  <view class="today-card">
+    <view class="today-left">
+      <text class="today-label">今日</text>
+      <text class="today-num" wx:if="{{todayCount > 0}}">{{todayMinutesText}} · {{todayCount}}次打卡</text>
+      <text class="today-num today-empty" wx:else>今天还没打卡</text>
+    </view>
+    <view class="today-btn" bindtap="goRoute">去打卡</view>
+  </view>
+
+  <!-- 阶段统计 2×2（纯阶段口径） -->
+  <view class="section-head">
+    <text class="section-title">阶段统计</text>
+    <text class="section-count">{{stageName}}</text>
+  </view>
+  <view class="summary-card">
+    <view class="sum-grid">
+      <view class="sg-cell sg-tl">
+        <view class="sg-label">阶段累计</view>
+        <view class="sg-num">
+          <text class="sg-val">{{stageTotalHours}}</text>
+          <text class="sg-unit">h</text>
         </view>
       </view>
-    </view>
-
-    <view class="summary-card">
-      <!-- 4 指标 2×2 紧凑网格：本月 / 累计 / 常规X / 已读完次数 -->
-      <view class="sum-grid">
-        <view class="sg-cell sg-tl clickable" bindtap="goToStats" data-tab="0">
-          <view class="sg-label">本周</view>
-          <view class="sg-num">
-            <text class="sg-val">{{weekTotalHours}}</text>
-            <text class="sg-unit">h</text>
-          </view>
+      <view class="sg-cell sg-tr">
+        <view class="sg-label">已读完</view>
+        <view class="sg-num">
+          <text class="sg-val">{{stageReadCount}}</text>
+          <text class="sg-unit">次</text>
         </view>
-        <view class="sg-cell sg-tr clickable" bindtap="goToStats" data-tab="3">
-          <view class="sg-label">累计</view>
-          <view class="sg-num">
-            <text class="sg-val">{{totalHoursText}}</text>
-            <text class="sg-unit">h</text>
-          </view>
+      </view>
+      <view class="sg-cell sg-bl">
+        <view class="sg-label">本周</view>
+        <view class="sg-num">
+          <text class="sg-val">{{stageWeekHours}}</text>
+          <text class="sg-unit">h</text>
         </view>
-        <view class="sg-cell sg-bl clickable" bindtap="goToStageStats">
-          <view class="sg-label">{{currentStageName || '未设置'}}</view>
-          <view class="sg-num">
-            <text class="sg-val">{{stageHours}}</text>
-            <text class="sg-unit">h</text>
-          </view>
-        </view>
-        <view class="sg-cell sg-br clickable" bindtap="goToReadingStats">
-          <view class="sg-label">已读完</view>
-          <view class="sg-num">
-            <text class="sg-val sg-read">{{stageReadCount}}</text>
-            <text class="sg-unit">次</text>
-          </view>
+      </view>
+      <view class="sg-cell sg-br">
+        <view class="sg-label">打卡天数</view>
+        <view class="sg-num">
+          <text class="sg-val">{{stageDaysCount}}</text>
+          <text class="sg-unit">天</text>
         </view>
       </view>
     </view>
   </view>
 
-  <!-- 记录列表（紧凑，无卡片包裹） -->
-  <view class="record-section" wx:if="{{records.length > 0}}">
-    <view class="section-head">
-      <text class="section-title">打卡记录</text>
-      <text class="section-count">共 {{records.length}} 条</text>
+  <!-- 分组时长分布 -->
+  <block wx:if="{{hasGroupData}}">
+    <view class="section-head group-head">
+      <text class="section-title">分组时长分布</text>
+      <text class="section-count">累计占比</text>
     </view>
+    <view class="group-card">
+      <view class="group-row" wx:for="{{groupBars}}" wx:key="key" wx:for-item="g">
+        <text class="group-label">{{g.label}}</text>
+        <view class="group-track">
+          <view class="group-fill" style="width: {{g.percent}}%"></view>
+        </view>
+        <text class="group-minutes">{{g.minutesText}}</text>
+      </view>
+    </view>
+  </block>
 
+  <!-- 今日打卡明细 -->
+  <block wx:if="{{todayRecords.length > 0}}">
+    <view class="section-head group-head">
+      <text class="section-title">今日打卡</text>
+      <text class="section-count">共 {{todayRecords.length}} 条</text>
+    </view>
     <view class="record-list">
-      <block wx:for="{{records}}" wx:key="id" wx:for-item="r" wx:for-index="idx">
+      <block wx:for="{{todayRecords}}" wx:key="id" wx:for-item="r" wx:for-index="idx">
         <view
           class="swipe-wrap"
           data-idx="{{idx}}"
@@ -79,46 +115,20 @@
             <view class="record-main">
               <view class="record-line1">
                 <text class="record-res-name">{{r.resourceName}}</text>
-                <text class="record-date">{{r.dateText}}</text>
+                <text class="record-duration">{{r.durationText}}</text>
               </view>
               <view class="record-line2">
                 <view class="record-tags">
-                  <text class="tag-stage">{{r.stageName}}</text>
                   <text class="tag-group tag-group-{{r.groupKey}}">{{r.groupLabel}}</text>
                   <text class="record-remark" wx:if="{{r.remark}}">{{r.remark}}</text>
                 </view>
-                <view class="record-duration">{{r.durationText}}</view>
+                <text class="record-date">{{r.timeText}}</text>
               </view>
             </view>
           </view>
         </view>
       </block>
     </view>
-  </view>
+  </block>
 
-  <view class="empty-wrap" wx:else>
-    <view class="empty-icon">📖</view>
-    <view class="empty-text">本月暂无打卡记录</view>
-    <view class="empty-hint">在「路线」中点击资源即可开始打卡</view>
-  </view>
-
-</view>
-
-<!-- 简易月份选择器弹层 -->
-<view class="mp-mask {{monthPickerOpen ? 'show' : ''}}" bindtap="onCloseMonthPicker" wx:if="{{monthPickerOpen}}">
-  <view class="mp-sheet" catchtap="">
-    <view class="mp-title">选择月份</view>
-    <picker-view indicator-style="height: 80rpx;" class="mp-pv" value="{{pickerValue}}" bindchange="onPickerChange">
-      <picker-view-column>
-        <view wx:for="{{yearRange}}" wx:key="*this" class="mp-item">{{item}}年</view>
-      </picker-view-column>
-      <picker-view-column>
-        <view wx:for="{{monthRange}}" wx:key="*this" class="mp-item">{{item}}月</view>
-      </picker-view-column>
-    </picker-view>
-    <view class="mp-actions">
-      <button class="mp-btn mp-cancel" bindtap="onCloseMonthPicker">取消</button>
-      <button class="mp-btn mp-ok" bindtap="onConfirmMonthPicker">确定</button>
-    </view>
-  </view>
 </view>

@@ -5,6 +5,11 @@
       <view class="menu-label">关于庆爸2.0</view>
       <view class="menu-arrow">›</view>
     </view>
+    <view class="menu-item" bindtap="goRecords">
+      <view class="menu-icon">📋</view>
+      <view class="menu-label">打卡记录</view>
+      <view class="menu-arrow">›</view>
+    </view>
     <view class="menu-item" bindtap="goSettings">
       <view class="menu-icon">⚙️</view>
       <view class="menu-label">设置</view>

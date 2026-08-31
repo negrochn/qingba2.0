@@ -186,7 +186,7 @@ const routeData = {
       "time_investment": "80-100H",
       "target_phase": "phase18+",
       "entry_requirement": "佩奇可初步裸听且常规1-6累计不低于400H",
-      "promotion_standard": "佩奇可裸听且常规1累计总投入不低于480H（小小优趣可不测，因为有科普词汇）",
+      "promotion_standard": "佩奇可裸听且从常规1累计总投入不低于480H（小小优趣可不测，因为有科普词汇）",
       "resources": {
         "main_picture_books": ["大红狗", "胖龙蓝蓝", "青蛙蟾蜍", "Frog and Friends", "女巫温妮（绘本版）", "心智麦田（庆爸精选35本）"],
         "main_graded_readers": ["牛津树L7", "培生启明星L7-8", "快乐瓢虫L4"],

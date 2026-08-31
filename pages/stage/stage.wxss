@@ -126,20 +126,22 @@
   align-items: center;
 }
 
-.res-head-accent {
-  width: 6rpx;
-  height: 38rpx;
-  border-radius: 3rpx;
-  background: linear-gradient(180deg, #4a90d9 0%, #6ab0f3 100%);
-  margin-right: 16rpx;
-  flex-shrink: 0;
+.res-hl-stage {
+  font-size: 30rpx;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
 }
 
-.res-hl-stage {
-  font-size: 34rpx;
-  font-weight: 800;
-  color: #153b72;
-  letter-spacing: 2rpx;
+.res-hl-stage::before {
+  content: "";
+  display: inline-block;
+  flex-shrink: 0;
+  width: 6rpx;
+  height: 28rpx;
+  background: #4a90d9;
+  border-radius: 3rpx;
+  margin-right: 12rpx;
 }
 
 .res-head-sub {
@@ -773,3 +775,303 @@
 }
 
 .ci-btn-ok:active { opacity: 0.88; }
+
+/* ====== 晋级卡片 ====== */
+.promote-card {
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 20rpx 24rpx 24rpx;
+  margin-bottom: 28rpx;
+  box-shadow: 0 4rpx 22rpx rgba(59, 99, 171, 0.08);
+  border: 2rpx solid #e8eef7;
+}
+
+.promote-progress {
+  margin: 8rpx 10rpx 16rpx;
+}
+
+.promote-progress-bar {
+  height: 12rpx;
+  background: #e3e8ee;
+  border-radius: 6rpx;
+  overflow: hidden;
+  margin-bottom: 10rpx;
+}
+
+.promote-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4a90d9 0%, #6ab0f3 100%);
+  border-radius: 6rpx;
+  transition: width 0.3s ease;
+}
+
+.promote-progress-fill-done {
+  background: linear-gradient(90deg, #52c41a 0%, #73d13d 100%);
+}
+
+.promote-progress-text {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 22rpx;
+}
+
+.promote-progress-hours {
+  color: #4a5870;
+  font-weight: 500;
+}
+
+.promote-progress-target {
+  color: #8c9aae;
+}
+
+.promote-status {
+  font-size: 22rpx;
+  color: #8c9aae;
+  margin: 0 10rpx 16rpx;
+}
+
+.promote-status-met {
+  color: #389e0d;
+  font-weight: 500;
+}
+
+.promote-btn {
+  height: 72rpx;
+  line-height: 72rpx;
+  text-align: center;
+  border-radius: 36rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  margin: 0 10rpx;
+}
+
+.promote-btn-active {
+  color: #fff;
+  background: linear-gradient(135deg, #4a90d9 0%, #6ab0f3 100%);
+}
+
+.promote-btn-active:active {
+  opacity: 0.88;
+}
+
+.promote-btn-disabled {
+  color: #b0b9c5;
+  background: #eef1f5;
+}
+
+/* ====== 晋级弹窗 ====== */
+.pm-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 1000;
+  pointer-events: none;
+  transition: background 0.2s ease;
+  display: flex;
+  align-items: flex-end;
+}
+
+.pm-mask-show {
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+}
+
+.pm-sheet {
+  width: 100%;
+  background: #fff;
+  border-top-left-radius: 24rpx;
+  border-top-right-radius: 24rpx;
+  padding: 16rpx 32rpx calc(env(safe-area-inset-bottom) + 32rpx);
+  box-sizing: border-box;
+  transform: translateY(100%);
+  transition: transform 0.25s ease;
+}
+
+.pm-mask-show .pm-sheet {
+  transform: translateY(0);
+}
+
+.pm-handle {
+  width: 72rpx;
+  height: 8rpx;
+  background: #e3e8ee;
+  border-radius: 4rpx;
+  margin: 8rpx auto 24rpx;
+}
+
+.pm-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.pm-title {
+  flex: 1;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1f4a84;
+}
+
+.pm-close {
+  width: 56rpx;
+  height: 56rpx;
+  line-height: 50rpx;
+  text-align: center;
+  font-size: 44rpx;
+  color: #aaa;
+  border-radius: 50%;
+}
+
+.pm-close:active {
+  background: #f3f4f6;
+  color: #555;
+}
+
+.pm-stage-info {
+  background: #f7f9fc;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.pm-stage-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 8rpx;
+}
+
+.pm-stage-tip {
+  font-size: 24rpx;
+  color: #8c9aae;
+  line-height: 1.5;
+}
+
+.pm-form {
+  background: #f7f9fc;
+  border-radius: 16rpx;
+  padding: 0 24rpx;
+  margin-bottom: 20rpx;
+}
+
+.pm-form-item {
+  display: flex;
+  align-items: center;
+  min-height: 96rpx;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #ececec;
+}
+
+.pm-form-item:last-child {
+  border-bottom: none;
+}
+
+.pm-form-label {
+  flex-shrink: 0;
+  font-size: 28rpx;
+  color: #333;
+  width: 160rpx;
+}
+
+.pm-form-value {
+  flex: 1;
+  text-align: right;
+  font-size: 28rpx;
+  color: #4a90d9;
+  font-weight: 500;
+}
+
+.pm-form-control {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12rpx;
+}
+
+.pm-num-input {
+  flex: 1;
+  text-align: right;
+  font-size: 34rpx;
+  color: #111;
+  font-weight: 500;
+  height: 64rpx;
+  padding: 0 16rpx;
+}
+
+.pm-form-unit {
+  flex-shrink: 0;
+  font-size: 26rpx;
+  color: #999;
+}
+
+.pm-quick-row {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 32rpx;
+}
+
+.pm-quick-btn {
+  height: 64rpx;
+  line-height: 64rpx;
+  padding: 0 28rpx;
+  text-align: center;
+  background: #eef4fd;
+  color: #4a90d9;
+  font-size: 26rpx;
+  border-radius: 12rpx;
+  font-weight: 500;
+}
+
+.pm-quick-btn:active {
+  background: #dce8f7;
+}
+
+.pm-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pm-btn {
+  width: 46%;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 44rpx;
+  font-size: 30rpx;
+  border: none;
+  text-align: center;
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  padding: 0 !important;
+}
+
+.pm-btn::after {
+  border: none;
+}
+
+.pm-btn-cancel {
+  background: #f2f4f7;
+  color: #556;
+  margin-right: 4%;
+}
+
+.pm-btn-cancel:active {
+  background: #e0e3e8;
+}
+
+.pm-btn-ok {
+  background: linear-gradient(135deg, #4a90d9 0%, #6ab0f3 100%);
+  color: #fff;
+  font-weight: 600;
+}
+
+.pm-btn-ok:active {
+  opacity: 0.88;
+}

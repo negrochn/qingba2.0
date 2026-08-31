@@ -3,7 +3,6 @@
   <view class="res-wrap" wx:if="{{resourceGroups.length}}">
     <view class="res-head">
       <view class="res-head-left">
-        <view class="res-head-accent"></view>
         <view class="res-hl-stage">{{stage.stage_name}}</view>
       </view>
       <view class="res-head-sub">
@@ -83,7 +82,6 @@
   <view class="card key-point-card" wx:if="{{stage.key_points.length}}">
     <view class="res-head">
       <view class="res-head-left">
-        <view class="res-head-accent"></view>
         <view class="res-hl-stage">关键要点</view>
       </view>
       <view class="res-head-sub">
@@ -105,6 +103,90 @@
           <view class="kp-tag kp-tag-hi" wx:if="{{item.highlighted}}">重要</view>
         </view>
       </view>
+    </view>
+  </view>
+
+  <!-- 晋级卡片（仅当前常规阶段展示） -->
+  <view class="card promote-card" wx:if="{{canPromote}}">
+    <view class="res-head">
+      <view class="res-head-left">
+        <view class="res-hl-stage">阶段晋级</view>
+      </view>
+      <view class="res-head-sub">
+        <text class="res-hl-text">当前阶段</text>
+        <text class="res-hl-bold">{{stage.stage_name}}</text>
+        <text class="res-hl-text">时间达标后可晋级下一阶段</text>
+      </view>
+    </view>
+    <view class="res-divider"></view>
+
+    <view class="promote-progress">
+      <view class="promote-progress-bar">
+        <view class="promote-progress-fill {{timeMet ? 'promote-progress-fill-done' : ''}}" style="width: {{progressPercent}}%;"></view>
+      </view>
+      <view class="promote-progress-text">
+        <text class="promote-progress-hours">{{requiredType === 'accumulated' ? '常规1-6累计已投入' : '已投入'}} {{investedHoursText}}h</text>
+        <text class="promote-progress-target" wx:if="{{requiredHours}}">目标 {{requiredHours}}h</text>
+      </view>
+    </view>
+
+    <view class="promote-status {{timeMet ? 'promote-status-met' : ''}}">
+      <text wx:if="{{timeMet}}">✓ 时间投入已达标</text>
+      <text wx:else>时间投入未达标，继续加油</text>
+    </view>
+
+    <view
+      class="promote-btn {{promoteEnabled ? 'promote-btn-active' : 'promote-btn-disabled'}}"
+      bindtap="onPromoteTap"
+    >
+      <text wx:if="{{promoteEnabled}}">申请晋级</text>
+      <text wx:else>时间不足，暂不可晋级</text>
+    </view>
+  </view>
+</view>
+
+<!-- 小小优趣测试结果弹窗 -->
+<view class="pm-mask {{showPromoteModal ? 'pm-mask-show' : ''}}" bindtap="closePromoteModal" catchtouchmove="noop">
+  <view class="pm-sheet" catchtap="noop" catchtouchmove="noop">
+    <view class="pm-handle"></view>
+
+    <view class="pm-head">
+      <view class="pm-title">晋级测试校验</view>
+      <view class="pm-close" catchtap="closePromoteModal">×</view>
+    </view>
+
+    <view class="pm-stage-info">
+      <view class="pm-stage-name">{{stage.stage_name}}</view>
+      <view class="pm-stage-tip">开启小小优趣成长计划后，晋级需测试结果达标</view>
+    </view>
+
+    <view class="pm-form">
+      <view class="pm-form-item">
+        <text class="pm-form-label">晋级要求</text>
+        <view class="pm-form-value">稳定 {{promoteTargetPhaseText}}</view>
+      </view>
+      <view class="pm-form-item">
+        <text class="pm-form-label">测试结果</text>
+        <view class="pm-form-control">
+          <input
+            class="pm-num-input"
+            type="number"
+            placeholder="请输入 phase 数字"
+            value="{{youquTestInput}}"
+            bindinput="onYouquTestInput"
+          />
+          <text class="pm-form-unit">phase</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="pm-quick-row">
+      <view class="pm-quick-btn" data-val="{{promoteTargetPhase}}" bindtap="quickYouquPhase">{{promoteTargetPhaseText}}</view>
+    </view>
+
+    <view class="pm-actions">
+      <button class="pm-btn pm-btn-cancel" bindtap="closePromoteModal">取消</button>
+      <button class="pm-btn pm-btn-ok" bindtap="submitPromote">确认晋级</button>
     </view>
   </view>
 </view>

@@ -3,12 +3,10 @@
     "pages/home/home",
     "pages/route/route",
     "pages/mine/mine",
+    "pages/records/records",
     "pages/stage/stage",
     "pages/about/about",
-    "pages/settings/settings",
-    "pages/stats/stats",
-    "pages/stage-stats/stage-stats",
-    "pages/reading-stats/reading-stats"
+    "pages/settings/settings"
   ],
   "window": {
     "backgroundTextStyle": "dark",

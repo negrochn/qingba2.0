@@ -13,6 +13,49 @@ const CLICKABLE_GROUPS = [
   'fusion_apps'           // 融合APP
 ]
 
+// 解析目标时长: '60-80H' -> {min:60,max:80}，'60H' -> {min:60,max:60}
+function parseTargetHours(text) {
+  if (!text) return null
+  const range = text.match(/(\d+)\s*-\s*(\d+)/)
+  if (range) return { min: +range[1], max: +range[2] }
+  const single = text.match(/(\d+)/)
+  if (single) return { min: +single[1], max: +single[1] }
+  return null
+}
+
+// 从 phase 字符串中提取数字，如 'phase5' -> 5
+function parsePhaseNumber(text) {
+  if (!text) return 0
+  const m = String(text).match(/phase\s*(\d+)/i)
+  return m ? +m[1] : 0
+}
+
+// 是否为常规阶段
+function isRegularStage(stageId) {
+  return /^regular_\d+$/.test(stageId)
+}
+
+// 解析阶段晋级所需时长（小时）
+// 优先从 promotion_standard 中提取；涉及“累计”时返回累计小时
+function getRequiredHours(stage) {
+  const standard = stage.promotion_standard || ''
+  // 累计投入时间，如“常规1-6累计投入时间不低于400H”
+  const accumulated = standard.match(/累计.*?投入.*?不低于\s*(\d+)\s*[Hh]/)
+  if (accumulated) {
+    return { type: 'accumulated', hours: +accumulated[1] }
+  }
+  const total = standard.match(/累计总投入.*?不低于\s*(\d+)\s*[Hh]/)
+  if (total) {
+    return { type: 'accumulated', hours: +total[1] }
+  }
+  // 普通时间要求，回退到 time_investment
+  const target = parseTargetHours(stage.time_investment)
+  if (target) {
+    return { type: 'stage', hours: target.min }
+  }
+  return { type: 'stage', hours: 0 }
+}
+
 Page({
   data: {
     stage: null,
@@ -42,7 +85,20 @@ Page({
     currentReadCount: 0,  // 当前资源已读次数
     // 资源今日累计打卡(展示徽标用) { "groupKey|资源名": 分钟 }
     resTotals: {},
-    readCounts: {}
+    readCounts: {},
+    // 晋级信息
+    canPromote: false,
+    promoteEnabled: false,
+    requiredHours: 0,
+    requiredType: 'stage',
+    investedHoursText: '0',
+    timeMet: false,
+    progressPercent: 0,
+    // 晋级弹窗
+    showPromoteModal: false,
+    promoteTargetPhase: 0,
+    promoteTargetPhaseText: '',
+    youquTestInput: ''
   },
 
   onLoad(options) {
@@ -85,6 +141,7 @@ Page({
     this.setData({ stage, stageIndex: index, stageLocked, stageStatus, resourceGroups: groups })
     this._refreshResTotals()
     this._refreshReadCounts()
+    this._refreshPromoteInfo()
   },
 
   onShow() {
@@ -103,7 +160,156 @@ Page({
       this.setData({ stageLocked, stageStatus })
       this._refreshResTotals()
       this._refreshReadCounts()
+      this._refreshPromoteInfo()
     }
+  },
+
+  // 刷新晋级信息：当前常规阶段展示进度与晋级入口
+  _refreshPromoteInfo() {
+    const stage = this.data.stage
+    if (!stage) return
+
+    const isRegular = isRegularStage(stage.stage_id)
+    const isCurrent = this.data.stageStatus === 'current'
+    const required = getRequiredHours(stage)
+
+    let minutes = 0
+    if (required.type === 'accumulated') {
+      minutes = checkin.getAccumulatedMinutes(stage.stage_id)
+    } else {
+      minutes = checkin.getStageMinutes(stage.stage_id)
+    }
+    const hours = minutes / 60
+    const timeMet = required.hours > 0 ? hours >= required.hours : false
+    const progressPercent = required.hours > 0 ? Math.min(100, Math.round(hours / required.hours * 100)) : 0
+    const targetPhaseNum = parsePhaseNumber(stage.target_phase)
+
+    this.setData({
+      canPromote: isRegular && isCurrent,
+      promoteEnabled: isRegular && isCurrent && timeMet,
+      requiredHours: required.hours,
+      requiredType: required.type,
+      investedHoursText: `${(+hours).toFixed(1)}`.replace(/\.0$/, ''),
+      timeMet,
+      progressPercent,
+      promoteTargetPhase: targetPhaseNum,
+      promoteTargetPhaseText: targetPhaseNum ? `phase${targetPhaseNum}` : ''
+    })
+  },
+
+  // 点击晋级按钮
+  onPromoteTap() {
+    const stage = this.data.stage
+    if (!stage || !this.data.promoteEnabled) return
+
+    const youquEnabled = checkin.isYouquPlanEnabled()
+    if (youquEnabled && this.data.promoteTargetPhase > 0) {
+      // 开启小小优趣成长计划：需输入测试结果
+      this.setData({
+        showPromoteModal: true,
+        youquTestInput: ''
+      })
+    } else {
+      // 未开启：直接确认晋级
+      wx.showModal({
+        title: '确认晋级',
+        content: `${stage.stage_name} 时间投入已达标，确认晋级到下一阶段？`,
+        confirmText: '晋级',
+        cancelText: '取消',
+        confirmColor: '#4a90d9',
+        success: (res) => {
+          if (res.confirm) {
+            this.doPromote()
+          }
+        }
+      })
+    }
+  },
+
+  // 关闭晋级弹窗
+  closePromoteModal() {
+    this.setData({
+      showPromoteModal: false,
+      youquTestInput: ''
+    })
+  },
+
+  // 输入测试结果
+  onYouquTestInput(e) {
+    this.setData({ youquTestInput: e.detail.value })
+  },
+
+  // 快捷输入目标 phase
+  quickYouquPhase(e) {
+    const { val } = e.currentTarget.dataset
+    this.setData({ youquTestInput: String(val) })
+  },
+
+  // 提交晋级（含测试结果校验）
+  submitPromote() {
+    const stage = this.data.stage
+    if (!stage) return
+
+    const raw = String(this.data.youquTestInput || '').trim()
+    if (!raw) {
+      wx.showToast({ title: '请输入测试结果', icon: 'none' })
+      return
+    }
+    // 兼容 'phase5' 或 '5' 两种输入
+    const testPhase = parsePhaseNumber(raw) || Number(raw)
+    if (!isFinite(testPhase) || testPhase <= 0 || !Number.isInteger(testPhase)) {
+      wx.showToast({ title: '请输入有效 phase 整数', icon: 'none' })
+      return
+    }
+
+    if (testPhase < this.data.promoteTargetPhase) {
+      wx.showModal({
+        title: '测试结果未达标',
+        content: `${stage.stage_name} 晋级要求稳定达到 ${this.data.promoteTargetPhaseText}，当前测试结果 phase${testPhase} 未达标，建议继续积累后再晋级。`,
+        showCancel: false,
+        confirmText: '知道了',
+        confirmColor: '#4a90d9'
+      })
+      return
+    }
+
+    this.closePromoteModal()
+    this.doPromote()
+  },
+
+  // 执行晋级
+  doPromote() {
+    const stage = this.data.stage
+    const nextIndex = this.data.stageIndex + 1
+    if (nextIndex >= routeData.stages.length) {
+      wx.showToast({ title: '已是最后阶段', icon: 'none' })
+      return
+    }
+
+    const nextStage = routeData.stages[nextIndex]
+    const stageData = {
+      id: nextStage.stage_id,
+      name: nextStage.stage_name,
+      targetPhase: nextStage.target_phase,
+      vocabularyTarget: nextStage.vocabulary_target,
+      timeInvestment: nextStage.time_investment
+    }
+
+    checkin.setCurrentStage(stageData)
+
+    // 通知首页数据已变更
+    try {
+      const app = getApp()
+      if (app && app.globalData) app.globalData.checkinDirty = true
+    } catch (e) {}
+
+    wx.showToast({
+      title: `已晋级：${nextStage.stage_name}`,
+      icon: 'success'
+    })
+
+    // 刷新本页状态（本阶段变为已完成，晋级入口消失）
+    this.onShow()
   },
 
   _refreshResTotals() {

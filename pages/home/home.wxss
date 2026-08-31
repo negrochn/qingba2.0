@@ -1,7 +1,9 @@
-/* 首页：方案A - 单卡式汇总 + 紧凑列表 */
+/* 首页：微信原生风格重构（扁平白卡 + 发丝分隔线 + 统一间距） */
 
 page {
   background: #f5f6f8;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 .container {
@@ -10,20 +12,7 @@ page {
   min-height: 100vh;
 }
 
-/* ===== 概览区 + 记录区（统一头部在外结构） ===== */
-.overview-section {
-  margin-bottom: 24rpx;
-}
-
-/* 卡片：头部移出后，内部仅保留2×2指标 */
-.summary-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
-  border-radius: 24rpx;
-  /* padding: 20rpx 12rpx; */
-  box-shadow: 0 6rpx 24rpx rgba(60, 90, 140, 0.06);
-}
-
-/* 两个区块共用的 section-head（左右两端对齐） */
+/* ===== 区块头 ===== */
 .section-head {
   display: flex;
   align-items: center;
@@ -31,9 +20,12 @@ page {
   padding: 0 8rpx 16rpx;
 }
 
+.group-head {
+  padding-top: 8rpx;
+}
+
 .section-title {
   font-size: 30rpx;
-  font-weight: 600;
   color: #1a1a1a;
 }
 
@@ -42,105 +34,179 @@ page {
   color: #999;
 }
 
-/* 打卡概览：头部右侧 — 年份 + 月份选择器 */
-.overview-right {
+/* ===== 阶段 Hero 卡 ===== */
+.hero-card {
+  background: linear-gradient(135deg, #4a90d9 0%, #6ab0f3 100%);
+  border-radius: 20rpx;
+  padding: 32rpx;
+  color: #fff;
+  margin-bottom: 24rpx;
+}
+
+.hero-name-row {
   display: flex;
   align-items: center;
-  gap: 12rpx;
+  gap: 16rpx;
 }
 
-.overview-year {
-  font-size: 24rpx;
-  color: #999;
+.hero-name {
+  font-size: 44rpx;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
-.overview-picker {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  padding: 8rpx 16rpx;
-  background: #f2f5fa;
-  border-radius: 24rpx;
-}
-
-.overview-month {
-  font-size: 26rpx;
-  color: #4a5568;
-  font-weight: 500;
-}
-
-.overview-arrow {
+.hero-tag,
+.hero-badge {
   font-size: 20rpx;
-  color: #888;
-  transition: transform 0.2s;
+  padding: 4rpx 14rpx;
+  border-radius: 20rpx;
+  flex-shrink: 0;
 }
 
-.overview-arrow.up {
-  transform: rotate(180deg);
+.hero-tag {
+  background: rgba(255, 255, 255, 0.2);
 }
 
-/* 4 指标 2×2 紧凑网格（副文字行删除 → 更紧凑） */
+.hero-badge {
+  background: rgba(255, 255, 255, 0.95);
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.hero-desc {
+  font-size: 24rpx;
+  opacity: 0.85;
+  margin-top: 12rpx;
+}
+
+.progress-track {
+  height: 16rpx;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 8rpx;
+  margin-top: 28rpx;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #fff;
+  border-radius: 8rpx;
+  transition: width 0.3s;
+}
+
+.progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  opacity: 0.9;
+}
+
+.hero-hint {
+  font-size: 24rpx;
+  opacity: 0.85;
+  margin-top: 16rpx;
+}
+
+/* ===== 今日状态条 ===== */
+.today-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 22rpx 28rpx;
+  margin-bottom: 24rpx;
+}
+
+.today-left {
+  display: flex;
+  align-items: baseline;
+  gap: 16rpx;
+}
+
+.today-label {
+  font-size: 26rpx;
+  color: #8a8f99;
+}
+
+.today-num {
+  font-size: 30rpx;
+  font-weight: 400;
+  color: #1a1a1a;
+  font-family: "DIN Alternate", -apple-system, Helvetica, Arial, sans-serif;
+}
+
+.today-empty {
+  color: #999;
+  font-weight: 400;
+  font-size: 26rpx;
+}
+
+.today-btn {
+  background: #4a90d9;
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 500;
+  padding: 12rpx 32rpx;
+  border-radius: 32rpx;
+}
+
+.today-btn:active {
+  opacity: 0.85;
+}
+
+/* ===== 阶段统计 2×2 网格（发丝分隔线，无渐变） ===== */
+.summary-card {
+  background: #fff;
+  border-radius: 20rpx;
+  margin-bottom: 24rpx;
+  overflow: hidden;
+}
+
 .sum-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
   background: #fff;
-  border-radius: 20rpx;
-  /* padding: 14rpx 0; */
-  row-gap: 10rpx;
 }
 
 .sg-cell {
   position: relative;
   text-align: center;
-  padding: 14rpx 12rpx;
+  padding: 28rpx 12rpx;
   box-sizing: border-box;
 }
 
-.sg-cell.clickable {
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.sg-cell.clickable:active {
-  opacity: 0.7;
-}
-
-/* 右列加左分隔线 */
+/* 右列加左侧发丝线 */
 .sg-tr::before,
 .sg-br::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 18%;
-  bottom: 18%;
+  top: 22%;
+  bottom: 22%;
   width: 1rpx;
-  background: linear-gradient(180deg, transparent 0%, #e5e9f0 30%, #e5e9f0 70%, transparent 100%);
+  background: #ebedf0;
 }
 
-/* 第二行（bl br）加顶部分隔线 */
+/* 第二行加顶部发丝线 */
 .sg-bl::after,
 .sg-br::after {
   content: '';
   position: absolute;
   top: 0;
-  left: 14%;
-  right: 14%;
+  left: 12%;
+  right: 12%;
   height: 1rpx;
-  background: linear-gradient(90deg, transparent 0%, #e5e9f0 30%, #e5e9f0 70%, transparent 100%);
-}
-
-/* 左下角、右下角：淡蓝→淡粉渐变底，突出阶段维度 */
-.sg-bl,
-.sg-br {
-  background: linear-gradient(135deg, rgba(106, 176, 243, 0.05) 0%, rgba(252, 190, 227, 0.06) 100%);
+  background: #ebedf0;
 }
 
 .sg-label {
-  font-size: 22rpx;
-  color: #8a8f99;
-  margin-bottom: 10rpx;
-  letter-spacing: 0.5rpx;
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 12rpx;
 }
 
 .sg-num {
@@ -151,56 +217,85 @@ page {
 }
 
 .sg-val {
-  font-size: 52rpx;
-  font-weight: 500;
+  font-size: 48rpx;
   color: #1a1a1a;
   line-height: 1.05;
-  font-family: 'DIN Alternate', -apple-system, Helvetica, Arial, sans-serif;
+  font-family: "DIN Alternate", -apple-system, Helvetica, Arial, sans-serif;
 }
 
 .sg-unit {
   font-size: 22rpx;
-  font-weight: 500;
-  color: #8a8f99;
-}
-
-.sg-read {
-  background: linear-gradient(135deg, #4a90d9 0%, #c13a8d 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-/* ===== 记录区 ===== */
-.record-section {
-  margin-bottom: 24rpx;
-}
-
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 8rpx 16rpx;
-}
-
-.section-title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.section-count {
-  font-size: 24rpx;
+  font-weight: 400;
   color: #999;
 }
 
+/* ===== 分组时长分布（纯 CSS 条形图） ===== */
+.group-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 8rpx 28rpx;
+  margin-bottom: 24rpx;
+}
+
+.group-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 0;
+}
+
+.group-row:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1rpx;
+  background: #ebedf0;
+}
+
+.group-label {
+  flex-shrink: 0;
+  width: 150rpx;
+  font-size: 24rpx;
+  color: #556;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.group-track {
+  flex: 1;
+  height: 14rpx;
+  background: #ebedf0;
+  border-radius: 7rpx;
+  overflow: hidden;
+}
+
+.group-fill {
+  height: 100%;
+  background: #4a90d9;
+  border-radius: 7rpx;
+}
+
+.group-minutes {
+  flex-shrink: 0;
+  width: 96rpx;
+  text-align: right;
+  font-size: 24rpx;
+  font-weight: 400;
+  color: #2a3a50;
+  font-family: "DIN Alternate", -apple-system, Helvetica, Arial, sans-serif;
+}
+
+/* ===== 今日打卡明细 ===== */
 .record-list {
   background: #fff;
   border-radius: 20rpx;
   overflow: hidden;
 }
 
-/* 滑动删除 */
 .swipe-wrap {
   position: relative;
   overflow: hidden;
@@ -213,11 +308,7 @@ page {
   right: 28rpx;
   bottom: 0;
   height: 1rpx;
-  background: #f0f2f5;
-}
-
-.record-row {
-  position: relative;
+  background: #ebedf0;
 }
 
 .swipe-bg {
@@ -239,7 +330,6 @@ page {
   align-items: center;
   justify-content: center;
   font-size: 28rpx;
-  font-weight: 500;
 }
 
 .swipe-fg {
@@ -248,8 +338,8 @@ page {
   z-index: 1;
 }
 
-/* 单行记录 */
 .record-row {
+  position: relative;
   display: flex;
   align-items: center;
   padding: 18rpx 28rpx;
@@ -258,13 +348,12 @@ page {
   box-sizing: border-box;
 }
 
-/* 首字小图标 */
 .record-avatar {
   flex-shrink: 0;
   width: 52rpx;
   height: 52rpx;
   border-radius: 12rpx;
-  background: linear-gradient(135deg, #5a9af0 0%, #7fb4f7 100%);
+  background: #4a90d9;
   color: #fff;
   font-size: 26rpx;
   font-weight: 500;
@@ -282,7 +371,6 @@ page {
   gap: 8rpx;
 }
 
-/* 第一行 */
 .record-line1 {
   display: flex;
   align-items: center;
@@ -292,7 +380,6 @@ page {
 
 .record-res-name {
   font-size: 28rpx;
-  font-weight: 500;
   color: #1a1a1a;
   overflow: hidden;
   white-space: nowrap;
@@ -300,13 +387,15 @@ page {
   max-width: 100%;
 }
 
-.record-date {
+.record-duration {
   flex-shrink: 0;
-  font-size: 22rpx;
-  color: #aaa;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #2a3a50;
+  font-family: "DIN Alternate", -apple-system, Helvetica, Arial, sans-serif;
+  line-height: 1;
 }
 
-/* 第二行 */
 .record-line2 {
   display: flex;
   align-items: center;
@@ -321,14 +410,6 @@ page {
   flex-wrap: wrap;
   flex: 1;
   min-width: 0;
-}
-
-.tag-stage {
-  font-size: 20rpx;
-  color: #7a5200;
-  background: #fff7e6;
-  padding: 2rpx 10rpx;
-  border-radius: 6rpx;
 }
 
 .tag-group {
@@ -348,6 +429,12 @@ page {
 .tag-group-fusion_apps { color: #531dab; background: #f5f0ff; }
 .tag-group-default { color: #888; background: #f5f5f5; }
 
+.record-date {
+  flex-shrink: 0;
+  font-size: 22rpx;
+  color: #aaa;
+}
+
 .record-remark {
   font-size: 20rpx;
   color: #52c41a;
@@ -357,120 +444,4 @@ page {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-.record-duration {
-  flex-shrink: 0;
-  font-size: 26rpx;
-  font-weight: 600;
-  color: #2a3a50;
-  font-family: 'DIN Alternate', -apple-system, Helvetica, Arial, sans-serif;
-  line-height: 1;
-  align-self: flex-end;
-  padding-bottom: 2rpx;
-}
-
-/* ===== 空状态 ===== */
-.empty-wrap {
-  padding: 120rpx 40rpx;
-  text-align: center;
-}
-
-.empty-icon {
-  font-size: 100rpx;
-  opacity: 0.6;
-  margin-bottom: 24rpx;
-}
-
-.empty-text {
-  font-size: 30rpx;
-  color: #666;
-  font-weight: 500;
-  margin-bottom: 12rpx;
-}
-
-.empty-hint {
-  font-size: 26rpx;
-  color: #aaa;
-}
-
-/* ===== 月份选择器弹层 ===== */
-.mp-mask {
-  position: fixed;
-  left: 0; right: 0; top: 0; bottom: 0;
-  background: rgba(0,0,0,0);
-  z-index: 2000;
-  pointer-events: none;
-  transition: background 0.2s;
-  display: flex;
-  align-items: flex-end;
-}
-
-.mp-mask.show {
-  background: rgba(0,0,0,0.45);
-  pointer-events: auto;
-}
-
-.mp-sheet {
-  width: 100%;
-  background: #fff;
-  border-top-left-radius: 24rpx;
-  border-top-right-radius: 24rpx;
-  padding: 24rpx 32rpx;
-  box-sizing: border-box;
-}
-
-.mp-title {
-  text-align: center;
-  font-size: 30rpx;
-  color: #333;
-  font-weight: 600;
-  margin-bottom: 16rpx;
-}
-
-.mp-pv {
-  width: 100%;
-  height: 400rpx;
-}
-
-.mp-item {
-  line-height: 80rpx;
-  text-align: center;
-  font-size: 30rpx;
-  color: #333;
-}
-
-.mp-actions {
-  display: flex;
-  justify-content: center;
-  gap: 20rpx;
-  margin-top: 16rpx;
-}
-
-.mp-btn {
-  width: 45%;
-  height: 80rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 40rpx;
-  font-size: 28rpx;
-  border: none;
-  padding: 0;
-  line-height: 1;
-}
-
-.mp-btn::after {
-  border: none;
-}
-
-.mp-cancel {
-  background: #f2f4f7;
-  color: #556;
-}
-
-.mp-ok {
-  background: linear-gradient(135deg, #4a90d9 0%, #6ab0f3 100%);
-  color: #fff;
-  font-weight: 600;
 }

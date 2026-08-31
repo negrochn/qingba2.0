@@ -1,61 +1,45 @@
 const checkin = require('../../utils/checkin.js')
+const data = require('../../utils/data.js')
 const app = getApp()
+
+// 小时数显示：去尾零（2.50 -> 2.5, 2.00 -> 2）
+function fmtHours(minutes) {
+  return (minutes / 60).toFixed(2).replace(/\.?0+$/, '') || '0'
+}
 
 // 删除按钮宽度（rpx），与样式保持一致
 const DELETE_W = 150
 
 Page({
   data: {
-    // Hero 总时长（整数部分.小数部分，单位 h）
-    heroHours: '0',
-    heroDecimal: '00',
-    // 三栏统计
-    totalCount: 0,
-    totalDays: 0,
-    totalHoursText: '0',
-    // 当前月
-    curYm: '',              // 'YYYY-MM'
-    monthDisplay: '',       // '8月'
-    yearText: '',           // '2026年'
-    monthTotalHours: '0.0', // '386.44' 格式
-    weekTotalHours: '0',
-    monthCount: 0,
-    monthDays: 0,
-    // 当前阶段
-    currentStageName: '',
-    stageHours: '0.00',
+    // 阶段 Hero 卡
+    stageName: '',
+    stageDesc: '',          // '目标 phase5 · 200-300词 · 60-80H'
+    stageHoursText: '0',    // 阶段已投入小时
+    targetHoursText: '',    // 目标下限小时，如 '60'
+    stagePercent: 0,        // 0-100
+    hasTarget: false,       // 能否解析目标时长
+    stageDone: false,       // 已达下限目标
+    // 今日状态条
+    todayMinutesText: '0m',
+    todayCount: 0,
+    // 阶段统计 2×2（纯阶段口径）
+    stageTotalHours: '0',
     stageReadCount: 0,
-    // 记录列表（扁平）
-    records: [],
-    // 月份选择器
-    monthPickerOpen: false,
-    yearRange: [],
-    monthRange: [],
-    pickerValue: [0, 0],
-    _pendingYear: 0,
-    _pendingMonth: 0,
-    // 滑动状态
+    stageWeekHours: '0',
+    stageDaysCount: 0,
+    // 分组时长分布
+    groupBars: [],
+    hasGroupData: false,
+    // 今日打卡明细
+    todayRecords: [],
+    // 滑动删除状态
     _touchStartX: 0,
     _touchStartY: 0,
     _curSwipeIdx: -1
   },
 
   onLoad() {
-    const now = new Date()
-    const curYm = this._toYm(now)
-
-    // 年份范围：今年 ±3
-    const y = now.getFullYear()
-    const yearRange = []
-    for (let i = y - 3; i <= y + 3; i++) yearRange.push(i)
-    const monthRange = []
-    for (let i = 1; i <= 12; i++) monthRange.push(i)
-
-    this.setData({
-      curYm,
-      yearRange,
-      monthRange
-    })
     this._refresh()
   },
 
@@ -71,163 +55,134 @@ Page({
     this._refresh(dirty)
   },
 
-  // 主刷新
+  // 主刷新：全部以「当前阶段」为口径聚合
   _refresh() {
-    const ym = this.data.curYm || this._toYm(new Date())
-    const [y, m] = ym.split('-').map(Number)
-
-    // ---- Hero：累计总时长 ----
-    const totalMin = checkin.totalMinutesAll()
-    const totalHoursFloat = totalMin / 60
-    const heroH = Math.floor(totalHoursFloat)
-    const heroDec = Math.round((totalHoursFloat - heroH) * 100)
-    const heroDecimal = heroDec < 10 ? `0${heroDec}` : `${heroDec}`
-
-    // ---- 三栏统计 ----
-    const totalCount = checkin.totalCountAll()
-    const totalDays = checkin.totalDaysAll()
-    // 总时长保留2位小数
-    const totalHoursText = totalHoursFloat.toFixed(2)
-
-    // ---- 本月 ----
-    const mTotalMin = checkin.monthTotalMinutes(ym)
-    const mHoursFloat = mTotalMin / 60
-    const mTotalHoursStr = mHoursFloat.toFixed(2).replace(/\.?0+$/, '') || '0'
-    const mCount = checkin.monthCheckinCount(ym)
-    const mDays = checkin.monthDaysCount(ym)
-
-    // ---- 本周 ----
-    const wTotalMin = checkin.weekTotalMinutes()
-    const wHoursFloat = wTotalMin / 60
-    const weekTotalHours = wHoursFloat.toFixed(2).replace(/\.?0+$/, '') || '0'
-
-    // ---- 当前阶段（常规X）时长 / 读完次数 ----
     const curStage = checkin.getCurrentStage()
-    let currentStageName = ''
-    let stageHours = '0.00'
-    let stageReadCount = 0
-    if (curStage) {
-      currentStageName = curStage.name || ''
-      const stageMin = checkin.totalMinutesByStage(curStage.id)
-      stageHours = (stageMin / 60).toFixed(2)
-      stageReadCount = checkin.totalReadCountByStage(curStage.id)
+    const stageId = curStage ? curStage.id : ''
+    const stageInfo = (data.routeData.stages || []).find(s => s.stage_id === stageId) || null
+
+    // ---- 阶段全部记录聚合（一次遍历） ----
+    const now = new Date()
+    const dayOfWeek = now.getDay()
+    const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+    const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday)
+    const weekStartStr = checkin.todayStr(monday)
+    const today = checkin.todayStr()
+
+    const all = checkin.getAll()
+    let stageMinutes = 0
+    let weekMinutes = 0
+    let todayMinutes = 0
+    let todayCount = 0
+    const daysSet = new Set()
+    const groupMinutes = {}
+    const groupLabels = {}
+    const todayRecords = []
+
+    for (const day in all) {
+      for (const r of all[day]) {
+        if (r.stageId !== stageId) continue
+        const min = r.durationMinutes || 0
+        stageMinutes += min
+        daysSet.add(day)
+        if (day >= weekStartStr) weekMinutes += min
+        if (r.groupKey) {
+          groupMinutes[r.groupKey] = (groupMinutes[r.groupKey] || 0) + min
+          if (!groupLabels[r.groupKey]) groupLabels[r.groupKey] = r.groupLabel || r.groupKey
+        }
+        if (day === today) {
+          todayMinutes += min
+          todayCount++
+          todayRecords.push(r)
+        }
+      }
+    }
+    todayRecords.sort((a, b) => b.timestamp - a.timestamp)
+
+    // ---- Hero：阶段信息 + 进度 ----
+    let stageName = curStage ? (curStage.name || '') : ''
+    let stageDesc = ''
+    if (stageInfo) {
+      stageName = stageInfo.stage_name
+      stageDesc = `目标 ${stageInfo.target_phase} · ${stageInfo.vocabulary_target} · ${stageInfo.time_investment}`
     }
 
-    // ---- 记录列表 ----
-    const monthRecords = checkin.getByMonth(ym)
-    // 时间倒序
-    monthRecords.sort((a, b) => b.timestamp - a.timestamp)
-    const records = monthRecords.map(r => ({
+    const target = this._parseTarget(stageInfo && stageInfo.time_investment)
+    let stagePercent = 0
+    let hasTarget = false
+    let stageDone = false
+    let targetHoursText = ''
+    if (target) {
+      hasTarget = true
+      targetHoursText = `${target.min}h`
+      const hours = stageMinutes / 60
+      stagePercent = Math.min(100, Math.round(hours / target.min * 100))
+      stageDone = hours >= target.min
+    }
+
+    // ---- 分组时长分布（按时长降序） ----
+    const groupKeys = Object.keys(groupMinutes).sort((a, b) => groupMinutes[b] - groupMinutes[a])
+    const maxGroupMin = groupKeys.length ? groupMinutes[groupKeys[0]] : 0
+    const groupBars = groupKeys.map(key => ({
+      key,
+      label: groupLabels[key] || key,
+      minutesText: checkin.fmtHoursDecimal(groupMinutes[key]),
+      percent: maxGroupMin ? Math.max(6, Math.round(groupMinutes[key] / maxGroupMin * 100)) : 0
+    }))
+
+    // ---- 今日打卡明细 ----
+    const todayList = todayRecords.map(r => ({
       id: r.id,
-      stageName: r.stageName,
+      resourceName: r.resourceName,
       groupKey: r.groupKey,
       groupLabel: r.groupLabel,
-      resourceName: r.resourceName,
       firstChar: (r.resourceName || '').trim().charAt(0) || '📖',
-      remark: r.remark || '',
       durationText: checkin.fmtMinutes(r.durationMinutes),
-      dateText: this._fmtDate(r.timestamp),
+      timeText: this._fmtTime(r.timestamp),
+      remark: r.remark || '',
       _dx: 0,
       _anim: false
     }))
 
-    const idx = this.data.yearRange.indexOf(y)
-    const pickerValue = [idx >= 0 ? idx : 0, m - 1]
-
     this.setData({
-      heroHours: String(heroH),
-      heroDecimal,
-      totalCount,
-      totalDays,
-      totalHoursText,
-      monthDisplay: `${m}月`,
-      yearText: `${y}年`,
-      monthTotalHours: mTotalHoursStr,
-      weekTotalHours,
-      monthCount: mCount,
-      monthDays: mDays,
-      currentStageName,
-      stageHours,
-      stageReadCount,
-      records,
-      pickerValue
+      stageName,
+      stageDesc,
+      stageHoursText: fmtHours(stageMinutes),
+      targetHoursText,
+      stagePercent,
+      hasTarget,
+      stageDone,
+      todayMinutesText: checkin.fmtMinutes(todayMinutes),
+      todayCount,
+      stageTotalHours: fmtHours(stageMinutes),
+      stageReadCount: checkin.totalReadCountByStage(stageId),
+      stageWeekHours: fmtHours(weekMinutes),
+      stageDaysCount: daysSet.size,
+      groupBars,
+      hasGroupData: groupBars.length > 0,
+      todayRecords: todayList
     })
   },
 
-  _toYm(d) {
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    return `${y}-${m}`
+  // 解析目标时长: '60-80H' -> {min:60,max:80}，'60H' -> {min:60,max:60}
+  _parseTarget(text) {
+    if (!text) return null
+    const range = text.match(/(\d+)\s*-\s*(\d+)/)
+    if (range) return { min: +range[1], max: +range[2] }
+    const single = text.match(/(\d+)/)
+    if (single) return { min: +single[1], max: +single[1] }
+    return null
   },
 
-  // 参考图风格：08/24 07:27
-  _fmtDate(ts) {
+  // 今日明细只显示时分: 07:27
+  _fmtTime(ts) {
     const d = new Date(ts)
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
     const hh = String(d.getHours()).padStart(2, '0')
     const mm = String(d.getMinutes()).padStart(2, '0')
-    return `${m}/${day} ${hh}:${mm}`
+    return `${hh}:${mm}`
   },
 
-  // ===== 月份选择器 =====
-  onToggleMonthPicker() {
-    const ym = this.data.curYm
-    const [y, m] = ym.split('-').map(Number)
-    const idx = this.data.yearRange.indexOf(y)
-    this.setData({
-      monthPickerOpen: true,
-      pickerValue: [idx >= 0 ? idx : 0, m - 1],
-      _pendingYear: y,
-      _pendingMonth: m
-    })
-  },
-
-  onCloseMonthPicker() {
-    this.setData({ monthPickerOpen: false })
-  },
-
-  onPickerChange(e) {
-    const val = e.detail.value // [yearIdx, monthIdx]
-    const y = this.data.yearRange[val[0]]
-    const m = this.data.monthRange[val[1]]
-    this.setData({ _pendingYear: y, _pendingMonth: m })
-  },
-
-  onConfirmMonthPicker() {
-    const y = this.data._pendingYear
-    const m = this.data._pendingMonth
-    const ym = `${y}-${String(m).padStart(2, '0')}`
-
-    // 不能超过当前月
-    const now = new Date()
-    const nowYm = this._toYm(now)
-    if (ym > nowYm) {
-      wx.showToast({ title: '不能选择未来月份', icon: 'none' })
-      return
-    }
-    this.setData({
-      curYm: ym,
-      monthPickerOpen: false
-    })
-    this._refresh()
-  },
-
-  // ===== 跳转统计页 =====
-  goToStats(e) {
-    const tab = e.currentTarget.dataset.tab || 0;
-    wx.navigateTo({ url: `/pages/stats/stats?tab=${tab}` });
-  },
-
-  goToStageStats() {
-    wx.navigateTo({ url: '/pages/stage-stats/stage-stats' });
-  },
-
-  goToReadingStats() {
-    wx.navigateTo({ url: '/pages/reading-stats/reading-stats' });
-  },
-
-  // ===== 滑动删除 =====
+  // ===== 今日打卡滑动删除（同记录页） =====
   _snapDx(dx) {
     if (dx <= -DELETE_W / 2) return -DELETE_W
     return 0
@@ -242,7 +197,7 @@ Page({
       _curSwipeIdx: idx
     })
     // 关闭其他已打开的
-    const records = this.data.records
+    const records = this.data.todayRecords
     let changed = false
     for (let i = 0; i < records.length; i++) {
       if (i !== idx && records[i]._dx !== 0) {
@@ -252,11 +207,11 @@ Page({
       }
     }
     if (changed) {
-      this.setData({ records })
+      this.setData({ todayRecords: records })
     }
     // 开始拖动：关闭动画
     records[idx]._anim = false
-    this.setData({ [`records[${idx}]`]: records[idx] })
+    this.setData({ [`todayRecords[${idx}]`]: records[idx] })
   },
 
   onTouchMove(e) {
@@ -265,27 +220,25 @@ Page({
     const t = e.touches[0]
     const dxPx = t.clientX - this.data._touchStartX
     // px → rpx (约 2 倍，简单换算)
-    const dxRpx = dxPx * 2
-    const prev = 0
-    let newDx = prev + dxRpx
+    let newDx = dxPx * 2
     if (newDx < -(DELETE_W + 20)) newDx = -(DELETE_W + 20)
     if (newDx > 10) newDx = 10
-    this.setData({ [`records[${idx}]._dx`]: newDx })
+    this.setData({ [`todayRecords[${idx}]._dx`]: newDx })
   },
 
   onTouchEnd() {
     const idx = this.data._curSwipeIdx
     if (idx < 0) return
-    const r = this.data.records[idx]
+    const r = this.data.todayRecords[idx]
     const targetDx = this._snapDx(r._dx)
     this.setData({
-      [`records[${idx}]._dx`]: targetDx,
-      [`records[${idx}]._anim`]: true,
+      [`todayRecords[${idx}]._dx`]: targetDx,
+      [`todayRecords[${idx}]._anim`]: true,
       _curSwipeIdx: -1
     })
   },
 
-  // 删除记录
+  // 删除今日打卡记录
   deleteRecord(e) {
     const { id } = e.currentTarget.dataset
     wx.showModal({
@@ -305,5 +258,10 @@ Page({
         this._refresh()
       }
     })
+  },
+
+  // ===== 跳转 =====
+  goRoute() {
+    wx.switchTab({ url: '/pages/route/route' })
   }
 })

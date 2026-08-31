@@ -3,7 +3,6 @@
   <!-- 打卡进度卡片 -->
   <view class="card">
     <view class="card-head">
-      <view class="card-accent"></view>
       <view class="card-title">打卡进度</view>
     </view>
 
@@ -24,12 +23,19 @@
     <view class="stage-preview empty" wx:else>
       请选择当前学习阶段
     </view>
+
+    <view class="switch-item">
+      <view class="switch-info">
+        <view class="picker-label">小小优趣成长计划</view>
+        <view class="switch-desc">开启后，常规阶段达标可解锁下一阶段</view>
+      </view>
+      <switch checked="{{youquEnabled}}" bindchange="onYouquPlanChange" color="#4a90d9" />
+    </view>
   </view>
 
   <!-- 数据管理卡片 -->
   <view class="card">
     <view class="card-head">
-      <view class="card-accent"></view>
       <view class="card-title">数据管理</view>
     </view>
 
@@ -68,7 +74,6 @@
   <!-- 开发者工具（压力测试）仅开发版显示 -->
   <view class="card" wx:if="{{showDevTools}}">
     <view class="card-head">
-      <view class="card-accent"></view>
       <view class="card-title">开发者工具</view>
     </view>
 
@@ -85,7 +90,6 @@
   <!-- 关于版本 -->
   <view class="card">
     <view class="card-head">
-      <view class="card-accent"></view>
       <view class="card-title">关于</view>
     </view>
 

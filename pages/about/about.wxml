@@ -11,7 +11,6 @@
   <!-- 01 路线介绍 -->
   <view class="chapter-card">
     <view class="chapter-head">
-      <view class="chapter-accent"></view>
       <view class="chapter-title">路线介绍</view>
     </view>
 
@@ -31,7 +30,6 @@
   <!-- 02 阶段标准 -->
   <view class="chapter-card">
     <view class="chapter-head">
-      <view class="chapter-accent"></view>
       <view class="chapter-title">阶段参考</view>
     </view>
 
@@ -78,7 +76,6 @@
   <!-- 03 使用说明 -->
   <view class="chapter-card">
     <view class="chapter-head">
-      <view class="chapter-accent"></view>
       <view class="chapter-title">使用说明</view>
     </view>
 

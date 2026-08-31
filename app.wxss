@@ -24,10 +24,8 @@ view, text {
 }
 
 .section-title {
-  font-size: 32rpx;
-  font-weight: 600;
+  font-size: 30rpx;
   color: #1a1a1a;
-  margin-bottom: 16rpx;
   display: flex;
   align-items: center;
 }
@@ -35,11 +33,11 @@ view, text {
 .section-title::before {
   content: "";
   display: inline-block;
-  width: 8rpx;
-  height: 32rpx;
+  width: 6rpx;
+  height: 28rpx;
   background: #4a90d9;
-  border-radius: 4rpx;
-  margin-right: 16rpx;
+  border-radius: 3rpx;
+  margin-right: 12rpx;
 }
 
 .tag {

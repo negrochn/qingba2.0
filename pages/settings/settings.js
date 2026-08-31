@@ -36,7 +36,8 @@ Page({
     showDevTools: false,
     currentStageIndex: -1,
     currentStage: null,
-    currentStageDisplay: ''
+    currentStageDisplay: '',
+    youquEnabled: false
   },
 
   onLoad() {
@@ -47,11 +48,29 @@ Page({
 
     this.loadStats();
     this.loadCurrentStage();
+    this.loadYouquPlan();
   },
 
   onShow() {
     this.loadStats();
     this.loadCurrentStage();
+    this.loadYouquPlan();
+  },
+
+  // 读取小小优趣成长计划开关
+  loadYouquPlan() {
+    this.setData({ youquEnabled: checkin.isYouquPlanEnabled() });
+  },
+
+  // 切换小小优趣成长计划开关
+  onYouquPlanChange(e) {
+    const enabled = !!e.detail.value;
+    checkin.setYouquPlanEnabled(enabled);
+    this.setData({ youquEnabled: enabled });
+    wx.showToast({
+      title: enabled ? '已开启' : '已关闭',
+      icon: 'none'
+    });
   },
 
   // 加载当前阶段
@@ -156,6 +175,9 @@ Page({
       if (currentStage) {
         data.current_stage = currentStage;
       }
+
+      // 小小优趣成长计划开关
+      data.youqu_plan = checkin.isYouquPlanEnabled();
 
       // 添加版本信息
       data.__backup_meta = {
@@ -396,6 +418,11 @@ Page({
       // 恢复当前阶段
       if (data.current_stage) {
         wx.setStorageSync(checkin.CURRENT_STAGE_KEY, data.current_stage);
+      }
+
+      // 恢复小小优趣成长计划开关（缺省按 false，兼容旧备份）
+      if (typeof data.youqu_plan === 'boolean') {
+        checkin.setYouquPlanEnabled(data.youqu_plan);
       }
 
       wx.hideLoading();
