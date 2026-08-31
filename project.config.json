@@ -5,6 +5,14 @@
       {
         "value": "qingba_listening_route.json",
         "type": "file"
+      },
+      {
+        "value": "README.md",
+        "type": "file"
+      },
+      {
+        "value": "assets",
+        "type": "folder"
       }
     ],
     "include": []
