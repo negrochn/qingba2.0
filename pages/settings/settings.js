@@ -3,6 +3,7 @@ const checkin = require('../../utils/checkin.js');
 const { routeData } = require('../../utils/data.js');
 const { generateStressData } = require('../../utils/stress-test.js');
 const docx = require('../../utils/docx.js');
+const theme = require('../../utils/theme.js');
 
 // 构建阶段选项
 const stageOptions = routeData.stages.map(s => ({
@@ -49,7 +50,17 @@ Page({
       { key: 'open', label: '打开备份文件' },
       { key: 'share', label: '转发给好友' }
     ],
-    _importMode: 'overwrite'
+    _importMode: 'overwrite',
+    // 字体大小
+    fontClass: 'fs-normal',
+    fontLevelIndex: theme.defaultIndex(),
+    fontLevelOptions: theme.LEVELS,
+    fontLevelText: '',
+    // 深色模式
+    darkClass: 'dm-auto',
+    darkModeIndex: theme.getDarkModeIndex(),
+    darkModeOptions: theme.DARK_MODES,
+    darkModeText: ''
   },
 
   onLoad() {
@@ -61,16 +72,78 @@ Page({
       _importMode: 'overwrite'
     });
 
+    const app = getApp();
+    if (app && app.applyFontLevel) app.applyFontLevel(this);
+
+    this.loadFontLevel();
+    this.loadDarkMode();
     this.loadStats();
     this.loadCurrentStage();
     this.loadYouquPlan();
   },
 
   onShow() {
+    const app = getApp();
+    if (app && app.applyFontLevel) app.applyFontLevel(this);
+
+    this.loadFontLevel();
+    this.loadDarkMode();
     this.loadStats();
     this.loadCurrentStage();
     this.loadYouquPlan();
     this._loadClearOptions();
+  },
+
+  // ===== 字体大小 =====
+  loadFontLevel() {
+    this.setData({
+      fontLevelIndex: theme.getFontLevelIndex(),
+      fontLevelText: theme.getFontLevelText(),
+      fontClass: theme.getFontClass()
+    });
+  },
+
+  onFontLevelChange(e) {
+    const index = parseInt(e.detail.value, 10);
+    const level = theme.LEVELS[index];
+    if (!level) return;
+
+    theme.setFontLevel(level.key);
+    this.loadFontLevel();
+
+    const app = getApp();
+    if (app && app.applyFontLevel) app.applyFontLevel(this);
+
+    wx.showToast({
+      title: `字号：${level.label}`,
+      icon: 'none'
+    });
+  },
+
+  // ===== 深色模式 =====
+  loadDarkMode() {
+    this.setData({
+      darkModeIndex: theme.getDarkModeIndex(),
+      darkModeText: theme.getDarkModeText(),
+      darkClass: theme.getDarkClass()
+    });
+  },
+
+  onDarkModeChange(e) {
+    const index = parseInt(e.detail.value, 10);
+    const mode = theme.DARK_MODES[index];
+    if (!mode) return;
+
+    theme.setDarkMode(mode.key);
+    this.loadDarkMode();
+
+    const app = getApp();
+    if (app && app.applyFontLevel) app.applyFontLevel(this);
+
+    wx.showToast({
+      title: `深色模式：${mode.label}`,
+      icon: 'none'
+    });
   },
 
   // 读取小小优趣成长计划开关
@@ -214,6 +287,9 @@ Page({
       // 小小优趣成长计划开关
       data.youqu_plan = checkin.isYouquPlanEnabled();
 
+      // 字体大小档位
+      data.font_level = theme.getFontLevel();
+
       // 添加版本信息
       data.__backup_meta = {
         version: '2.0',
@@ -312,57 +388,34 @@ Page({
         },
         fail: (err) => {
           console.error('shareFileMessage fail', err);
-          // 转发失败时，回退到复制到剪贴板
+          // 转发失败时，回退到打开备份文件另存
           wx.showModal({
             title: '转发失败',
-            content: '无法直接转发文件，是否复制备份内容到剪贴板？粘贴到聊天即可保存。',
-            confirmText: '复制',
+            content: '无法直接转发文件，可尝试使用「打开备份文件」，从预览页右上角菜单存储到文件或转发。',
+            confirmText: '打开备份',
             cancelText: '取消',
             success: (res) => {
               if (res.confirm) {
-                this._copyBackupToClipboard(filePath);
+                this.openBackupFile(filePath);
               }
             }
           });
         }
       });
     } else {
-      // 不支持转发API，直接复制到剪贴板
+      // 不支持转发API，引导通过打开备份文件保存
       wx.showModal({
-        title: '复制备份',
-        content: '当前微信版本不支持文件转发，将备份内容复制到剪贴板，粘贴到聊天即可保存。',
-        confirmText: '复制',
+        title: '无法转发',
+        content: '当前微信版本不支持文件转发。可使用「打开备份文件」，从预览页右上角菜单存储到文件或转发。',
+        confirmText: '打开备份',
         cancelText: '取消',
         success: (res) => {
           if (res.confirm) {
-            this._copyBackupToClipboard(filePath);
+            this.openBackupFile(filePath);
           }
         }
       });
     }
-  },
-
-  // 复制备份内容到剪贴板（备选方案）
-  _copyBackupToClipboard(filePath) {
-    const fs = wx.getFileSystemManager();
-    fs.readFile({
-      filePath,
-      encoding: 'utf8',
-      success: (res) => {
-        wx.setClipboardData({
-          data: res.data,
-          success: () => {
-            // 系统已提示，不再弹窗
-          }
-        });
-      },
-      fail: () => {
-        wx.showToast({
-          title: '读取文件失败',
-          icon: 'none'
-        });
-      }
-    });
   },
 
   // ===== 导入备份 =====
@@ -573,6 +626,12 @@ Page({
         checkin.setYouquPlanEnabled(data.youqu_plan);
       }
 
+      // 恢复字体大小档位（旧备份无此字段时保持当前设置）
+      if (typeof data.font_level === 'string' && theme.indexOf(data.font_level) >= 0) {
+        theme.setFontLevel(data.font_level);
+        this.loadFontLevel();
+      }
+
       wx.hideLoading();
       this.loadStats();
 
@@ -609,16 +668,20 @@ Page({
       }
     }
 
-    // picker 选项：全部数据 + 各阶段，label 仅显示范围名称
-    const options = routeData.stages.map(s => ({
-      key: s.stage_id,
-      name: s.stage_name,
-      label: s.stage_name
-    }));
+    // picker 选项：全部数据 + 有数据的阶段（附加 count 供确认提示与空判断）
+    const options = routeData.stages
+      .filter(s => (counts[s.stage_id] || 0) > 0)
+      .map(s => ({
+        key: s.stage_id,
+        name: s.stage_name,
+        label: s.stage_name,
+        count: counts[s.stage_id] || 0
+      }));
     options.unshift({
       key: 'all',
       name: '全部数据',
-      label: '全部数据'
+      label: '全部数据',
+      count: total
     });
     this.setData({ clearOptions: options });
   },

@@ -6,14 +6,21 @@ Page({
     stages: routeData.stages,
     stageCount: routeData.stages.length,
     currentStageId: '',
-    currentStageIndex: -1
+    currentStageIndex: -1,
+    fontClass: ''
   },
 
   onLoad() {
+    const app = getApp()
+    if (app && app.applyFontLevel) app.applyFontLevel(this)
+
     this.loadCurrentStage();
   },
 
   onShow() {
+    const app = getApp()
+    if (app && app.applyFontLevel) app.applyFontLevel(this)
+
     // 首页"去打卡"跳转过来时，滚动到当前阶段
     let needScroll = false
     try {

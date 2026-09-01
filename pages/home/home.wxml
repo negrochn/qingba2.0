@@ -1,4 +1,4 @@
-<view class="container">
+<view class="container {{fontClass}} {{darkClass}}">
 
   <!-- 阶段 Hero 卡 -->
   <view class="hero-card">

@@ -35,14 +35,20 @@ Page({
     // 滑动删除状态
     _touchStartX: 0,
     _touchStartY: 0,
-    _curSwipeIdx: -1
+    _curSwipeIdx: -1,
+    fontClass: ''
   },
 
   onLoad() {
+    const app = getApp()
+    if (app && app.applyFontLevel) app.applyFontLevel(this)
     // 数据统一由 onShow 加载，避免首屏重复计算两次
   },
 
   onShow() {
+    const app = getApp()
+    if (app && app.applyFontLevel) app.applyFontLevel(this)
+
     this._refresh()
   },
 

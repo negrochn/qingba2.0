@@ -1,4 +1,4 @@
-<view class="container">
+<view class="container {{fontClass}} {{darkClass}}">
   <view class="timeline">
     <view
       class="stage-item {{index < currentStageIndex && currentStageIndex >= 0 ? 'stage-done' : ''}} {{index > currentStageIndex && currentStageIndex >= 0 ? 'stage-locked' : ''}} {{item.stage_id === currentStageId ? 'stage-current' : ''}}"

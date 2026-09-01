@@ -1,4 +1,4 @@
-<view class="container">
+<view class="container {{fontClass}} {{darkClass}}">
   <view class="menu">
     <view class="menu-item" bindtap="goAbout">
       <view class="menu-icon">📖</view>

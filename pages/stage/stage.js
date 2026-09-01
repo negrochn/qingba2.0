@@ -98,10 +98,14 @@ Page({
     showPromoteModal: false,
     promoteTargetPhase: 0,
     promoteTargetPhaseText: '',
-    youquTestInput: ''
+    youquTestInput: '',
+    fontClass: ''
   },
 
   onLoad(options) {
+    const app = getApp()
+    if (app && app.applyFontLevel) app.applyFontLevel(this)
+
     const index = Number(options.index)
     // 索引非法时提示并返回，避免停在空白页无法退出
     if (isNaN(index) || index < 0 || index >= routeData.stages.length) {
@@ -156,6 +160,9 @@ Page({
   },
 
   onShow() {
+    const app = getApp()
+    if (app && app.applyFontLevel) app.applyFontLevel(this)
+
     if (this.data.stage) {
       // 重新计算状态（当前阶段可能在设置页改变）
       const currentStage = checkin.getCurrentStage()

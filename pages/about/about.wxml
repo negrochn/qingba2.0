@@ -1,4 +1,4 @@
-<view class="container">
+<view class="container {{fontClass}} {{darkClass}}">
 
   <!-- 顶部 banner -->
   <view class="page-banner">
@@ -9,11 +9,10 @@
   <view class="disclaimer">说明：本小程序仅作英语启蒙路线、资源与经验的信息展示，以及个人学习时长的打卡记录，不含课程教学、付费内容及师生互动功能。</view>
 
   <!-- 01 路线介绍 -->
+  <view class="chapter-head">
+    <view class="chapter-title">路线介绍</view>
+  </view>
   <view class="chapter-card">
-    <view class="chapter-head">
-      <view class="chapter-title">路线介绍</view>
-    </view>
-
     <view class="para">3-4岁的孩子，一般来说，只能走常规路径，因为大循环第一阶段横跨了6个难度，年龄越小的孩子，越容易出现卡认知的情况，表现为：到了牛5-6级别，专注度明显下滑或情节理解困难等等。</view>
 
     <view class="para highlight">所以，对于3-4岁的孩子，常规路线才是更优选择。这个阶段的孩子，往往能普遍接受低级别素材，对低级别素材能保持较好的兴趣度和较高的专注度。家长们只需关注以下三个要点，基本可保证顺利推进。</view>
@@ -28,11 +27,10 @@
   </view>
 
   <!-- 02 阶段标准 -->
+  <view class="chapter-head">
+    <view class="chapter-title">阶段参考</view>
+  </view>
   <view class="chapter-card">
-    <view class="chapter-head">
-      <view class="chapter-title">阶段参考</view>
-    </view>
-
     <view class="stage-block">
       <view class="stage-name">常规一阶段</view>
       <view class="stage-line">· 时间投入建议：<text class="hl">60-80H</text> ｜ 准入标准：<text class="hl">零基础</text> ｜ 晋级参考：<text class="hl">时间满足且小小优趣稳定新版phase5</text></view>
@@ -74,11 +72,10 @@
   </view>
 
   <!-- 03 使用说明 -->
+  <view class="chapter-head">
+    <view class="chapter-title">使用说明</view>
+  </view>
   <view class="chapter-card">
-    <view class="chapter-head">
-      <view class="chapter-title">使用说明</view>
-    </view>
-
     <!-- 方式一：亲子共读 -->
     <view class="method-block">
       <view class="method-name">方式一：亲子共读</view>

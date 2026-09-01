@@ -1,5 +1,5 @@
 .menu {
-  background: #fff;
+  background: var(--card);
   border-radius: 16rpx;
   overflow: hidden;
 }
@@ -18,7 +18,7 @@
   right: 28rpx;
   bottom: 0;
   height: 1rpx;
-  background: #f0f0f0;
+  background: var(--divider);
 }
 
 .menu-item:last-child::after {
@@ -29,20 +29,28 @@
   flex-shrink: 0;
   width: 56rpx;
   height: 56rpx;
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32rpx;
+  font-size: calc(32rpx * var(--fs, 1));
   margin-right: 20rpx;
 }
 
 .menu-label {
   flex: 1;
-  font-size: 30rpx;
-  color: #333;
+  font-size: calc(30rpx * var(--fs, 1));
+  color: var(--text);
 }
 
 .menu-arrow {
-  font-size: 32rpx;
+  font-size: calc(32rpx * var(--fs, 1));
   color: #c0c8d0;
+}
+
+/* 深色模式适配 */
+.dm-dark .menu-arrow { color: #4a4a4e; }
+
+@media (prefers-color-scheme: dark) {
+  .dm-auto .menu-arrow { color: #4a4a4e; }
 }

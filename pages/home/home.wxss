@@ -1,46 +1,44 @@
-/* 首页：微信原生风格重构（扁平白卡 + 发丝分隔线 + 统一间距） */
+/* 首页：微信原生风格重构（扁平白卡 + 发丝分隔线 + 统一间距）（支持深色模式） */
 
 page {
-  background: #f5f6f8;
+  background: var(--bg);
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 .container {
-  padding: 24rpx 24rpx calc(env(safe-area-inset-bottom) + 32rpx);
+  padding: 16rpx 0 calc(env(safe-area-inset-bottom) + 32rpx);
   box-sizing: border-box;
   min-height: 100vh;
 }
 
-/* ===== 区块头 ===== */
+/* ===== 区块头（微信原生分组标题风格，与设置页 group-title 一致） ===== */
 .section-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 8rpx 16rpx;
-}
-
-.group-head {
-  padding-top: 8rpx;
+  padding: 16rpx 40rpx 12rpx;
 }
 
 .section-title {
-  font-size: 30rpx;
-  color: #1a1a1a;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1.4;
 }
 
 .section-count {
-  font-size: 24rpx;
-  color: #999;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1.4;
 }
 
 /* ===== 阶段 Hero 卡 ===== */
 .hero-card {
   background: linear-gradient(135deg, #4a90d9 0%, #6ab0f3 100%);
-  border-radius: 20rpx;
+  border-radius: 16rpx;
   padding: 32rpx;
   color: #fff;
-  margin-bottom: 24rpx;
+  margin: 0 24rpx 24rpx;
 }
 
 .hero-name-row {
@@ -51,13 +49,12 @@ page {
 
 .hero-name {
   font-size: 44rpx;
-  font-weight: 600;
   line-height: 1.2;
 }
 
 .hero-tag,
 .hero-badge {
-  font-size: 20rpx;
+  font-size: calc(20rpx * var(--fs, 1));
   padding: 4rpx 14rpx;
   border-radius: 20rpx;
   flex-shrink: 0;
@@ -70,11 +67,10 @@ page {
 .hero-badge {
   background: rgba(255, 255, 255, 0.95);
   color: #2e7d32;
-  font-weight: 600;
 }
 
 .hero-desc {
-  font-size: 24rpx;
+  font-size: calc(24rpx * var(--fs, 1));
   opacity: 0.85;
   margin-top: 12rpx;
 }
@@ -99,12 +95,12 @@ page {
   align-items: center;
   justify-content: space-between;
   margin-top: 10rpx;
-  font-size: 22rpx;
+  font-size: calc(22rpx * var(--fs, 1));
   opacity: 0.9;
 }
 
 .hero-hint {
-  font-size: 24rpx;
+  font-size: calc(24rpx * var(--fs, 1));
   opacity: 0.85;
   margin-top: 16rpx;
 }
@@ -114,10 +110,10 @@ page {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
-  border-radius: 20rpx;
+  background: var(--card);
+  border-radius: 16rpx;
   padding: 22rpx 28rpx;
-  margin-bottom: 24rpx;
+  margin: 0 24rpx 24rpx;
 }
 
 .today-left {
@@ -127,28 +123,27 @@ page {
 }
 
 .today-label {
-  font-size: 26rpx;
-  color: #8a8f99;
+  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text3);
 }
 
 .today-num {
-  font-size: 30rpx;
+  font-size: calc(30rpx * var(--fs, 1));
   font-weight: 400;
-  color: #1a1a1a;
+  color: var(--text);
   font-family: "DIN Alternate", -apple-system, Helvetica, Arial, sans-serif;
 }
 
 .today-empty {
-  color: #999;
+  color: var(--text3);
   font-weight: 400;
-  font-size: 26rpx;
+  font-size: calc(26rpx * var(--fs, 1));
 }
 
 .today-btn {
   background: #4a90d9;
   color: #fff;
-  font-size: 26rpx;
-  font-weight: 500;
+  font-size: calc(26rpx * var(--fs, 1));
   padding: 12rpx 32rpx;
   border-radius: 32rpx;
 }
@@ -159,9 +154,9 @@ page {
 
 /* ===== 阶段统计 2×2 网格（发丝分隔线，无渐变） ===== */
 .summary-card {
-  background: #fff;
-  border-radius: 20rpx;
-  margin-bottom: 24rpx;
+  background: var(--card);
+  border-radius: 16rpx;
+  margin: 0 24rpx 24rpx;
   overflow: hidden;
 }
 
@@ -169,7 +164,7 @@ page {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  background: #fff;
+  background: var(--card);
 }
 
 .sg-cell {
@@ -188,7 +183,7 @@ page {
   top: 22%;
   bottom: 22%;
   width: 1rpx;
-  background: #ebedf0;
+  background: var(--divider);
 }
 
 /* 第二行加顶部发丝线 */
@@ -200,12 +195,12 @@ page {
   left: 12%;
   right: 12%;
   height: 1rpx;
-  background: #ebedf0;
+  background: var(--divider);
 }
 
 .sg-label {
-  font-size: 24rpx;
-  color: #999;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
   margin-bottom: 12rpx;
 }
 
@@ -218,23 +213,23 @@ page {
 
 .sg-val {
   font-size: 48rpx;
-  color: #1a1a1a;
+  color: var(--text);
   line-height: 1.05;
   font-family: "DIN Alternate", -apple-system, Helvetica, Arial, sans-serif;
 }
 
 .sg-unit {
-  font-size: 22rpx;
+  font-size: calc(22rpx * var(--fs, 1));
   font-weight: 400;
-  color: #999;
+  color: var(--text3);
 }
 
 /* ===== 分组时长分布（纯 CSS 条形图） ===== */
 .group-card {
-  background: #fff;
-  border-radius: 20rpx;
+  background: var(--card);
+  border-radius: 16rpx;
   padding: 8rpx 28rpx;
-  margin-bottom: 24rpx;
+  margin: 0 24rpx 24rpx;
 }
 
 .group-row {
@@ -252,14 +247,14 @@ page {
   right: 0;
   bottom: 0;
   height: 1rpx;
-  background: #ebedf0;
+  background: var(--divider);
 }
 
 .group-label {
   flex-shrink: 0;
   width: 150rpx;
-  font-size: 24rpx;
-  color: #556;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text2);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -268,7 +263,7 @@ page {
 .group-track {
   flex: 1;
   height: 14rpx;
-  background: #ebedf0;
+  background: var(--divider);
   border-radius: 7rpx;
   overflow: hidden;
 }
@@ -283,16 +278,17 @@ page {
   flex-shrink: 0;
   width: 96rpx;
   text-align: right;
-  font-size: 24rpx;
+  font-size: calc(24rpx * var(--fs, 1));
   font-weight: 400;
-  color: #2a3a50;
+  color: var(--text2);
   font-family: "DIN Alternate", -apple-system, Helvetica, Arial, sans-serif;
 }
 
 /* ===== 今日打卡明细 ===== */
 .record-list {
-  background: #fff;
-  border-radius: 20rpx;
+  background: var(--card);
+  border-radius: 16rpx;
+  margin: 0 24rpx;
   overflow: hidden;
 }
 
@@ -308,7 +304,7 @@ page {
   right: 28rpx;
   bottom: 0;
   height: 1rpx;
-  background: #ebedf0;
+  background: var(--divider);
 }
 
 .swipe-bg {
@@ -329,12 +325,12 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28rpx;
+  font-size: calc(28rpx * var(--fs, 1));
 }
 
 .swipe-fg {
   position: relative;
-  background: #fff;
+  background: var(--card);
   z-index: 1;
 }
 
@@ -355,8 +351,7 @@ page {
   border-radius: 12rpx;
   background: #4a90d9;
   color: #fff;
-  font-size: 26rpx;
-  font-weight: 500;
+  font-size: calc(26rpx * var(--fs, 1));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -379,8 +374,8 @@ page {
 }
 
 .record-res-name {
-  font-size: 28rpx;
-  color: #1a1a1a;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -389,9 +384,8 @@ page {
 
 .record-duration {
   flex-shrink: 0;
-  font-size: 26rpx;
-  font-weight: 600;
-  color: #2a3a50;
+  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text2);
   font-family: "DIN Alternate", -apple-system, Helvetica, Arial, sans-serif;
   line-height: 1;
 }
@@ -413,7 +407,7 @@ page {
 }
 
 .tag-group {
-  font-size: 20rpx;
+  font-size: calc(20rpx * var(--fs, 1));
   padding: 2rpx 10rpx;
   border-radius: 6rpx;
 }
@@ -427,16 +421,16 @@ page {
 .tag-group-fun_extensions { color: #389e0d; background: #f0ffe0; }
 .tag-group-science_extensions { color: #ad6800; background: #fffbe6; }
 .tag-group-fusion_apps { color: #531dab; background: #f5f0ff; }
-.tag-group-default { color: #888; background: #f5f5f5; }
+.tag-group-default { color: var(--text3); background: var(--cell-active); }
 
 .record-date {
   flex-shrink: 0;
-  font-size: 22rpx;
-  color: #aaa;
+  font-size: calc(22rpx * var(--fs, 1));
+  color: var(--text3);
 }
 
 .record-remark {
-  font-size: 20rpx;
+  font-size: calc(20rpx * var(--fs, 1));
   color: #52c41a;
   background: #f0fff0;
   padding: 2rpx 10rpx;

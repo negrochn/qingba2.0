@@ -1,8 +1,20 @@
 /* 全局样式 */
+
+/* ===== 主题色板（浅色为默认） =====
+   深色模式通过根节点 class（dm-light / dm-dark / dm-auto）切换 CSS 变量 */
 page {
-  background-color: #f5f6f8;
-  color: #333;
-  font-size: 28rpx;
+  --bg: #f5f6f8;
+  --card: #ffffff;
+  --card2: #f7f8fa;
+  --text: #1a1a1a;
+  --text2: #666666;
+  --text3: #999999;
+  --divider: #ebedf0;
+  --brand: #4a90d9;
+  --cell-active: #f5f5f5;
+  background-color: var(--bg);
+  color: var(--text);
+  font-size: calc(28rpx * var(--fs, 1));
   line-height: 1.6;
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
@@ -11,12 +23,83 @@ view, text {
   box-sizing: border-box;
 }
 
+/* 手动浅色（系统深色时强制浅色内容区） */
+.dm-light {
+  --bg: #f5f6f8;
+  --card: #ffffff;
+  --card2: #f7f8fa;
+  --text: #1a1a1a;
+  --text2: #666666;
+  --text3: #999999;
+  --divider: #ebedf0;
+  --brand: #4a90d9;
+  --cell-active: #f5f5f5;
+}
+
+/* 手动深色（微信官方深色色板：BG #111 / 卡片 #1C1C1E / 文字 rgba(255,255,255,.9/.6/.35)） */
+.dm-dark {
+  --bg: #111111;
+  --card: #1c1c1e;
+  --card2: #232326;
+  --text: rgba(255, 255, 255, 0.92);
+  --text2: rgba(255, 255, 255, 0.62);
+  --text3: rgba(255, 255, 255, 0.42);
+  --divider: rgba(255, 255, 255, 0.1);
+  --brand: #5aa0e9;
+  --cell-active: #2c2c2e;
+}
+
+/* 跟随系统 */
+@media (prefers-color-scheme: dark) {
+  page {
+    --bg: #111111;
+  }
+
+  .dm-auto {
+    --bg: #111111;
+    --card: #1c1c1e;
+    --card2: #232326;
+    --text: rgba(255, 255, 255, 0.92);
+    --text2: rgba(255, 255, 255, 0.62);
+    --text3: rgba(255, 255, 255, 0.42);
+    --divider: rgba(255, 255, 255, 0.1);
+    --brand: #5aa0e9;
+    --cell-active: #2c2c2e;
+  }
+}
+
+/* ===== 字体大小档位 =====
+   档位 class 挂在页面根节点上，子节点所有 calc(Nrpx * var(--fs)) 自动缩放 */
+.fs-small {
+  --fs: 0.9;
+  font-size: calc(28rpx * var(--fs, 1));
+}
+
+.fs-normal {
+  --fs: 1;
+  font-size: calc(28rpx * var(--fs, 1));
+}
+
+.fs-large {
+  --fs: 1.15;
+  font-size: calc(28rpx * var(--fs, 1));
+}
+
+.fs-xlarge {
+  --fs: 1.3;
+  font-size: calc(28rpx * var(--fs, 1));
+}
+
 .container {
   padding: 24rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  min-height: 100vh;
+  background: var(--bg);
+  box-sizing: border-box;
 }
 
 .card {
-  background: #fff;
+  background: var(--card);
   border-radius: 16rpx;
   padding: 28rpx;
   margin-bottom: 24rpx;
@@ -24,8 +107,8 @@ view, text {
 }
 
 .section-title {
-  font-size: 30rpx;
-  color: #1a1a1a;
+  font-size: calc(30rpx * var(--fs, 1));
+  color: var(--text);
   display: flex;
   align-items: center;
 }
@@ -46,7 +129,7 @@ view, text {
   background: #eef4fb;
   color: #4a90d9;
   border-radius: 8rpx;
-  font-size: 24rpx;
+  font-size: calc(24rpx * var(--fs, 1));
   margin: 6rpx 6rpx 6rpx 0;
 }
 
@@ -54,4 +137,40 @@ view, text {
   background: #4a90d9;
   color: #fff;
   border-radius: 12rpx;
+}
+
+/* ===== 全局深色适配（微信小程序深色规范） =====
+   分类彩色标签：浅色为浅底深字，深色转为深底亮字 */
+.dm-dark .tag-group-main_picture_books { color: #7fb4f7; background: rgba(127, 180, 247, 0.16); }
+.dm-dark .tag-group-main_graded_readers { color: #b39df5; background: rgba(179, 157, 245, 0.16); }
+.dm-dark .tag-group-main_animations { color: #ff9c6e; background: rgba(255, 156, 110, 0.16); }
+.dm-dark .tag-group-sub_graded_readers { color: #5cd3dc; background: rgba(92, 211, 220, 0.16); }
+.dm-dark .tag-group-sub_animations { color: #ff9ecb; background: rgba(255, 158, 203, 0.16); }
+.dm-dark .tag-group-fun_extensions { color: #95de64; background: rgba(149, 222, 100, 0.16); }
+.dm-dark .tag-group-science_extensions { color: #ffd666; background: rgba(255, 214, 102, 0.16); }
+.dm-dark .tag-group-fusion_apps { color: #b37feb; background: rgba(179, 127, 235, 0.16); }
+
+/* 备注标签 */
+.dm-dark .record-remark { color: #95de64; background: rgba(149, 222, 100, 0.16); }
+
+/* 弹层遮罩统一为深色规范值 */
+.dm-dark .ci-mask-show,
+.dm-dark .pm-mask-show,
+.dm-dark .mp-mask.show { background: rgba(0, 0, 0, 0.5); }
+
+@media (prefers-color-scheme: dark) {
+  .dm-auto .tag-group-main_picture_books { color: #7fb4f7; background: rgba(127, 180, 247, 0.16); }
+  .dm-auto .tag-group-main_graded_readers { color: #b39df5; background: rgba(179, 157, 245, 0.16); }
+  .dm-auto .tag-group-main_animations { color: #ff9c6e; background: rgba(255, 156, 110, 0.16); }
+  .dm-auto .tag-group-sub_graded_readers { color: #5cd3dc; background: rgba(92, 211, 220, 0.16); }
+  .dm-auto .tag-group-sub_animations { color: #ff9ecb; background: rgba(255, 158, 203, 0.16); }
+  .dm-auto .tag-group-fun_extensions { color: #95de64; background: rgba(149, 222, 100, 0.16); }
+  .dm-auto .tag-group-science_extensions { color: #ffd666; background: rgba(255, 214, 102, 0.16); }
+  .dm-auto .tag-group-fusion_apps { color: #b37feb; background: rgba(179, 127, 235, 0.16); }
+
+  .dm-auto .record-remark { color: #95de64; background: rgba(149, 222, 100, 0.16); }
+
+  .dm-auto .ci-mask-show,
+  .dm-auto .pm-mask-show,
+  .dm-auto .mp-mask.show { background: rgba(0, 0, 0, 0.5); }
 }

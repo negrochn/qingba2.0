@@ -20,10 +20,14 @@ Page({
     // 滑动状态
     _touchStartX: 0,
     _touchStartY: 0,
-    _curSwipeIdx: -1
+    _curSwipeIdx: -1,
+    fontClass: ''
   },
 
   onLoad() {
+    const app = getApp()
+    if (app && app.applyFontLevel) app.applyFontLevel(this)
+
     const now = new Date()
     const y = now.getFullYear()
 
@@ -42,6 +46,9 @@ Page({
   },
 
   onShow() {
+    const app = getApp()
+    if (app && app.applyFontLevel) app.applyFontLevel(this)
+
     this._refresh()
   },
 

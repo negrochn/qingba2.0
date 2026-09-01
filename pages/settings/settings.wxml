@@ -1,118 +1,133 @@
-<view class="container">
+<view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- 打卡进度卡片 -->
-  <view class="card">
-    <view class="card-head">
-      <view class="card-title">打卡进度</view>
-    </view>
-
-    <picker mode="selector" range="{{stageOptions}}" range-key="name" value="{{currentStageIndex}}" bindchange="onStageChange" class="stage-picker">
-      <view class="picker-item">
-        <view class="picker-label">当前阶段</view>
-        <view class="picker-value-wrap">
-          <view class="picker-value">{{currentStageDisplay || '未设置'}}</view>
-          <view class="picker-arrow">›</view>
+  <!-- 显示 -->
+  <view class="group">
+    <view class="group-title">显示</view>
+    <view class="group-card">
+      <picker mode="selector" range="{{fontLevelOptions}}" range-key="label" value="{{fontLevelIndex}}" bindchange="onFontLevelChange" class="cell-picker">
+        <view class="cell">
+          <view class="cell-label">字体大小</view>
+          <view class="cell-right">
+            <text class="cell-value">{{fontLevelText}}</text>
+            <text class="cell-arrow">›</text>
+          </view>
         </view>
-      </view>
-    </picker>
+      </picker>
 
-    <view class="stage-preview" wx:if="{{currentStage}}">
-      <view class="stage-preview-title">{{currentStage.name}} · {{currentStage.targetPhase}}</view>
-      <view class="stage-preview-desc">积累 {{currentStage.vocabularyTarget}} · {{currentStage.timeInvestment}}</view>
-    </view>
-    <view class="stage-preview empty" wx:else>
-      请选择当前学习阶段
-    </view>
+      <view class="cell-divider"></view>
 
-    <view class="switch-item">
-      <view class="switch-info">
-        <view class="picker-label">小小优趣成长计划</view>
-        <view class="switch-desc">开启后，常规阶段达标可解锁下一阶段</view>
-      </view>
-      <switch checked="{{youquEnabled}}" bindchange="onYouquPlanChange" color="#4a90d9" />
+      <picker mode="selector" range="{{darkModeOptions}}" range-key="label" value="{{darkModeIndex}}" bindchange="onDarkModeChange" class="cell-picker">
+        <view class="cell">
+          <view class="cell-label">深色模式</view>
+          <view class="cell-right">
+            <text class="cell-value">{{darkModeText}}</text>
+            <text class="cell-arrow">›</text>
+          </view>
+        </view>
+      </picker>
     </view>
   </view>
 
-  <!-- 数据管理卡片 -->
-  <view class="card">
-    <view class="card-head">
-      <view class="card-title">数据管理</view>
-    </view>
-
-    <!-- 导出备份 -->
-    <picker mode="selector" range="{{exportOptions}}" range-key="label" bindchange="onExportModeChange">
-      <view class="action-item">
-        <view class="action-icon backup">📤</view>
-        <view class="action-info">
-          <view class="action-title">导出备份</view>
-          <view class="action-desc">生成 docx 备份文件，可打开/转发</view>
+  <!-- 学习计划 -->
+  <view class="group">
+    <view class="group-title">学习计划</view>
+    <view class="group-card">
+      <view class="cell">
+        <view class="cell-info">
+          <view class="cell-label">小小优趣成长计划</view>
+          <view class="cell-desc">开启后，常规阶段达标可解锁下一阶段</view>
         </view>
-        <view class="action-arrow">›</view>
+        <switch checked="{{youquEnabled}}" bindchange="onYouquPlanChange" color="#4a90d9" />
       </view>
-    </picker>
-
-    <!-- 导入备份 -->
-    <picker mode="selector" range="{{importOptions}}" range-key="label" bindchange="onImportModeChange">
-      <view class="action-item">
-        <view class="action-icon import">📥</view>
-        <view class="action-info">
-          <view class="action-title">导入备份</view>
-          <view class="action-desc">支持 txt / json / docx 备份文件</view>
-        </view>
-        <view class="action-arrow">›</view>
-      </view>
-    </picker>
-
-    <!-- 清空数据 -->
-    <picker wx:if="{{totalCount > 0}}" mode="selector" range="{{clearOptions}}" range-key="label" bindchange="onClearScopeChange">
-      <view class="action-item danger">
-        <view class="action-icon delete">🗑️</view>
-        <view class="action-info">
-          <view class="action-title">清空数据</view>
-          <view class="action-desc">请选择要清空的范围</view>
-        </view>
-        <view class="action-arrow">›</view>
-      </view>
-    </picker>
-    <view wx:else class="action-item danger">
-      <view class="action-icon delete">🗑️</view>
-      <view class="action-info">
-        <view class="action-title">清空数据</view>
-        <view class="action-desc">暂无数据</view>
-      </view>
-      <view class="action-arrow">›</view>
     </view>
   </view>
 
-  <!-- 开发者工具（压力测试）仅开发版显示 -->
-  <view class="card" wx:if="{{showDevTools}}">
-    <view class="card-head">
-      <view class="card-title">开发者工具</view>
-    </view>
+  <!-- 数据管理 -->
+  <view class="group">
+    <view class="group-title">数据管理</view>
+    <view class="group-card">
+      <picker mode="selector" range="{{exportOptions}}" range-key="label" bindchange="onExportModeChange" class="cell-picker">
+        <view class="cell">
+          <view class="cell-label">导出备份</view>
+          <view class="cell-right">
+            <text class="cell-desc-right">生成 docx 文件</text>
+            <text class="cell-arrow">›</text>
+          </view>
+        </view>
+      </picker>
 
-    <view class="action-item" bindtap="onStressTest">
-      <view class="action-icon">🧪</view>
-      <view class="action-info">
-        <view class="action-title">生成测试数据</view>
-        <view class="action-desc">按真实计划生成：每阶段约80-90小时，日期从今天往回推算</view>
+      <view class="cell-divider"></view>
+
+      <picker mode="selector" range="{{importOptions}}" range-key="label" bindchange="onImportModeChange" class="cell-picker">
+        <view class="cell">
+          <view class="cell-label">导入备份</view>
+          <view class="cell-right">
+            <text class="cell-desc-right">txt / json / docx</text>
+            <text class="cell-arrow">›</text>
+          </view>
+        </view>
+      </picker>
+
+      <view class="cell-divider"></view>
+
+      <picker wx:if="{{totalCount > 0}}" mode="selector" range="{{clearOptions}}" range-key="label" bindchange="onClearScopeChange" class="cell-picker">
+        <view class="cell cell-danger">
+          <view class="cell-label">清空数据</view>
+          <view class="cell-right">
+            <text class="cell-desc-right">不可恢复</text>
+            <text class="cell-arrow">›</text>
+          </view>
+        </view>
+      </picker>
+      <view wx:else class="cell cell-danger">
+        <view class="cell-label">清空数据</view>
+        <view class="cell-right">
+          <text class="cell-desc-right">暂无数据</text>
+          <text class="cell-arrow">›</text>
+        </view>
       </view>
-      <view class="action-arrow">›</view>
     </view>
   </view>
 
-  <!-- 关于版本 -->
-  <view class="card">
-    <view class="card-head">
-      <view class="card-title">关于</view>
-    </view>
+  <!-- 开发者工具（仅开发版显示） -->
+  <view class="group" wx:if="{{showDevTools}}">
+    <view class="group-title">开发者工具</view>
+    <view class="group-card">
+      <picker mode="selector" range="{{stageOptions}}" range-key="name" value="{{currentStageIndex}}" bindchange="onStageChange" class="cell-picker">
+        <view class="cell">
+          <view class="cell-label">当前阶段</view>
+          <view class="cell-right">
+            <text class="cell-value {{currentStage ? '' : 'placeholder'}}">{{currentStageDisplay || '未设置'}}</text>
+            <text class="cell-arrow">›</text>
+          </view>
+        </view>
+      </picker>
 
-    <view class="info-item">
-      <view class="info-label">版本号</view>
-      <view class="info-value">{{appVersion}}</view>
+      <view class="cell-divider"></view>
+
+      <view class="cell" bindtap="onStressTest">
+        <view class="cell-label">生成测试数据</view>
+        <view class="cell-right">
+          <text class="cell-desc-right">每阶段约 80-90 小时</text>
+          <text class="cell-arrow">›</text>
+        </view>
+      </view>
     </view>
-    <view class="info-item">
-      <view class="info-label">数据存储</view>
-      <view class="info-value">本地存储</view>
+  </view>
+
+  <!-- 关于 -->
+  <view class="group">
+    <view class="group-title">关于</view>
+    <view class="group-card">
+      <view class="cell">
+        <view class="cell-label">版本号</view>
+        <text class="cell-value">{{appVersion}}</text>
+      </view>
+      <view class="cell-divider"></view>
+      <view class="cell">
+        <view class="cell-label">数据存储</view>
+        <text class="cell-value">本地存储</text>
+      </view>
     </view>
   </view>
 

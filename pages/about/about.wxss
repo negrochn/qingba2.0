@@ -1,72 +1,55 @@
-/* 关于庆爸2.0 详情页 - 方案A：章节卡片 */
+/* 关于庆爸2.0 详情页 - 微信原生分组风格（标题与卡片样式与设置页统一，支持深色模式） */
 
 page {
-  background: #f5f6f8;
+  background: var(--bg);
 }
 
 .container {
-  padding: 0 0 calc(env(safe-area-inset-bottom) + 40rpx);
+  padding: 16rpx 0 calc(env(safe-area-inset-bottom) + 40rpx);
 }
 
-/* ===== 顶部 banner ===== */
+/* ===== 顶部 banner（微信风格渐变卡片） ===== */
 .page-banner {
-  padding: 48rpx 32rpx 36rpx;
+  padding: 36rpx 24rpx 40rpx;
   text-align: center;
 }
 
 .banner-text {
   display: inline-block;
-  font-size: 40rpx;
-  font-weight: 700;
+  font-size: 36rpx;
+  font-weight: 600;
   color: #fff;
   background: linear-gradient(135deg, #4a90d9 0%, #6ab0f3 100%);
-  padding: 16rpx 48rpx;
-  border-radius: 16rpx;
+  padding: 14rpx 44rpx;
+  border-radius: 12rpx;
   letter-spacing: 4rpx;
-  box-shadow: 0 6rpx 24rpx rgba(74, 144, 217, 0.3);
 }
 
-/* ===== 章节卡片 ===== */
-.chapter-card {
-  margin: 0 28rpx 28rpx;
-  background: #ffffff;
-  border-radius: 20rpx;
-  padding: 28rpx 28rpx 32rpx;
-  box-shadow: 0 4rpx 20rpx rgba(60, 90, 140, 0.06);
-  border: 2rpx solid #e8eef7;
-}
-
-/* 章节标题行 */
+/* ===== 章节标题（微信原生分组标题风格，与设置页 group-title 一致） ===== */
 .chapter-head {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  margin-bottom: 24rpx;
+  padding: 16rpx 40rpx 12rpx;
 }
 
 .chapter-title {
-  font-size: 30rpx;
-  color: #1a1a1a;
-  display: flex;
-  align-items: center;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1.4;
 }
 
-.chapter-title::before {
-  content: "";
-  display: inline-block;
-  flex-shrink: 0;
-  width: 6rpx;
-  height: 28rpx;
-  background: #4a90d9;
-  border-radius: 3rpx;
-  margin-right: 12rpx;
+/* ===== 章节卡片（微信原生卡片风格，与设置页 group-card 一致） ===== */
+.chapter-card {
+  margin: 0 24rpx 28rpx;
+  background: var(--card);
+  border-radius: 16rpx;
+  padding: 28rpx;
+  overflow: hidden;
 }
 
 /* ===== 段落 ===== */
 .para {
-  font-size: 28rpx;
+  font-size: calc(28rpx * var(--fs, 1));
   line-height: 1.65;
-  color: #3a4556;
+  color: var(--text2);
   margin-bottom: 24rpx;
   text-align: justify;
 }
@@ -83,25 +66,23 @@ page {
 /* ===== 列表 ===== */
 .bullets {
   margin: 20rpx 0 28rpx;
-  padding-left: 8rpx;
-  background: #f8fafd;
+  background: var(--card2);
   border-radius: 12rpx;
   padding: 20rpx 24rpx;
 }
 
 .bullet {
-  font-size: 28rpx;
+  font-size: calc(28rpx * var(--fs, 1));
   line-height: 1.8;
-  color: #3a4556;
+  color: var(--text2);
 }
 
 /* ===== 阶段块（卡片风格） ===== */
 .stage-block {
-  background: #f8fafd;
-  border-radius: 14rpx;
+  background: var(--card2);
+  border-radius: 12rpx;
   padding: 20rpx 24rpx;
   margin-bottom: 16rpx;
-  border: 2rpx solid #e8eef7;
 }
 
 .stage-block:last-child {
@@ -109,16 +90,16 @@ page {
 }
 
 .stage-name {
-  font-size: 28rpx;
+  font-size: calc(28rpx * var(--fs, 1));
   font-weight: 600;
-  color: #1a3b72;
+  color: var(--text);
   margin-bottom: 10rpx;
 }
 
 .stage-line {
-  font-size: 26rpx;
+  font-size: calc(26rpx * var(--fs, 1));
   line-height: 1.6;
-  color: #4a5568;
+  color: var(--text2);
   margin-bottom: 6rpx;
 }
 
@@ -135,7 +116,7 @@ page {
 .method-block {
   margin-bottom: 32rpx;
   padding-bottom: 24rpx;
-  border-bottom: 1rpx solid #eef2f7;
+  border-bottom: 1rpx solid var(--divider);
 }
 
 .method-block:last-child {
@@ -145,18 +126,16 @@ page {
 }
 
 .method-name {
-  font-size: 30rpx;
-  font-weight: 700;
-  color: #1a3b72;
+  font-size: calc(28rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text);
   margin-bottom: 14rpx;
-  padding-left: 14rpx;
-  border-left: 4rpx solid #4a90d9;
 }
 
 .method-op {
-  font-size: 26rpx;
+  font-size: calc(26rpx * var(--fs, 1));
   line-height: 1.65;
-  color: #3a4556;
+  color: var(--text2);
   margin-bottom: 16rpx;
 }
 
@@ -170,16 +149,16 @@ page {
 }
 
 .warn-title {
-  font-size: 26rpx;
+  font-size: calc(26rpx * var(--fs, 1));
   font-weight: 600;
   color: #c0392b;
   margin-bottom: 10rpx;
 }
 
 .warn-item {
-  font-size: 26rpx;
+  font-size: calc(26rpx * var(--fs, 1));
   line-height: 1.65;
-  color: #3a4556;
+  color: var(--text2);
   margin-bottom: 6rpx;
 }
 
@@ -194,24 +173,23 @@ page {
 
 /* ===== 子块（小小优趣等） ===== */
 .sub-block {
-  background: #f0f7ff;
-  border-radius: 14rpx;
+  background: var(--card2);
+  border-radius: 12rpx;
   padding: 18rpx 22rpx;
   margin-top: 16rpx;
-  border: 2rpx solid #d6e8fc;
 }
 
 .sub-title {
-  font-size: 26rpx;
+  font-size: calc(26rpx * var(--fs, 1));
   font-weight: 600;
   color: #1a5fb0;
   margin-bottom: 10rpx;
 }
 
 .para-sm {
-  font-size: 26rpx;
+  font-size: calc(26rpx * var(--fs, 1));
   line-height: 1.6;
-  color: #3a4556;
+  color: var(--text2);
   margin-bottom: 10rpx;
 }
 
@@ -221,13 +199,72 @@ page {
 
 /* ===== 声明条 ===== */
 .disclaimer {
-  margin: 0 28rpx 24rpx;
+  margin: 0 24rpx 28rpx;
   background: #eef6ff;
   border: 2rpx solid #cfe4fb;
-  border-radius: 14rpx;
+  border-radius: 12rpx;
   padding: 18rpx 22rpx;
-  font-size: 24rpx;
+  font-size: calc(24rpx * var(--fs, 1));
   line-height: 1.6;
   color: #4a6b8a;
   text-align: justify;
+}
+
+/* ===== 深色模式适配（微信小程序深色规范） ===== */
+.dm-dark .para.highlight {
+  background: #2a2016;
+  color: #e57373;
+}
+
+.dm-dark .warn-block {
+  background: #2a1f1a;
+}
+
+.dm-dark .warn-title,
+.dm-dark .hl {
+  color: #e57373;
+}
+
+.dm-dark .warn-num {
+  color: #ff9c6e;
+}
+
+.dm-dark .sub-title {
+  color: #7fb4f7;
+}
+
+.dm-dark .disclaimer {
+  background: #1f2b3a;
+  border-color: #2c3f52;
+  color: #8fa8c0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dm-auto .para.highlight {
+    background: #2a2016;
+    color: #e57373;
+  }
+
+  .dm-auto .warn-block {
+    background: #2a1f1a;
+  }
+
+  .dm-auto .warn-title,
+  .dm-auto .hl {
+    color: #e57373;
+  }
+
+  .dm-auto .warn-num {
+    color: #ff9c6e;
+  }
+
+  .dm-auto .sub-title {
+    color: #7fb4f7;
+  }
+
+  .dm-auto .disclaimer {
+    background: #1f2b3a;
+    border-color: #2c3f52;
+    color: #8fa8c0;
+  }
 }

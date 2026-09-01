@@ -564,9 +564,7 @@ function fmtMinutes(totalMin) {
 function fmtHoursDecimal(totalMin) {
   const m = Number(totalMin) || 0
   if (m <= 0) return '0h'
-  const h = m / 60
-  // 不足1小时显示0.x h，否则保留1位小数
-  return h < 1 ? `${h.toFixed(1)}h` : `${h.toFixed(1)}h`
+  return `${(m / 60).toFixed(1)}h`
 }
 
 // ===== 读完次数 =====

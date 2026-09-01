@@ -1,217 +1,111 @@
-/* 设置详情页 - 微信小程序原生风格（品牌蓝 #4a90d9） */
+/* 设置页 - 微信小程序原生分组列表风格（支持深色模式） */
 
 page {
-  background: #f5f6f8;
+  background: var(--bg);
 }
 
 .container {
-  padding: 24rpx 24rpx calc(env(safe-area-inset-bottom) + 40rpx);
+  padding: 16rpx 0 calc(env(safe-area-inset-bottom) + 40rpx);
 }
 
-/* ===== 卡片：扁平白卡，无投影无装饰边框 ===== */
-.card {
-  background: #ffffff;
-  border-radius: 20rpx;
-  padding: 28rpx 28rpx 12rpx;
+/* ===== 分组 ===== */
+.group {
   margin-bottom: 24rpx;
 }
 
-.card-head {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  margin-bottom: 20rpx;
+.group-title {
+  padding: 16rpx 40rpx 12rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1.4;
 }
 
-.card-title {
-  font-size: 30rpx;
-  color: #1a1a1a;
-  display: flex;
-  align-items: center;
-}
-
-.card-title::before {
-  content: "";
-  display: inline-block;
-  flex-shrink: 0;
-  width: 6rpx;
-  height: 28rpx;
-  background: #4a90d9;
-  border-radius: 3rpx;
-  margin-right: 12rpx;
-}
-
-/* ===== 操作项 ===== */
-.action-item {
-  display: flex;
-  align-items: center;
-  padding: 24rpx 16rpx;
-  border-bottom: 1rpx solid #ebedf0;
-}
-
-.action-item:last-child {
-  border-bottom: none;
-}
-
-.action-item.danger .action-title {
-  color: #e74c3c;
-}
-
-.action-icon {
-  flex-shrink: 0;
-  width: 72rpx;
-  height: 72rpx;
+.group-card {
+  background: var(--card);
+  margin: 0 24rpx;
   border-radius: 16rpx;
+  overflow: hidden;
+}
+
+/* ===== 列表项 ===== */
+.cell {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 36rpx;
-  margin-right: 20rpx;
+  justify-content: space-between;
+  padding: 28rpx 32rpx;
+  box-sizing: border-box;
 }
 
-.action-icon.backup {
-  background: #e8f5e9;
+.cell-picker {
+  display: block;
 }
 
-.action-icon.import {
-  background: #eef4fd;
+.cell-picker .cell:active,
+.cell:active {
+  background: var(--cell-active);
 }
 
-.action-icon.delete {
-  background: #ffebee;
-}
-
-.action-info {
+.cell-label {
   flex: 1;
   min-width: 0;
+  margin-right: 24rpx;
+  font-size: calc(30rpx * var(--fs, 1));
+  color: var(--text);
 }
 
-.action-title {
-  font-size: 28rpx;
-  font-weight: 500;
-  color: #1a1a1a;
-  margin-bottom: 6rpx;
-}
-
-.action-desc {
-  font-size: 24rpx;
-  color: #999;
-}
-
-.action-arrow {
-  font-size: 32rpx;
-  color: #c0c8d0;
-}
-
-/* ===== 信息项 ===== */
-.info-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20rpx 16rpx;
-  border-bottom: 1rpx solid #ebedf0;
-}
-
-.info-item:last-child {
-  border-bottom: none;
-}
-
-.info-label {
-  font-size: 28rpx;
-  color: #1a1a1a;
-}
-
-.info-value {
-  font-size: 28rpx;
-  color: #888;
-}
-
-/* ===== 学习进度 ===== */
-.picker-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24rpx 16rpx;
-  border-bottom: 1rpx solid #ebedf0;
-}
-
-.picker-label {
-  font-size: 28rpx;
-  color: #1a1a1a;
-}
-
-.picker-value-wrap {
-  display: flex;
-  align-items: center;
-}
-
-.picker-value {
-  font-size: 28rpx;
-  color: #4a90d9;
-  font-weight: 500;
-}
-
-.picker-arrow {
-  font-size: 32rpx;
-  color: #c0c8d0;
-  margin-left: 8rpx;
-}
-
-.stage-preview {
-  margin-top: 16rpx;
-  padding: 20rpx 24rpx;
-  background: #eef4fd;
-  border-radius: 12rpx;
-}
-
-.stage-preview.empty {
-  background: #f7f8fa;
-  border: 2rpx dashed #ebedf0;
-  color: #aaa;
-  text-align: center;
-  font-size: 26rpx;
-  padding: 28rpx;
-}
-
-.stage-preview-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 8rpx;
-}
-
-.stage-preview-desc {
-  font-size: 24rpx;
-  color: #666;
-}
-
-/* ===== 原生 Picker 样式优化 ===== */
-.stage-picker {
-  width: 100%;
-}
-
-.stage-picker .picker-item {
-  font-size: 32rpx;
-  min-height: 88rpx;
-}
-
-/* ===== 小小优趣成长计划开关 ===== */
-.switch-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24rpx 16rpx;
-  border-top: 1rpx solid #ebedf0;
-}
-
-.switch-info {
+.cell-info {
   flex: 1;
   min-width: 0;
   margin-right: 16rpx;
 }
 
-.switch-desc {
-  font-size: 24rpx;
-  color: #999;
-  margin-top: 6rpx;
+.cell-desc {
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+  margin-top: 8rpx;
+}
+
+.cell-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  max-width: 60%;
+}
+
+.cell-value {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
+}
+
+.cell-value.placeholder {
+  color: var(--text3);
+  opacity: 0.7;
+}
+
+.cell-desc-right {
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+}
+
+.cell-arrow {
+  font-size: calc(36rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1;
+  margin-left: 12rpx;
+}
+
+/* 危险操作 */
+.cell-danger .cell-label {
+  color: #fa5151;
+}
+
+.cell-danger .cell-desc-right {
+  color: #f5a3a3;
+}
+
+/* 分隔线：左侧留白（微信原生 inset） */
+.cell-divider {
+  height: 1rpx;
+  background: var(--divider);
+  margin-left: 32rpx;
 }

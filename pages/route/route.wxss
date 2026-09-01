@@ -1,19 +1,19 @@
-/* 路线页卡 - 微信小程序风格 */
+/* 路线页卡 - 微信小程序风格（支持深色模式） */
 
 page {
-  background: #f7f7f7;
+  background: var(--bg);
 }
 
 .container {
   padding: 24rpx 24rpx 48rpx;
-  background: #f7f7f7;
+  background: var(--bg);
   min-height: 100vh;
   box-sizing: border-box;
 }
 
 /* 时间线容器 */
 .timeline {
-  background: #ffffff;
+  background: var(--card);
   border-radius: 16rpx;
   padding: 8rpx 0;
   overflow: hidden;
@@ -28,7 +28,7 @@ page {
 }
 
 .stage-hover {
-  background: #f5f5f5;
+  background: var(--cell-active);
 }
 
 /* 左侧轨道 */
@@ -45,6 +45,7 @@ page {
 .stage-node {
   width: 40rpx;
   height: 40rpx;
+  line-height: 1;
   border-radius: 50%;
   background: #d8d8d8;
   display: flex;
@@ -57,7 +58,7 @@ page {
 }
 
 .node-num {
-  font-size: 22rpx;
+  font-size: calc(22rpx * var(--fs, 1));
   color: #ffffff;
   font-weight: 500;
 }
@@ -65,7 +66,7 @@ page {
 .stage-line {
   width: 2rpx;
   flex: 1;
-  background: #e8e8e8;
+  background: var(--divider);
   margin-top: 6rpx;
   min-height: 32rpx;
 }
@@ -74,7 +75,7 @@ page {
 .stage-body {
   flex: 1;
   padding: 4rpx 0 20rpx 20rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid var(--divider);
   min-width: 0;
 }
 
@@ -99,14 +100,14 @@ page {
 }
 
 .stage-name {
-  font-size: 30rpx;
+  font-size: calc(30rpx * var(--fs, 1));
   font-weight: 600;
-  color: #191919;
+  color: var(--text);
   line-height: 1.4;
 }
 
 .stage-phase {
-  font-size: 20rpx;
+  font-size: calc(20rpx * var(--fs, 1));
   color: #576b95;
   background: #edf0f5;
   padding: 2rpx 12rpx;
@@ -115,14 +116,14 @@ page {
 }
 
 .stage-arrow {
-  font-size: 32rpx;
-  color: #c8c8c8;
+  font-size: calc(32rpx * var(--fs, 1));
+  color: var(--text3);
   font-weight: 300;
 }
 
 .stage-desc {
-  font-size: 24rpx;
-  color: #888;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text2);
   margin-bottom: 10rpx;
   line-height: 1.5;
 }
@@ -138,7 +139,7 @@ page {
 }
 
 .tag {
-  font-size: 20rpx;
+  font-size: calc(20rpx * var(--fs, 1));
   padding: 4rpx 12rpx;
   border-radius: 6rpx;
   font-weight: 400;
@@ -191,7 +192,7 @@ page {
 }
 
 .node-icon {
-  font-size: 20rpx;
+  font-size: calc(20rpx * var(--fs, 1));
   font-weight: 500;
   color: #ffffff;
 }
@@ -206,11 +207,11 @@ page {
 }
 
 .stage-locked .stage-name {
-  color: #595959;
+  color: var(--text2);
 }
 
 .stage-locked .stage-desc {
-  color: #8c8c8c;
+  color: var(--text3);
 }
 
 .stage-locked .tag {
@@ -218,16 +219,16 @@ page {
 }
 
 .node-locked {
-  background: #bfbfbf;
-  color: #8c8c8c;
+  background: var(--text3);
+  color: var(--card);
 }
 
 .stage-locked .stage-line {
-  background: #d9d9d9;
+  background: var(--divider);
 }
 
 .stage-lock-tag {
-  font-size: 18rpx;
+  font-size: calc(18rpx * var(--fs, 1));
   color: #8c6d1f;
   background: #fffbe6;
   border-radius: 6rpx;
@@ -236,10 +237,73 @@ page {
 }
 
 .stage-done-tag {
-  font-size: 18rpx;
+  font-size: calc(18rpx * var(--fs, 1));
   color: #389e0d;
   background: #f6fffa;
   border-radius: 6rpx;
   padding: 2rpx 8rpx;
   margin-left: 4rpx;
+}
+
+/* ===== 深色模式适配（微信小程序深色规范） ===== */
+.dm-dark .stage-node { background: #3a3a3c; }
+
+.dm-dark .stage-phase {
+  color: #9aaecf;
+  background: rgba(154, 174, 207, 0.16);
+}
+
+.dm-dark .tag-entry { color: #ffd666; background: rgba(255, 214, 102, 0.16); }
+.dm-dark .tag-promote { color: #8ab4ff; background: rgba(138, 180, 255, 0.16); }
+
+.dm-dark .stage-current .stage-body {
+  background: rgba(7, 193, 96, 0.1);
+}
+
+.dm-dark .stage-done .stage-name {
+  color: #9aaecf;
+}
+
+.dm-dark .stage-done .stage-line {
+  background: #2e3f33;
+}
+
+.dm-dark .node-locked {
+  background: #4a4a4e;
+  color: #d8d8d8;
+}
+
+.dm-dark .stage-lock-tag { color: #ffd666; background: rgba(255, 214, 102, 0.16); }
+.dm-dark .stage-done-tag { color: #95de64; background: rgba(149, 222, 100, 0.16); }
+
+@media (prefers-color-scheme: dark) {
+  .dm-auto .stage-node { background: #3a3a3c; }
+
+  .dm-auto .stage-phase {
+    color: #9aaecf;
+    background: rgba(154, 174, 207, 0.16);
+  }
+
+  .dm-auto .tag-entry { color: #ffd666; background: rgba(255, 214, 102, 0.16); }
+  .dm-auto .tag-promote { color: #8ab4ff; background: rgba(138, 180, 255, 0.16); }
+
+  .dm-auto .stage-current .stage-body {
+    background: rgba(7, 193, 96, 0.1);
+  }
+
+  .dm-auto .stage-done .stage-name {
+    color: #9aaecf;
+  }
+
+  .dm-auto .stage-done .stage-line {
+    background: #2e3f33;
+  }
+
+  .dm-auto .node-locked {
+    background: #4a4a4e;
+    color: #d8d8d8;
+  }
+
+  .dm-auto .stage-lock-tag { color: #ffd666; background: rgba(255, 214, 102, 0.16); }
+  .dm-auto .stage-done-tag { color: #95de64; background: rgba(149, 222, 100, 0.16); }
 }

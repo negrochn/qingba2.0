@@ -1,16 +1,16 @@
-<view class="container">
-  <view class="record-section" wx:if="{{records.length > 0}}">
-    <view class="section-head">
-      <text class="section-title">打卡记录</text>
-      <view class="overview-right">
-        <text class="overview-year">{{yearText}}</text>
-        <view class="overview-picker" bindtap="onToggleMonthPicker">
-          <text class="overview-month">{{monthDisplay}}</text>
-          <text class="overview-arrow {{monthPickerOpen ? 'up' : ''}}">▾</text>
-        </view>
+<view class="container {{fontClass}} {{darkClass}}">
+  <!-- 头部：始终显示，含月份选择器（标题由导航栏承担，与设置页一致） -->
+  <view class="section-head">
+    <view class="overview-right">
+      <text class="overview-year">{{yearText}}</text>
+      <view class="overview-picker" bindtap="onToggleMonthPicker">
+        <text class="overview-month">{{monthDisplay}}</text>
+        <text class="overview-arrow {{monthPickerOpen ? 'up' : ''}}">▾</text>
       </view>
     </view>
+  </view>
 
+  <view class="record-section" wx:if="{{records.length > 0}}">
     <view class="record-list">
       <block wx:for="{{records}}" wx:key="id" wx:for-item="r" wx:for-index="idx">
         <view

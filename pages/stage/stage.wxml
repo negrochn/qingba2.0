@@ -1,11 +1,9 @@
-<view class="container" wx:if="{{stage}}">
+<view class="container {{fontClass}} {{darkClass}}" wx:if="{{stage}}">
   <!-- 阶段资源（核心：打卡）放在上半区，突出入口 -->
-  <view class="res-wrap" wx:if="{{resourceGroups.length}}">
-    <view class="res-head">
-      <view class="res-head-left">
-        <view class="res-hl-stage">{{stage.stage_name}}</view>
-      </view>
-      <view class="res-head-sub">
+  <block wx:if="{{resourceGroups.length}}">
+    <view class="st-group-head">
+      <text class="st-group-title">{{stage.stage_name}}</text>
+      <view class="st-group-sub">
         <text class="res-hl-text">积累</text>
         <text class="res-hl-bold">{{stage.vocabulary_target}}</text>
         <text class="res-hl-paren">（</text>
@@ -15,10 +13,9 @@
         <text class="res-hl-paren">）</text>
       </view>
     </view>
-    <view class="res-divider"></view>
-
+    <view class="res-wrap">
     <view class="res-list" wx:for="{{resourceGroups}}" wx:for-item="g" wx:for-index="gidx" wx:key="key">
-      <view class="rg-head {{g.clickable && !stageLocked ? 'rg-head-active' : ''}}" data-group-key="{{g.key}}" bindtap="onToggleGroup">
+      <view class="rg-head {{expandedGroups[g.key] ? '' : 'rg-head-folded'}} {{g.clickable && !stageLocked ? 'rg-head-active' : ''}}" data-group-key="{{g.key}}" bindtap="onToggleGroup">
         <view class="rg-head-left">
           <view class="rg-dot rg-dot-{{g.key}}"></view>
           <view class="rg-label rg-label-{{g.key}}">{{g.label}}</view>
@@ -71,32 +68,19 @@
           </view>
         </view>
       </view>
-      <view class="rg-body rg-body-collapsed" wx:else>
-        <view class="rg-collapsed-hint" wx:if="{{g.clickable}}">{{g.items.length}} 项资源，点击展开</view>
-        <view class="rg-collapsed-hint rg-collapsed-note" wx:else>{{g.items.length}} 项资源，仅供参考</view>
-      </view>
     </view>
-  </view>
+    </view>
+  </block>
 
   <!-- 关键要点（移动到底部） -->
-  <view class="card key-point-card" wx:if="{{stage.key_points.length}}">
-    <view class="res-head">
-      <view class="res-head-left">
-        <view class="res-hl-stage">关键要点</view>
-      </view>
-      <view class="res-head-sub">
-        <text class="res-hl-text">执行</text>
-        <text class="res-hl-bold">{{stage.stage_name}}</text>
-        <text class="res-hl-text">时的重点提醒，共</text>
-        <text class="res-hl-bold">{{stage.key_points.length}}</text>
-        <text class="res-hl-text">条</text>
-      </view>
+  <block wx:if="{{stage.key_points.length}}">
+    <view class="st-group-head">
+      <text class="st-group-title">关键要点</text>
     </view>
-    <view class="res-divider"></view>
-    
+    <view class="card key-point-card">
     <!-- 方案A：紧凑列表 -->
     <view class="kp-list">
-      <view class="kp-item {{item.highlighted ? 'kp-item-hi' : ''}}" wx:for="{{stage.key_points}}" wx:key="index">
+      <view class="kp-item {{item.highlighted ? 'kp-item-hi' : ''}}" wx:for="{{stage.key_points}}" wx:key="text">
         <view class="kp-dot {{item.highlighted ? 'kp-dot-hi' : ''}}"></view>
         <view class="kp-body">
           <text class="kp-text">{{item.text}}</text>
@@ -104,49 +88,44 @@
         </view>
       </view>
     </view>
-  </view>
+    </view>
+  </block>
 
   <!-- 晋级卡片（仅当前常规阶段展示） -->
-  <view class="card promote-card" wx:if="{{canPromote}}">
-    <view class="res-head">
-      <view class="res-head-left">
-        <view class="res-hl-stage">阶段晋级</view>
+  <block wx:if="{{canPromote}}">
+    <view class="st-group-head">
+      <text class="st-group-title">阶段晋级</text>
+    </view>
+    <view class="card promote-card">
+      <view class="promote-title">{{stage.stage_name}} 阶段进度</view>
+      <view class="promote-bar-row">
+        <progress
+          class="promote-bar"
+          percent="{{progressPercent}}"
+          stroke-width="6"
+          activeColor="{{timeMet ? '#52c41a' : '#4a90d9'}}"
+          backgroundColor="{{darkClass ? '#3a3a3a' : '#ececec'}}"
+          borderRadius="6"
+        />
+        <text class="promote-percent">{{progressPercent}}%</text>
       </view>
-      <view class="res-head-sub">
-        <text class="res-hl-text">当前阶段</text>
-        <text class="res-hl-bold">{{stage.stage_name}}</text>
-        <text class="res-hl-text">时间达标后可晋级下一阶段</text>
+      <view class="promote-meta">
+        <text>已投入 {{investedHoursText}}h</text>
+        <text wx:if="{{requiredHours}}"> · 目标 {{requiredHours}}h</text>
+      </view>
+      <view
+        class="promote-btn {{promoteEnabled ? 'promote-btn-active' : 'promote-btn-disabled'}}"
+        bindtap="onPromoteTap"
+      >
+        <text wx:if="{{promoteEnabled}}">申请晋级</text>
+        <text wx:else>时间不足，暂不可晋级</text>
       </view>
     </view>
-    <view class="res-divider"></view>
-
-    <view class="promote-progress">
-      <view class="promote-progress-bar">
-        <view class="promote-progress-fill {{timeMet ? 'promote-progress-fill-done' : ''}}" style="width: {{progressPercent}}%;"></view>
-      </view>
-      <view class="promote-progress-text">
-        <text class="promote-progress-hours">{{requiredType === 'accumulated' ? '常规1-6累计已投入' : '已投入'}} {{investedHoursText}}h</text>
-        <text class="promote-progress-target" wx:if="{{requiredHours}}">目标 {{requiredHours}}h</text>
-      </view>
-    </view>
-
-    <view class="promote-status {{timeMet ? 'promote-status-met' : ''}}">
-      <text wx:if="{{timeMet}}">✓ 时间投入已达标</text>
-      <text wx:else>时间投入未达标，继续加油</text>
-    </view>
-
-    <view
-      class="promote-btn {{promoteEnabled ? 'promote-btn-active' : 'promote-btn-disabled'}}"
-      bindtap="onPromoteTap"
-    >
-      <text wx:if="{{promoteEnabled}}">申请晋级</text>
-      <text wx:else>时间不足，暂不可晋级</text>
-    </view>
-  </view>
+  </block>
 </view>
 
 <!-- 小小优趣测试结果弹窗 -->
-<view class="pm-mask {{showPromoteModal ? 'pm-mask-show' : ''}}" bindtap="closePromoteModal" catchtouchmove="noop">
+<view class="pm-mask {{fontClass}} {{darkClass}} {{showPromoteModal ? 'pm-mask-show' : ''}}" bindtap="closePromoteModal" catchtouchmove="noop">
   <view class="pm-sheet" catchtap="noop" catchtouchmove="noop">
     <view class="pm-handle"></view>
 
@@ -192,7 +171,7 @@
 </view>
 
 <!-- 打卡弹窗(底部半屏) -->
-<view class="ci-mask {{showCheckin ? 'ci-mask-show' : ''}}" bindtap="closeCheckin" catchtouchmove="noop">
+<view class="ci-mask {{fontClass}} {{darkClass}} {{showCheckin ? 'ci-mask-show' : ''}}" bindtap="closeCheckin" catchtouchmove="noop">
   <view class="ci-sheet" catchtap="noop" catchtouchmove="noop">
     <view class="ci-handle"></view>
 
