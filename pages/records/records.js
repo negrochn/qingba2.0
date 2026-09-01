@@ -1,5 +1,4 @@
 const checkin = require('../../utils/checkin.js')
-const app = getApp()
 
 // 删除按钮宽度（rpx），与样式保持一致
 const DELETE_W = 150
@@ -39,7 +38,7 @@ Page({
       yearRange,
       monthRange
     })
-    this._refresh()
+    // 列表数据统一由 onShow 加载，避免首屏重复计算两次
   },
 
   onShow() {
@@ -175,6 +174,12 @@ Page({
     let newDx = dxPx * 2
     if (newDx < -(DELETE_W + 20)) newDx = -(DELETE_W + 20)
     if (newDx > 10) newDx = 10
+
+    // 节流：同一次滑动内位移变化小于 2rpx 时跳过，避免高频 setData 掉帧
+    if (this._swipeIdx === idx && Math.abs(newDx - this._lastDx) < 2) return
+    this._swipeIdx = idx
+    this._lastDx = newDx
+
     this.setData({ [`records[${idx}]._dx`]: newDx })
   },
 
@@ -203,9 +208,6 @@ Page({
           wx.showToast({ title: '删除失败', icon: 'none' })
           return
         }
-        try {
-          if (app && app.globalData) app.globalData.checkinDirty = true
-        } catch (ee) {}
         wx.showToast({ title: '已删除', icon: 'success' })
         this._refresh()
       }

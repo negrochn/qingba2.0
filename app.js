@@ -3,7 +3,7 @@ App({
     // 全局数据
   },
   globalData: {
-    // 打卡数据脏标记：stage 页打卡后置为 true，home 页 onShow 时检查并刷新
-    checkinDirty: false
+    // 首页"去打卡"跳路线页时置为 true，路线页 onShow 后滚动到当前阶段并复位
+    scrollToCurrentStage: false
   }
 })

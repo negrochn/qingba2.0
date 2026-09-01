@@ -14,11 +14,25 @@ Page({
   },
 
   onShow() {
-    this.loadCurrentStage();
+    // 首页"去打卡"跳转过来时，滚动到当前阶段
+    let needScroll = false
+    try {
+      const app = getApp()
+      if (app && app.globalData && app.globalData.scrollToCurrentStage) {
+        needScroll = true
+        app.globalData.scrollToCurrentStage = false
+      }
+    } catch (e) {}
+
+    this.loadCurrentStage(() => {
+      if (needScroll) {
+        this._scrollToStage(this.data.currentStageIndex)
+      }
+    })
   },
 
   // 加载当前阶段
-  loadCurrentStage() {
+  loadCurrentStage(cb) {
     const current = checkin.getCurrentStage();
     let currentIndex = -1
     routeData.stages.forEach((s, i) => {
@@ -27,7 +41,29 @@ Page({
     this.setData({
       currentStageId: current ? current.id : '',
       currentStageIndex: currentIndex
-    });
+    }, () => {
+      if (typeof cb === 'function') cb()
+    })
+  },
+
+  // 滚动到指定阶段（页面级滚动，元素距顶部留 120px）
+  _scrollToStage(index) {
+    if (index === undefined || index === null || index < 0) return
+
+    const query = wx.createSelectorQuery().in(this)
+    query.select(`#stage-${index}`).boundingClientRect()
+    query.selectViewport().scrollOffset()
+    query.exec(res => {
+      const rect = res && res[0]
+      const scroll = res && res[1]
+      if (!rect || !scroll) return
+
+      const target = scroll.scrollTop + rect.top - 120
+      wx.pageScrollTo({
+        scrollTop: target > 0 ? target : 0,
+        duration: 300
+      })
+    })
   },
 
   toStage(e) {

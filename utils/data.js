@@ -1,4 +1,6 @@
 // 听力训练路线数据，源自 qingba_listening_route.json
+// 注意：运行时只读取本文件（该 JSON 已被打包排除），
+// 若修改路线数据，请同步更新根目录的 qingba_listening_route.json，避免两份数据漂移
 const routeData = {
   "route_name": "庆爸听力线 常规路径（2.0版）",
   "age_group": "3-4岁",

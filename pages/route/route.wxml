@@ -4,6 +4,7 @@
       class="stage-item {{index < currentStageIndex && currentStageIndex >= 0 ? 'stage-done' : ''}} {{index > currentStageIndex && currentStageIndex >= 0 ? 'stage-locked' : ''}} {{item.stage_id === currentStageId ? 'stage-current' : ''}}"
       wx:for="{{stages}}"
       wx:key="stage_id"
+      id="stage-{{index}}"
       data-index="{{index}}"
       bindtap="toStage"
       hover-class="stage-hover"

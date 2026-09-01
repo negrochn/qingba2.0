@@ -2,6 +2,7 @@
 const checkin = require('../../utils/checkin.js');
 const { routeData } = require('../../utils/data.js');
 const { generateStressData } = require('../../utils/stress-test.js');
+const docx = require('../../utils/docx.js');
 
 // 构建阶段选项
 const stageOptions = routeData.stages.map(s => ({
@@ -37,14 +38,28 @@ Page({
     currentStageIndex: -1,
     currentStage: null,
     currentStageDisplay: '',
-    youquEnabled: false
+    youquEnabled: false,
+    // picker 选项
+    clearOptions: [],
+    importOptions: [
+      { key: 'overwrite', label: '覆盖式导入' },
+      { key: 'merge', label: '合并式导入' }
+    ],
+    exportOptions: [
+      { key: 'open', label: '打开备份文件' },
+      { key: 'share', label: '转发给好友' }
+    ],
+    _importMode: 'overwrite'
   },
 
   onLoad() {
     // 正式版/体验版隐藏开发者工具入口
     let env = '';
     try { env = wx.getAccountInfoSync().miniProgram.envVersion || '' } catch (e) {}
-    this.setData({ showDevTools: env === 'develop' });
+    this.setData({
+      showDevTools: env === 'develop',
+      _importMode: 'overwrite'
+    });
 
     this.loadStats();
     this.loadCurrentStage();
@@ -55,6 +70,7 @@ Page({
     this.loadStats();
     this.loadCurrentStage();
     this.loadYouquPlan();
+    this._loadClearOptions();
   },
 
   // 读取小小优趣成长计划开关
@@ -142,8 +158,27 @@ Page({
     }
   },
 
-  // ===== 备份（导出JSON文件） =====
-  onBackup() {
+  // ===== 导出备份 =====
+  // 点击 picker 选择打开/转发，选择后再生成文件
+  onExportModeChange(e) {
+    const options = this.data.exportOptions || [];
+    const opt = options[e.detail.value];
+    if (!opt) return;
+
+    // 选择具体动作后，再按需生成备份文件
+    this._generateBackupFile((filePath, fileName) => {
+      if (opt.key === 'open') {
+        this.openBackupFile(filePath);
+      } else if (opt.key === 'share') {
+        this.shareFile(filePath, fileName);
+      }
+    });
+  },
+
+  // 生成 docx 备份文件，成功后回调 (filePath, fileName)
+  _generateBackupFile(callback) {
+    wx.showLoading({ title: '生成中...', mask: true });
+
     try {
       // 收集所有数据
       const data = {};
@@ -192,7 +227,7 @@ Page({
       // 生成文件名
       const now = new Date();
       const pad = (n) => String(n).padStart(2, '0');
-      const fileName = `qingba_backup_${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.txt`;
+      const fileName = `qingba_backup_${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.docx`;
 
       // 写入临时文件
       const fs = wx.getFileSystemManager();
@@ -208,16 +243,19 @@ Page({
       } catch (e) {}
 
       const filePath = `${wx.env.USER_DATA_PATH}/${fileName}`;
+      const docxBuffer = docx.createDocx(json);
 
       fs.writeFile({
         filePath,
-        data: json,
-        encoding: 'utf8',
+        data: docxBuffer,
         success: () => {
-          // 直接转发给好友（或文件传输助手）
-          this.shareFile(filePath, fileName);
+          wx.hideLoading();
+          if (typeof callback === 'function') {
+            callback(filePath, fileName);
+          }
         },
         fail: (err) => {
+          wx.hideLoading();
           console.error('写入文件失败', err);
           wx.showToast({
             title: '备份失败',
@@ -226,12 +264,38 @@ Page({
         }
       });
     } catch (e) {
+      wx.hideLoading();
       console.error('备份失败', e);
       wx.showToast({
         title: '备份失败',
         icon: 'none'
       });
     }
+  },
+
+  // 用 openDocument 打开备份文件（iPhone 可"存储到文件"）
+  openBackupFile(filePath) {
+    if (!wx.openDocument) {
+      wx.showToast({ title: '当前版本不支持打开文件', icon: 'none' });
+      return;
+    }
+    wx.openDocument({
+      filePath,
+      fileType: 'docx',
+      showMenu: true,
+      success: () => {
+        // 打开成功：预览页右上角菜单可转发 / 用其他应用打开（存储到文件）
+      },
+      fail: (err) => {
+        console.error('openDocument fail', err);
+        wx.showModal({
+          title: '打开失败',
+          content: '无法打开备份文件，可尝试转发给好友。',
+          showCancel: false,
+          confirmText: '知道了'
+        });
+      }
+    });
   },
 
   // 转发文件给好友
@@ -288,12 +352,7 @@ Page({
         wx.setClipboardData({
           data: res.data,
           success: () => {
-            wx.showModal({
-              title: '已复制',
-              content: '备份内容已复制到剪贴板，打开微信聊天粘贴即可保存。',
-              showCancel: false,
-              confirmText: '我知道了'
-            });
+            // 系统已提示，不再弹窗
           }
         });
       },
@@ -306,15 +365,23 @@ Page({
     });
   },
 
-  // ===== 导入（从备份文件） =====
-  onImport() {
+  // ===== 导入备份 =====
+  // 点击 picker 选择覆盖/合并，选择后再选文件
+  onImportModeChange(e) {
+    const options = this.data.importOptions || [];
+    const opt = options[e.detail.value];
+    if (!opt) return;
+
+    // 记录导入方式，再选择文件
+    this.setData({ _importMode: opt.key });
+
     wx.chooseMessageFile({
       count: 1,
       type: 'file',
-      extension: ['txt', 'json'],
+      extension: ['txt', 'json', 'docx'],
       success: (res) => {
         const file = res.tempFiles[0];
-        this.readAndImport(file.path);
+        this.readAndImport(file.path, file.name);
       },
       fail: (err) => {
         console.log('选择文件失败或取消', err);
@@ -322,61 +389,96 @@ Page({
     });
   },
 
-  readAndImport(filePath) {
+  readAndImport(filePath, fileName) {
     wx.showLoading({ title: '读取中...' });
 
     const fs = wx.getFileSystemManager();
-    fs.readFile({
-      filePath,
-      encoding: 'utf8',
-      success: (res) => {
-        wx.hideLoading();
-        try {
-          const data = JSON.parse(res.data);
-
-          // 验证必要的 key
-          if (!data.checkin_records || !Array.isArray(data.checkin_records)) {
-            wx.showToast({
-              title: '备份格式无效',
-              icon: 'none'
-            });
-            return;
-          }
-
-          const recordCount = data.checkin_records.length;
-          wx.showModal({
-            title: '确认导入',
-            content: `将导入 ${recordCount} 条打卡记录，是否继续？`,
-            confirmText: '导入',
-            cancelText: '取消',
-            confirmColor: '#4a90d9',
-            success: (modalRes) => {
-              if (modalRes.confirm) {
-                this.doImport(data);
-              }
-            }
-          });
-        } catch (e) {
+    if (docx.isDocxName(fileName)) {
+      // docx：以二进制读取后解析
+      fs.readFile({
+        filePath,
+        success: (res) => {
           wx.hideLoading();
-          wx.showModal({
-            title: '解析失败',
-            content: 'JSON格式错误，请检查文件内容是否正确',
-            showCancel: false
+          try {
+            const text = docx.parseDocx(res.data);
+            this._handleImportText(text);
+          } catch (e) {
+            console.error('docx 解析失败', e);
+            wx.showModal({
+              title: '解析失败',
+              content: '备份文件解析失败，请使用本小程序导出的、未修改过的备份文件。',
+              showCancel: false
+            });
+          }
+        },
+        fail: (err) => {
+          wx.hideLoading();
+          console.error('读取文件失败', err);
+          wx.showToast({
+            title: '读取文件失败',
+            icon: 'none'
           });
         }
-      },
-      fail: (err) => {
-        wx.hideLoading();
-        console.error('读取文件失败', err);
-        wx.showToast({
-          title: '读取文件失败',
-          icon: 'none'
-        });
-      }
-    });
+      });
+    } else {
+      // txt / json：直接按文本读取
+      fs.readFile({
+        filePath,
+        encoding: 'utf8',
+        success: (res) => {
+          wx.hideLoading();
+          this._handleImportText(res.data);
+        },
+        fail: (err) => {
+          wx.hideLoading();
+          console.error('读取文件失败', err);
+          wx.showToast({
+            title: '读取文件失败',
+            icon: 'none'
+          });
+        }
+      });
+    }
   },
 
-  doImport(data) {
+  // 解析备份文本并确认导入
+  _handleImportText(text) {
+    try {
+      const data = JSON.parse(text);
+
+      // 验证必要的 key
+      if (!data.checkin_records || !Array.isArray(data.checkin_records)) {
+        wx.showToast({
+          title: '备份格式无效',
+          icon: 'none'
+        });
+        return;
+      }
+
+      const recordCount = data.checkin_records.length;
+      const modeText = this.data._importMode === 'merge' ? '合并式导入' : '覆盖式导入';
+      wx.showModal({
+        title: '确认导入',
+        content: `备份包含 ${recordCount} 条打卡记录，导入方式：${modeText}，是否继续？`,
+        confirmText: '导入',
+        cancelText: '取消',
+        confirmColor: '#4a90d9',
+        success: (modalRes) => {
+          if (modalRes.confirm) {
+            this.doImport(data, this.data._importMode);
+          }
+        }
+      });
+    } catch (e) {
+      wx.showModal({
+        title: '解析失败',
+        content: 'JSON格式错误，请检查文件内容是否正确',
+        showCancel: false
+      });
+    }
+  },
+
+  doImport(data, mode = 'overwrite') {
     wx.showLoading({ title: '导入中...' });
 
     try {
@@ -402,7 +504,45 @@ Page({
           }
           grouped[day].push(record);
         }
-        checkin.saveAll(grouped);
+
+        // 合并模式：保留本地记录，按日期合并并按 id 去重（同 id 保留本地版本）
+        if (mode === 'merge') {
+          const local = checkin.getAll();
+          const mergedByDay = {};
+          for (const day in local) {
+            if (Array.isArray(local[day]) && local[day].length > 0) {
+              mergedByDay[day] = local[day].slice();
+            }
+          }
+          for (const day in grouped) {
+            if (!mergedByDay[day]) {
+              mergedByDay[day] = [];
+            }
+            for (const c of grouped[day]) {
+              mergedByDay[day].push(c);
+            }
+          }
+          for (const day in mergedByDay) {
+            const seen = new Set();
+            const deduped = [];
+            for (const c of mergedByDay[day]) {
+              const key = c && c.id ? c.id : (c ? `${c.day}_${c.timestamp}_${c.resourceName}` : '');
+              if (!key) {
+                deduped.push(c);
+                continue;
+              }
+              if (!seen.has(key)) {
+                seen.add(key);
+                deduped.push(c);
+              }
+            }
+            deduped.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+            mergedByDay[day] = deduped;
+          }
+          checkin.saveAll(mergedByDay);
+        } else {
+          checkin.saveAll(grouped);
+        }
       }
 
       // 保存默认备注
@@ -410,9 +550,17 @@ Page({
         wx.setStorageSync(checkin.DEFAULT_REMARK_KEY, data.checkin_default_remark);
       }
 
-      // 保存已读次数
+      // 保存已读次数（合并模式：本地与备份按资源累加）
       if (data.read_count_data) {
-        wx.setStorageSync(checkin.READ_COUNT_KEY, data.read_count_data);
+        if (mode === 'merge') {
+          const mergedCounts = Object.assign({}, wx.getStorageSync(checkin.READ_COUNT_KEY) || {});
+          for (const key in data.read_count_data) {
+            mergedCounts[key] = (mergedCounts[key] || 0) + (data.read_count_data[key] || 0);
+          }
+          wx.setStorageSync(checkin.READ_COUNT_KEY, mergedCounts);
+        } else {
+          wx.setStorageSync(checkin.READ_COUNT_KEY, data.read_count_data);
+        }
       }
 
       // 恢复当前阶段
@@ -433,11 +581,6 @@ Page({
         icon: 'success'
       });
 
-      // 通知其他页面数据已更新
-      const app = getApp();
-      if (app) {
-        app.globalData.checkinDirty = true;
-      }
     } catch (e) {
       wx.hideLoading();
       wx.showToast({
@@ -448,41 +591,88 @@ Page({
   },
 
   // ===== 清空数据 =====
-  onClearData() {
-    if (this.data.totalCount === 0) {
-      wx.showToast({ title: '暂无数据', icon: 'none' });
+  // 每次进入设置页时刷新清空范围选项
+  _loadClearOptions() {
+    const total = this.data.totalCount || 0;
+    if (total === 0) {
+      this.setData({ clearOptions: [] });
+      return;
+    }
+
+    // 统计各阶段记录条数
+    const all = checkin.getAll();
+    const counts = {};
+    for (const day in all) {
+      for (const c of all[day]) {
+        const sid = c && c.stageId ? c.stageId : '';
+        counts[sid] = (counts[sid] || 0) + 1;
+      }
+    }
+
+    // picker 选项：全部数据 + 各阶段，label 仅显示范围名称
+    const options = routeData.stages.map(s => ({
+      key: s.stage_id,
+      name: s.stage_name,
+      label: s.stage_name
+    }));
+    options.unshift({
+      key: 'all',
+      name: '全部数据',
+      label: '全部数据'
+    });
+    this.setData({ clearOptions: options });
+  },
+
+  // picker 选择清空范围后二次确认
+  onClearScopeChange(e) {
+    const options = this.data.clearOptions || [];
+    const opt = options[e.detail.value];
+    if (!opt) return;
+
+    if (!opt.count) {
+      wx.showToast({ title: '该范围暂无数据', icon: 'none' });
       return;
     }
 
     wx.showModal({
       title: '确认清空',
-      content: `将删除全部 ${this.data.totalCount} 条打卡记录，此操作不可恢复，是否继续？`,
+      content: `将删除「${opt.name}」共 ${opt.count} 条打卡记录，此操作不可恢复，是否继续？`,
       confirmText: '清空',
       cancelText: '取消',
       confirmColor: '#e74c3c',
       success: (res) => {
         if (res.confirm) {
-          this.doClear();
+          this.doClear(opt.key);
         }
       }
     });
   },
 
-  doClear() {
+  doClear(scope) {
     wx.showLoading({ title: '清除中...' });
 
     setTimeout(() => {
       try {
-        // 使用 clearAllCheckins 清除主 key + 所有分片 key
-        const removed = checkin.clearAllCheckins();
-        wx.removeStorageSync(checkin.DEFAULT_REMARK_KEY);
-        wx.removeStorageSync(checkin.READ_COUNT_KEY);
-        wx.removeStorageSync(checkin.CURRENT_STAGE_KEY);
+        if (!scope || scope === 'all') {
+          // 使用 clearAllCheckins 清除主 key + 所有分片 key
+          checkin.clearAllCheckins();
+          wx.removeStorageSync(checkin.DEFAULT_REMARK_KEY);
+          wx.removeStorageSync(checkin.READ_COUNT_KEY);
+          wx.removeStorageSync(checkin.CURRENT_STAGE_KEY);
 
-        // 重置当前阶段为常规1
-        const firstStage = routeData.stages[0];
-        if (firstStage) {
-          checkin.setCurrentStage({ id: firstStage.stage_id, name: firstStage.stage_name });
+          // 重置当前阶段为常规1
+          const firstStage = routeData.stages[0];
+          if (firstStage) {
+            checkin.setCurrentStage({ id: firstStage.stage_id, name: firstStage.stage_name });
+          }
+        } else {
+          // 按阶段清除：仅删除该阶段的记录与已读次数
+          const removed = checkin.clearCheckinsByStage(scope);
+          if (!removed) {
+            wx.hideLoading();
+            wx.showToast({ title: '该范围暂无数据', icon: 'none' });
+            return;
+          }
         }
 
         wx.hideLoading();
@@ -494,11 +684,6 @@ Page({
           icon: 'success'
         });
 
-        // 通知其他页面
-        const app = getApp();
-        if (app) {
-          app.globalData.checkinDirty = true;
-        }
       } catch (e) {
         wx.hideLoading();
         wx.showToast({
@@ -513,7 +698,7 @@ Page({
   onStressTest() {
     wx.showModal({
       title: '压力测试',
-      content: '将生成从2021年6月至今的模拟打卡数据（约1900天，每天3-10条），会覆盖现有数据，是否继续？',
+      content: '将生成模拟打卡数据（每阶段累计约80-90小时，每日15-60分钟，含缺卡日），会覆盖现有数据，是否继续？',
       confirmText: '生成',
       cancelText: '取消',
       confirmColor: '#4a90d9',
@@ -541,12 +726,12 @@ Page({
         let stageSummary = '';
         for (const name in result.stageStats) {
           const s = result.stageStats[name];
-          stageSummary += `${name}: ${s.days}天 ${s.records}条 ${s.hours}h\n`;
+          stageSummary += `${name}: ${s.days}天 ${s.records}条 ${s.hours}h(目标${s.targetHours}h)\n`;
         }
 
         wx.showModal({
           title: '生成完成',
-          content: `总天数: ${result.totalDays}\n总记录: ${result.totalRecords}条\n总时长: ${result.totalHours}h\n已读完: ${result.totalReadCounts}次\n\n${stageSummary}`,
+          content: `打卡: ${result.totalDays}天 / 跨度: ${result.spanDays}天\n总记录: ${result.totalRecords}条\n总时长: ${result.totalHours}h\n已读完: ${result.totalReadCounts}次\n\n${stageSummary}`,
           showCancel: false,
           confirmText: '确定'
         });

@@ -1,5 +1,6 @@
 // 压力测试数据生成
-// 从指定日期到今天，逐级分阶段生成打卡记录
+// 按真实计划生成：每个阶段累计打卡约80-90小时，每日总时长15-60分钟，约12%的天数缺卡
+// 日期从今天往回推算
 const { routeData, resourceLabels } = require('./data.js')
 const { READ_COUNT_KEY, CURRENT_STAGE_KEY, saveAll } = require('./checkin.js')
 
@@ -31,97 +32,132 @@ function getStageResources(stage) {
   return resources
 }
 
+// 将某天总时长拆成 1-3 条记录（每条至少5分钟）
+function splitDuration(total) {
+  let n
+  if (total <= 25) n = 1
+  else if (total <= 45) n = 2
+  else n = 3
+  const splits = []
+  let remain = total
+  for (let k = 0; k < n; k++) {
+    if (k === n - 1) {
+      splits.push(remain)
+    } else {
+      const minSplit = 5
+      const maxSplit = remain - (n - k - 1) * minSplit
+      const s = minSplit + Math.floor(Math.random() * (maxSplit - minSplit + 1))
+      splits.push(s)
+      remain -= s
+    }
+  }
+  return splits
+}
+
 /**
  * 生成压力测试数据
+ * - 每个阶段累计打卡时长约 80-90 小时
+ * - 每日打卡总时长 15-60 分钟（拆成 1-3 条记录）
+ * - 约 12% 的天数缺卡
+ * - 日期从今天往回推算
  * @param {Function} onProgress - 进度回调 (current, total, msg)
  * @returns {Object} 统计信息
  */
 function generateStressData(onProgress) {
-  const startDate = new Date(2021, 5, 1) // 2021-06-01
-  const endDate = new Date()
-  endDate.setHours(23, 59, 59, 0)
-
-  const totalDays = Math.ceil((endDate - startDate) / (24 * 60 * 60 * 1000)) + 1
   const stages = routeData.stages // 7 stages
-  const daysPerStage = Math.floor(totalDays / stages.length)
 
-  // 阶段时间线
-  const stageTimeline = stages.map((stage, i) => {
-    const startDay = i * daysPerStage
-    const endDay = (i === stages.length - 1) ? totalDays - 1 : (i + 1) * daysPerStage - 1
-    return { stage, startDay, endDay, resources: getStageResources(stage) }
+  // 逐阶段"模拟"：按目标累计时长生成每日计划，null 表示缺卡
+  const stagePlans = stages.map(stage => {
+    const targetMinutes = (80 + Math.floor(Math.random() * 11)) * 60 // 80-90 小时
+    const days = []
+    let acc = 0
+    while (acc < targetMinutes) {
+      // 约 12% 概率缺卡
+      if (Math.random() < 0.12) {
+        days.push(null)
+        continue
+      }
+      const m = 15 + Math.floor(Math.random() * 46) // 15-60 分钟
+      days.push(m)
+      acc += m
+    }
+    return { stage, days, targetMinutes, actualMinutes: acc }
   })
+
+  const spanDays = stagePlans.reduce((s, p) => s + p.days.length, 0)
+
+  // 从今天往回推算起始日期
+  const endDate = new Date()
+  endDate.setHours(0, 0, 0, 0)
+  const startDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate() - (spanDays - 1))
+  startDate.setHours(0, 0, 0, 0)
 
   const allCheckins = {}
   const readCounts = {}
   let totalRecords = 0
   let totalMinutes = 0
+  let checkedDays = 0
+  let dayIdx = 0
 
-  for (let dayIdx = 0; dayIdx < totalDays; dayIdx++) {
-    const d = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + dayIdx)
-    const dayStr = dateToStr(d)
-    const timestamp = d.getTime()
+  for (const plan of stagePlans) {
+    const { stage, days } = plan
+    const resources = getStageResources(stage)
 
-    // 确定当前阶段
-    let currentStageInfo = stageTimeline[0]
-    for (const tl of stageTimeline) {
-      if (dayIdx >= tl.startDay && dayIdx <= tl.endDay) {
-        currentStageInfo = tl
-        break
+    for (const dayMinutes of days) {
+      const d = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + dayIdx)
+      const dayStr = dateToStr(d)
+      dayIdx++
+
+      // 缺卡日：不生成记录
+      if (dayMinutes === null) {
+        if (onProgress && dayIdx % 100 === 0) {
+          onProgress(dayIdx, spanDays, `生成中: ${dayStr} (${stage.stage_name})`)
+        }
+        continue
       }
-    }
 
-    const stage = currentStageInfo.stage
-    const resources = currentStageInfo.resources
+      // 拆成 1-3 条记录
+      const splits = splitDuration(dayMinutes)
 
-    // 随机生成 3-10 条记录
-    const recordCount = 3 + Math.floor(Math.random() * 8) // 3-10
-    const dayRecords = []
-
-    for (let j = 0; j < recordCount; j++) {
-      // 随机选一个资源
-      const res = resources[Math.floor(Math.random() * resources.length)]
-
-      // 时长：10-30 分钟
-      const duration = 10 + Math.floor(Math.random() * 21)
-
-      // 时间戳：当天随机时间
+      // 当天随机起点时间
       const hour = 7 + Math.floor(Math.random() * 14) // 7:00-21:00
       const minute = Math.floor(Math.random() * 60)
-      const ts = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour, minute, Math.floor(Math.random() * 60)).getTime()
+      const baseTs = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour, minute, Math.floor(Math.random() * 60)).getTime()
 
-      const record = {
-        id: genId(),
-        day: dayStr,
-        stageId: stage.stage_id,
-        stageName: stage.stage_name,
-        groupKey: res.groupKey,
-        groupLabel: res.groupLabel,
-        resourceName: res.resourceName,
-        durationMinutes: duration,
-        remark: '',
-        timestamp: ts
-      }
-      dayRecords.push(record)
-      totalRecords++
-      totalMinutes += duration
-    }
-
-    allCheckins[dayStr] = dayRecords
-
-    // 每两周产生 1-2 次已读完
-    if (dayIdx > 0 && dayIdx % 14 === 0) {
-      const readCount = 1 + Math.floor(Math.random() * 2) // 1-2
-      for (let r = 0; r < readCount; r++) {
+      const dayRecords = []
+      for (let j = 0; j < splits.length; j++) {
         const res = resources[Math.floor(Math.random() * resources.length)]
-        const key = `${stage.stage_id}|${res.groupKey}|${res.resourceName}`
-        readCounts[key] = (readCounts[key] || 0) + 1
+        dayRecords.push({
+          id: genId(),
+          day: dayStr,
+          stageId: stage.stage_id,
+          stageName: stage.stage_name,
+          groupKey: res.groupKey,
+          groupLabel: res.groupLabel,
+          resourceName: res.resourceName,
+          durationMinutes: splits[j],
+          remark: '',
+          timestamp: baseTs + j * 30 * 60 * 1000 // 多条记录间隔30分钟
+        })
+        totalRecords++
+        totalMinutes += splits[j]
       }
-    }
+      allCheckins[dayStr] = dayRecords
+      checkedDays++
 
-    // 每 100 天报告进度
-    if (onProgress && (dayIdx % 100 === 0 || dayIdx === totalDays - 1)) {
-      onProgress(dayIdx + 1, totalDays, `生成中: ${dayStr} (${stage.stage_name})`)
+      // 每两周产生 1-2 次已读完
+      if (dayIdx > 0 && dayIdx % 14 === 0) {
+        const readCount = 1 + Math.floor(Math.random() * 2) // 1-2
+        for (let r = 0; r < readCount; r++) {
+          const res = resources[Math.floor(Math.random() * resources.length)]
+          const key = `${stage.stage_id}|${res.groupKey}|${res.resourceName}`
+          readCounts[key] = (readCounts[key] || 0) + 1
+        }
+      }
+
+      if (onProgress && dayIdx % 100 === 0) {
+        onProgress(dayIdx, spanDays, `生成中: ${dayStr} (${stage.stage_name})`)
+      }
     }
   }
 
@@ -129,38 +165,42 @@ function generateStressData(onProgress) {
   saveAll(allCheckins)
   wx.setStorageSync(READ_COUNT_KEY, readCounts)
 
-  // 设置当前阶段为准桥梁
-  const bridgeStage = stages.find(s => s.stage_id === 'pre_bridge')
-  if (bridgeStage) {
+  // 设置当前阶段为最后阶段（准桥梁）
+  const lastStage = stages[stages.length - 1]
+  if (lastStage) {
     wx.setStorageSync(CURRENT_STAGE_KEY, {
-      id: bridgeStage.stage_id,
-      name: bridgeStage.stage_name
+      id: lastStage.stage_id,
+      name: lastStage.stage_name
     })
   }
 
   // 各阶段统计
   const stageStats = {}
-  for (const tl of stageTimeline) {
+  for (const plan of stagePlans) {
+    const { stage, days, targetMinutes } = plan
+    let records = 0
     let minutes = 0
-    let count = 0
     for (const day in allCheckins) {
       for (const c of allCheckins[day]) {
-        if (c.stageId === tl.stage.stage_id) {
+        if (c.stageId === stage.stage_id) {
           minutes += c.durationMinutes
-          count++
+          records++
         }
       }
     }
-    stageStats[tl.stage.stage_name] = {
-      days: tl.endDay - tl.startDay + 1,
-      records: count,
+    stageStats[stage.stage_name] = {
+      days: days.filter(d => d !== null).length, // 实际打卡天数
+      spanDays: days.length, // 阶段跨度天数
+      records,
       minutes,
-      hours: (minutes / 60).toFixed(1)
+      hours: (minutes / 60).toFixed(1),
+      targetHours: (targetMinutes / 60).toFixed(0)
     }
   }
 
   return {
-    totalDays,
+    totalDays: checkedDays, // 实际打卡天数
+    spanDays, // 时间跨度天数
     totalRecords,
     totalHours: (totalMinutes / 60).toFixed(1),
     totalReadCounts: Object.values(readCounts).reduce((s, v) => s + v, 0),

@@ -1,6 +1,5 @@
 const checkin = require('../../utils/checkin.js')
 const data = require('../../utils/data.js')
-const app = getApp()
 
 // 小时数显示：去尾零（2.50 -> 2.5, 2.00 -> 2）
 function fmtHours(minutes) {
@@ -40,19 +39,11 @@ Page({
   },
 
   onLoad() {
-    this._refresh()
+    // 数据统一由 onShow 加载，避免首屏重复计算两次
   },
 
   onShow() {
-    // 若其他页面有打卡/删除操作，刷新
-    let dirty = false
-    try {
-      if (app && app.globalData && app.globalData.checkinDirty) {
-        app.globalData.checkinDirty = false
-        dirty = true
-      }
-    } catch (e) {}
-    this._refresh(dirty)
+    this._refresh()
   },
 
   // 主刷新：全部以「当前阶段」为口径聚合
@@ -223,6 +214,12 @@ Page({
     let newDx = dxPx * 2
     if (newDx < -(DELETE_W + 20)) newDx = -(DELETE_W + 20)
     if (newDx > 10) newDx = 10
+
+    // 节流：同一次滑动内位移变化小于 2rpx 时跳过，避免高频 setData 掉帧
+    if (this._swipeIdx === idx && Math.abs(newDx - this._lastDx) < 2) return
+    this._swipeIdx = idx
+    this._lastDx = newDx
+
     this.setData({ [`todayRecords[${idx}]._dx`]: newDx })
   },
 
@@ -251,9 +248,6 @@ Page({
           wx.showToast({ title: '删除失败', icon: 'none' })
           return
         }
-        try {
-          if (app && app.globalData) app.globalData.checkinDirty = true
-        } catch (ee) {}
         wx.showToast({ title: '已删除', icon: 'success' })
         this._refresh()
       }
@@ -262,6 +256,14 @@ Page({
 
   // ===== 跳转 =====
   goRoute() {
+    // 标记：跳转后路线页需滚动到当前阶段
+    try {
+      const app = getApp();
+      if (app && app.globalData) {
+        app.globalData.scrollToCurrentStage = true;
+      }
+    } catch (e) {}
+
     wx.switchTab({ url: '/pages/route/route' })
   }
 })

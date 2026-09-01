@@ -13,6 +13,14 @@
       {
         "value": "assets",
         "type": "folder"
+      },
+      {
+        "value": "CHANGELOG.md",
+        "type": "file"
+      },
+      {
+        "value": ".gitignore",
+        "type": "file"
       }
     ],
     "include": []
@@ -32,7 +40,7 @@
     "autoAudits": false,
     "newFeature": false,
     "uglifyFileName": false,
-    "uploadWithSourceMap": true,
+    "uploadWithSourceMap": false,
     "useIsolateContext": true,
     "nodeModules": false,
     "enhance": true,
@@ -44,7 +52,6 @@
     "enableEngineAbi": true,
     "checkInvalidKey": true,
     "checkSiteMap": true,
-    "uploadWithSourceMap_": true,
     "useStaticServer": true,
     "babelSetting": {
       "ignore": [],
@@ -62,7 +69,7 @@
   },
   "compileType": "miniprogram",
   "libVersion": "3.5.5",
-  "appid": "wx55acc6487319d4f3",
+  "appid": "touristappid",
   "projectname": "庆爸2.0",
   "condition": {},
   "editorSetting": {

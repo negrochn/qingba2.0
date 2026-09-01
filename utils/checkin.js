@@ -113,41 +113,69 @@ function _estimateItemCount(data) {
 
 // ===== 分片读写 =====
 
+// 列出所有分片 key
+// getStorageInfoSync 不可用时，按月份范围探测，避免分片态数据"凭空消失"
+function _listChunkKeys() {
+  try {
+    const info = wx.getStorageInfoSync()
+    if (info && Array.isArray(info.keys)) {
+      return info.keys.filter(k => String(k).startsWith(CHUNK_PREFIX))
+    }
+  } catch (e) {
+    console.error('getStorageInfoSync failed:', e)
+  }
+
+  // 回退：按月份回溯探测（10 年）
+  const found = []
+  const now = new Date()
+  for (let i = 0; i < 120; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    try {
+      const v = wx.getStorageSync(_chunkKey(ym))
+      if (v && typeof v === 'object') found.push(_chunkKey(ym))
+    } catch (e) {}
+  }
+  return found
+}
+
+// 是否处于分片存储模式
+function _isChunkMode() {
+  return _listChunkKeys().length > 0
+}
+
 function getAll() {
   try {
     const main = wx.getStorageSync(STORAGE_KEY) || {}
-    let allKeys = []
-    try {
-      const info = wx.getStorageInfoSync()
-      allKeys = info.keys || []
-    } catch(e) {}
+    const chunkKeys = _listChunkKeys()
 
-    // 检查是否存在分片 key
-    const hasChunks = allKeys.some(k => k.startsWith(CHUNK_PREFIX))
-    if (!hasChunks && Object.keys(main).length > 0) return main
+    // 无分片：直接返回主 key（空对象即表示确实没有数据）
+    if (chunkKeys.length === 0) return main
 
     // 合并主 key + 所有分片
     const merged = { ...main }
-    allKeys.forEach(k => {
-      if (k.startsWith(CHUNK_PREFIX)) {
-        try {
-          const chunk = wx.getStorageSync(k)
-          if (chunk && typeof chunk === 'object') {
-            for (const day in chunk) {
-              if (Array.isArray(chunk[day]) && chunk[day].length > 0) {
-                merged[day] = chunk[day]
-              }
+    chunkKeys.forEach(k => {
+      try {
+        const chunk = wx.getStorageSync(k)
+        if (chunk && typeof chunk === 'object') {
+          for (const day in chunk) {
+            if (Array.isArray(chunk[day]) && chunk[day].length > 0) {
+              merged[day] = chunk[day]
             }
           }
-        } catch(e) {}
-      }
+        }
+      } catch(e) {}
     })
     return merged
   } catch (e) {
+    console.error('getAll failed:', e)
     return {}
   }
 }
 
+// 保存全部数据
+// 分片模式采用"先写新分片，全部成功后再删旧的"，任何一步失败都回滚，保证旧数据不丢
+// @returns {boolean} 是否保存成功
 function saveAll(data) {
   try {
     // 保存前检查总量，超阈值弹一次提醒
@@ -158,17 +186,19 @@ function saveAll(data) {
 
     // 数据量小且条目少：直接存主 key（兼容旧版）
     if (bytes <= MAX_ITEM_BYTES && itemCount < 500) {
-      try { wx.setStorageSync(STORAGE_KEY, data) } catch (e) { _onSaveFail() }
-      // 若此前处于分片态，必须同步删除旧分片（先写后删：写入失败时保留旧分片兜底）
-      _removeChunkKeys()
-      return
+      let ok = true
+      try {
+        wx.setStorageSync(STORAGE_KEY, data)
+      } catch (e) {
+        ok = false
+        _onSaveFail()
+      }
+      // 只有写入成功才删除旧分片（写入失败时旧分片仍在，可兜底）
+      if (ok) _removeChunkKeys()
+      return ok
     }
 
     // 数据量大：按月分片存储
-    // 先清空主 key 和旧分片（避免残留）
-    try { wx.removeStorageSync(STORAGE_KEY) } catch(e) {}
-    _removeChunkKeys()
-
     const months = {}
     for (const day in data) {
       const ym = _dayToMonth(day)
@@ -176,33 +206,63 @@ function saveAll(data) {
       months[ym][day] = data[day]
     }
 
+    const oldKeys = _listChunkKeys()
+    const newKeys = []
+    let ok = true
+
+    // 1) 先写入所有新分片（此时旧数据仍在，失败也不丢）
     for (const ym in months) {
       const chunkData = months[ym]
       const chunkBytes = _estimateBytes(chunkData)
       const chunkItems = _estimateItemCount(chunkData)
-
-      // 单月仍超限则继续拆分到单日
-      if (chunkBytes <= MAX_ITEM_BYTES && chunkItems < 500) {
-        try { wx.setStorageSync(_chunkKey(ym), chunkData) } catch (e) { _onSaveFail() }
-      } else {
-        // 极端情况：某月数据量极大，按天逐条存
-        for (const day in chunkData) {
-          const dayData = { [day]: chunkData[day] }
-          try { wx.setStorageSync(_chunkKey(ym + '_' + day.substring(8)), dayData) } catch (e) { _onSaveFail() }
+      try {
+        if (chunkBytes <= MAX_ITEM_BYTES && chunkItems < 500) {
+          const key = _chunkKey(ym)
+          wx.setStorageSync(key, chunkData)
+          newKeys.push(key)
+        } else {
+          // 极端情况：某月数据量极大，按天逐条存
+          for (const day in chunkData) {
+            const key = _chunkKey(ym + '_' + day.substring(8))
+            wx.setStorageSync(key, { [day]: chunkData[day] })
+            newKeys.push(key)
+          }
         }
+      } catch (e) {
+        ok = false
+        _onSaveFail()
+        break
       }
     }
+
+    if (!ok) {
+      // 回滚：只删除本次新写入的分片，旧数据原样保留
+      newKeys.forEach(k => {
+        try { wx.removeStorageSync(k) } catch (e) {}
+      })
+      return false
+    }
+
+    // 2) 全部写成功后，再清理主 key 与不再使用的旧分片
+    try { wx.removeStorageSync(STORAGE_KEY) } catch(e) {}
+    oldKeys.forEach(k => {
+      if (newKeys.indexOf(k) < 0) {
+        try { wx.removeStorageSync(k) } catch (e) {}
+      }
+    })
+
+    return true
   } catch (e) {
     console.error('saveAll failed:', e)
+    return false
   }
 }
 
 // 新增打卡记录
 // opts: { stageId, stageName, groupKey, groupLabel, resourceName, durationMinutes, remark }
+// @returns {Object|null} 成功返回记录，保存失败返回 null
 function addCheckin(opts) {
-  const all = getAll()
   const day = todayStr()
-  const list = all[day] || []
   const record = {
     id: genId(),
     day,
@@ -215,10 +275,33 @@ function addCheckin(opts) {
     remark: opts.remark || '',
     timestamp: Date.now()
   }
+
+  // 快路径：分片模式下只读写当天所在月份的分片，避免全量 I/O
+  if (_isChunkMode()) {
+    try {
+      const key = _chunkKey(_dayToMonth(day))
+      const chunk = wx.getStorageSync(key)
+      if (chunk && typeof chunk === 'object') {
+        const list = Array.isArray(chunk[day]) ? chunk[day].slice() : []
+        list.push(record)
+        chunk[day] = list
+        // 该分片未超限才走快路径，否则回退全量以重新分片
+        if (_estimateBytes(chunk) <= MAX_ITEM_BYTES && _estimateItemCount(chunk) < 500) {
+          wx.setStorageSync(key, chunk)
+          return record
+        }
+      }
+    } catch (e) {
+      console.error('addCheckin fast path failed:', e)
+    }
+  }
+
+  // 慢路径：全量读写
+  const all = getAll()
+  const list = all[day] || []
   list.push(record)
   all[day] = list
-  saveAll(all)
-  return record
+  return saveAll(all) ? record : null
 }
 
 // 默认备注存储: { "stageId|groupKey|resourceName": remark }
@@ -292,6 +375,33 @@ function todayTotalByResource(stageId, groupKey, resourceName) {
     .reduce((s, c) => s + c.durationMinutes, 0)
 }
 
+// 批量汇总某天某阶段下各资源的累计时长与已读次数
+// 只需一次 getAll，避免在页面循环里对每个资源重复全量读取
+// @returns {Object} { minutes: { "groupKey|resourceName": min }, readCounts: { "groupKey|resourceName": count } }
+function getDayTotalsByStage(stageId, day) {
+  const minutes = {}
+  const readCounts = {}
+  try {
+    const list = getByDay(day || todayStr())
+    for (const c of list) {
+      if (!c || c.stageId !== stageId) continue
+      const k = `${c.groupKey}|${c.resourceName}`
+      minutes[k] = (minutes[k] || 0) + (Number(c.durationMinutes) || 0)
+    }
+
+    const counts = _getReadCounts()
+    const prefix = `${stageId}|`
+    for (const key in counts) {
+      if (String(key).indexOf(prefix) === 0) {
+        readCounts[String(key).substring(prefix.length)] = counts[key]
+      }
+    }
+  } catch (e) {
+    console.error('getDayTotalsByStage failed:', e)
+  }
+  return { minutes, readCounts }
+}
+
 // 获取某月所有打卡记录
 // ym: 'YYYY-MM'
 function getByMonth(ym) {
@@ -322,6 +432,7 @@ function totalReadCountByStage(stageId) {
 }
 
 // 根据 id 删除打卡记录
+// @returns {boolean} 是否删除并保存成功
 function deleteCheckin(id) {
   const all = getAll()
   for (const day in all) {
@@ -334,8 +445,7 @@ function deleteCheckin(id) {
       } else {
         all[day] = list
       }
-      saveAll(all)
-      return true
+      return !!saveAll(all)
     }
   }
   return false
@@ -366,6 +476,43 @@ function clearAllCheckins() {
     })
 
     return toRemove.length
+  } catch (e) {
+    return 0
+  }
+}
+
+// 清除某阶段的全部打卡记录（同时清除该阶段的已读次数）
+// 保留其它阶段数据，返回被删除的记录条数
+function clearCheckinsByStage(stageId) {
+  try {
+    const all = getAll()
+    let removed = 0
+    const remain = {}
+
+    for (const day in all) {
+      const list = all[day]
+      if (!Array.isArray(list)) continue
+      const kept = list.filter(c => c && c.stageId !== stageId)
+      removed += list.length - kept.length
+      if (kept.length > 0) {
+        remain[day] = kept
+      }
+    }
+
+    // 同步清除该阶段的已读次数（key 格式: stageId|groupKey|resourceName）
+    const counts = _getReadCounts()
+    const prefix = `${stageId}|`
+    let changed = false
+    for (const k in counts) {
+      if (String(k).indexOf(prefix) === 0) {
+        delete counts[k]
+        changed = true
+      }
+    }
+    if (changed) _saveReadCounts(counts)
+
+    if (removed > 0) saveAll(remain)
+    return removed
   } catch (e) {
     return 0
   }
@@ -501,11 +648,13 @@ module.exports = {
   addCheckin,
   deleteCheckin,
   clearAllCheckins,
+  clearCheckinsByStage,
   getAll,
   getByMonth,
   totalCountAll,
   totalReadCountByStage,
   todayTotalByResource,
+  getDayTotalsByStage,
   fmtMinutes,
   fmtHoursDecimal,
   getDefaultRemark,

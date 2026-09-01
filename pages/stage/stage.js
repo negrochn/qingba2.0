@@ -103,8 +103,19 @@ Page({
 
   onLoad(options) {
     const index = Number(options.index)
+    // 索引非法时提示并返回，避免停在空白页无法退出
+    if (isNaN(index) || index < 0 || index >= routeData.stages.length) {
+      wx.showToast({ title: '阶段不存在', icon: 'none' })
+      setTimeout(() => { wx.navigateBack() }, 800)
+      return
+    }
+
     const stage = routeData.stages[index]
-    if (!stage) return
+    if (!stage) {
+      wx.showToast({ title: '阶段不存在', icon: 'none' })
+      setTimeout(() => { wx.navigateBack() }, 800)
+      return
+    }
 
     const order = [
       'main_picture_books', 'main_graded_readers', 'main_animations',
@@ -297,12 +308,6 @@ Page({
 
     checkin.setCurrentStage(stageData)
 
-    // 通知首页数据已变更
-    try {
-      const app = getApp()
-      if (app && app.globalData) app.globalData.checkinDirty = true
-    } catch (e) {}
-
     wx.showToast({
       title: `已晋级：${nextStage.stage_name}`,
       icon: 'success'
@@ -317,19 +322,23 @@ Page({
     if (!stage) return
     const totals = {}
     const groupProgress = {}
+
+    // 一次读取当天该阶段全部资源的时长与已读次数，避免在循环内重复全量读取
+    const { minutes, readCounts } = checkin.getDayTotalsByStage(stage.stage_id, checkin.todayStr())
+
     this.data.resourceGroups.forEach(g => {
       if (!g.clickable) return
       let groupToday = 0
       let groupReadCount = 0
       g.items.forEach(name => {
-        const min = checkin.todayTotalByResource(stage.stage_id, g.key, name)
+        const key = `${g.key}|${name}`
+        const min = minutes[key] || 0
         if (min > 0) {
-          totals[`${g.key}|${name}`] = min
+          totals[key] = min
           groupToday += min
         }
         // 统计该组已读总数
-        const rc = checkin.getReadCount(stage.stage_id, g.key, name)
-        groupReadCount += rc
+        groupReadCount += readCounts[key] || 0
       })
       groupProgress[g.key] = {
         todayMin: groupToday,
@@ -459,7 +468,7 @@ Page({
 
     const remarkText = String(remarkInput || '').trim()
 
-    checkin.addCheckin({
+    const record = checkin.addCheckin({
       stageId: stage.stage_id,
       stageName: stage.stage_name,
       groupKey: currentGroup.key,
@@ -469,17 +478,18 @@ Page({
       remark: remarkText
     })
 
+    // 保存失败（如本地存储已满）时不提示成功
+    if (!record) {
+      wx.showToast({ title: '保存失败,请检查存储空间', icon: 'none' })
+      return
+    }
+
     // 保存备注为默认值
     checkin.saveDefaultRemark(stage.stage_id, currentGroup.key, currentResource, remarkText)
 
-    // 通知首页数据已变更
-    try {
-      const app = getApp()
-      if (app && app.globalData) app.globalData.checkinDirty = true
-    } catch (e) {}
-
     const resKey = `${currentGroup.key}|${currentResource}`
-    const newTotal = checkin.todayTotalByResource(stage.stage_id, currentGroup.key, currentResource)
+    // 基于本地值累加，避免再触发一次全量读取
+    const newTotal = (Number(this.data.resTotals[resKey]) || 0) + minutes
     
     // 更新分组进度
     const groupProgress = { ...this.data.groupProgress }
