@@ -104,7 +104,7 @@
           percent="{{progressPercent}}"
           stroke-width="6"
           activeColor="{{timeMet ? '#52c41a' : '#4a90d9'}}"
-          backgroundColor="{{darkClass ? '#3a3a3a' : '#ececec'}}"
+          backgroundColor="{{isDark ? '#3a3a3a' : '#ececec'}}"
           borderRadius="6"
         />
         <text class="promote-percent">{{progressPercent}}%</text>

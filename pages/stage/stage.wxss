@@ -422,9 +422,10 @@
   line-height: 52rpx;
   text-align: center;
   border-radius: 14rpx;
-  background: var(--card);
-  color: #2e6bb8;
+  background: rgba(7, 193, 96, 0.10);
+  color: #07C160;
   font-size: calc(24rpx * var(--fs, 1));
+  font-weight: 600;
   margin-right: 18rpx;
   flex-shrink: 0;
 }
@@ -433,11 +434,6 @@
   background: linear-gradient(135deg, #5a9af0 0%, #7fb4f7 100%);
   color: #fff;
   font-size: calc(28rpx * var(--fs, 1));
-}
-
-.r-row-done .r-no {
-  background: var(--card);
-  color: #2f7a4a;
 }
 
 .r-body {
@@ -1066,6 +1062,8 @@
 
 .dm-dark .rg-progress { color: #95de64; background: rgba(149, 222, 100, 0.12); }
 .dm-dark .rg-progress-val { color: #95de64; }
+.dm-dark .rg-progress-empty { color: var(--text3); background: var(--cell-active); }
+.dm-dark .rg-progress-locked { color: var(--text3); background: var(--cell-active); }
 
 .dm-dark .r-row-done {
   background: linear-gradient(90deg, #1e2a22 0%, #1c1c1e 55%);
@@ -1073,14 +1071,16 @@
 
 .dm-dark .r-row-done:active { background: #233a2a; }
 
-.dm-dark .r-no { color: #8ab4ff; }
-.dm-dark .r-row-done .r-no { color: #95de64; }
-.dm-dark .r-sub { color: #95de64; }
+.dm-dark .r-no { color: #52e070; background: rgba(82, 196, 26, 0.22); }
+.dm-dark .r-no-char { background: linear-gradient(135deg, #4a8fd9 0%, #6eaaf0 100%); }
+.dm-dark .r-sub { color: var(--text3); }
 
 .dm-dark .lock-bar {
   background: linear-gradient(135deg, #2a2416, #262014);
   border-color: #57451f;
 }
+
+.dm-dark .lock-text { color: #e0a56a; }
 
 .dm-dark .r-read-badge { color: #ffd666; background: rgba(255, 214, 102, 0.16); }
 .dm-dark .r-read-btn { color: #ff9c6e; border-color: rgba(255, 156, 110, 0.4); }
@@ -1132,6 +1132,8 @@
 
   .dm-auto .rg-progress { color: #95de64; background: rgba(149, 222, 100, 0.12); }
   .dm-auto .rg-progress-val { color: #95de64; }
+  .dm-auto .rg-progress-empty { color: var(--text3); background: var(--cell-active); }
+  .dm-auto .rg-progress-locked { color: var(--text3); background: var(--cell-active); }
 
   .dm-auto .r-row-done {
     background: linear-gradient(90deg, #1e2a22 0%, #1c1c1e 55%);
@@ -1139,14 +1141,16 @@
 
   .dm-auto .r-row-done:active { background: #233a2a; }
 
-  .dm-auto .r-no { color: #8ab4ff; }
-  .dm-auto .r-row-done .r-no { color: #95de64; }
-  .dm-auto .r-sub { color: #95de64; }
+  .dm-auto .r-no { color: #52e070; background: rgba(82, 196, 26, 0.22); }
+  .dm-auto .r-no-char { background: linear-gradient(135deg, #4a8fd9 0%, #6eaaf0 100%); }
+  .dm-auto .r-sub { color: var(--text3); }
 
   .dm-auto .lock-bar {
     background: linear-gradient(135deg, #2a2416, #262014);
     border-color: #57451f;
   }
+
+  .dm-auto .lock-text { color: #e0a56a; }
 
   .dm-auto .r-read-badge { color: #ffd666; background: rgba(255, 214, 102, 0.16); }
   .dm-auto .r-read-btn { color: #ff9c6e; border-color: rgba(255, 156, 110, 0.4); }

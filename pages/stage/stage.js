@@ -1,5 +1,6 @@
 const { routeData, resourceLabels } = require('../../utils/data.js')
 const checkin = require('../../utils/checkin.js')
+const theme = require('../../utils/theme.js')
 
 // 可点击打卡的资源分类(8 类)
 const CLICKABLE_GROUPS = [
@@ -99,12 +100,20 @@ Page({
     promoteTargetPhase: 0,
     promoteTargetPhaseText: '',
     youquTestInput: '',
-    fontClass: ''
+    fontClass: '',
+    isDark: false
+  },
+
+  // 同步"实际是否深色"（结合 dm-dark 手动 / dm-auto 跟随系统），供 wxml 进度条底色判断
+  _syncDark(app) {
+    const systemDark = app && app._systemDark
+    this.setData({ isDark: theme.isDarkMode(systemDark) })
   },
 
   onLoad(options) {
     const app = getApp()
     if (app && app.applyFontLevel) app.applyFontLevel(this)
+    this._syncDark(app)
 
     const index = Number(options.index)
     // 索引非法时提示并返回，避免停在空白页无法退出
@@ -162,6 +171,7 @@ Page({
   onShow() {
     const app = getApp()
     if (app && app.applyFontLevel) app.applyFontLevel(this)
+    this._syncDark(app)
 
     if (this.data.stage) {
       // 重新计算状态（当前阶段可能在设置页改变）
