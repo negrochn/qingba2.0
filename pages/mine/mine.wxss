@@ -1,56 +1,56 @@
-.menu {
+/* 我的页卡 - 微信小程序原生分组列表风格（与设置页一致） */
+
+page {
+  background: var(--bg);
+}
+
+.container {
+  padding: 16rpx 0 calc(env(safe-area-inset-bottom) + 40rpx);
+}
+
+/* ===== 分组 ===== */
+.group {
+  margin-bottom: 24rpx;
+}
+
+.group-card {
   background: var(--card);
+  margin: 0 24rpx;
   border-radius: 16rpx;
   overflow: hidden;
 }
 
-.menu-item {
+/* ===== 列表项 ===== */
+.cell {
   display: flex;
   align-items: center;
-  padding: 28rpx 28rpx;
-  position: relative;
+  justify-content: space-between;
+  padding: 28rpx 32rpx;
+  box-sizing: border-box;
 }
 
-.menu-item::after {
-  content: '';
-  position: absolute;
-  left: 80rpx;
-  right: 28rpx;
-  bottom: 0;
-  height: 1rpx;
-  background: var(--divider);
+.cell:active {
+  background: var(--cell-active);
 }
 
-.menu-item:last-child::after {
-  display: none;
-}
-
-.menu-icon {
-  flex-shrink: 0;
-  width: 56rpx;
-  height: 56rpx;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(32rpx * var(--fs, 1));
-  margin-right: 20rpx;
-}
-
-.menu-label {
+.cell-label {
   flex: 1;
+  min-width: 0;
+  margin-right: 24rpx;
   font-size: calc(30rpx * var(--fs, 1));
   color: var(--text);
 }
 
-.menu-arrow {
-  font-size: calc(32rpx * var(--fs, 1));
-  color: #c0c8d0;
+.cell-arrow {
+  font-size: calc(36rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1;
+  margin-left: 12rpx;
 }
 
-/* 深色模式适配 */
-.dm-dark .menu-arrow { color: #4a4a4e; }
-
-@media (prefers-color-scheme: dark) {
-  .dm-auto .menu-arrow { color: #4a4a4e; }
+/* 分隔线：左侧留白（微信原生 inset） */
+.cell-divider {
+  height: 1rpx;
+  background: var(--divider);
+  margin-left: 32rpx;
 }

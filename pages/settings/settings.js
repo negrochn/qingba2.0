@@ -206,8 +206,10 @@ Page({
       timeInvestment: stage.time_investment
     };
 
-    // 保存
+    // 保存：当前阶段 + 前序阶段标记完成（与首页引导一致）
     checkin.setCurrentStage(stageData);
+    const done = stageOptions.slice(0, index).map(s => s.id);
+    checkin.setCompletedStages(done);
 
     this.setData({
       currentStageIndex: index,
@@ -283,6 +285,9 @@ Page({
       if (currentStage) {
         data.current_stage = currentStage;
       }
+
+      // 已完成阶段名单（与首启引导一致）
+      data.stage_done = checkin.getCompletedStages();
 
       // 小小优趣成长计划开关
       data.youqu_plan = checkin.isYouquPlanEnabled();
@@ -621,6 +626,19 @@ Page({
         wx.setStorageSync(checkin.CURRENT_STAGE_KEY, data.current_stage);
       }
 
+      // 恢复已完成阶段名单（合并模式：取并集）
+      if (Array.isArray(data.stage_done)) {
+        if (mode === 'merge') {
+          const merged = new Set([
+            ...(checkin.getCompletedStages() || []),
+            ...data.stage_done
+          ]);
+          checkin.setCompletedStages(Array.from(merged));
+        } else {
+          checkin.setCompletedStages(data.stage_done);
+        }
+      }
+
       // 恢复小小优趣成长计划开关（缺省按 false，兼容旧备份）
       if (typeof data.youqu_plan === 'boolean') {
         checkin.setYouquPlanEnabled(data.youqu_plan);
@@ -721,13 +739,9 @@ Page({
           checkin.clearAllCheckins();
           wx.removeStorageSync(checkin.DEFAULT_REMARK_KEY);
           wx.removeStorageSync(checkin.READ_COUNT_KEY);
+          // 清空后回到初始未设置态：移除当前阶段与已完成名单（与首启引导一致）
           wx.removeStorageSync(checkin.CURRENT_STAGE_KEY);
-
-          // 重置当前阶段为常规1
-          const firstStage = routeData.stages[0];
-          if (firstStage) {
-            checkin.setCurrentStage({ id: firstStage.stage_id, name: firstStage.stage_name });
-          }
+          checkin.setCompletedStages([]);
         } else {
           // 按阶段清除：仅删除该阶段的记录与已读次数
           const removed = checkin.clearCheckinsByStage(scope);

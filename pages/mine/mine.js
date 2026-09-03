@@ -16,6 +16,9 @@ Page({
   goRecords() {
     wx.navigateTo({ url: '/pages/records/records' })
   },
+  goStats() {
+    wx.navigateTo({ url: '/pages/stats/stats' })
+  },
   goAbout() {
     wx.navigateTo({ url: '/pages/about/about' })
   },

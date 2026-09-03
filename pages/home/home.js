@@ -1,6 +1,9 @@
 const checkin = require('../../utils/checkin.js')
 const data = require('../../utils/data.js')
 
+// 首次启动引导用：阶段选项
+const stageOptions = data.routeData.stages.map(s => ({ id: s.stage_id, name: s.stage_name }))
+
 // 小时数显示：去尾零（2.50 -> 2.5, 2.00 -> 2）
 function fmtHours(minutes) {
   return (minutes / 60).toFixed(2).replace(/\.?0+$/, '') || '0'
@@ -36,6 +39,10 @@ Page({
     _touchStartX: 0,
     _touchStartY: 0,
     _curSwipeIdx: -1,
+    // 首次启动引导
+    showOnboard: false,
+    stageOptions,
+    onboardStageIndex: 0,
     fontClass: ''
   },
 
@@ -50,6 +57,50 @@ Page({
     if (app && app.applyFontLevel) app.applyFontLevel(this)
 
     this._refresh()
+
+    // 首次启动引导：未引导过时弹出欢迎层
+    if (!checkin.hasOnboarded()) {
+      const cur = checkin.getCurrentStage()
+      let idx = 0
+      if (cur) {
+        const fi = stageOptions.findIndex(s => s.id === cur.id)
+        if (fi >= 0) idx = fi
+      }
+      this.setData({ showOnboard: true, onboardStageIndex: idx })
+    }
+  },
+
+  // 引导中选择当前阶段
+  onStageChange(e) {
+    this.setData({ onboardStageIndex: parseInt(e.detail.value) })
+  },
+
+  // 确认首次启动引导：写入阶段与已完成名单
+  confirmOnboard() {
+    const idx = this.data.onboardStageIndex
+    const stage = data.routeData.stages[idx]
+    const stageData = {
+      id: stage.stage_id,
+      name: stage.stage_name,
+      targetPhase: stage.target_phase,
+      vocabularyTarget: stage.vocabulary_target,
+      timeInvestment: stage.time_investment
+    }
+    checkin.setCurrentStage(stageData)
+
+    // 所选阶段之前的所有阶段标记为已完成
+    const done = data.routeData.stages.slice(0, idx).map(s => s.stage_id)
+    checkin.setCompletedStages(done)
+
+    checkin.setOnboarded()
+    this.setData({ showOnboard: false })
+    this._refresh()
+  },
+
+  // 关闭首次启动引导并标记已引导
+  closeOnboard() {
+    checkin.setOnboarded()
+    this.setData({ showOnboard: false })
   },
 
   // 主刷新：全部以「当前阶段」为口径聚合
@@ -116,6 +167,7 @@ Page({
       stagePercent = Math.min(100, Math.round(hours / target.min * 100))
       stageDone = hours >= target.min
     }
+    const stageCompleted = checkin.isStageDone(stageId)
 
     // ---- 分组时长分布（按时长降序） ----
     const groupKeys = Object.keys(groupMinutes).sort((a, b) => groupMinutes[b] - groupMinutes[a])
@@ -149,6 +201,7 @@ Page({
       stagePercent,
       hasTarget,
       stageDone,
+      stageCompleted,
       todayMinutesText: checkin.fmtMinutes(todayMinutes),
       todayCount,
       stageTotalHours: fmtHours(stageMinutes),
@@ -259,6 +312,9 @@ Page({
       }
     })
   },
+
+  // 阻止弹层内容区点击冒泡关闭
+  noop() {},
 
   // ===== 跳转 =====
   goRoute() {

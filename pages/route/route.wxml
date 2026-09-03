@@ -1,7 +1,7 @@
 <view class="container {{fontClass}} {{darkClass}}">
   <view class="timeline">
     <view
-      class="stage-item {{index < currentStageIndex && currentStageIndex >= 0 ? 'stage-done' : ''}} {{index > currentStageIndex && currentStageIndex >= 0 ? 'stage-locked' : ''}} {{item.stage_id === currentStageId ? 'stage-current' : ''}}"
+      class="stage-item {{item._state === 'done' ? 'stage-done' : ''}} {{item._state === 'current' ? 'stage-current' : ''}} {{item._state === 'locked' ? 'stage-locked' : ''}}"
       wx:for="{{stages}}"
       wx:key="stage_id"
       id="stage-{{index}}"
@@ -10,10 +10,10 @@
       hover-class="stage-hover"
     >
       <view class="stage-rail">
-        <view class="stage-node {{item.stage_id === currentStageId ? 'node-current' : ''}} {{index < currentStageIndex && currentStageIndex >= 0 ? 'node-done' : ''}} {{index > currentStageIndex && currentStageIndex >= 0 ? 'node-locked' : ''}}">
-          <text class="node-num" wx:if="{{index >= currentStageIndex || currentStageIndex < 0}}">{{index + 1}}</text>
+        <view class="stage-node {{item._state === 'current' ? 'node-current' : ''}} {{item._state === 'done' ? 'node-done' : ''}} {{item._state === 'locked' ? 'node-locked' : ''}}">
+          <text class="node-num" wx:if="{{item._state !== 'done'}}">{{index + 1}}</text>
           <text class="node-icon" wx:else>✓</text>
-          <view class="node-current-dot" wx:if="{{item.stage_id === currentStageId}}"></view>
+          <view class="node-current-dot" wx:if="{{item._state === 'current'}}"></view>
         </view>
         <view class="stage-line" wx:if="{{index < stageCount - 1}}"></view>
       </view>
@@ -23,8 +23,8 @@
           <view class="stage-title-row">
             <text class="stage-name">{{item.stage_name}}</text>
             <text class="stage-phase">{{item.target_phase}}</text>
-            <view class="stage-lock-tag" wx:if="{{index > currentStageIndex && currentStageIndex >= 0}}">🔒 未解锁</view>
-            <view class="stage-done-tag" wx:if="{{index < currentStageIndex && currentStageIndex >= 0}}">✓ 已完成</view>
+            <view class="stage-lock-tag" wx:if="{{item._state === 'locked'}}">🔒 未解锁</view>
+            <view class="stage-done-tag" wx:if="{{item._state === 'done'}}">✓ 已完成</view>
           </view>
           <text class="stage-arrow">›</text>
         </view>

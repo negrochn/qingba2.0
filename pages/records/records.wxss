@@ -18,7 +18,7 @@ page {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding: 0 8rpx 16rpx;
+  padding: 0 0 16rpx;
 }
 
 /* 月份选择器（头部右侧，与首页一致） */

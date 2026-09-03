@@ -94,7 +94,7 @@
   <!-- 晋级卡片（仅当前常规阶段展示） -->
   <block wx:if="{{canPromote}}">
     <view class="st-group-head">
-      <text class="st-group-title">阶段晋级</text>
+      <text class="st-group-title">{{isLastStage ? '阶段达成' : '阶段晋级'}}</text>
     </view>
     <view class="card promote-card">
       <view class="promote-title">{{stage.stage_name}} 阶段进度</view>
@@ -117,8 +117,8 @@
         class="promote-btn {{promoteEnabled ? 'promote-btn-active' : 'promote-btn-disabled'}}"
         bindtap="onPromoteTap"
       >
-        <text wx:if="{{promoteEnabled}}">申请晋级</text>
-        <text wx:else>时间不足，暂不可晋级</text>
+        <text wx:if="{{promoteEnabled}}">{{isLastStage ? '完成阶段' : '申请晋级'}}</text>
+        <text wx:else>{{isLastStage ? '时间不足，暂不可完成' : '时间不足，暂不可晋级'}}</text>
       </view>
     </view>
   </block>

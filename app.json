@@ -6,7 +6,8 @@
     "pages/records/records",
     "pages/stage/stage",
     "pages/about/about",
-    "pages/settings/settings"
+    "pages/settings/settings",
+    "pages/stats/stats"
   ],
   "window": {
     "backgroundTextStyle": "dark",

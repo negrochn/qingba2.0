@@ -225,40 +225,40 @@
   margin-right: 12rpx;
   flex-shrink: 0;
 }
-/* 主线绘本 */
-.rg-dot-main_picture_books { background: #4a90d9; box-shadow: 0 0 8rpx rgba(74,144,217,0.5); }
-.rg-label-main_picture_books { color: #1a5fb0; }
+/* 主线绘本（红） */
+.rg-dot-main_picture_books { background: #e74c3c; box-shadow: 0 0 8rpx rgba(231,76,60,0.5); }
+.rg-label-main_picture_books { color: #e74c3c; }
 
-/* 主线分级 */
-.rg-dot-main_graded_readers { background: #7b5fd6; box-shadow: 0 0 8rpx rgba(123,95,214,0.5); }
-.rg-label-main_graded_readers { color: #4a26a8; }
+/* 主线分级（橙） */
+.rg-dot-main_graded_readers { background: #e67e22; box-shadow: 0 0 8rpx rgba(230,126,34,0.5); }
+.rg-label-main_graded_readers { color: #e67e22; }
 
-/* 主线动画 */
-.rg-dot-main_animations { background: #ff7a45; box-shadow: 0 0 8rpx rgba(255,122,69,0.5); }
-.rg-label-main_animations { color: #c4390e; }
+/* 主线动画（黄） */
+.rg-dot-main_animations { background: #f1c40f; box-shadow: 0 0 8rpx rgba(241,196,15,0.5); }
+.rg-label-main_animations { color: #d4a017; }
 
-/* 辅线分级 */
-.rg-dot-sub_graded_readers { background: #13c2c2; box-shadow: 0 0 8rpx rgba(19,194,194,0.5); }
-.rg-label-sub_graded_readers { color: #006d75; }
+/* 辅线分级（绿） */
+.rg-dot-sub_graded_readers { background: #2ecc71; box-shadow: 0 0 8rpx rgba(46,204,113,0.5); }
+.rg-label-sub_graded_readers { color: #27ae60; }
 
-/* 辅线动画 */
-.rg-dot-sub_animations { background: #f759ab; box-shadow: 0 0 8rpx rgba(247,89,171,0.5); }
-.rg-label-sub_animations { color: #b0156e; }
+/* 辅线动画（青） */
+.rg-dot-sub_animations { background: #1abc9c; box-shadow: 0 0 8rpx rgba(26,188,156,0.5); }
+.rg-label-sub_animations { color: #16a085; }
 
-/* 趣味拓展 */
-.rg-dot-fun_extensions { background: #73d13d; box-shadow: 0 0 8rpx rgba(115,209,61,0.5); }
-.rg-label-fun_extensions { color: #389e0d; }
+/* 趣味拓展（蓝） */
+.rg-dot-fun_extensions { background: #3498db; box-shadow: 0 0 8rpx rgba(52,152,219,0.5); }
+.rg-label-fun_extensions { color: #2980b9; }
 
-/* 科普拓展 */
-.rg-dot-science_extensions { background: #ffc53d; box-shadow: 0 0 8rpx rgba(255,197,61,0.5); }
-.rg-label-science_extensions { color: #ad6800; }
+/* 科普拓展（靛） */
+.rg-dot-science_extensions { background: #9b59b6; box-shadow: 0 0 8rpx rgba(155,89,182,0.5); }
+.rg-label-science_extensions { color: #8e44ad; }
 
-/* 融合APP */
-.rg-dot-fusion_apps { background: #9254de; box-shadow: 0 0 8rpx rgba(146,84,222,0.5); }
-.rg-label-fusion_apps { color: #531dab; }
+/* 融合APP（紫） */
+.rg-dot-fusion_apps { background: #8e44ad; box-shadow: 0 0 8rpx rgba(142,68,173,0.5); }
+.rg-label-fusion_apps { color: #7d3c98; }
 
 /* 默认 */
-.rg-dot-default { background: #bfbfbf; }
+.rg-dot-default { background: #888888; box-shadow: 0 0 8rpx rgba(136,136,136,0.5); }
 .rg-label-default { color: var(--text3); }
 
 .rg-label {
@@ -929,6 +929,10 @@
   border-bottom: 1rpx solid var(--divider);
 }
 
+.pm-picker {
+  display: block;
+}
+
 .pm-form-item:last-child {
   border-bottom: none;
 }
@@ -1050,15 +1054,15 @@
 .dm-dark .res-hl-bold { color: #7fb4f7; }
 .dm-dark .res-hl-time { color: #8ab4ff; }
 
-/* 分类标签文字：深色下提亮 */
-.dm-dark .rg-label-main_picture_books { color: #7fb4f7; }
-.dm-dark .rg-label-main_graded_readers { color: #b39df5; }
-.dm-dark .rg-label-main_animations { color: #ff9c6e; }
-.dm-dark .rg-label-sub_graded_readers { color: #5cd3dc; }
-.dm-dark .rg-label-sub_animations { color: #ff9ecb; }
-.dm-dark .rg-label-fun_extensions { color: #95de64; }
-.dm-dark .rg-label-science_extensions { color: #ffd666; }
-.dm-dark .rg-label-fusion_apps { color: #b37feb; }
+/* 分类标签文字：深色下提亮（彩虹色序） */
+.dm-dark .rg-label-main_picture_books { color: #ff6b6b; }
+.dm-dark .rg-label-main_graded_readers { color: #f5b041; }
+.dm-dark .rg-label-main_animations { color: #f7dc6f; }
+.dm-dark .rg-label-sub_graded_readers { color: #58d68d; }
+.dm-dark .rg-label-sub_animations { color: #48c9b0; }
+.dm-dark .rg-label-fun_extensions { color: #5dade2; }
+.dm-dark .rg-label-science_extensions { color: #bb8fce; }
+.dm-dark .rg-label-fusion_apps { color: #af7ac5; }
 
 .dm-dark .rg-progress { color: #95de64; background: rgba(149, 222, 100, 0.12); }
 .dm-dark .rg-progress-val { color: #95de64; }
@@ -1117,14 +1121,14 @@
   .dm-auto .res-hl-bold { color: #7fb4f7; }
   .dm-auto .res-hl-time { color: #8ab4ff; }
 
-  .dm-auto .rg-label-main_picture_books { color: #7fb4f7; }
-  .dm-auto .rg-label-main_graded_readers { color: #b39df5; }
-  .dm-auto .rg-label-main_animations { color: #ff9c6e; }
-  .dm-auto .rg-label-sub_graded_readers { color: #5cd3dc; }
-  .dm-auto .rg-label-sub_animations { color: #ff9ecb; }
-  .dm-auto .rg-label-fun_extensions { color: #95de64; }
-  .dm-auto .rg-label-science_extensions { color: #ffd666; }
-  .dm-auto .rg-label-fusion_apps { color: #b37feb; }
+  .dm-auto .rg-label-main_picture_books { color: #ff6b6b; }
+  .dm-auto .rg-label-main_graded_readers { color: #f5b041; }
+  .dm-auto .rg-label-main_animations { color: #f7dc6f; }
+  .dm-auto .rg-label-sub_graded_readers { color: #58d68d; }
+  .dm-auto .rg-label-sub_animations { color: #48c9b0; }
+  .dm-auto .rg-label-fun_extensions { color: #5dade2; }
+  .dm-auto .rg-label-science_extensions { color: #bb8fce; }
+  .dm-auto .rg-label-fusion_apps { color: #af7ac5; }
 
   .dm-auto .rg-progress { color: #95de64; background: rgba(149, 222, 100, 0.12); }
   .dm-auto .rg-progress-val { color: #95de64; }

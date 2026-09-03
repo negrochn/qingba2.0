@@ -30,9 +30,9 @@ function parsePhaseNumber(text) {
   return m ? +m[1] : 0
 }
 
-// 是否为常规阶段
+// 是否为常规阶段（含准桥梁，均支持晋级/达成目标）
 function isRegularStage(stageId) {
-  return /^regular_\d+$/.test(stageId)
+  return /^regular_\d+$/.test(stageId) || stageId === 'pre_bridge'
 }
 
 // 解析阶段晋级所需时长（小时）
@@ -189,6 +189,8 @@ Page({
 
     const isRegular = isRegularStage(stage.stage_id)
     const isCurrent = this.data.stageStatus === 'current'
+    const isLastStage = this.data.stageIndex >= routeData.stages.length - 1
+    const alreadyDone = checkin.isStageDone(stage.stage_id)
     const required = getRequiredHours(stage)
 
     let minutes = 0
@@ -203,8 +205,10 @@ Page({
     const targetPhaseNum = parsePhaseNumber(stage.target_phase)
 
     this.setData({
-      canPromote: isRegular && isCurrent,
-      promoteEnabled: isRegular && isCurrent && timeMet,
+      canPromote: isRegular && isCurrent && !alreadyDone,
+      promoteEnabled: isRegular && isCurrent && timeMet && !alreadyDone,
+      isLastStage,
+      alreadyDone,
       requiredHours: required.hours,
       requiredType: required.type,
       investedHoursText: `${(+hours).toFixed(1)}`.replace(/\.0$/, ''),
@@ -228,11 +232,14 @@ Page({
         youquTestInput: ''
       })
     } else {
-      // 未开启：直接确认晋级
+      // 未开启：直接确认（晋级或达成目标）
+      const isLast = this.data.stageIndex >= routeData.stages.length - 1
       wx.showModal({
-        title: '确认晋级',
-        content: `${stage.stage_name} 时间投入已达标，确认晋级到下一阶段？`,
-        confirmText: '晋级',
+        title: isLast ? '确认完成阶段' : '确认晋级',
+        content: isLast
+          ? `${stage.stage_name} 时间投入已达标，确认标记为已完成？`
+          : `${stage.stage_name} 时间投入已达标，确认晋级到下一阶段？`,
+        confirmText: isLast ? '完成' : '晋级',
         cancelText: '取消',
         confirmColor: '#4a90d9',
         success: (res) => {
@@ -298,13 +305,26 @@ Page({
   // 执行晋级
   doPromote() {
     const stage = this.data.stage
-    const nextIndex = this.data.stageIndex + 1
-    if (nextIndex >= routeData.stages.length) {
-      wx.showToast({ title: '已是最后阶段', icon: 'none' })
+    // 最后阶段（准桥梁）：不推进，显式记录为已完成（达成目标）
+    if (this.data.stageIndex >= routeData.stages.length - 1) {
+      checkin.markStageDone(stage.stage_id)
+      wx.showToast({
+        title: `已达成目标：${stage.stage_name}`,
+        icon: 'success'
+      })
+      // 返回路线页并滚动到当前（已达成）阶段
+      this._backToRoute()
       return
     }
 
+    const nextIndex = this.data.stageIndex + 1
     const nextStage = routeData.stages[nextIndex]
+
+    this._applyPromote(nextStage)
+  },
+
+  // 真正推进到下一阶段
+  _applyPromote(nextStage) {
     const stageData = {
       id: nextStage.stage_id,
       name: nextStage.stage_name,
@@ -320,8 +340,22 @@ Page({
       icon: 'success'
     })
 
-    // 刷新本页状态（本阶段变为已完成，晋级入口消失）
-    this.onShow()
+    // 返回路线页并滚动到新当前阶段
+    this._backToRoute()
+  },
+
+  // 晋级/达成后返回路线页并滚动到当前阶段
+  _backToRoute() {
+    const app = getApp()
+    if (app && app.globalData) app.globalData.scrollToCurrentStage = true
+    // 延迟返回，确保成功 toast 可见
+    setTimeout(() => {
+      wx.navigateBack({
+        fail() {
+          wx.switchTab({ url: '/pages/route/route' })
+        }
+      })
+    }, 700)
   },
 
   _refreshResTotals() {

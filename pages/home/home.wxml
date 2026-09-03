@@ -4,7 +4,8 @@
   <view class="hero-card">
     <view class="hero-name-row">
       <text class="hero-name">{{stageName || '未设置阶段'}}</text>
-      <text class="hero-badge" wx:if="{{stageDone}}">✓ 已达标</text>
+      <text class="hero-badge" wx:if="{{stageCompleted}}">✓ 已达成目标</text>
+      <text class="hero-badge" wx:elif="{{stageDone}}">✓ 已达标</text>
       <text class="hero-tag" wx:elif="{{stageName}}">当前阶段</text>
     </view>
     <view class="hero-desc" wx:if="{{stageDesc}}">{{stageDesc}}</view>
@@ -131,4 +132,26 @@
     </view>
   </block>
 
+</view>
+
+<!-- 首次启动引导（全屏遮罩，覆盖 tabBar） -->
+<view class="ob-overlay {{fontClass}} {{darkClass}}" wx:if="{{showOnboard}}" catchtouchmove="noop">
+  <view class="ob-content">
+    <view class="ob-logo">📚</view>
+    <view class="ob-title">庆爸 2.0</view>
+    <view class="ob-desc">孩子英语听力训练打卡工具<br/>常规1-6 → 准桥梁，逐级解锁</view>
+
+    <view class="ob-form">
+      <picker class="ob-picker" mode="selector" range="{{stageOptions}}" range-key="name" value="{{onboardStageIndex}}" bindchange="onStageChange">
+        <view class="ob-form-row">
+          <text class="ob-form-label">当前阶段</text>
+          <text class="ob-form-value">{{stageOptions[onboardStageIndex].name}}</text>
+        </view>
+      </picker>
+
+      <view class="ob-hint">所选阶段之前的所有阶段将标记为已完成</view>
+    </view>
+
+    <button class="ob-btn" bindtap="confirmOnboard">开始使用</button>
+  </view>
 </view>

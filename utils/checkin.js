@@ -8,6 +8,8 @@ const DEFAULT_REMARK_KEY = 'qingba_default_remarks'
 const READ_COUNT_KEY = 'qingba_read_counts'
 const CURRENT_STAGE_KEY = 'qingba_current_stage'
 const YOUQU_PLAN_KEY = 'qingba_youqu_plan'
+const STAGE_DONE_KEY = 'qingba_stage_done'   // 已完成阶段 id 列表
+const HAS_ONBOARDED_KEY = 'qingba_has_onboarded' // 是否已完成首次启动引导
 
 // 单条 storage 上限（字节），留余量
 const MAX_ITEM_BYTES = 900 * 1024 // 约 900KB，微信上限 1MB
@@ -470,6 +472,13 @@ function clearAllCheckins() {
       }
     })
 
+    // 清空完成阶段名单与首启标记（回到初始状态）
+    toRemove.push(STAGE_DONE_KEY)
+    toRemove.push(HAS_ONBOARDED_KEY)
+
+    // 清理历史残留 key（早期版本按阶段记录的启蒙年龄，已废弃）
+    try { wx.removeStorageSync('qingba_stage_ages') } catch (e) {}
+
     // 批量删除
     toRemove.forEach(k => {
       try { wx.removeStorageSync(k) } catch (e) {}
@@ -510,6 +519,14 @@ function clearCheckinsByStage(stageId) {
       }
     }
     if (changed) _saveReadCounts(counts)
+
+    // 同步从已完成名单移除该阶段
+    const done = getCompletedStages()
+    const di = done.indexOf(stageId)
+    if (di >= 0) {
+      done.splice(di, 1)
+      try { wx.setStorageSync(STAGE_DONE_KEY, done) } catch (e) {}
+    }
 
     if (removed > 0) saveAll(remain)
     return removed
@@ -616,22 +633,97 @@ function getReadCountByStage(stageId) {
   return result
 }
 
-// 默认当前阶段：常规1
-const DEFAULT_STAGE = { id: 'regular_1', name: '常规1' }
+// 某阶段已读完排行：按资源聚合读完次数，降序，仅含 count>0
+// @returns {Array} [{ groupKey, groupLabel, resourceName, count }]
+function getReadRankingByStage(stageId) {
+  const all = getAll()
+  const labelMap = {}
+  for (const day in all) {
+    for (const r of all[day]) {
+      if (r.stageId === stageId && r.groupKey) labelMap[r.groupKey] = r.groupLabel
+    }
+  }
+  const counts = getReadCountByStage(stageId)
+  const list = []
+  for (const key in counts) {
+    if (!counts[key]) continue
+    const idx = String(key).indexOf('|')
+    const groupKey = key.substring(0, idx)
+    const resourceName = key.substring(idx + 1)
+    list.push({ groupKey, groupLabel: labelMap[groupKey] || '', resourceName, count: counts[key] })
+  }
+  list.sort((a, b) => b.count - a.count)
+  return list
+}
 
-// 当前阶段相关
+// 当前阶段相关（无存储时返回 null，表示用户尚未设置）
 function getCurrentStage() {
   try {
     const saved = wx.getStorageSync(CURRENT_STAGE_KEY)
     if (saved) return saved
   } catch (e) {}
-  // 无存储时返回默认值：常规1
-  return { ...DEFAULT_STAGE }
+  return null
 }
 
 function setCurrentStage(stageData) {
   try {
     wx.setStorageSync(CURRENT_STAGE_KEY, stageData)
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
+// ===== 已完成阶段（含最后阶段，用于显式标记“达成目标”）=====
+function getCompletedStages() {
+  try {
+    const arr = wx.getStorageSync(STAGE_DONE_KEY)
+    return Array.isArray(arr) ? arr : []
+  } catch (e) {
+    return []
+  }
+}
+
+function isStageDone(stageId) {
+  if (!stageId) return false
+  return getCompletedStages().indexOf(stageId) >= 0
+}
+
+function markStageDone(stageId) {
+  if (!stageId) return false
+  const list = getCompletedStages()
+  if (list.indexOf(stageId) >= 0) return true
+  list.push(stageId)
+  try {
+    wx.setStorageSync(STAGE_DONE_KEY, list)
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
+// ===== 首次启动引导 =====
+function hasOnboarded() {
+  try {
+    return !!wx.getStorageSync(HAS_ONBOARDED_KEY)
+  } catch (e) {
+    return false
+  }
+}
+
+function setOnboarded() {
+  try {
+    wx.setStorageSync(HAS_ONBOARDED_KEY, true)
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
+// 批量覆盖已完成阶段名单（供首次启动一次性标记）
+function setCompletedStages(list) {
+  try {
+    wx.setStorageSync(STAGE_DONE_KEY, Array.isArray(list) ? list : [])
     return true
   } catch (e) {
     return false
@@ -660,8 +752,15 @@ module.exports = {
   getReadCount,
   incrementReadCount,
   getReadCountByStage,
+  getReadRankingByStage,
   getCurrentStage,
   setCurrentStage,
+  getCompletedStages,
+  isStageDone,
+  markStageDone,
+  setCompletedStages,
+  hasOnboarded,
+  setOnboarded,
   saveAll,
   isYouquPlanEnabled,
   setYouquPlanEnabled,

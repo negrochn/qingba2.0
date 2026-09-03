@@ -439,3 +439,102 @@ page {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+
+/* ===== 首次启动引导（全屏遮罩）===== */
+.ob-overlay {
+  position: fixed;
+  left: 0; top: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ob-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 60rpx;
+}
+
+.ob-logo {
+  font-size: 120rpx;
+  line-height: 1;
+  margin-bottom: 32rpx;
+}
+
+.ob-title {
+  font-size: calc(48rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 16rpx;
+}
+
+.ob-desc {
+  text-align: center;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1.8;
+  margin-bottom: 48rpx;
+}
+
+.ob-form {
+  width: 100%;
+  background: var(--card);
+  border-radius: 16rpx;
+  margin-bottom: 48rpx;
+  overflow: hidden;
+}
+
+.ob-picker {
+  display: block;
+}
+
+.ob-form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 32rpx;
+}
+
+.ob-picker:not(:first-child) .ob-form-row {
+  border-top: 1rpx solid var(--divider);
+}
+
+.ob-form-label {
+  font-size: calc(30rpx * var(--fs, 1));
+  color: var(--text);
+}
+
+.ob-form-value {
+  font-size: calc(30rpx * var(--fs, 1));
+  color: var(--text2);
+}
+
+.ob-hint {
+  padding: 16rpx 32rpx 24rpx;
+  font-size: calc(22rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1.6;
+}
+
+.ob-btn {
+  width: 480rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 44rpx;
+  font-size: calc(32rpx * var(--fs, 1));
+  background: #4a90d9;
+  color: #fff;
+  border: none;
+  padding: 0;
+}
+
+.ob-btn::after {
+  border: none;
+}
+
+.ob-btn:active {
+  background: #3a7bc0;
+}

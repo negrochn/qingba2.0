@@ -2,7 +2,7 @@
 // 按真实计划生成：每个阶段累计打卡约80-90小时，每日总时长15-60分钟，约12%的天数缺卡
 // 日期从今天往回推算
 const { routeData, resourceLabels } = require('./data.js')
-const { READ_COUNT_KEY, CURRENT_STAGE_KEY, saveAll } = require('./checkin.js')
+const { READ_COUNT_KEY, saveAll, setCurrentStage, setCompletedStages } = require('./checkin.js')
 
 function genId() {
   return 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8)
@@ -165,13 +165,16 @@ function generateStressData(onProgress) {
   saveAll(allCheckins)
   wx.setStorageSync(READ_COUNT_KEY, readCounts)
 
-  // 设置当前阶段为最后阶段（准桥梁）
-  const lastStage = stages[stages.length - 1]
+  // 设置当前阶段为最后阶段（准桥梁），并把前序阶段标记完成（与首页引导一致）
+  const lastIdx = stages.length - 1
+  const lastStage = stages[lastIdx]
   if (lastStage) {
-    wx.setStorageSync(CURRENT_STAGE_KEY, {
+    setCurrentStage({
       id: lastStage.stage_id,
       name: lastStage.stage_name
     })
+    const done = stages.slice(0, lastIdx).map(s => s.stage_id)
+    setCompletedStages(done)
   }
 
   // 各阶段统计

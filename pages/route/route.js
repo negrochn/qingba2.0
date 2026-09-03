@@ -45,7 +45,21 @@ Page({
     routeData.stages.forEach((s, i) => {
       if (current && s.stage_id === current.id) currentIndex = i
     })
+    const doneIds = checkin.getCompletedStages()
+    // 预计算每阶段状态：done（已完成）/ current（当前）/ locked（未解锁）
+    const stages = routeData.stages.map((s, i) => {
+      let state
+      if (doneIds.indexOf(s.stage_id) >= 0 || (currentIndex >= 0 && i < currentIndex)) {
+        state = 'done'
+      } else if (i === currentIndex) {
+        state = 'current'
+      } else {
+        state = 'locked'
+      }
+      return Object.assign({}, s, { _state: state })
+    })
     this.setData({
+      stages,
       currentStageId: current ? current.id : '',
       currentStageIndex: currentIndex
     }, () => {

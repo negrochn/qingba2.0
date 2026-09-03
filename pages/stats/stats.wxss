@@ -1,0 +1,227 @@
+/* 数据统计详情页（微信原生分组列表风格，支持深色模式） */
+
+page {
+  background: var(--bg);
+}
+
+.container {
+  padding: 16rpx 0 calc(env(safe-area-inset-bottom) + 40rpx);
+}
+
+/* ===== 分组（同设置页原生风格） ===== */
+.group {
+  margin-bottom: 24rpx;
+}
+
+.group-title {
+  padding: 0 24rpx 16rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1.4;
+}
+
+.group-title-sub {
+  color: var(--text3);
+  opacity: 0.8;
+  font-size: calc(22rpx * var(--fs, 1));
+}
+
+/* 卡片内第一行（分段控件右对齐） */
+.card-head {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20rpx;
+}
+
+.group-card {
+  background: var(--card);
+  margin: 0 24rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  padding: 16rpx 0;
+}
+
+/* ===== 顶部阶段选择（独立于所有模块） ===== */
+.section-head {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8rpx 32rpx 12rpx;
+}
+
+.stage-picker-inner {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 10rpx 20rpx;
+  background: var(--cell-active);
+  border-radius: 24rpx;
+}
+
+.stage-picker-label {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text);
+  font-weight: 500;
+}
+
+.overview-arrow {
+  font-size: calc(20rpx * var(--fs, 1));
+  color: var(--text3);
+}
+
+/* ===== 概览 ===== */
+.overview-card {
+  display: flex;
+}
+
+.overview-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28rpx 0;
+}
+
+.overview-item:first-child {
+  border-right: 1rpx solid var(--divider);
+}
+
+.overview-num {
+  font-size: calc(44rpx * var(--fs, 1));
+  color: var(--text);
+  font-family: 'DIN Alternate', -apple-system, Helvetica, Arial, sans-serif;
+  line-height: 1.1;
+}
+
+.overview-cap {
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+  margin-top: 12rpx;
+}
+
+/* ===== 分段控件 ===== */
+.seg {
+  display: flex;
+  background: var(--cell-active);
+  border-radius: 20rpx;
+  padding: 4rpx;
+}
+
+.seg-item {
+  padding: 8rpx 24rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+  border-radius: 16rpx;
+}
+
+.seg-item.on {
+  background: var(--card);
+  color: var(--text);
+  font-weight: 500;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+}
+
+/* ===== 每月时长 ===== */
+.month-row .bar-label {
+  width: 80rpx;
+}
+
+/* ===== 条形行（按分组 / 按绘本） ===== */
+.bar-row {
+  display: flex;
+  align-items: center;
+  padding: 14rpx 28rpx;
+  gap: 16rpx;
+}
+
+.bar-label {
+  flex-shrink: 0;
+  width: 150rpx;
+  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text2);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.bar-track {
+  flex: 1;
+  height: 16rpx;
+  background: var(--cell-active);
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 8rpx;
+  min-width: 4rpx;
+}
+
+.bar-val {
+  flex-shrink: 0;
+  width: 96rpx;
+  text-align: right;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+  font-family: 'DIN Alternate', -apple-system, Helvetica, Arial, sans-serif;
+}
+
+.book-row {
+  gap: 12rpx;
+}
+
+.book-dot {
+  flex-shrink: 0;
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+}
+
+.book-name {
+  width: 220rpx;
+}
+
+/* ===== 每月时长 ===== */
+
+/* ===== 读完排行 ===== */
+.read-row {
+  display: flex;
+  align-items: center;
+  padding: 18rpx 28rpx;
+  gap: 16rpx;
+}
+
+.read-row:not(:last-child) {
+  border-bottom: 1rpx solid var(--divider);
+}
+
+.read-dot {
+  flex-shrink: 0;
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+}
+
+.read-name {
+  flex: 1;
+  min-width: 0;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.read-count {
+  flex-shrink: 0;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text2);
+}
+
+/* ===== 空态 ===== */
+.empty-tip {
+  padding: 40rpx;
+  text-align: center;
+  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text3);
+}
