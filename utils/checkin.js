@@ -476,9 +476,6 @@ function clearAllCheckins() {
     toRemove.push(STAGE_DONE_KEY)
     toRemove.push(HAS_ONBOARDED_KEY)
 
-    // 清理历史残留 key（早期版本按阶段记录的启蒙年龄，已废弃）
-    try { wx.removeStorageSync('qingba_stage_ages') } catch (e) {}
-
     // 批量删除
     toRemove.forEach(k => {
       try { wx.removeStorageSync(k) } catch (e) {}
