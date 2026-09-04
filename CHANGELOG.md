@@ -19,6 +19,7 @@
 - 新增独立选择页 `importPicker`（导入方式）、`clearPicker`（清空范围），与既有 `stagePicker` / `fontPicker` / `darkMode` 风格一致
 - **我的页卡（mine）布局对齐设置页**：采用与设置页同一套微信风格分组列表原语（全宽平铺无圆角 `.group-card` + `.cell`），并修复此前深色模式不跟随（仅挂 `fontClass` 未挂 `darkClass`）；cell 为「左侧图标 + 标题 + 右 chevron」结构，已去掉 group-title 与头像资料卡
 - **打卡弹窗（stage）按 skill 重构**：从私有 `.ci-*` 类切换为原语 4 `.sheet-mask`/`.action-sheet`、原语 13/15 `.form-card`/`.form-row`/`.form-field`、原语 14 `.seg-control`/`.seg-item`（10/15/20/30 快捷时长，选中态走 `brand #07C160`）、原语 10 变体 `.badge-pill-brand`（"读完" 绿 pill）、新增 `.btn-pill` 胶囊按钮（取消 / 打卡）；移除 `.dm-dark`/`.dm-auto` 中已废弃的 `.ci-*` 选择器；新增 skill 原语 `.badge-pill-brand`（品牌完成态 pill）
+- **skill 新增原语 16 `.btn` 按钮族**：基于 WeChat 转账说明 / 评论 / 确认弹窗等截图，沉淀 `.btn` 基类（高度 88rpx = 44pt iOS、矩形圆角 8rpx）+ 4 变体（`.btn-primary` 品牌绿主操作 / `.btn-secondary` 灰底次操作 / `.btn-danger` iOS systemRed / `.btn-disabled` iOS systemGray3）+ `.btn-pill` 胶囊变体（圆角 44rpx）+ `.btn-block` 全宽修饰 + `.btn-row` 内容区并排 / `.btn-bar` 整页底部带 `safe-area-inset-bottom` 布局；design-tokens.md 新增 `btn-h` / `btn-pad-x` / `btn-fs` / `btn-gap` / `radius-btn` / `radius-pill` / `btn-disabled-bg` token；约定"主左 / 次右"反 WeChat 习惯统一为"主右 / 次左"
 
 ### 修复
 

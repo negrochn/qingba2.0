@@ -134,6 +134,12 @@
 | 分段控件圆角 `radius-seg` | `8rpx` | 小圆角矩形，非胶囊 |
 | 分段控件边框 | `1rpx` | 浅色 `text-2`，深色 `chevron` |
 | 必填标记色 | `brand` | `#07C160`（与 tabBar 选中、seg-control 选中同源，**非** `danger`） |
+| 按钮高 `btn-h` | `88rpx` | = cell-h = 44pt iOS |
+| 按钮水平 padding | `btn-pad-x` | `32rpx` |
+| 按钮字号 `btn-fs` | `32rpx / 500` |  |
+| 按钮间距 | `btn-gap` | `24rpx`（并排布局时） |
+| 按钮圆角 `radius-btn` | `8rpx` | iOS 4pt，矩形圆角（**非胶囊**） |
+| 按钮胶囊圆角 `radius-pill` | `44rpx` | = btn-h / 2，半圆 |
 
 ## 4. 圆角与阴影
 
@@ -143,6 +149,8 @@
 | 单元格内部 | 无圆角（section 全宽平铺，cell 直接相邻，无首末圆角） |
 | 弹层顶部圆角 `radius-sheet` | `24rpx`（仅顶部两角，底部贴屏） |
 | 搜索栏圆角 `radius-search` | `16rpx`（小圆角，非胶囊） |
+| 按钮矩形圆角 `radius-btn` | `8rpx` | iOS 4pt |
+| 按钮胶囊圆角 `radius-pill` | `44rpx` | = btn-h / 2，半圆 |
 | 头像圆角 `radius-avatar` | `8rpx`（小圆角，正方形） |
 | 数字徽标药丸 | `16rpx`（半圆） |
 | 选中圈 | `50%`（正圆） |
@@ -171,6 +179,7 @@
 | `search-bg` | `rgba(118,118,128,0.24)`（iOS systemGray6 dark） |
 | `check-on` | `#FFFFFF`（固定） |
 | `badge-on` | `#FFFFFF`（固定） |
+| `btn-disabled-bg` | `#C7C7CC` | `#3A3A3C`（iOS systemGray3） |
 
 - **切换机制**：根节点 class `dm-light`（强制浅）/ `dm-dark`（强制深）/ `dm-auto`（跟随系统 `@media (prefers-color-scheme: dark)`）切换 CSS 变量。
 - 新增任何颜色，必须同时提供浅色与深色（含 `dm-auto`）定义。
@@ -204,6 +213,7 @@
 - `.avatar`：单图 / 3×2 拼图 / 占位。
 - `.badge`：红点 / 数字药丸。
 - `.device-banner`：设备状态条（多端登录提示）。
+- `.btn`：按钮族（`.btn-primary` 主操作 brand 绿 / `.btn-secondary` 次操作灰底 / `.btn-danger` 危险红底 / `.btn-disabled` 禁用 systemGray3 / `.btn-pill` 胶囊变体 / `.btn-block` 全宽修饰 + `.btn-row` 内容区并排 / `.btn-bar` 整页底部带安全区）。
 
 ---
 ## TODO：待补充

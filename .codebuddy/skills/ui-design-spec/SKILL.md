@@ -33,6 +33,7 @@ description: 微信（iOS 风格）UI 设计规范，基于微信设置 / 通知
 - 间距：页面边距 32rpx，组间距 24rpx / 带 caption 48rpx，cell 最小高 88rpx，switch 104×56rpx。
 - 圆角卡片 ~20rpx，**无阴影**（靠白/灰对比）。
 - 两套原语：`.group`（圆角卡片+标题带）、`.group-flat`（裸白带+行外 caption）。
+- 按钮 `.btn` 族：高度 88rpx（= 44pt iOS），矩形圆角 8rpx，变体 `primary`（品牌绿 `var(--brand)`）+ `secondary`（`cell-active` 灰底）+ `danger`（iOS systemRed）+ `disabled`（iOS systemGray3），胶囊变体 `btn-pill`（半径 44rpx）；布局 `.btn-row`（内容区居中并排）/ `.btn-bar`（整页底部带 `safe-area-inset-bottom`）。详见 components.md「原语 16」。
 
 ## 项目实现备注（与 qingba 代码对齐）
 

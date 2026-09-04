@@ -850,6 +850,145 @@ WXSS：
 
 ---
 
+## 原语 16：`.btn`（按钮族）
+
+> 来源：微信「转账说明」「评论」「确认弹窗」等场景中，浅灰次按钮 + 品牌绿主按钮的并排组合。iOS 矩形圆角（`radius-btn` 8rpx），高度 88rpx = cell-h = 44pt；项目内若需胶囊变体（圆角 = 高 / 2），叠加 `.btn-pill` 即可。
+
+### 基类 `.btn`
+
+```xml
+<view class="btn-row">
+  <button class="btn btn-secondary" bindtap="close">取消</button>
+  <button class="btn btn-primary" bindtap="confirm">确定</button>
+</view>
+```
+
+```css
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 88rpx;                /* btn-h = cell-h = 44pt iOS */
+  padding: 0 32rpx;             /* btn-pad-x */
+  font-size: calc(32rpx * var(--fs, 1));   /* btn-fs */
+  font-weight: 500;
+  border: none;
+  border-radius: 8rpx;          /* radius-btn，iOS 4pt */
+  line-height: 1;
+  box-sizing: border-box;
+  text-align: center;
+  background: var(--cell-active);
+  color: var(--text);
+}
+.btn::after { border: none; }   /* 清除小程序 button 默认边框 */
+.btn:active { opacity: 0.85; }  /* 按下态：所有变体统一 */
+```
+
+### 变体表（4 + 1）
+
+| 类 | 底色 | 字色 | 场景 |
+|----|------|------|------|
+| `.btn-primary` | `var(--brand)`（`#07C160`） | `#FFFFFF` | 主操作：确定 / 保存 / 提交 / 支付 |
+| `.btn-secondary` | `var(--cell-active)` | `var(--text)` | 次要操作：取消 / 返回 |
+| `.btn-danger` | `var(--danger)` | `#FFFFFF` | 危险操作：删除 / 注销 / 清空 |
+| `.btn-disabled` | iOS systemGray3（`#C7C7CC` / 深 `#3A3A3C`） | `#FFFFFF` | 禁用态：数据未变更 / 权限不足 |
+| `.btn-pill` | — | — | 圆角变体：`border-radius: 44rpx`（`radius-pill`），与上述 4 个变体叠加使用 |
+
+```css
+/* 主操作：品牌绿底（#07C160，按 WeChat 真机 transfer / save） */
+.btn-primary {
+  background: var(--brand);
+  color: #fff;
+}
+/* 次操作：灰底（iOS systemGray6 light #F2F2F2 / dark 浅白） */
+.btn-secondary {
+  background: var(--cell-active);
+  color: var(--text);
+}
+/* 危险：iOS systemRed（#FF3B30 light / #FF453A dark） */
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+/* 禁用：iOS systemGray3，浅 #C7C7CC / 深 #3A3A3C（建议项目在 app.wxss 加 --btn-disabled-bg token） */
+.btn-disabled {
+  background: #C7C7CC;
+  color: #fff;
+  pointer-events: none;       /* 禁用态不响应点击 */
+}
+.dm-dark .btn-disabled {
+  background: #3A3A3C;
+}
+.btn-disabled:active { opacity: 1; }  /* 禁用态无按下反馈 */
+/* 胶囊变体：与上述 4 变体叠加（例 class="btn btn-pill btn-primary"） */
+.btn-pill { border-radius: 44rpx; }   /* radius-pill = btn-h / 2 */
+```
+
+### 修饰
+
+```css
+.btn-block {
+  width: 100%;
+  padding: 0;                /* 全宽时取消左右内边距 */
+}
+```
+
+### 布局容器
+
+| 容器 | 用途 | 特征 |
+|------|------|------|
+| `.btn-row` | 弹层内 / 内容区底部两按钮 | flex 居中 + gap 24rpx + 普通 padding |
+| `.btn-bar` | 整页底部操作条（表单 / 列表下方） | flex 居中 + gap 24rpx + `card` 背景 + `safe-area-inset-bottom` |
+
+```css
+.btn-row {
+  display: flex;
+  justify-content: center;   /* 主左 / 次右靠居中 + gap 实现，不靠两端对齐 */
+  align-items: center;
+  gap: 24rpx;                /* btn-gap */
+  padding: 16rpx 32rpx;
+  box-sizing: border-box;
+}
+.btn-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24rpx;
+  padding: 16rpx 32rpx calc(env(safe-area-inset-bottom) + 32rpx);
+  background: var(--card);   /* 与整页背景形成层次 */
+  box-sizing: border-box;
+}
+```
+
+使用例：
+
+```xml
+<!-- 弹层内：两按钮并排（次 + 主） -->
+<view class="btn-row">
+  <button class="btn btn-secondary" bindtap="close">取消</button>
+  <button class="btn btn-primary" bindtap="confirm">确定</button>
+</view>
+
+<!-- 整页底部：单按钮（提交 / 打卡） -->
+<view class="btn-bar">
+  <button class="btn btn-pill btn-primary btn-block" bindtap="submit">打卡</button>
+</view>
+```
+
+### 约定
+
+- **变体按语义选**：每个弹层 / 表单仅 1 个 `primary`（主操作），`secondary` 用于取消 / 返回，`danger` **仅**用于危险 / 销毁，**不要**把"删除"做成 `primary`。
+- **并排布局主左次右**：WeChat 习惯"取消在左、确定在右"（iOS 习惯相反），**项目内统一**：主操作在右、取消在左，与 iOS 微信原生观感一致。
+- **不与 `.sheet-row` 混用**：`.sheet-row`（原语 4）是无背景纯文字行（高度 `sheet-row-h` 88rpx），用于 action-sheet 内的多行 destructive 操作；`.btn` 是**带背景实体按钮**，用于"确认 / 取消"型双按钮或"提交"型单按钮。两者高度都是 88rpx 但**视觉与语义不同**。
+- **`.btn-pill` 叠加使用**：用 `<button class="btn btn-pill btn-primary btn-block">` 形式组合，**不要**单独定义 `.btn-pill-primary` 等冗余类。
+- **禁用态不响应按下**：`.btn-disabled` 设 `pointer-events: none` + `:active { opacity: 1 }`，按下无视觉反馈、不可点击。
+- **`.btn-row` 居中并排**：不要用 `justify-content: space-between`（"两端对齐"会让两按钮被撑到贴边，丢失"双按钮居中"语义）。
+- **整页底部用 `.btn-bar`**：带 `card` 背景与 `safe-area-inset-bottom` 适配，区别于内容区内的 `.btn-row`。
+- **主按钮色 = `var(--brand)`**：WeChat 真机主按钮用品牌绿 `#07C160`（与 tabBar 选中、seg-control 选中、必填提示同源）。**项目内若已自定义 `var(--brand)`**（如本项目 `#4a90d9` 蓝），按项目惯例渲染；保持 skill 引用 `var(--brand)` 即可，**不要**硬编码 `#07C160`。
+- **字号缩放**：基类与变体字号统一用 `calc(32rpx * var(--fs, 1))`，跟随系统字号档位。
+
+---
+
 ## TODO：待逐组件补全
 - [x] 导航栏 / 返回
 - [x] 分组原语 `.group` / `.group-flat`
@@ -870,6 +1009,7 @@ WXSS：
 - [ ] 空状态
 - [ ] 加载 / 骨架屏
 - [x] 单行 / 多行文本输入 `.form-input`（见原语 15）；整页多字段表单 `.form-page`（见原语 13）；分段切换 `.seg-control`（见原语 14）
+- [x] 原语 16 `.btn` 按钮族（`.btn-primary` / `.btn-secondary` / `.btn-danger` / `.btn-disabled` / `.btn-pill` + `.btn-block` 修饰 + `.btn-row` / `.btn-bar` 布局容器）
 - [ ] 滚轮选择器 `.wheel-picker`（地区 省/市/区、性别、日期）—— 微信自研底部 `picker-view`，带「完成」
 - [ ] 滑块 `.slider`（字体大小，拖动实时预览上方示例文字）
 - [ ] 标签 chip 多选 `.tag-chip`（设置备注和标签）
