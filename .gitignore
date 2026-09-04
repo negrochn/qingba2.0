@@ -7,7 +7,7 @@ package-lock.json
 dist/
 build/
 
-# 微信开发者工具本地私有配置（含个人 appid 等）
+# 微信开发者工具本地配置文件（含个人 appid 等）
 project.private.config.json
 
 # 日志
