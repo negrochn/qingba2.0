@@ -133,12 +133,6 @@ view, text {
   margin: 6rpx 6rpx 6rpx 0;
 }
 
-.btn-primary {
-  background: #4a90d9;
-  color: #fff;
-  border-radius: 12rpx;
-}
-
 /* ===== 全局深色适配（微信小程序深色规范） =====
    分类彩色标签：浅色为浅底深字，深色转为深底亮字 */
 .dm-dark .tag-group-main_picture_books { color: #7fb4f7; background: rgba(127, 180, 247, 0.16); }
