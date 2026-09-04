@@ -123,6 +123,17 @@
 | 静音图标 | — | `24rpx`，字色 `chevron` |
 | 设备状态条 padding | `device-banner-pad` | `24rpx 32rpx` |
 | 设备状态条图标 | — | `32rpx`，字色 `text-2` |
+| 表单行高 `form-row-h` | `88rpx` | 与 `cell-h` 一致 |
+| 表单行左右 padding | `form-row-pad-x` | 左右 `32rpx`（与 `cell-pad-x` 一致） |
+| 表单 label 与 input 间距 | `form-label-gap` | `24rpx` |
+| 表单行间分隔线缩进 | — | 左 `32rpx`（与 cell divider 一致） |
+| 表单分组分隔间距 `form-section-gap` | `24rpx` | 视觉分段时 divider 上加 24rpx margin（图片中公司信息 ↔ 银行信息的分组断点） |
+| 分段控件项高 `seg-item-h` | `56rpx` | 单个选项框高度 |
+| 分段控件项左右 padding | `seg-item-pad-x` | `32rpx` |
+| 分段控件项间距 | `seg-gap` | `16rpx`（除首项外，每个项左 16rpx） |
+| 分段控件圆角 `radius-seg` | `8rpx` | 小圆角矩形，非胶囊 |
+| 分段控件边框 | `1rpx` | 浅色 `text-2`，深色 `chevron` |
+| 必填标记色 | `brand` | `#07C160`（与 tabBar 选中、seg-control 选中同源，**非** `danger`） |
 
 ## 4. 圆角与阴影
 
@@ -197,7 +208,6 @@
 ---
 ## TODO：待补充
 - 截图未覆盖：居中 modal（UIAlert 风格）、空状态、加载/骨架屏、消息详情页（聊天界面 / 输入栏 / 表情 / 图片消息）等。
-- 表单相关：微信主应用**无整页多字段表单提交页**，仅有单字段逐条编辑（名字 / 备注）、滚轮选择器（地区 / 性别）、滑块（字体大小）、标签 chip 多选。多字段表单仅出现在微信支付 / 账号 / 反馈等低频域，不在主应用规范范围。待补截图。
 - caption 超过 2 行的处理约定。
 - 字号系统缩放方案（是否引入 `--fs`）。
 - 弹层动效（遮罩淡入 / 面板滑入 / 退出动画）。

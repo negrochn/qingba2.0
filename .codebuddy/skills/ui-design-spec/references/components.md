@@ -622,6 +622,206 @@
 
 ---
 
+## 原语 13：`.form-page`（整页多字段表单页）
+
+> 来源：微信「添加发票抬头」「收货地址」「实名认证」等表单页。nav 取消 / 保存 + 整页白底 section 集中承载分段控件与字段列表，**所有字段在同一张白底卡片内**（与 `.group` 全宽平铺风格一致），字段间用 1rpx 分隔线，**不要**每个字段独立卡片。
+
+整页结构：nav-bar（取消 / 标题 / 保存）+ 内容区（`.group-card` 包所有字段）。
+
+```xml
+<view class="container">
+  <!-- nav 已由页面 nav-bar 提供：左 取消 / 中 添加发票抬头 / 右 保存 -->
+  <!-- 保存按钮未变更时禁用 = 字色 #C7C7CC + 不可点；变更后字色 brand -->
+
+  <view class="group">
+    <view class="group-card">
+      <!-- 顶部分段切换（可选；如「抬头类型：个人 / 单位」） -->
+      <view class="form-row">
+        <view class="form-label">抬头类型</view>
+        <view class="seg-control">
+          <view class="seg-item {{type==='个人' ? 'seg-active' : ''}}"
+                bindtap="setType" data-key="个人">个人</view>
+          <view class="seg-item {{type==='单位' ? 'seg-active' : ''}}"
+                bindtap="setType" data-key="单位">单位</view>
+        </view>
+      </view>
+      <view class="cell-divider"></view>
+
+      <!-- 字段行（label + input） -->
+      <view class="form-row">
+        <view class="form-label">名称</view>
+        <input class="form-field" placeholder="单位名称（必填）"
+               placeholder-class="form-placeholder-required" />
+      </view>
+      <view class="cell-divider"></view>
+
+      <view class="form-row">
+        <view class="form-label">税号</view>
+        <input class="form-field" placeholder="纳税人识别号"
+               placeholder-class="form-placeholder" />
+      </view>
+
+      <!-- 分组断点：同一卡片内字段较多时用 .form-divider-section 做视觉分段 -->
+      <view class="cell-divider form-divider-section"></view>
+
+      <view class="form-row">
+        <view class="form-label">电话号码</view>
+        <input class="form-field" placeholder="电话号码"
+               placeholder-class="form-placeholder" />
+      </view>
+      <view class="cell-divider"></view>
+      <view class="form-row">
+        <view class="form-label">开户银行</view>
+        <input class="form-field" placeholder="开户银行名称"
+               placeholder-class="form-placeholder" />
+      </view>
+      <view class="cell-divider"></view>
+      <view class="form-row">
+        <view class="form-label">银行账户</view>
+        <input class="form-field" placeholder="银行账户号码"
+               placeholder-class="form-placeholder" />
+      </view>
+    </view>
+  </view>
+</view>
+```
+
+WXSS（最小集，复用既有原语）：
+
+```css
+.form-row {
+  display: flex;
+  align-items: center;
+  min-height: 88rpx;             /* form-row-h */
+  padding: 24rpx 32rpx;          /* form-row-pad-x */
+  box-sizing: border-box;
+}
+.form-label {
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text);
+  margin-right: 24rpx;           /* form-label-gap */
+  flex-shrink: 0;
+}
+.form-field {
+  flex: 1;
+  min-width: 0;
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text);
+  text-align: right;             /* 与 settings 页 .cell-value 一致 */
+}
+.form-placeholder {
+  color: var(--text-2);
+}
+.form-placeholder-required {
+  color: var(--brand);            /* #07C160，必填提示 */
+}
+
+/* 分组断点：复用 .cell-divider，再加 24rpx 上 margin 做视觉分段 */
+.form-divider-section {
+  margin-top: 24rpx;
+}
+```
+
+### 约定
+
+- **nav 取消 / 保存**：左"取消"（普通 text 按钮，34rpx / 字色 `text`），右"保存"（**未变更时禁用**：字色 `#C7C7CC` + `pointer-events: none`；变更后字色 `brand`、可点）。
+- **整页一张白底卡片**：所有字段集中在单一全宽 `.group-card` 内，与 `.group` 原语一致（平铺、无圆角、段间 `group-gap`）；**禁止**每个字段独立卡片。
+- **label 不 flex 占满**：`flex-shrink: 0` + 固定 `margin-right`，把 flex 剩余空间交给 input，避免长 label（如"单位地址"）与 input 互挤。
+- **input 右对齐文本**：`text-align: right`，与设置页 `.cell-value` 风格统一。
+- **分组断点**：同一卡片内字段 > 4 时，用 `.form-divider-section`（= `.cell-divider` + `margin-top: 24rpx`）做视觉分段；不要拆为多张 `.group-card`。
+- **placeholder 样式必须用 `placeholder-class`**：小程序 `<input>` 的 placeholder **不支持**内联 `style` 改色，必须用 `placeholder-class` 指定样式类。
+- **必填用 `brand`**：不要用 `danger`（避免与危险操作混淆），与 tabBar 选中、seg-control 选中同源。
+
+---
+
+## 原语 14：`.seg-control`（分段切换控件）
+
+> 来源：微信「添加发票抬头」抬头类型（个人 / 单位）、支付方式（余额 / 银行卡）。两个或更多选项 N 选 1，选中态走**品牌绿**边框 + 绿字。
+
+```xml
+<view class="seg-control">
+  <view class="seg-item {{key==='default' ? 'seg-active' : ''}}"
+        bindtap="pick" data-key="default">默认</view>
+  <view class="seg-item {{key==='custom' ? 'seg-active' : ''}}"
+        bindtap="pick" data-key="custom">自定义</view>
+</view>
+```
+
+WXSS：
+
+```css
+.seg-control {
+  display: flex;
+  align-items: center;
+}
+.seg-item {
+  height: 56rpx;                  /* seg-item-h */
+  padding: 0 32rpx;               /* seg-item-pad-x */
+  margin-left: 16rpx;             /* seg-gap，除首个外 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1rpx solid var(--text-2);
+  border-radius: 8rpx;            /* radius-seg */
+  background: var(--card);
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text-2);
+  box-sizing: border-box;
+}
+.seg-item:first-child {
+  margin-left: 0;                 /* 首个项不留左间距 */
+}
+.seg-active {
+  border-color: var(--brand);     /* #07C160 */
+  color: var(--brand);
+}
+```
+
+### 约定
+
+- **颜色**：选中态用 `brand`（`#07C160`），**不要**用 `success`（与开关开启 / picker 勾选混淆）；未选中态用 `text-2`。
+- **不要用本控件做"开关"语义**：本控件是单选触发器，**按下立即应用**，无须配保存按钮（与开关 / picker 一致）。
+- **整控件不可点**：点击命中单个 `.seg-item`（不需点 `.seg-control` 整行）；`bindtap` 挂在 `.seg-item`。
+- **N 选 1 写法**：把 `key` 换成 `sel`（或数组），`data-key` 对应值判断 `{{sel==='value' ? 'seg-active' : ''}}`。
+- **不与 `.cell-switch` / `<switch>` 混用**：分段切换 ≠ 开关。开关是二态 toggle（开 / 关），分段切换是多选 1。
+
+---
+
+## 原语 15：`.form-input`（单行表单字段）
+
+> 来源：微信「添加发票抬头」字段行。左侧 label（自适应宽度，不 flex 占满），右侧 `<input>` 占满剩余空间并右对齐。占位文字用 `placeholder-class` 控制颜色。
+
+详见「原语 13 `.form-page`」内的 `.form-row` / `.form-label` / `.form-field` / `.form-placeholder` / `.form-placeholder-required` 节点定义。本原语 = 一行表单字段 = `.form-row + .form-label + .form-field`。
+
+### 变体：label 侧必填星标（更可控）
+
+必填项也可在 label 后直接挂一个 `.form-required-marker`，避免依赖 placeholder 内含 `(必填)` 字样：
+
+```xml
+<view class="form-row">
+  <view class="form-label">名称<text class="form-required-marker"> *</text></view>
+  <input class="form-field" placeholder="单位名称" placeholder-class="form-placeholder" />
+</view>
+```
+
+```css
+.form-required-marker {
+  color: var(--brand);
+  margin-left: 4rpx;
+  font-size: calc(34rpx * var(--fs, 1));
+}
+```
+
+### 约定
+
+- **label `flex-shrink: 0` + `margin-right: 24rpx`**：label 占自然宽，input `flex: 1` 占满；label 与 input 之间留 24rpx（form-label-gap）。
+- **input `text-align: right`**：与设置页 `.cell-value` 右对齐风格统一。
+- **placeholder 必须用 `placeholder-class`**：小程序 `<input>` 的 placeholder **不支持**内联 `style` 颜色，必须通过 `placeholder-class` 指定样式类。
+- **必填颜色 = `brand`**（`#07C160`），**不要**用 `danger`（避免与危险操作混淆）。
+- **字段内嵌进 `.group-card`**：与 `.group` 原语一致，平铺、无圆角；不要为字段单独建卡片。
+
+---
+
 ## TODO：待逐组件补全
 - [x] 导航栏 / 返回
 - [x] 分组原语 `.group` / `.group-flat`
@@ -641,7 +841,7 @@
 - [ ] 居中 modal（UIAlert 风格，非底部）
 - [ ] 空状态
 - [ ] 加载 / 骨架屏
-- [ ] 单行 / 多行文本输入 `.form-input`（名字编辑、朋友圈发表）—— 微信为**单字段逐条编辑**，**无整页多字段表单提交页**
+- [x] 单行 / 多行文本输入 `.form-input`（见原语 15）；整页多字段表单 `.form-page`（见原语 13）；分段切换 `.seg-control`（见原语 14）
 - [ ] 滚轮选择器 `.wheel-picker`（地区 省/市/区、性别、日期）—— 微信自研底部 `picker-view`，带「完成」
 - [ ] 滑块 `.slider`（字体大小，拖动实时预览上方示例文字）
 - [ ] 标签 chip 多选 `.tag-chip`（设置备注和标签）
