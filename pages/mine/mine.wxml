@@ -2,9 +2,9 @@
 
   <!-- 关于 -->
   <view class="group">
-    <view class="group-title">关于</view>
     <view class="group-card">
       <view class="cell" bindtap="goAbout">
+        <text class="cell-icon">📚</text>
         <view class="cell-label">关于庆爸2.0</view>
         <view class="cell-right">
           <text class="cell-arrow">›</text>
@@ -15,9 +15,9 @@
 
   <!-- 功能 -->
   <view class="group">
-    <view class="group-title">功能</view>
     <view class="group-card">
       <view class="cell" bindtap="goRecords">
+        <text class="cell-icon">📅</text>
         <view class="cell-label">打卡记录</view>
         <view class="cell-right">
           <text class="cell-arrow">›</text>
@@ -27,6 +27,7 @@
       <view class="cell-divider"></view>
 
       <view class="cell" bindtap="goStats">
+        <text class="cell-icon">📊</text>
         <view class="cell-label">数据统计</view>
         <view class="cell-right">
           <text class="cell-arrow">›</text>
@@ -37,9 +38,9 @@
 
   <!-- 设置 -->
   <view class="group">
-    <view class="group-title">设置</view>
     <view class="group-card">
       <view class="cell" bindtap="goSettings">
+        <text class="cell-icon">⚙️</text>
         <view class="cell-label">设置</view>
         <view class="cell-right">
           <text class="cell-arrow">›</text>
