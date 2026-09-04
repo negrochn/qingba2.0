@@ -229,9 +229,9 @@
       </view>
     </view>
 
-    <view class="sheet-actions">
-      <button class="btn-pill btn-pill-secondary" bindtap="closeCheckin">取消</button>
-      <button class="btn-pill btn-pill-primary" bindtap="submitCheckin">打卡</button>
+    <view class="btn-row">
+      <button class="btn btn-secondary" bindtap="closeCheckin">取消</button>
+      <button class="btn btn-primary" bindtap="submitCheckin">打卡</button>
     </view>
   </view>
 </view>

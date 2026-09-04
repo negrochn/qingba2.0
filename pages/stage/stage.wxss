@@ -517,7 +517,7 @@
    原语 14 .seg-control + .seg-item（4 项等宽 variant：.seg-control-grid）
    原语 10 变体 .badge-pill-brand（"读完" 绿 pill）
    原语 1 .cell-divider / .cell-arrow
-   新增 .btn-pill（sheet 底部并排胶囊按钮） */
+   原语 16 .btn 按钮族（.btn-row 布局 + .btn-secondary 取消 + .btn-primary 打卡，胶囊变体） */
 
 /* 原语 4 .sheet-mask + .action-sheet */
 .sheet-mask {
@@ -701,44 +701,46 @@
   flex-shrink: 0;
 }
 
-/* 操作按钮行：项目原 .ci-actions 重命名为 .sheet-actions */
-.sheet-actions {
+/* 操作按钮行（skill 原语 16 .btn-row：居中 + gap 24rpx） */
+.btn-row {
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 24rpx;                  /* btn-gap */
   margin-top: 16rpx;
 }
 
-/* 新增：胶囊按钮 .btn-pill（用于 sheet 底部并排操作按钮） */
-.btn-pill {
-  width: 46%;
-  height: 88rpx;
-  line-height: 88rpx;
-  border-radius: 44rpx;
+/* 标准按钮族（skill 原语 16，仅限打卡弹窗作用域 .action-sheet） */
+.action-sheet .btn {
+  flex: 1;                     /* 两按钮等宽 */
+  height: 88rpx;               /* btn-h = 44pt iOS */
+  border-radius: 44rpx;        /* 保留胶囊风格（上次明确要胶囊） */
   font-size: calc(30rpx * var(--fs, 1));
-  border: none;
-  text-align: center;
-  display: flex !important;
-  justify-content: center;
-  align-items: center;
-  padding: 0 !important;
   font-weight: 500;
-}
-.btn-pill::after { border: none; }
-.btn-pill-secondary {
-  background: var(--cell-active);
-  color: var(--text2);
-  margin-right: 4%;
-}
-.btn-pill-secondary:active {
-  background: var(--divider);
-}
-.btn-pill-primary {
-  /* 项目主色：#4a90d9 → #6ab0f3 渐变（沿用项目约定；skill 中无主按钮色 token） */
-  background: linear-gradient(135deg, #4a90d9 0%, #6ab0f3 100%);
+  border: none;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-sizing: border-box;
   color: #fff;
 }
-.btn-pill-primary:active { opacity: 0.88; }
+.action-sheet .btn::after { border: none; }    /* 清除小程序 button 默认边框 */
+.action-sheet .btn:active { opacity: 0.88; }   /* 按下态反馈（含 primary） */
+
+.action-sheet .btn-secondary {
+  background: var(--cell-active);
+  color: var(--text);          /* 黑字（更微信原生，原灰字 text2 改为黑） */
+}
+.action-sheet .btn-secondary:active {
+  background: var(--divider);
+}
+.action-sheet .btn-primary {
+  /* 项目主色 #4a90d9（var(--brand)），与 seg-active 选中态一致；去渐变改实心 */
+  background: var(--brand);
+  color: #fff;
+}
 
 /* ====== 晋级卡片（微信原生 progress 组件） ====== */
 .promote-card {
