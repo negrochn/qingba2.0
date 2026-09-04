@@ -45,22 +45,25 @@ function setFontLevel(key) {
 }
 
 // ===== 深色模式 =====
-// 存储: qingba_dark_mode = 'auto' | 'light' | 'dark'
+// 微信风格：跟随系统 toggle（开启 → 跟随系统，关闭 → 可手动选择浅色 / 深色）
+// 存储: qingba_dark_mode = 'auto' (跟随系统) | 'light' (普通模式) | 'dark' (深色模式)
+// 关闭「跟随系统」时默认进入普通模式（DEFAULT_MANUAL_MODE）
 
 const DARK_MODE_KEY = 'qingba_dark_mode'
 const DEFAULT_DARK_MODE = 'auto'
+const VALID_DARK_KEYS = ['auto', 'light', 'dark']
 
-const DARK_MODES = [
-  { key: 'auto', label: '跟随系统' },
-  { key: 'light', label: '浅色' },
-  { key: 'dark', label: '深色' }
-]
+// 关闭态默认进入普通模式
+const DEFAULT_MANUAL_MODE = 'light'
+
+const DARK_MODE_LABELS = {
+  auto: '跟随系统',
+  light: '已关闭',
+  dark: '已开启'
+}
 
 function indexOfDark(key) {
-  for (let i = 0; i < DARK_MODES.length; i++) {
-    if (DARK_MODES[i].key === key) return i
-  }
-  return -1
+  return VALID_DARK_KEYS.indexOf(key)
 }
 
 function getDarkMode() {
@@ -68,12 +71,11 @@ function getDarkMode() {
   try {
     key = wx.getStorageSync(DARK_MODE_KEY) || ''
   } catch (e) {}
-  if (indexOfDark(key) < 0) return DEFAULT_DARK_MODE
-  return key
+  return VALID_DARK_KEYS.indexOf(key) >= 0 ? key : DEFAULT_DARK_MODE
 }
 
 function setDarkMode(key) {
-  if (indexOfDark(key) < 0) return false
+  if (VALID_DARK_KEYS.indexOf(key) < 0) return false
   try {
     wx.setStorageSync(DARK_MODE_KEY, key)
   } catch (e) {}
@@ -85,18 +87,17 @@ function getDarkModeIndex() {
   return i >= 0 ? i : 0
 }
 
-// 根节点的深色 class，如 dm-dark / dm-light / dm-auto
+// 根节点的深色 class：dm-auto | dm-light | dm-dark
 function getDarkClass() {
   return 'dm-' + getDarkMode()
 }
 
-// 当前模式描述文本，如 "跟随系统"
+// 设置页 cell 显示文本：'auto'→'跟随系统'，'light'→'已关闭'，'dark'→'已开启'（显示状态，而非重复模式名）
 function getDarkModeText() {
-  const mode = DARK_MODES[indexOfDark(getDarkMode())] || DARK_MODES[0]
-  return mode.label
+  return DARK_MODE_LABELS[getDarkMode()] || DARK_MODE_LABELS[DEFAULT_DARK_MODE]
 }
 
-// 是否实际处于深色（auto 时结合系统偏好）
+// 是否实际处于深色：'dark' 或 ('auto' 且系统深色)
 function isDarkMode(systemDark) {
   const mode = getDarkMode()
   return mode === 'dark' || (mode === 'auto' && !!systemDark)
@@ -136,8 +137,10 @@ module.exports = {
   indexOf,
   defaultIndex,
   DARK_MODE_KEY,
-  DARK_MODES,
   DEFAULT_DARK_MODE,
+  VALID_DARK_KEYS,
+  DEFAULT_MANUAL_MODE,
+  DARK_MODE_LABELS,
   getDarkMode,
   setDarkMode,
   getDarkModeIndex,

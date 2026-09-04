@@ -3,12 +3,12 @@
 /* ===== 主题色板（浅色为默认） =====
    深色模式通过根节点 class（dm-light / dm-dark / dm-auto）切换 CSS 变量 */
 page {
-  --bg: #f5f6f8;
+  --bg: #ededed;
   --card: #ffffff;
   --card2: #f7f8fa;
   --text: #1a1a1a;
-  --text2: #666666;
-  --text3: #999999;
+  --text2: #737373;
+  --text3: #b2b2b2;
   --divider: #ebedf0;
   --brand: #4a90d9;
   --cell-active: #f5f5f5;
@@ -25,12 +25,12 @@ view, text {
 
 /* 手动浅色（系统深色时强制浅色内容区） */
 .dm-light {
-  --bg: #f5f6f8;
+  --bg: #ededed;
   --card: #ffffff;
   --card2: #f7f8fa;
   --text: #1a1a1a;
-  --text2: #666666;
-  --text3: #999999;
+  --text2: #737373;
+  --text3: #b2b2b2;
   --divider: #ebedf0;
   --brand: #4a90d9;
   --cell-active: #f5f5f5;

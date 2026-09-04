@@ -671,6 +671,15 @@ function setCurrentStage(stageData) {
   }
 }
 
+function clearCurrentStage() {
+  try {
+    wx.removeStorageSync(CURRENT_STAGE_KEY)
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
 // ===== 已完成阶段（含最后阶段，用于显式标记“达成目标”）=====
 function getCompletedStages() {
   try {
@@ -752,6 +761,7 @@ module.exports = {
   getReadRankingByStage,
   getCurrentStage,
   setCurrentStage,
+  clearCurrentStage,
   getCompletedStages,
   isStageDone,
   markStageDone,

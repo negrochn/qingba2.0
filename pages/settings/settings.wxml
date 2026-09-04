@@ -4,27 +4,23 @@
   <view class="group">
     <view class="group-title">显示</view>
     <view class="group-card">
-      <picker mode="selector" range="{{fontLevelOptions}}" range-key="label" value="{{fontLevelIndex}}" bindchange="onFontLevelChange" class="cell-picker">
-        <view class="cell">
-          <view class="cell-label">字体大小</view>
-          <view class="cell-right">
-            <text class="cell-value">{{fontLevelText}}</text>
-            <text class="cell-arrow">›</text>
-          </view>
+      <view class="cell" bindtap="goFontPicker">
+        <view class="cell-label">字体大小</view>
+        <view class="cell-right">
+          <text class="cell-value">{{fontLevelText}}</text>
+          <text class="cell-arrow">›</text>
         </view>
-      </picker>
+      </view>
 
       <view class="cell-divider"></view>
 
-      <picker mode="selector" range="{{darkModeOptions}}" range-key="label" value="{{darkModeIndex}}" bindchange="onDarkModeChange" class="cell-picker">
-        <view class="cell">
-          <view class="cell-label">深色模式</view>
-          <view class="cell-right">
-            <text class="cell-value">{{darkModeText}}</text>
-            <text class="cell-arrow">›</text>
-          </view>
+      <view class="cell" bindtap="goDarkMode">
+        <view class="cell-label">深色模式</view>
+        <view class="cell-right">
+          <text class="cell-value">{{darkModeText}}</text>
+          <text class="cell-arrow">›</text>
         </view>
-      </picker>
+      </view>
     </view>
   </view>
 
@@ -35,9 +31,9 @@
       <view class="cell">
         <view class="cell-info">
           <view class="cell-label">小小优趣成长计划</view>
-          <view class="cell-desc">开启后，常规阶段达标可解锁下一阶段</view>
+          <view class="cell-desc">开启后，完成阶段会校验测试结果</view>
         </view>
-        <switch checked="{{youquEnabled}}" bindchange="onYouquPlanChange" color="#4a90d9" />
+        <switch checked="{{youquEnabled}}" bindchange="onYouquPlanChange" color="#34C759" />
       </view>
     </view>
   </view>
@@ -46,43 +42,29 @@
   <view class="group">
     <view class="group-title">数据管理</view>
     <view class="group-card">
-      <picker mode="selector" range="{{exportOptions}}" range-key="label" bindchange="onExportModeChange" class="cell-picker">
-        <view class="cell">
-          <view class="cell-label">导出备份</view>
-          <view class="cell-right">
-            <text class="cell-desc-right">生成 docx 文件</text>
-            <text class="cell-arrow">›</text>
-          </view>
+      <view class="cell" bindtap="onExport">
+        <view class="cell-label">导出备份</view>
+        <view class="cell-right">
+          <text class="cell-value">word</text>
+          <text class="cell-arrow">›</text>
         </view>
-      </picker>
+      </view>
 
       <view class="cell-divider"></view>
 
-      <picker mode="selector" range="{{importOptions}}" range-key="label" bindchange="onImportModeChange" class="cell-picker">
-        <view class="cell">
-          <view class="cell-label">导入备份</view>
-          <view class="cell-right">
-            <text class="cell-desc-right">txt / json / docx</text>
-            <text class="cell-arrow">›</text>
-          </view>
+      <view class="cell" bindtap="goImportPicker">
+        <view class="cell-label">导入备份</view>
+        <view class="cell-right">
+          <text class="cell-value">支持 txt/json/word</text>
+          <text class="cell-arrow">›</text>
         </view>
-      </picker>
+      </view>
 
       <view class="cell-divider"></view>
 
-      <picker wx:if="{{totalCount > 0}}" mode="selector" range="{{clearOptions}}" range-key="label" bindchange="onClearScopeChange" class="cell-picker">
-        <view class="cell cell-danger">
-          <view class="cell-label">清空数据</view>
-          <view class="cell-right">
-            <text class="cell-desc-right">不可恢复</text>
-            <text class="cell-arrow">›</text>
-          </view>
-        </view>
-      </picker>
-      <view wx:else class="cell cell-danger">
+      <view class="cell cell-danger" bindtap="goClearPicker">
         <view class="cell-label">清空数据</view>
         <view class="cell-right">
-          <text class="cell-desc-right">暂无数据</text>
           <text class="cell-arrow">›</text>
         </view>
       </view>
@@ -93,22 +75,20 @@
   <view class="group" wx:if="{{showDevTools}}">
     <view class="group-title">开发者工具</view>
     <view class="group-card">
-      <picker mode="selector" range="{{stageOptions}}" range-key="name" value="{{currentStageIndex}}" bindchange="onStageChange" class="cell-picker">
-        <view class="cell">
-          <view class="cell-label">当前阶段</view>
-          <view class="cell-right">
-            <text class="cell-value {{currentStage ? '' : 'placeholder'}}">{{currentStageDisplay || '未设置'}}</text>
-            <text class="cell-arrow">›</text>
-          </view>
+      <view class="cell" bindtap="goStagePicker">
+        <view class="cell-label">当前阶段</view>
+        <view class="cell-right">
+          <text class="cell-value {{currentStage ? '' : 'placeholder'}}">{{currentStageDisplay || '未设置'}}</text>
+          <text class="cell-arrow">›</text>
         </view>
-      </picker>
+      </view>
 
       <view class="cell-divider"></view>
 
       <view class="cell" bindtap="onStressTest">
-        <view class="cell-label">生成测试数据</view>
+        <view class="cell-label">压力测试</view>
         <view class="cell-right">
-          <text class="cell-desc-right">每阶段约 80-90 小时</text>
+          <text class="cell-value">每阶段约 80-90 小时</text>
           <text class="cell-arrow">›</text>
         </view>
       </view>
@@ -120,8 +100,8 @@
     <view class="group-title">关于</view>
     <view class="group-card">
       <view class="cell">
-        <view class="cell-label">版本号</view>
-        <text class="cell-value">{{appVersion}}</text>
+        <view class="cell-label">关于小程序</view>
+        <text class="cell-value">版本{{appVersion}}</text>
       </view>
       <view class="cell-divider"></view>
       <view class="cell">

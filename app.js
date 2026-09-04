@@ -64,7 +64,7 @@ App({
     const isDark = theme.isDarkMode(this._systemDark)
     wx.setNavigationBarColor({
       frontColor: isDark ? '#ffffff' : '#000000',
-      backgroundColor: isDark ? '#111111' : '#ffffff',
+      backgroundColor: isDark ? '#111111' : '#ededed',
       fail: () => {}
     })
     wx.setTabBarStyle({

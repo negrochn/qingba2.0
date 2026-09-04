@@ -7,14 +7,19 @@
     "pages/stage/stage",
     "pages/about/about",
     "pages/settings/settings",
-    "pages/stats/stats"
+    "pages/stats/stats",
+    "pages/stagePicker/stagePicker",
+    "pages/fontPicker/fontPicker",
+    "pages/darkMode/darkMode",
+    "pages/importPicker/importPicker",
+    "pages/clearPicker/clearPicker"
   ],
   "window": {
     "backgroundTextStyle": "dark",
-    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarBackgroundColor": "#ededed",
     "navigationBarTitleText": "庆爸2.0",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#ffffff"
+    "backgroundColor": "#ededed"
   },
   "tabBar": {
     "color": "#999999",

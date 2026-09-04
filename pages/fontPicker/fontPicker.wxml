@@ -1,0 +1,17 @@
+<view class="container {{fontClass}} {{darkClass}}">
+
+  <!-- 原语 3：picker-page（整页一个 group 卡片，无 group-title） -->
+  <view class="group">
+    <view class="group-card">
+      <block wx:for="{{levels}}" wx:key="key" wx:for-item="l" wx:for-index="i">
+        <view wx:if="{{i > 0}}" class="cell-divider"></view>
+        <view class="cell cell-radio {{selectedKey === l.key ? 'cell-checked' : ''}}"
+              bindtap="pick" data-key="{{l.key}}">
+          <text class="cell-label">{{l.label}}</text>
+          <text class="cell-check" hidden="{{selectedKey !== l.key}}">✓</text>
+        </view>
+      </block>
+    </view>
+  </view>
+
+</view>

@@ -40,27 +40,13 @@ Page({
     currentStage: null,
     currentStageDisplay: '',
     youquEnabled: false,
-    // picker 选项
-    clearOptions: [],
-    importOptions: [
-      { key: 'overwrite', label: '覆盖式导入' },
-      { key: 'merge', label: '合并式导入' }
-    ],
-    exportOptions: [
-      { key: 'open', label: '打开备份文件' },
-      { key: 'share', label: '转发给好友' }
-    ],
     _importMode: 'overwrite',
     // 字体大小
     fontClass: 'fs-normal',
-    fontLevelIndex: theme.defaultIndex(),
-    fontLevelOptions: theme.LEVELS,
     fontLevelText: '',
     // 深色模式
     darkClass: 'dm-auto',
-    darkModeIndex: theme.getDarkModeIndex(),
-    darkModeOptions: theme.DARK_MODES,
-    darkModeText: ''
+    darkModeText: '',
   },
 
   onLoad() {
@@ -91,59 +77,32 @@ Page({
     this.loadStats();
     this.loadCurrentStage();
     this.loadYouquPlan();
-    this._loadClearOptions();
   },
 
   // ===== 字体大小 =====
   loadFontLevel() {
     this.setData({
-      fontLevelIndex: theme.getFontLevelIndex(),
       fontLevelText: theme.getFontLevelText(),
       fontClass: theme.getFontClass()
     });
   },
 
-  onFontLevelChange(e) {
-    const index = parseInt(e.detail.value, 10);
-    const level = theme.LEVELS[index];
-    if (!level) return;
-
-    theme.setFontLevel(level.key);
-    this.loadFontLevel();
-
-    const app = getApp();
-    if (app && app.applyFontLevel) app.applyFontLevel(this);
-
-    wx.showToast({
-      title: `字号：${level.label}`,
-      icon: 'none'
-    });
+  // 跳转字号选择页（原语 3：picker-page 整页单选）
+  goFontPicker() {
+    wx.navigateTo({ url: '/pages/fontPicker/fontPicker' });
   },
 
   // ===== 深色模式 =====
   loadDarkMode() {
     this.setData({
-      darkModeIndex: theme.getDarkModeIndex(),
       darkModeText: theme.getDarkModeText(),
       darkClass: theme.getDarkClass()
     });
   },
 
-  onDarkModeChange(e) {
-    const index = parseInt(e.detail.value, 10);
-    const mode = theme.DARK_MODES[index];
-    if (!mode) return;
-
-    theme.setDarkMode(mode.key);
-    this.loadDarkMode();
-
-    const app = getApp();
-    if (app && app.applyFontLevel) app.applyFontLevel(this);
-
-    wx.showToast({
-      title: `深色模式：${mode.label}`,
-      icon: 'none'
-    });
+  // 跳转深色模式选择页（微信风格：单 toggle）
+  goDarkMode() {
+    wx.navigateTo({ url: '/pages/darkMode/darkMode' });
   },
 
   // 读取小小优趣成长计划开关
@@ -191,36 +150,9 @@ Page({
     }
   },
 
-  // 切换阶段
-  onStageChange(e) {
-    const index = parseInt(e.detail.value);
-    if (index < 0 || index >= stageOptions.length) return;
-
-    // 获取完整阶段数据
-    const stage = routeData.stages[index];
-    const stageData = {
-      id: stage.stage_id,
-      name: stage.stage_name,
-      targetPhase: stage.target_phase,
-      vocabularyTarget: stage.vocabulary_target,
-      timeInvestment: stage.time_investment
-    };
-
-    // 保存：当前阶段 + 前序阶段标记完成（与首页引导一致）
-    checkin.setCurrentStage(stageData);
-    const done = stageOptions.slice(0, index).map(s => s.id);
-    checkin.setCompletedStages(done);
-
-    this.setData({
-      currentStageIndex: index,
-      currentStage: stageData,
-      currentStageDisplay: stageData.name
-    });
-
-    wx.showToast({
-      title: `已设置：${stageData.name}`,
-      icon: 'success'
-    });
+  // 跳转阶段选择页（原语 3：picker-page 整页单选）
+  goStagePicker() {
+    wx.navigateTo({ url: '/pages/stagePicker/stagePicker' });
   },
 
   // 加载统计数据（目前只需要 totalCount，用于清空数据提示）
@@ -234,19 +166,10 @@ Page({
   },
 
   // ===== 导出备份 =====
-  // 点击 picker 选择打开/转发，选择后再生成文件
-  onExportModeChange(e) {
-    const options = this.data.exportOptions || [];
-    const opt = options[e.detail.value];
-    if (!opt) return;
-
-    // 选择具体动作后，再按需生成备份文件
-    this._generateBackupFile((filePath, fileName) => {
-      if (opt.key === 'open') {
-        this.openBackupFile(filePath);
-      } else if (opt.key === 'share') {
-        this.shareFile(filePath, fileName);
-      }
+  // 点击直接生成并打开备份文件（Word 文档）
+  onExport() {
+    this._generateBackupFile((filePath) => {
+      this.openBackupFile(filePath);
     });
   },
 
@@ -379,59 +302,17 @@ Page({
     });
   },
 
-  // 转发文件给好友
-  shareFile(filePath, fileName) {
-    if (wx.shareFileMessage) {
-      wx.shareFileMessage({
-        filePath,
-        fileName,
-        success: () => {
-          wx.showToast({
-            title: '备份已发送',
-            icon: 'success'
-          });
-        },
-        fail: (err) => {
-          console.error('shareFileMessage fail', err);
-          // 转发失败时，回退到打开备份文件另存
-          wx.showModal({
-            title: '转发失败',
-            content: '无法直接转发文件，可尝试使用「打开备份文件」，从预览页右上角菜单存储到文件或转发。',
-            confirmText: '打开备份',
-            cancelText: '取消',
-            success: (res) => {
-              if (res.confirm) {
-                this.openBackupFile(filePath);
-              }
-            }
-          });
-        }
-      });
-    } else {
-      // 不支持转发API，引导通过打开备份文件保存
-      wx.showModal({
-        title: '无法转发',
-        content: '当前微信版本不支持文件转发。可使用「打开备份文件」，从预览页右上角菜单存储到文件或转发。',
-        confirmText: '打开备份',
-        cancelText: '取消',
-        success: (res) => {
-          if (res.confirm) {
-            this.openBackupFile(filePath);
-          }
-        }
-      });
-    }
-  },
+
 
   // ===== 导入备份 =====
-  // 点击 picker 选择覆盖/合并，选择后再选文件
-  onImportModeChange(e) {
-    const options = this.data.importOptions || [];
-    const opt = options[e.detail.value];
-    if (!opt) return;
+  // 跳转导入方式选择页（原语 3：picker-page 整页单选）
+  goImportPicker() {
+    wx.navigateTo({ url: '/pages/importPicker/importPicker' });
+  },
 
-    // 记录导入方式，再选择文件
-    this.setData({ _importMode: opt.key });
+  // 从 importPicker 返回后，按所选方式选择备份文件并导入
+  startImport(mode) {
+    this.setData({ _importMode: mode });
 
     wx.chooseMessageFile({
       count: 1,
@@ -439,10 +320,15 @@ Page({
       extension: ['txt', 'json', 'docx'],
       success: (res) => {
         const file = res.tempFiles[0];
+        if (!file) {
+          wx.showToast({ title: '未选择文件', icon: 'none' });
+          return;
+        }
         this.readAndImport(file.path, file.name);
       },
       fail: (err) => {
-        console.log('选择文件失败或取消', err);
+        if (err && err.errMsg && err.errMsg.indexOf('cancel') >= 0) return;
+        wx.showToast({ title: '未选择文件', icon: 'none' });
       }
     });
   },
@@ -667,57 +553,18 @@ Page({
     }
   },
 
-  // ===== 清空数据 =====
-  // 每次进入设置页时刷新清空范围选项
-  _loadClearOptions() {
-    const total = this.data.totalCount || 0;
-    if (total === 0) {
-      this.setData({ clearOptions: [] });
-      return;
-    }
-
-    // 统计各阶段记录条数
-    const all = checkin.getAll();
-    const counts = {};
-    for (const day in all) {
-      for (const c of all[day]) {
-        const sid = c && c.stageId ? c.stageId : '';
-        counts[sid] = (counts[sid] || 0) + 1;
-      }
-    }
-
-    // picker 选项：全部数据 + 有数据的阶段（附加 count 供确认提示与空判断）
-    const options = routeData.stages
-      .filter(s => (counts[s.stage_id] || 0) > 0)
-      .map(s => ({
-        key: s.stage_id,
-        name: s.stage_name,
-        label: s.stage_name,
-        count: counts[s.stage_id] || 0
-      }));
-    options.unshift({
-      key: 'all',
-      name: '全部数据',
-      label: '全部数据',
-      count: total
-    });
-    this.setData({ clearOptions: options });
+  // 跳转清空范围选择页（原语 3：picker-page 整页单选）
+  goClearPicker() {
+    wx.navigateTo({ url: '/pages/clearPicker/clearPicker' });
   },
 
-  // picker 选择清空范围后二次确认
-  onClearScopeChange(e) {
-    const options = this.data.clearOptions || [];
-    const opt = options[e.detail.value];
+  // 从 clearPicker 返回后，二次确认并执行清空
+  startClear(opt) {
     if (!opt) return;
-
-    if (!opt.count) {
-      wx.showToast({ title: '该范围暂无数据', icon: 'none' });
-      return;
-    }
 
     wx.showModal({
       title: '确认清空',
-      content: `将删除「${opt.name}」共 ${opt.count} 条打卡记录，此操作不可恢复，是否继续？`,
+      content: `将清空「${opt.name}」的所有打卡记录，此操作不可恢复，是否继续？`,
       confirmText: '清空',
       cancelText: '取消',
       confirmColor: '#e74c3c',
