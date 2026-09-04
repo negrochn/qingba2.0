@@ -12,7 +12,7 @@
 }
 
 .st-group-title {
-  font-size: calc(24rpx * var(--fs, 1));
+  font-size: calc(29rpx * var(--fs, 1));
   color: var(--text3);
   line-height: 1.4;
   flex-shrink: 0;
@@ -22,7 +22,7 @@
   flex: 1;
   min-width: 0;
   margin-left: 16rpx;
-  font-size: calc(22rpx * var(--fs, 1));
+  font-size: calc(27rpx * var(--fs, 1));
   color: var(--text2);
   line-height: 1.5;
   text-align: right;
@@ -95,7 +95,7 @@
 .kp-text {
   flex: 1;
   min-width: 0;
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(32rpx * var(--fs, 1));
   line-height: 1.6;
   color: var(--text2);
 }
@@ -108,7 +108,7 @@
 .kp-tag {
   display: inline-flex;
   align-items: center;
-  font-size: calc(20rpx * var(--fs, 1));
+  font-size: calc(24rpx * var(--fs, 1));
   color: #ff7a45;
   background: #fff2e8;
   padding: 2rpx 12rpx;
@@ -149,10 +149,10 @@
 
 .res-hl-phase {
   color: #fff;
-  background: linear-gradient(135deg, #4a90d9 0%, #6ab0f3 100%);
+  background: linear-gradient(135deg, #00c25f 0%, #3fd98a 100%);
   padding: 2rpx 14rpx;
   border-radius: 10rpx;
-  font-size: calc(22rpx * var(--fs, 1));
+  font-size: calc(27rpx * var(--fs, 1));
   margin: 0 4rpx;
   display: inline-block;
   vertical-align: 2rpx;
@@ -263,21 +263,21 @@
 
 .rg-label {
   flex: 1;
-  font-size: calc(28rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);
 }
 
 .rg-tag {
-  font-size: calc(20rpx * var(--fs, 1));
+  font-size: calc(24rpx * var(--fs, 1));
   color: #fff;
-  background: linear-gradient(135deg, #4a90d9, #6ab0f3);
+  background: linear-gradient(135deg, #00c25f, #3fd98a);
   padding: 4rpx 14rpx;
   border-radius: 20rpx;
   margin-right: 12rpx;
 }
 
 .rg-count {
-  font-size: calc(22rpx * var(--fs, 1));
+  font-size: calc(27rpx * var(--fs, 1));
   color: var(--text3);
 }
 
@@ -285,7 +285,7 @@
 .rg-progress {
   display: flex;
   align-items: center;
-  font-size: calc(22rpx * var(--fs, 1));
+  font-size: calc(27rpx * var(--fs, 1));
   color: #3fae68;
   margin-right: 12rpx;
   background: #f0faf4;
@@ -316,11 +316,11 @@
 
 .lock-icon {
   margin-right: 12rpx;
-  font-size: calc(24rpx * var(--fs, 1));
+  font-size: calc(29rpx * var(--fs, 1));
 }
 
 .lock-text {
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(32rpx * var(--fs, 1));
   color: #8b6914;
   line-height: 1.5;
 }
@@ -332,7 +332,7 @@
 
 .r-sub-locked {
   color: var(--text3);
-  font-size: calc(24rpx * var(--fs, 1));
+  font-size: calc(29rpx * var(--fs, 1));
 }
 
 .rg-progress-val {
@@ -350,7 +350,7 @@
 
 /* 展开/折叠箭头 */
 .rg-arrow {
-  font-size: calc(32rpx * var(--fs, 1));
+  font-size: calc(39rpx * var(--fs, 1));
   color: var(--text3);
   font-weight: 300;
   transition: transform 0.2s;
@@ -373,7 +373,7 @@
 }
 
 .rg-collapsed-hint {
-  font-size: calc(24rpx * var(--fs, 1));
+  font-size: calc(29rpx * var(--fs, 1));
   color: var(--text3);
   text-align: center;
 }
@@ -424,7 +424,7 @@
   border-radius: 14rpx;
   background: rgba(7, 193, 96, 0.10);
   color: #07C160;
-  font-size: calc(24rpx * var(--fs, 1));
+  font-size: calc(29rpx * var(--fs, 1));
   font-weight: 600;
   margin-right: 18rpx;
   flex-shrink: 0;
@@ -433,7 +433,7 @@
 .r-no-char {
   background: linear-gradient(135deg, #5a9af0 0%, #7fb4f7 100%);
   color: #fff;
-  font-size: calc(28rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1));
 }
 
 .r-body {
@@ -443,14 +443,14 @@
 }
 
 .r-name {
-  font-size: calc(28rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);
   line-height: 1.4;
 }
 
 .r-sub {
   margin-top: 6rpx;
-  font-size: calc(22rpx * var(--fs, 1));
+  font-size: calc(27rpx * var(--fs, 1));
   color: #3fae68;
   line-height: 1.4;
 }
@@ -472,7 +472,7 @@
   color: #d48806;
   padding: 4rpx 12rpx;
   border-radius: 16rpx;
-  font-size: calc(20rpx * var(--fs, 1));
+  font-size: calc(24rpx * var(--fs, 1));
 }
 
 /* 读完按钮 */
@@ -482,7 +482,7 @@
   border: 1rpx solid #ffd1a8;
   padding: 4rpx 16rpx;
   border-radius: 16rpx;
-  font-size: calc(22rpx * var(--fs, 1));
+  font-size: calc(27rpx * var(--fs, 1));
   line-height: 1.4;
 }
 .r-read-btn:active {
@@ -494,30 +494,29 @@
   color: #fff;
   padding: 6rpx 16rpx;
   border-radius: 20rpx;
-  font-size: calc(22rpx * var(--fs, 1));
+  font-size: calc(27rpx * var(--fs, 1));
   margin-right: 8rpx;
 }
 
 .r-arrow {
-  color: #4a90d9;
-  font-size: 40rpx;
+  color: #00c25f;
+  font-size: 49rpx;
   line-height: 1;
   font-weight: 300;
 }
 
 .r-arrow-gray {
   color: var(--text3);
-  font-size: 48rpx;
+  font-size: 58rpx;
 }
 
 /* ====== 打卡弹窗（skill 原语组合）
    原语 4 .sheet-mask + .action-sheet
    原语 4 变体 .sheet-handle（顶部抓手条）
    原语 13/15 .form-card / .form-row / .form-label / .form-right / .form-field / .form-unit
-   原语 14 .seg-control + .seg-item（4 项等宽 variant：.seg-control-grid）
-   原语 10 变体 .badge-pill-brand（"读完" 绿 pill）
+     原语 14 .seg-control + .seg-item（5 项等宽 variant：.seg-control-grid）
    原语 1 .cell-divider / .cell-arrow
-   原语 16 .btn 按钮族（.btn-row 布局 + .btn-secondary 取消 + .btn-primary 打卡，胶囊变体） */
+   原语 16 .btn 按钮族（.btn-row 布局 + .btn-secondary 取消 + .btn-primary 打卡） */
 
 /* 原语 4 .sheet-mask + .action-sheet */
 .sheet-mask {
@@ -567,7 +566,7 @@
 .sheet-head-title {
   flex: 1;
   min-width: 0;
-  font-size: calc(32rpx * var(--fs, 1));
+  font-size: calc(39rpx * var(--fs, 1));
   font-weight: 600;
   color: var(--text);
   overflow: hidden;
@@ -581,7 +580,7 @@
   height: 56rpx;
   line-height: 50rpx;
   text-align: center;
-  font-size: 44rpx;
+  font-size: 53rpx;
   color: var(--text3);
   border-radius: 50%;
 }
@@ -611,7 +610,7 @@
 }
 .form-label {
   flex-shrink: 0;
-  font-size: calc(28rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);
   width: 140rpx;                            /* 固定宽，保证 label 右沿对齐 */
 }
@@ -625,13 +624,13 @@
 .form-field {
   flex: 1;
   text-align: right;                        /* 与 settings 页 .cell-value 一致 */
-  font-size: calc(34rpx * var(--fs, 1));
+  font-size: calc(41rpx * var(--fs, 1));
   color: var(--text);
   height: 64rpx;
 }
 .form-unit {
   flex-shrink: 0;
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(32rpx * var(--fs, 1));
   color: var(--text3);
   margin-left: 8rpx;
 }
@@ -643,10 +642,11 @@
   margin: 0;
 }
 
-/* 原语 14 .seg-control + .seg-item（4 项等宽 variant：.seg-control-grid） */
+/* 原语 14 .seg-control + .seg-item（5 项等宽 variant：.seg-control-grid） */
 .seg-control {
   display: flex;
   align-items: center;
+  flex: 1;                      /* 在 form-row(flex) 内占满宽度，子项 flex:1 才能等宽撑开 */
 }
 .seg-control-grid .seg-item {
   flex: 1;
@@ -662,7 +662,7 @@
   border: 1rpx solid var(--divider);
   border-radius: 8rpx;                      /* radius-seg */
   background: var(--card);
-  font-size: calc(28rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);
   box-sizing: border-box;
 }
@@ -673,74 +673,24 @@
   background: var(--cell-active);
 }
 .seg-active {
-  border-color: var(--brand);               /* #07C160，原语 14 约定 */
+  border-color: var(--brand);               /* 项目主色绿 #00c25f，原语 14 约定 */
   color: var(--brand);
   background: var(--card);
 }
 
-/* 原语 10 变体：.badge-pill-brand（绿底 pill，用于"读完" 标签） */
-.badge-pill-brand {
-  display: inline-flex;
-  align-items: center;
-  height: 36rpx;
-  padding: 0 16rpx;
-  background: var(--brand);                 /* #07C160，brand 绿（不参与主题切换） */
-  color: var(--badge-on);                   /* #FFFFFF */
-  border-radius: 16rpx;
-  font-size: calc(22rpx * var(--fs, 1));
-  font-weight: 500;
-  flex-shrink: 0;
-}
-
 /* 原语 1 .cell-arrow（已读完行的 chevron） */
 .form-row .cell-arrow {
-  font-size: calc(34rpx * var(--fs, 1));
+  font-size: calc(41rpx * var(--fs, 1));
   color: var(--text3);
   line-height: 1;
   margin-left: 12rpx;
   flex-shrink: 0;
 }
 
-/* 操作按钮行（skill 原语 16 .btn-row：居中 + gap 24rpx） */
-.btn-row {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 24rpx;                  /* btn-gap */
-  margin-top: 16rpx;
-}
-
-/* 标准按钮族（skill 原语 16，仅限打卡弹窗作用域 .action-sheet） */
-.action-sheet .btn {
-  flex: 1;                     /* 两按钮等宽 */
-  height: 88rpx;               /* btn-h = 44pt iOS */
-  border-radius: 44rpx;        /* 保留胶囊风格（上次明确要胶囊） */
-  font-size: calc(30rpx * var(--fs, 1));
-  font-weight: 500;
-  border: none;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  box-sizing: border-box;
-  color: #fff;
-}
-.action-sheet .btn::after { border: none; }    /* 清除小程序 button 默认边框 */
-.action-sheet .btn:active { opacity: 0.88; }   /* 按下态反馈（含 primary） */
-
-.action-sheet .btn-secondary {
-  background: var(--cell-active);
-  color: var(--text);          /* 黑字（更微信原生，原灰字 text2 改为黑） */
-}
-.action-sheet .btn-secondary:active {
-  background: var(--divider);
-}
-.action-sheet .btn-primary {
-  /* 项目主色 #4a90d9（var(--brand)），与 seg-active 选中态一致；去渐变改实心 */
-  background: var(--brand);
-  color: #fff;
-}
+/* 标准按钮族：复用 skill 原语 16 全局 .btn（见 app.wxss）
+   打卡弹窗按钮（iOS 矩形圆角，非胶囊）+ 两按钮等宽 */
+.action-sheet .btn { flex: 1; }                 /* 两按钮等宽 */
+.action-sheet .btn-row { margin-top: 16rpx; }   /* 与上方表单留白 */
 
 /* ====== 晋级卡片（微信原生 progress 组件） ====== */
 .promote-card {
@@ -751,7 +701,7 @@
 }
 
 .promote-title {
-  font-size: calc(28rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);
   margin-bottom: 16rpx;
 }
@@ -768,7 +718,7 @@
 
 .promote-percent {
   margin-left: 16rpx;
-  font-size: calc(24rpx * var(--fs, 1));
+  font-size: calc(29rpx * var(--fs, 1));
   color: var(--text2);
   width: 88rpx;
   text-align: right;
@@ -777,7 +727,7 @@
 
 .promote-meta {
   margin-top: 12rpx;
-  font-size: calc(22rpx * var(--fs, 1));
+  font-size: calc(27rpx * var(--fs, 1));
   color: var(--text3);
   margin-bottom: 24rpx;
 }
@@ -787,13 +737,13 @@
   line-height: 88rpx;
   text-align: center;
   border-radius: 44rpx;
-  font-size: calc(30rpx * var(--fs, 1));
+  font-size: calc(36rpx * var(--fs, 1));
   margin: 0;
 }
 
 .promote-btn-active {
   color: #fff;
-  background: linear-gradient(135deg, #4a90d9 0%, #6ab0f3 100%);
+  background: linear-gradient(135deg, #00c25f 0%, #3fd98a 100%);
 }
 
 .promote-btn-active:active {
@@ -857,7 +807,7 @@
 
 .pm-title {
   flex: 1;
-  font-size: calc(32rpx * var(--fs, 1));
+  font-size: calc(39rpx * var(--fs, 1));
   color: #1f4a84;
 }
 
@@ -866,7 +816,7 @@
   height: 56rpx;
   line-height: 50rpx;
   text-align: center;
-  font-size: 44rpx;
+  font-size: 53rpx;
   color: var(--text3);
   border-radius: 50%;
 }
@@ -884,13 +834,13 @@
 }
 
 .pm-stage-name {
-  font-size: calc(30rpx * var(--fs, 1));
+  font-size: calc(36rpx * var(--fs, 1));
   color: var(--text);
   margin-bottom: 8rpx;
 }
 
 .pm-stage-tip {
-  font-size: calc(24rpx * var(--fs, 1));
+  font-size: calc(29rpx * var(--fs, 1));
   color: var(--text3);
   line-height: 1.5;
 }
@@ -920,7 +870,7 @@
 
 .pm-form-label {
   flex-shrink: 0;
-  font-size: calc(28rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);
   width: 160rpx;
 }
@@ -928,8 +878,8 @@
 .pm-form-value {
   flex: 1;
   text-align: right;
-  font-size: calc(28rpx * var(--fs, 1));
-  color: #4a90d9;
+  font-size: calc(34rpx * var(--fs, 1));
+  color: #00c25f;
 }
 
 .pm-form-control {
@@ -943,7 +893,7 @@
 .pm-num-input {
   flex: 1;
   text-align: right;
-  font-size: calc(34rpx * var(--fs, 1));
+  font-size: calc(41rpx * var(--fs, 1));
   color: var(--text);
   height: 64rpx;
   padding: 0 16rpx;
@@ -951,7 +901,7 @@
 
 .pm-form-unit {
   flex-shrink: 0;
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(32rpx * var(--fs, 1));
   color: var(--text3);
 }
 
@@ -967,8 +917,8 @@
   padding: 0 28rpx;
   text-align: center;
   background: var(--cell-active);
-  color: #4a90d9;
-  font-size: calc(26rpx * var(--fs, 1));
+  color: #00c25f;
+  font-size: calc(32rpx * var(--fs, 1));
   border-radius: 12rpx;
 }
 
@@ -987,7 +937,7 @@
   height: 88rpx;
   line-height: 88rpx;
   border-radius: 44rpx;
-  font-size: calc(30rpx * var(--fs, 1));
+  font-size: calc(36rpx * var(--fs, 1));
   border: none;
   text-align: center;
   display: flex !important;
@@ -1011,7 +961,7 @@
 }
 
 .pm-btn-ok {
-  background: linear-gradient(135deg, #4a90d9 0%, #6ab0f3 100%);
+  background: linear-gradient(135deg, #00c25f 0%, #3fd98a 100%);
   color: #fff;
 }
 
@@ -1142,3 +1092,6 @@
   .dm-auto .pm-form-value { color: #8ab4ff; }
   .dm-auto .pm-quick-btn { color: #8ab4ff; }
 }
+
+/* 详情页字体基准：常规路径 34rpx 起算（覆盖全局 28rpx 基准；子节点 calc(Nrpx*var(--fs)) 已同步按 34/28 放大） */
+.sheet-mask { font-size: calc(34rpx * var(--fs, 1)); }

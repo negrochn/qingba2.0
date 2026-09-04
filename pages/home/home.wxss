@@ -34,7 +34,7 @@ page {
 
 /* ===== 阶段 Hero 卡 ===== */
 .hero-card {
-  background: linear-gradient(135deg, #4a90d9 0%, #6ab0f3 100%);
+  background: linear-gradient(135deg, #00c25f 0%, #3fd98a 100%);
   border-radius: 16rpx;
   padding: 32rpx;
   color: #fff;
@@ -141,7 +141,7 @@ page {
 }
 
 .today-btn {
-  background: #4a90d9;
+  background: #00c25f;
   color: #fff;
   font-size: calc(26rpx * var(--fs, 1));
   padding: 12rpx 32rpx;
@@ -270,7 +270,7 @@ page {
 
 .group-fill {
   height: 100%;
-  background: #4a90d9;
+  background: #00c25f;
   border-radius: 7rpx;
 }
 
@@ -349,7 +349,7 @@ page {
   width: 52rpx;
   height: 52rpx;
   border-radius: 12rpx;
-  background: #4a90d9;
+  background: #00c25f;
   color: #fff;
   font-size: calc(26rpx * var(--fs, 1));
   display: flex;
@@ -525,7 +525,7 @@ page {
   line-height: 88rpx;
   border-radius: 44rpx;
   font-size: calc(32rpx * var(--fs, 1));
-  background: #4a90d9;
+  background: #00c25f;
   color: #fff;
   border: none;
   padding: 0;

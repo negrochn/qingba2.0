@@ -10,7 +10,8 @@ page {
   --text2: #737373;
   --text3: #b2b2b2;
   --divider: #ebedf0;
-  --brand: #4a90d9;
+  --brand: #00c25f;
+  --danger: #FF3B30;               /* iOS systemRed light */
   --cell-active: #f5f5f5;
   background-color: var(--bg);
   color: var(--text);
@@ -32,7 +33,8 @@ view, text {
   --text2: #737373;
   --text3: #b2b2b2;
   --divider: #ebedf0;
-  --brand: #4a90d9;
+  --brand: #00c25f;
+  --danger: #FF3B30;               /* iOS systemRed light */
   --cell-active: #f5f5f5;
 }
 
@@ -45,7 +47,8 @@ view, text {
   --text2: rgba(255, 255, 255, 0.62);
   --text3: rgba(255, 255, 255, 0.42);
   --divider: rgba(255, 255, 255, 0.1);
-  --brand: #5aa0e9;
+  --brand: #33d17a;
+  --danger: #FF453A;               /* iOS systemRed dark */
   --cell-active: #2c2c2e;
 }
 
@@ -63,7 +66,8 @@ view, text {
     --text2: rgba(255, 255, 255, 0.62);
     --text3: rgba(255, 255, 255, 0.42);
     --divider: rgba(255, 255, 255, 0.1);
-    --brand: #5aa0e9;
+    --brand: #33d17a;
+    --danger: #FF453A;               /* iOS systemRed dark */
     --cell-active: #2c2c2e;
   }
 }
@@ -118,7 +122,7 @@ view, text {
   display: inline-block;
   width: 6rpx;
   height: 28rpx;
-  background: #4a90d9;
+  background: #00c25f;
   border-radius: 3rpx;
   margin-right: 12rpx;
 }
@@ -127,7 +131,7 @@ view, text {
   display: inline-block;
   padding: 6rpx 16rpx;
   background: #eef4fb;
-  color: #4a90d9;
+  color: #00c25f;
   border-radius: 8rpx;
   font-size: calc(24rpx * var(--fs, 1));
   margin: 6rpx 6rpx 6rpx 0;
@@ -167,4 +171,185 @@ view, text {
   .dm-auto .ci-mask-show,
   .dm-auto .pm-mask-show,
   .dm-auto .mp-mask.show { background: rgba(0, 0, 0, 0.5); }
+}
+
+/* ===== 原语 16：.btn 按钮族（全局；规范见 skill ui-design-spec/references/components.md） =====
+   来源：微信「转账说明 / 评论 / 确认弹窗」浅灰次按钮 + 品牌主按钮并排；iOS 矩形圆角 8rpx，高 88rpx。
+   项目内 var(--brand) = #00c25f（品牌绿，区别于微信原生绿 #07C160；见原语 16 约定第 7 条）。 */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 88rpx;                /* btn-h = cell-h = 44pt iOS */
+  padding: 0 32rpx;             /* btn-pad-x */
+  font-size: calc(32rpx * var(--fs, 1));   /* btn-fs */
+  font-weight: 500;
+  border: none;
+  border-radius: 8rpx;          /* radius-btn，iOS 4pt（微信原生矩形） */
+  line-height: 1;
+  box-sizing: border-box;
+  text-align: center;
+  background: var(--cell-active);
+  color: var(--text);
+}
+.btn::after { border: none; }   /* 清除小程序 button 默认边框 */
+.btn:active { opacity: 0.85; }  /* 按下态：所有变体统一 */
+
+/* 变体 */
+.btn-primary {
+  background: var(--brand);
+  color: #fff;
+}
+.btn-secondary {
+  background: var(--cell-active);
+  color: var(--text);
+}
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+.btn-disabled {
+  background: #C7C7CC;
+  color: #fff;
+  pointer-events: none;       /* 禁用态不响应点击 */
+}
+.dm-dark .btn-disabled {
+  background: #3A3A3C;
+}
+.btn-disabled:active { opacity: 1; }  /* 禁用态无按下反馈 */
+
+/* 修饰 */
+.btn-block {
+  width: 100%;
+  padding: 0;                /* 全宽时取消左右内边距 */
+}
+
+/* 布局容器 */
+.btn-row {
+  display: flex;
+  justify-content: center;   /* 居中 + gap 实现，不靠两端对齐 */
+  align-items: center;
+  gap: 24rpx;                /* btn-gap */
+  padding: 16rpx 32rpx;
+  box-sizing: border-box;
+}
+.btn-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24rpx;
+  padding: 16rpx 32rpx calc(env(safe-area-inset-bottom) + 32rpx);
+  background: var(--card);   /* 与整页背景形成层次 */
+  box-sizing: border-box;
+}
+
+/* ===== 原语 1：.cell 列表项家族（全局；规范见 skill ui-design-spec）
+   来源：微信分组列表（设置 / 我的）+ picker-page 单选列表。跨 settings / mine /
+   stagePicker / importPicker / fontPicker / clearPicker / darkMode 七页统一后合入本文件，
+   各页不再重复定义。行高 cell-h = 88rpx（44pt iOS 点击热区），左右内边距 32rpx 对称。 */
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 88rpx;                /* cell-h 88rpx（点击热区） */
+  padding: 24rpx 32rpx;             /* cell-pad-x：左右 32rpx 对称 */
+  box-sizing: border-box;
+}
+.cell:active { background: var(--cell-active); }
+
+/* 主标题：直接作为 .cell 子元素时占满左侧，把右侧元素推到最右 */
+.cell-label {
+  font-size: calc(34rpx * var(--fs, 1));   /* 原语：row 主文 34rpx */
+  color: var(--text);
+  line-height: 1.4;
+}
+.cell > .cell-label {
+  flex: 1;
+  min-width: 0;
+  margin-right: 24rpx;
+}
+
+/* 含说明文字的行：info 占满左侧（竖向堆叠 label + desc），右侧元素贴右 */
+.cell-info {
+  flex: 1;
+  min-width: 0;
+  margin-right: 16rpx;
+  display: flex;
+  flex-direction: column;
+}
+.cell-desc {
+  font-size: calc(26rpx * var(--fs, 1));   /* 原语：desc 26rpx */
+  color: var(--text3);
+  line-height: 1.4;
+  margin-top: 4rpx;
+}
+
+/* 右侧内容容器 / 值 / 占位 / 箭头 */
+.cell-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  max-width: 60%;
+}
+.cell-value {
+  font-size: calc(34rpx * var(--fs, 1));   /* 原语：value 34rpx */
+  color: var(--text2);
+}
+.cell-value.placeholder {
+  color: var(--text2);
+  opacity: 0.6;
+}
+.cell-arrow {                              /* spec 对应 .cell-chevron */
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1;
+  margin-left: 12rpx;
+}
+
+/* 行首图标（mine 页 emoji 图标列） */
+.cell-icon {
+  width: 44rpx;
+  height: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* 危险操作语义色（spec #FF3B30） */
+.cell-danger .cell-label { color: #FF3B30; }
+
+/* 单选行标记（继承 .cell 基类，选中态由 .cell-check 呈现） */
+.cell-radio { /* 继承 .cell 基类 */ }
+
+/* 单选对勾（iOS systemGreen success；深色 #30D158） */
+.cell-check {
+  font-size: calc(34rpx * var(--fs, 1));
+  color: #34C759;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.dm-dark .cell-check { color: #30D158; }
+@media (prefers-color-scheme: dark) {
+  .dm-auto .cell-check { color: #30D158; }
+}
+
+/* 空状态（clearPicker） */
+.cell-empty {
+  padding: 48rpx 32rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
+  text-align: center;
+}
+
+/* 行间分隔线（左缩进 32rpx = cell-pad-x；mine 因图标列覆盖为 100rpx） */
+.cell-divider {
+  height: 1rpx;
+  background: var(--divider);
+  margin-left: 32rpx;
 }

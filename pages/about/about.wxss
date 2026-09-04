@@ -19,7 +19,7 @@ page {
   font-size: 36rpx;
   font-weight: 600;
   color: #fff;
-  background: linear-gradient(135deg, #4a90d9 0%, #6ab0f3 100%);
+  background: linear-gradient(135deg, #00c25f 0%, #3fd98a 100%);
   padding: 14rpx 44rpx;
   border-radius: 12rpx;
   letter-spacing: 4rpx;

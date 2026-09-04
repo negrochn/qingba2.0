@@ -27,49 +27,6 @@ page {
   overflow: hidden;
 }
 
-/* ===== 行（.cell 基类） ===== */
-.cell {
-  display: flex;
-  align-items: center;
-  justify-content: space-between; /* picker-page: 让 .cell-check 贴右 */
-  min-height: 88rpx;
-  padding: 24rpx 32rpx; /* cell-pad-x：左右 32rpx 对称 */
-  box-sizing: border-box;
-}
-
-.cell:active {
-  background: var(--cell-active);
-}
-
-/* ===== 跟随系统 toggle 行 ===== */
-.cell-info {
-  flex: 1;
-  min-width: 0;
-  margin-right: 16rpx;
-  display: flex;
-  flex-direction: column;
-}
-
-.cell-label {
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text);
-  line-height: 1.4;
-}
-
-/* picker-page radio：直接子 cell-label 需 flex:1 把 check 推到右
-   跟随系统行的 label 在 .cell-info（自带 flex:1）内，不在此规则命中，避免 column flex 撑高 */
-.cell.cell-radio > .cell-label {
-  flex: 1;
-  min-width: 0;
-  margin-right: 24rpx;
-}
-
-.cell-desc {
-  font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text3);
-  line-height: 1.4;
-}
-
 /* ===== 自定义 toggle（iOS 胶囊开关，深浅模式样式一致） ===== */
 .switch {
   position: relative;
@@ -101,21 +58,3 @@ page {
   left: 48rpx;
 }
 
-/* ===== 手动选择（原语 3 picker-page 单选行） ===== */
-.cell-radio {
-  /* 继承 .cell 基类 */
-}
-
-.cell-check {
-  font-size: calc(34rpx * var(--fs, 1));
-  color: #07c160;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-/* 分隔线：左缩进 32rpx */
-.cell-divider {
-  height: 1rpx;
-  background: var(--divider);
-  margin-left: 32rpx;
-}

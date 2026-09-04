@@ -103,7 +103,7 @@
           class="promote-bar"
           percent="{{progressPercent}}"
           stroke-width="6"
-          activeColor="{{timeMet ? '#52c41a' : '#4a90d9'}}"
+          activeColor="{{timeMet ? '#52c41a' : '#00c25f'}}"
           backgroundColor="{{isDark ? '#3a3a3a' : '#ececec'}}"
           borderRadius="6"
         />
@@ -170,7 +170,7 @@
   </view>
 </view>
 
-<!-- 打卡弹窗（skill 原语组合：原语 4 action-sheet + 原语 13/15 form-page/form-input + 原语 14 seg-control + 原语 10 badge-pill 变体） -->
+<!-- 打卡弹窗（skill 原语组合：原语 4 action-sheet + 原语 13/15 form-page/form-input + 原语 14 seg-control） -->
 <view class="sheet-mask {{fontClass}} {{darkClass}} {{showCheckin ? 'sheet-mask-show' : ''}}" bindtap="closeCheckin" catchtouchmove="noop">
   <view class="action-sheet" catchtap="noop" catchtouchmove="noop">
     <view class="sheet-handle"></view>
@@ -201,6 +201,7 @@
           <view class="seg-item {{durationInput==='10' ? 'seg-active' : ''}}" data-val="10" bindtap="quickDuration">10</view>
           <view class="seg-item {{durationInput==='15' ? 'seg-active' : ''}}" data-val="15" bindtap="quickDuration">15</view>
           <view class="seg-item {{durationInput==='20' ? 'seg-active' : ''}}" data-val="20" bindtap="quickDuration">20</view>
+          <view class="seg-item {{durationInput==='25' ? 'seg-active' : ''}}" data-val="25" bindtap="quickDuration">25</view>
           <view class="seg-item {{durationInput==='30' ? 'seg-active' : ''}}" data-val="30" bindtap="quickDuration">30</view>
         </view>
       </view>
@@ -223,7 +224,6 @@
         <view class="form-label">已读完</view>
         <view class="form-right">
           <text class="form-read-count">{{currentReadCount}} 次</text>
-          <view class="badge-pill-brand">读完</view>
           <text class="cell-arrow">›</text>
         </view>
       </view>

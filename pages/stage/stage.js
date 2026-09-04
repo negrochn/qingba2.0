@@ -251,7 +251,7 @@ Page({
           : `${stage.stage_name} 时间投入已达标，确认晋级到下一阶段？`,
         confirmText: isLast ? '完成' : '晋级',
         cancelText: '取消',
-        confirmColor: '#4a90d9',
+        confirmColor: '#00c25f',
         success: (res) => {
           if (res.confirm) {
             this.doPromote()
@@ -303,7 +303,7 @@ Page({
         content: `${stage.stage_name} 晋级要求稳定达到 ${this.data.promoteTargetPhaseText}，当前测试结果 phase${testPhase} 未达标，建议继续积累后再晋级。`,
         showCancel: false,
         confirmText: '知道了',
-        confirmColor: '#4a90d9'
+        confirmColor: '#00c25f'
       })
       return
     }
