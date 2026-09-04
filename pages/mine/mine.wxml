@@ -1,18 +1,27 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- 功能 -->
+  <!-- 关于 -->
   <view class="group">
+    <view class="group-title">关于</view>
     <view class="group-card">
       <view class="cell" bindtap="goAbout">
         <view class="cell-label">关于庆爸2.0</view>
         <text class="cell-arrow">›</text>
       </view>
-      <view class="cell-divider"></view>
+    </view>
+  </view>
+
+  <!-- 功能 -->
+  <view class="group">
+    <view class="group-title">功能</view>
+    <view class="group-card">
       <view class="cell" bindtap="goRecords">
         <view class="cell-label">打卡记录</view>
         <text class="cell-arrow">›</text>
       </view>
+
       <view class="cell-divider"></view>
+
       <view class="cell" bindtap="goStats">
         <view class="cell-label">数据统计</view>
         <text class="cell-arrow">›</text>
@@ -22,6 +31,7 @@
 
   <!-- 设置 -->
   <view class="group">
+    <view class="group-title">设置</view>
     <view class="group-card">
       <view class="cell" bindtap="goSettings">
         <view class="cell-label">设置</view>

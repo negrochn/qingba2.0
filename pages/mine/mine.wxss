@@ -1,4 +1,7 @@
-/* 我的页卡 - 微信小程序原生分组列表风格（与设置页一致） */
+/* 我的页卡 - 微信风格分组列表（与设置页 settings 采用同一套原语，布局保持一致）
+   组件原语：原语 1 .group（全宽分组 section + 标题带）+ .cell 基类三变体
+   主题：复用全局 --bg/--card/--text/--text2/--text3/--divider/--cell-active（同名 token）
+   缩放：保留 --fs 机制（calc(Nrpx * var(--fs,1))），字号随系统档位缩放 */
 
 page {
   background: var(--bg);
@@ -8,27 +11,40 @@ page {
   padding: 16rpx 0 calc(env(safe-area-inset-bottom) + 40rpx);
 }
 
-/* ===== 分组 ===== */
+/* ===== 分组（原语 1 .group） ===== */
 .group {
-  margin-bottom: 24rpx;
+  margin-bottom: 24rpx; /* group-gap 24rpx */
+}
+
+.group-title {
+  padding: 16rpx 32rpx; /* group-title-pad：spec 16rpx 32rpx */
+  font-size: calc(26rpx * var(--fs, 1)); /* group-title 26rpx */
+  color: var(--text3);
+  line-height: 1.4;
 }
 
 .group-card {
   background: var(--card);
-  margin: 0 24rpx;
-  border-radius: 16rpx;
+  margin: 0; /* 全宽平铺，无侧边距（微信分组 section 无 margin / 无圆角） */
+  border-radius: 0; /* 无圆角 */
   overflow: hidden;
 }
 
-/* ===== 列表项 ===== */
+/* ===== 列表项（.cell 基类 + 三变体） ===== */
 .cell {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 28rpx 32rpx;
+  min-height: 88rpx; /* cell-h 88rpx（点击热区） */
+  padding: 24rpx 32rpx; /* cell-pad-x：左右 32rpx 对称 */
   box-sizing: border-box;
 }
 
+.cell-picker {
+  display: block;
+}
+
+.cell-picker .cell:active,
 .cell:active {
   background: var(--cell-active);
 }
@@ -37,18 +53,60 @@ page {
   flex: 1;
   min-width: 0;
   margin-right: 24rpx;
-  font-size: calc(30rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1)); /* 原语：row 主文 34rpx */
   color: var(--text);
 }
 
-.cell-arrow {
-  font-size: calc(36rpx * var(--fs, 1));
+.cell-info {
+  flex: 1;
+  min-width: 0;
+  margin-right: 16rpx;
+}
+
+.cell-desc {
+  font-size: calc(28rpx * var(--fs, 1)); /* 原语：desc 28rpx */
+  color: var(--text3);
+}
+
+.cell-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  max-width: 60%;
+}
+
+.cell-value {
+  font-size: calc(34rpx * var(--fs, 1)); /* 原语：value 34rpx，字色 text-2（#737373） */
+  color: var(--text2);
+}
+
+.cell-value.placeholder {
+  color: var(--text2);
+  opacity: 0.6;
+}
+
+.cell-desc-right {
+  font-size: calc(28rpx * var(--fs, 1)); /* 原语：desc 28rpx */
+  color: var(--text3);
+}
+
+.cell-arrow { /* spec 对应 .cell-chevron */
+  font-size: calc(34rpx * var(--fs, 1)); /* chevron ~34rpx */
   color: var(--text3);
   line-height: 1;
   margin-left: 12rpx;
 }
 
-/* 分隔线：左侧留白（微信原生 inset） */
+/* 危险操作（原语：danger 语义色 = #FF3B30，spec） */
+.cell-danger .cell-label {
+  color: #FF3B30;
+}
+
+.cell-danger .cell-desc-right {
+  color: rgba(255, 59, 48, 0.6);
+}
+
+/* 分隔线：左缩进 32rpx（cell-pad-x），spec divider-row */
 .cell-divider {
   height: 1rpx;
   background: var(--divider);
