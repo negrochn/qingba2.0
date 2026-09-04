@@ -18,6 +18,7 @@
 - 设置入口文案与样式统一：「生成测试数据」更名为「压力测试」（右侧说明改用通用 `.cell-value` 样式）；「版本号」更名为「关于小程序」（右侧值显示「版本 X.X.X」）
 - 新增独立选择页 `importPicker`（导入方式）、`clearPicker`（清空范围），与既有 `stagePicker` / `fontPicker` / `darkMode` 风格一致
 - **我的页卡（mine）布局对齐设置页**：采用与设置页同一套微信风格分组列表原语（全宽平铺无圆角 `.group-card` + `.cell`），并修复此前深色模式不跟随（仅挂 `fontClass` 未挂 `darkClass`）；cell 为「左侧图标 + 标题 + 右 chevron」结构，已去掉 group-title 与头像资料卡
+- **打卡弹窗（stage）按 skill 重构**：从私有 `.ci-*` 类切换为原语 4 `.sheet-mask`/`.action-sheet`、原语 13/15 `.form-card`/`.form-row`/`.form-field`、原语 14 `.seg-control`/`.seg-item`（10/15/20/30 快捷时长，选中态走 `brand #07C160`）、原语 10 变体 `.badge-pill-brand`（"读完" 绿 pill）、新增 `.btn-pill` 胶囊按钮（取消 / 打卡）；移除 `.dm-dark`/`.dm-auto` 中已废弃的 `.ci-*` 选择器；新增 skill 原语 `.badge-pill-brand`（品牌完成态 pill）
 
 ### 修复
 

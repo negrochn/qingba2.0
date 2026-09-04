@@ -510,8 +510,17 @@
   font-size: 48rpx;
 }
 
-/* ====== 底部打卡弹窗 ====== */
-.ci-mask {
+/* ====== 打卡弹窗（skill 原语组合）
+   原语 4 .sheet-mask + .action-sheet
+   原语 4 变体 .sheet-handle（顶部抓手条）
+   原语 13/15 .form-card / .form-row / .form-label / .form-right / .form-field / .form-unit
+   原语 14 .seg-control + .seg-item（4 项等宽 variant：.seg-control-grid）
+   原语 10 变体 .badge-pill-brand（"读完" 绿 pill）
+   原语 1 .cell-divider / .cell-arrow
+   新增 .btn-pill（sheet 底部并排胶囊按钮） */
+
+/* 原语 4 .sheet-mask + .action-sheet */
+.sheet-mask {
   position: fixed;
   left: 0; right: 0; top: 0; bottom: 0;
   background: rgba(0,0,0,0);
@@ -521,28 +530,26 @@
   display: flex;
   align-items: flex-end;
 }
-
-.ci-mask-show {
+.sheet-mask-show {
   background: rgba(0,0,0,0.45);
   pointer-events: auto;
 }
-
-.ci-sheet {
+.action-sheet {
   width: 100%;
   background: var(--card);
-  border-top-left-radius: 24rpx;
+  border-top-left-radius: 24rpx;            /* radius-sheet */
   border-top-right-radius: 24rpx;
   padding: 16rpx 32rpx calc(env(safe-area-inset-bottom) + 32rpx);
   box-sizing: border-box;
   transform: translateY(100%);
   transition: transform 0.25s ease;
 }
-
-.ci-mask-show .ci-sheet {
+.sheet-mask-show .action-sheet {
   transform: translateY(0);
 }
 
-.ci-handle {
+/* 原语 4 变体：顶部抓手条（iOS 风格，可选） */
+.sheet-handle {
   width: 72rpx;
   height: 8rpx;
   background: var(--divider);
@@ -550,35 +557,25 @@
   margin: 8rpx auto 24rpx;
 }
 
-.ci-head {
+/* sheet 头部（标题 + 关闭） */
+.sheet-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 28rpx;
 }
-
-.ci-title {
+.sheet-head-title {
   flex: 1;
   min-width: 0;
   font-size: calc(32rpx * var(--fs, 1));
-  color: #1f4a84;
+  font-weight: 600;
+  color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   padding-right: 12rpx;
 }
-
-.ci-sort {
-  flex-shrink: 0;
-  font-size: calc(22rpx * var(--fs, 1));
-  color: #4a90d9;
-  background: #eef5ff;
-  padding: 6rpx 16rpx;
-  border-radius: 20rpx;
-  margin-right: 10rpx;
-}
-
-.ci-close {
+.sheet-close {
   flex-shrink: 0;
   width: 56rpx;
   height: 56rpx;
@@ -588,143 +585,132 @@
   color: var(--text3);
   border-radius: 50%;
 }
+.sheet-close:active {
+  background: var(--cell-active);
+  color: var(--text2);
+}
 
-.ci-close:active { background: var(--cell-active); color: var(--text2); }
-
-/* Form container - WeChat style card */
-.ci-form {
+/* 原语 13 .form-card（表单卡片：圆角白底，水平 padding 由 card 提供） */
+.form-card {
   background: var(--card);
   border-radius: 16rpx;
-  padding: 0 24rpx;
+  padding: 0 32rpx;                         /* form-row-pad-x（与 cell-pad-x 一致） */
   margin-bottom: 20rpx;
 }
 
-.ci-form-item {
+/* 原语 15 .form-row / .form-label / .form-right / .form-field / .form-unit */
+.form-row {
   display: flex;
   align-items: center;
-  min-height: 88rpx;
+  min-height: 88rpx;                        /* form-row-h = cell-h */
   padding: 16rpx 0;
-  border-bottom: 1rpx solid var(--divider);
+  box-sizing: border-box;
 }
-
-.ci-form-item:last-child {
-  border-bottom: none;
+.form-row:active {
+  background: var(--cell-active);
 }
-
-.ci-form-label {
+.form-label {
   flex-shrink: 0;
   font-size: calc(28rpx * var(--fs, 1));
   color: var(--text);
-  width: 140rpx;
+  width: 140rpx;                            /* 固定宽，保证 label 右沿对齐 */
 }
-
-.ci-form-control {
+.form-right {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 12rpx;
 }
-
-.ci-num-input {
+.form-field {
   flex: 1;
-  text-align: right;
+  text-align: right;                        /* 与 settings 页 .cell-value 一致 */
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);
   height: 64rpx;
-  padding: 0 16rpx;
 }
-
-.ci-form-unit {
+.form-unit {
   flex-shrink: 0;
   font-size: calc(26rpx * var(--fs, 1));
   color: var(--text3);
   margin-left: 8rpx;
 }
 
-.ci-text-input {
-  flex: 1;
-  font-size: calc(28rpx * var(--fs, 1));
-  color: var(--text);
-  height: 64rpx;
-  text-align: right;
+/* 原语 1 .cell-divider（行间分隔线，由 .form-card 限定全宽） */
+.form-card .cell-divider {
+  height: 1rpx;
+  background: var(--divider);
+  margin: 0;
 }
 
-.ci-text-input::placeholder {
-  color: var(--text3);
-}
-
-/* Quick buttons row */
-.ci-quick-row {
+/* 原语 14 .seg-control + .seg-item（4 项等宽 variant：.seg-control-grid） */
+.seg-control {
   display: flex;
-  gap: 12rpx;
-  padding: 16rpx 0 20rpx;
+  align-items: center;
 }
-
-.ci-quick-btn {
+.seg-control-grid .seg-item {
   flex: 1;
-  height: 64rpx;
-  line-height: 64rpx;
   text-align: center;
-  background: var(--card);
-  color: var(--text);
-  font-size: calc(26rpx * var(--fs, 1));
-  border-radius: 12rpx;
+}
+.seg-item {
+  height: 56rpx;                            /* seg-item-h */
+  padding: 0 32rpx;                         /* seg-item-pad-x */
+  margin-left: 16rpx;                       /* seg-gap，除首个外 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: 1rpx solid var(--divider);
-}
-
-.ci-quick-btn:active {
-  background: #e8f4ff;
-  border-color: #4a90d9;
-  color: #4a90d9;
-}
-
-.dm-dark .ci-quick-btn {
-  background: var(--card2);
-  border-color: rgba(255, 255, 255, 0.12);
-  color: var(--text2);
-}
-
-.dm-dark .ci-quick-btn:active {
-  background: rgba(138, 180, 255, 0.2);
-  border-color: #5aa0e9;
-  color: #8ab4ff;
-}
-
-.ci-read-count {
+  border-radius: 8rpx;                      /* radius-seg */
+  background: var(--card);
   font-size: calc(28rpx * var(--fs, 1));
   color: var(--text);
+  box-sizing: border-box;
 }
-
-.ci-read-tag {
-  font-size: calc(26rpx * var(--fs, 1));
-  color: #fff;
-  background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
-  padding: 6rpx 18rpx;
-  border-radius: 24rpx;
-  margin: 0 8rpx;
+.seg-item:first-child {
+  margin-left: 0;
 }
-
-.dm-dark .ci-read-tag {
-  background: linear-gradient(135deg, #3a9a40 0%, #4caf50 100%);
-}
-
-.ci-form-arrow {
-  font-size: calc(36rpx * var(--fs, 1));
-  color: var(--text3);
-}
-
-.ci-form-item:active {
+.seg-item:active {
   background: var(--cell-active);
 }
+.seg-active {
+  border-color: var(--brand);               /* #07C160，原语 14 约定 */
+  color: var(--brand);
+  background: var(--card);
+}
 
-.ci-actions {
+/* 原语 10 变体：.badge-pill-brand（绿底 pill，用于"读完" 标签） */
+.badge-pill-brand {
+  display: inline-flex;
+  align-items: center;
+  height: 36rpx;
+  padding: 0 16rpx;
+  background: var(--brand);                 /* #07C160，brand 绿（不参与主题切换） */
+  color: var(--badge-on);                   /* #FFFFFF */
+  border-radius: 16rpx;
+  font-size: calc(22rpx * var(--fs, 1));
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+/* 原语 1 .cell-arrow（已读完行的 chevron） */
+.form-row .cell-arrow {
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1;
+  margin-left: 12rpx;
+  flex-shrink: 0;
+}
+
+/* 操作按钮行：项目原 .ci-actions 重命名为 .sheet-actions */
+.sheet-actions {
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-top: 16rpx;
 }
 
-.ci-btn {
+/* 新增：胶囊按钮 .btn-pill（用于 sheet 底部并排操作按钮） */
+.btn-pill {
   width: 46%;
   height: 88rpx;
   line-height: 88rpx;
@@ -736,26 +722,23 @@
   justify-content: center;
   align-items: center;
   padding: 0 !important;
+  font-weight: 500;
 }
-
-.ci-btn::after { border: none; }
-
-.ci-btn-cancel {
+.btn-pill::after { border: none; }
+.btn-pill-secondary {
   background: var(--cell-active);
   color: var(--text2);
   margin-right: 4%;
 }
-
-.ci-btn-cancel:active {
+.btn-pill-secondary:active {
   background: var(--divider);
 }
-
-.ci-btn-ok {
+.btn-pill-primary {
+  /* 项目主色：#4a90d9 → #6ab0f3 渐变（沿用项目约定；skill 中无主按钮色 token） */
   background: linear-gradient(135deg, #4a90d9 0%, #6ab0f3 100%);
   color: #fff;
 }
-
-.ci-btn-ok:active { opacity: 0.88; }
+.btn-pill-primary:active { opacity: 0.88; }
 
 /* ====== 晋级卡片（微信原生 progress 组件） ====== */
 .promote-card {
@@ -1088,17 +1071,8 @@
 
 .dm-dark .r-arrow { color: #8ab4ff; }
 
-.dm-dark .ci-sort { color: #8ab4ff; background: rgba(138, 180, 255, 0.16); }
-
-.dm-dark .ci-title,
 .dm-dark .pm-title {
   color: #6f9ee8;
-}
-
-.dm-dark .ci-quick-btn:active {
-  background: rgba(138, 180, 255, 0.2);
-  border-color: #5aa0e9;
-  color: #8ab4ff;
 }
 
 
@@ -1158,27 +1132,8 @@
 
   .dm-auto .r-arrow { color: #8ab4ff; }
 
-  .dm-auto .ci-sort { color: #8ab4ff; background: rgba(138, 180, 255, 0.16); }
-
-  .dm-auto .ci-title,
   .dm-auto .pm-title {
     color: #6f9ee8;
-  }
-
-  .dm-auto .ci-quick-btn {
-    background: var(--card2);
-    border-color: rgba(255, 255, 255, 0.12);
-    color: var(--text2);
-  }
-
-  .dm-auto .ci-quick-btn:active {
-    background: rgba(138, 180, 255, 0.2);
-    border-color: #5aa0e9;
-    color: #8ab4ff;
-  }
-
-  .dm-auto .ci-read-tag {
-    background: linear-gradient(135deg, #3a9a40 0%, #4caf50 100%);
   }
 
 

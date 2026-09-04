@@ -537,6 +537,34 @@
 - `count > 99` 显示 `99+`（微信惯例）。
 - 用于：tabBar 图标、聊天列表右上角。
 
+### 变体：`.badge-pill-brand`（品牌绿 pill）
+
+> 用于正向 / 完成态（如「读完」「已读」标签）。颜色用 `brand`（`#07C160`）而非 `success` / `danger` / `unread` —— 三者分别对应"系统选中 / 危险 / 未读"，与"品牌完成"语义不同。
+
+```xml
+<view class="badge-pill-brand">读完</view>
+```
+
+```css
+.badge-pill-brand {
+  display: inline-flex;
+  align-items: center;
+  height: 36rpx;
+  padding: 0 16rpx;
+  background: var(--brand);   /* #07C160，不参与主题切换 */
+  color: var(--badge-on);     /* #FFFFFF */
+  border-radius: 16rpx;
+  font-size: calc(22rpx * var(--fs, 1));
+  font-weight: 500;
+  flex-shrink: 0;
+}
+```
+
+约定：
+- **高度 36rpx**：略大于未读徽标（32rpx），以承载 2-3 个汉字（"读完"/"完成"/"已读"）。
+- **背景不参与主题切换**：`brand` 在浅色 / 深色下保持 `#07C160`；`badge-on` 始终 `#FFFFFF`。
+- **不替代 `.badge-pill`**：前者是品牌完成态，后者是未读 / 计数红，不可混用。
+
 ### 约定
 - **`unread` 与 `danger` 区分**：徽标用 `unread`（WeChat 红 `#FA5151`），**禁止**用 `danger`（iOS systemRed `#FF3B30`）。这是消息计数色，不是销毁警告色。
 - **数字格式**：> 99 显示 "99+"；= 0 隐藏徽标（**不**显示 "0"）。
