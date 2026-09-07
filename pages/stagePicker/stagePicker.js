@@ -37,7 +37,6 @@ Page({
       checkin.clearCurrentStage();
       checkin.setCompletedStages([]);
       this.setData({ selectedId: '' });
-      wx.showToast({ title: '已清除当前阶段', icon: 'none' });
       setTimeout(() => wx.navigateBack(), 300);
       return;
     }

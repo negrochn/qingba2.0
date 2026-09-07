@@ -68,7 +68,7 @@ App({
       fail: () => {}
     })
     wx.setTabBarStyle({
-      backgroundColor: isDark ? '#111111' : '#ffffff',
+      backgroundColor: isDark ? '#111111' : '#f5f5f5',
       borderStyle: isDark ? 'black' : 'white',
       color: isDark ? '#8a8f99' : '#999999',
       selectedColor: '#00c25f',

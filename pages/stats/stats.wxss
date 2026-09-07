@@ -8,24 +8,6 @@ page {
   padding: 16rpx 0 calc(env(safe-area-inset-bottom) + 40rpx);
 }
 
-/* ===== 分组（同设置页原生风格） ===== */
-.group {
-  margin-bottom: 24rpx;
-}
-
-.group-title {
-  padding: 0 24rpx 16rpx;
-  font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text3);
-  line-height: 1.4;
-}
-
-.group-title-sub {
-  color: var(--text3);
-  opacity: 0.8;
-  font-size: calc(22rpx * var(--fs, 1));
-}
-
 /* 卡片内第一行（分段控件右对齐） */
 .card-head {
   display: flex;

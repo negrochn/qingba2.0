@@ -76,7 +76,7 @@
 
   <!-- 读完排行 -->
   <view class="group">
-    <view class="group-title">读完排行<text class="group-title-sub">（{{readTotal}}次）</text></view>
+    <view class="group-title">读完排行</view>
     <view class="group-card">
       <view class="read-row" wx:for="{{readList}}" wx:key="resourceName">
         <view class="read-dot" style="background:{{item.color}};"></view>

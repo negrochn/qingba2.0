@@ -5,7 +5,7 @@ page {
 }
 
 .container {
-  padding: 24rpx 24rpx calc(env(safe-area-inset-bottom) + 32rpx);
+  padding: 0 0 calc(env(safe-area-inset-bottom) + 32rpx);
   box-sizing: border-box;
   min-height: 100vh;
 }
@@ -67,7 +67,7 @@ page {
 .swipe-wrap:not(:last-child) .record-row::after {
   content: '';
   position: absolute;
-  left: 80rpx;
+  left: 148rpx;
   right: 28rpx;
   bottom: 0;
   height: 1rpx;
@@ -104,7 +104,6 @@ page {
 
 .record-list {
   background: var(--card);
-  border-radius: 20rpx;
   overflow: hidden;
 }
 
@@ -113,21 +112,21 @@ page {
   position: relative;
   display: flex;
   align-items: center;
-  padding: 18rpx 28rpx;
-  gap: 16rpx;
-  min-height: 96rpx;
+  padding: 24rpx 32rpx;
+  gap: 32rpx;
+  min-height: 144rpx;
   box-sizing: border-box;
 }
 
 /* 首字小图标 */
 .record-avatar {
   flex-shrink: 0;
-  width: 52rpx;
-  height: 52rpx;
+  width: 96rpx;
+  height: 96rpx;
   border-radius: 12rpx;
   background: linear-gradient(135deg, #5a9af0 0%, #7fb4f7 100%);
   color: #fff;
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(48rpx * var(--fs, 1));
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -140,7 +139,6 @@ page {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
 }
 
 /* 第一行 */
@@ -152,7 +150,7 @@ page {
 }
 
 .record-res-name {
-  font-size: calc(28rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1));
   font-weight: 500;
   color: var(--text);
   overflow: hidden;
@@ -163,7 +161,7 @@ page {
 
 .record-date {
   flex-shrink: 0;
-  font-size: calc(22rpx * var(--fs, 1));
+  font-size: calc(26rpx * var(--fs, 1));
   color: var(--text3);
 }
 
@@ -185,7 +183,7 @@ page {
 }
 
 .tag-stage {
-  font-size: calc(20rpx * var(--fs, 1));
+  font-size: calc(26rpx * var(--fs, 1));
   color: #7a5200;
   background: #fff7e6;
   padding: 2rpx 10rpx;
@@ -193,7 +191,7 @@ page {
 }
 
 .tag-group {
-  font-size: calc(20rpx * var(--fs, 1));
+  font-size: calc(26rpx * var(--fs, 1));
   padding: 2rpx 10rpx;
   border-radius: 6rpx;
 }
@@ -210,7 +208,7 @@ page {
 .tag-group-default { color: var(--text3); background: var(--cell-active); }
 
 .record-remark {
-  font-size: calc(20rpx * var(--fs, 1));
+  font-size: calc(26rpx * var(--fs, 1));
   color: #52c41a;
   background: #f0fff0;
   padding: 2rpx 10rpx;
@@ -222,7 +220,7 @@ page {
 
 .record-duration {
   flex-shrink: 0;
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1));
   font-weight: 600;
   color: var(--text2);
   font-family: 'DIN Alternate', -apple-system, Helvetica, Arial, sans-serif;
@@ -286,7 +284,6 @@ page {
   font-size: calc(30rpx * var(--fs, 1));
   color: var(--text);
   font-weight: 600;
-  margin-bottom: 16rpx;
 }
 
 .mp-pv {

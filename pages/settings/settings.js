@@ -115,10 +115,6 @@ Page({
     const enabled = !!e.detail.value;
     checkin.setYouquPlanEnabled(enabled);
     this.setData({ youquEnabled: enabled });
-    wx.showToast({
-      title: enabled ? '已开启' : '已关闭',
-      icon: 'none'
-    });
   },
 
   // 加载当前阶段

@@ -8,16 +8,6 @@ page {
   padding: 16rpx 0 calc(env(safe-area-inset-bottom) + 40rpx);
 }
 
-/* ===== 分组（原语 1 .group，无 group-title） ===== */
-.group {
-  margin-bottom: 24rpx;
-}
-
-.group-card {
-  background: var(--card);
-  margin: 0; /* 全宽平铺，无侧边距（微信分组 section 无 margin / 无圆角） */
-  border-radius: 0;
-  overflow: hidden;
-}
+/* 分组样式已合入全局 app.wxss（原语 1 .group / .group-card） */
 
 

@@ -86,59 +86,13 @@
     </view>
   </block>
 
-  <!-- 今日打卡明细 -->
-  <block wx:if="{{todayRecords.length > 0}}">
-    <view class="section-head group-head">
-      <text class="section-title">今日打卡</text>
-      <text class="section-count">共 {{todayRecords.length}} 条</text>
-    </view>
-    <view class="record-list">
-      <block wx:for="{{todayRecords}}" wx:key="id" wx:for-item="r" wx:for-index="idx">
-        <view
-          class="swipe-wrap"
-          data-idx="{{idx}}"
-          bindtouchstart="onTouchStart"
-          bindtouchmove="onTouchMove"
-          bindtouchend="onTouchEnd"
-        >
-          <view class="swipe-bg">
-            <view
-              class="swipe-del"
-              catchtap="deleteRecord"
-              data-id="{{r.id}}"
-            >删除</view>
-          </view>
-          <view
-            class="swipe-fg record-row"
-            style="transform: translateX({{r._dx}}rpx); transition: {{r._anim ? 'transform 0.25s ease' : 'none'}};"
-          >
-            <view class="record-avatar">{{r.firstChar}}</view>
-            <view class="record-main">
-              <view class="record-line1">
-                <text class="record-res-name">{{r.resourceName}}</text>
-                <text class="record-duration">{{r.durationText}}</text>
-              </view>
-              <view class="record-line2">
-                <view class="record-tags">
-                  <text class="tag-group tag-group-{{r.groupKey}}">{{r.groupLabel}}</text>
-                  <text class="record-remark" wx:if="{{r.remark}}">{{r.remark}}</text>
-                </view>
-                <text class="record-date">{{r.timeText}}</text>
-              </view>
-            </view>
-          </view>
-        </view>
-      </block>
-    </view>
-  </block>
-
 </view>
 
 <!-- 首次启动引导（全屏遮罩，覆盖 tabBar） -->
 <view class="ob-overlay {{fontClass}} {{darkClass}}" wx:if="{{showOnboard}}" catchtouchmove="noop">
   <view class="ob-content">
     <view class="ob-logo">📚</view>
-    <view class="ob-title">庆爸 2.0</view>
+    <view class="ob-title mb-16">庆爸 2.0</view>
     <view class="ob-desc">孩子英语听力训练打卡工具<br/>常规1-6 → 准桥梁，逐级解锁</view>
 
     <view class="ob-form">

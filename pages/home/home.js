@@ -9,9 +9,6 @@ function fmtHours(minutes) {
   return (minutes / 60).toFixed(2).replace(/\.?0+$/, '') || '0'
 }
 
-// 删除按钮宽度（rpx），与样式保持一致
-const DELETE_W = 150
-
 Page({
   data: {
     // 阶段 Hero 卡
@@ -33,12 +30,6 @@ Page({
     // 分组时长分布
     groupBars: [],
     hasGroupData: false,
-    // 今日打卡明细
-    todayRecords: [],
-    // 滑动删除状态
-    _touchStartX: 0,
-    _touchStartY: 0,
-    _curSwipeIdx: -1,
     // 首次启动引导
     showOnboard: false,
     stageOptions,
@@ -125,7 +116,6 @@ Page({
     const daysSet = new Set()
     const groupMinutes = {}
     const groupLabels = {}
-    const todayRecords = []
 
     for (const day in all) {
       for (const r of all[day]) {
@@ -141,11 +131,9 @@ Page({
         if (day === today) {
           todayMinutes += min
           todayCount++
-          todayRecords.push(r)
         }
       }
     }
-    todayRecords.sort((a, b) => b.timestamp - a.timestamp)
 
     // ---- Hero：阶段信息 + 进度 ----
     let stageName = curStage ? (curStage.name || '') : ''
@@ -179,20 +167,6 @@ Page({
       percent: maxGroupMin ? Math.max(6, Math.round(groupMinutes[key] / maxGroupMin * 100)) : 0
     }))
 
-    // ---- 今日打卡明细 ----
-    const todayList = todayRecords.map(r => ({
-      id: r.id,
-      resourceName: r.resourceName,
-      groupKey: r.groupKey,
-      groupLabel: r.groupLabel,
-      firstChar: (r.resourceName || '').trim().charAt(0) || '📖',
-      durationText: checkin.fmtMinutes(r.durationMinutes),
-      timeText: this._fmtTime(r.timestamp),
-      remark: r.remark || '',
-      _dx: 0,
-      _anim: false
-    }))
-
     this.setData({
       stageName,
       stageDesc,
@@ -209,8 +183,7 @@ Page({
       stageWeekHours: fmtHours(weekMinutes),
       stageDaysCount: daysSet.size,
       groupBars,
-      hasGroupData: groupBars.length > 0,
-      todayRecords: todayList
+      hasGroupData: groupBars.length > 0
     })
   },
 
@@ -222,95 +195,6 @@ Page({
     const single = text.match(/(\d+)/)
     if (single) return { min: +single[1], max: +single[1] }
     return null
-  },
-
-  // 今日明细只显示时分: 07:27
-  _fmtTime(ts) {
-    const d = new Date(ts)
-    const hh = String(d.getHours()).padStart(2, '0')
-    const mm = String(d.getMinutes()).padStart(2, '0')
-    return `${hh}:${mm}`
-  },
-
-  // ===== 今日打卡滑动删除（同记录页） =====
-  _snapDx(dx) {
-    if (dx <= -DELETE_W / 2) return -DELETE_W
-    return 0
-  },
-
-  onTouchStart(e) {
-    const idx = Number(e.currentTarget.dataset.idx)
-    const t = e.touches[0]
-    this.setData({
-      _touchStartX: t.clientX,
-      _touchStartY: t.clientY,
-      _curSwipeIdx: idx
-    })
-    // 关闭其他已打开的
-    const records = this.data.todayRecords
-    let changed = false
-    for (let i = 0; i < records.length; i++) {
-      if (i !== idx && records[i]._dx !== 0) {
-        records[i]._dx = 0
-        records[i]._anim = true
-        changed = true
-      }
-    }
-    if (changed) {
-      this.setData({ todayRecords: records })
-    }
-    // 开始拖动：关闭动画
-    records[idx]._anim = false
-    this.setData({ [`todayRecords[${idx}]`]: records[idx] })
-  },
-
-  onTouchMove(e) {
-    const idx = this.data._curSwipeIdx
-    if (idx < 0) return
-    const t = e.touches[0]
-    const dxPx = t.clientX - this.data._touchStartX
-    // px → rpx (约 2 倍，简单换算)
-    let newDx = dxPx * 2
-    if (newDx < -(DELETE_W + 20)) newDx = -(DELETE_W + 20)
-    if (newDx > 10) newDx = 10
-
-    // 节流：同一次滑动内位移变化小于 2rpx 时跳过，避免高频 setData 掉帧
-    if (this._swipeIdx === idx && Math.abs(newDx - this._lastDx) < 2) return
-    this._swipeIdx = idx
-    this._lastDx = newDx
-
-    this.setData({ [`todayRecords[${idx}]._dx`]: newDx })
-  },
-
-  onTouchEnd() {
-    const idx = this.data._curSwipeIdx
-    if (idx < 0) return
-    const r = this.data.todayRecords[idx]
-    const targetDx = this._snapDx(r._dx)
-    this.setData({
-      [`todayRecords[${idx}]._dx`]: targetDx,
-      [`todayRecords[${idx}]._anim`]: true,
-      _curSwipeIdx: -1
-    })
-  },
-
-  // 删除今日打卡记录
-  deleteRecord(e) {
-    const { id } = e.currentTarget.dataset
-    wx.showModal({
-      title: '删除记录',
-      content: '确认删除这条打卡记录？',
-      success: (res) => {
-        if (!res.confirm) return
-        const ok = checkin.deleteCheckin(id)
-        if (!ok) {
-          wx.showToast({ title: '删除失败', icon: 'none' })
-          return
-        }
-        wx.showToast({ title: '已删除', icon: 'success' })
-        this._refresh()
-      }
-    })
   },
 
   // 阻止弹层内容区点击冒泡关闭

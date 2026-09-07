@@ -44,6 +44,9 @@ description: 微信（iOS 风格）UI 设计规范，基于微信设置 / 通知
 - **项目实例（原语 3 picker-page）**：`stagePicker`（当前阶段）、`fontPicker`（字体大小）、`importPicker`（导入方式：覆盖式/合并式）、`clearPicker`（清空范围：全部数据 + 各阶段）。设置页「字体大小」「当前阶段」「导入备份」「清空数据」均以 `wx.navigateTo` 跳转到对应 picker 页，选完 `navigateBack` 回调设置页方法。
 - **默认勾选**：`stagePicker` 默认勾选当前已设值；`importPicker` / `clearPicker` 默认**不勾选**（`selectedKey:''`），进入即空选、需用户点选——两种均属原语3 合法形态。
 - **项目 CSS 变量**：`--bg/--card/--text/--text2/--text3/--divider/--cell-active` 对应规范 token `bg/card/text`、`text-2`+`caption`、`divider-row`、按下态。
+- **`.cell` 行高由 modifier 提供（项目实现）**：qingba 的 `.cell` 基类**不设** `min-height`（裸 `.cell` 无高度兜底）；行高由 modifier 提供——`.cell--single`（常规单行，min-height 110rpx ≈ 55pt）+ `.cell--desc`（含描述行，min-height 146rpx ≈ 73pt）。每个 `.cell` 必须挂 `cell--single` / `cell--desc` 之一，否则无高度。区别于规范原语"裸 `.cell` 默认 cell-h 88rpx"——项目把固定 88rpx 升级为按内容类型 110/146rpx，以承载更大字体档位（`--fs`）不自裁切。
+- **间距工具类 `.mb-16`（项目实现）**：app.wxss 提供公共单行工具类 `.mb-16 { margin-bottom: 16rpx }`，命名规则 `mb-<n>`（margin-bottom <n>rpx），按需扩展 `mb-8` / `mb-24`。用于卡片 / 分组间的统一分割留白，避免各页散写 `margin-bottom`（如 mine 页三个 `.group` 挂 `mb-16` 做分组间隔）。
+- **`.group-title` 项目取值（与规范差异）**：项目全局 `.group-title`（app.wxss）当前 `padding: 32rpx 32px 16rpx 32rpx; line-height: 1;`，字号沿用规范 26rpx。注意**右内边距是 `32px`（像素）而非 `32rpx`**，与全 rpx 体系不一致（疑似笔误，新代码建议统一为 `32rpx`）；stats 页已移除本地 `.group-title` 覆盖、回退到该全局样式。
 
 ## Resources
 ### references/

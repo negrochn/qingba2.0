@@ -37,7 +37,6 @@ Page({
 
     const level = theme.LEVELS[theme.indexOf(key)];
     this.setData({ selectedKey: key });
-    wx.showToast({ title: `字号：${level.label}`, icon: 'none' });
     setTimeout(() => wx.navigateBack(), 300);
   }
 });

@@ -703,7 +703,6 @@
 .promote-title {
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);
-  margin-bottom: 16rpx;
 }
 
 .promote-bar-row {

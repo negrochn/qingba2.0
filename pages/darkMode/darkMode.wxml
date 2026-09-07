@@ -3,7 +3,7 @@
   <!-- 跟随系统 toggle（始终显示） -->
   <view class="group">
     <view class="group-card">
-      <view class="cell cell-toggle" bindtap="toggleFollowSystem">
+      <view class="cell cell-toggle cell--desc" bindtap="toggleFollowSystem">
         <view class="cell-info">
           <text class="cell-label">跟随系统</text>
           <text class="cell-desc">开启后，将跟随系统打开或关闭深色模式</text>
@@ -19,13 +19,13 @@
   <view class="group" wx:if="{{!followSystem}}">
     <view class="group-title">手动选择</view>
     <view class="group-card">
-      <view class="cell cell-radio {{manualMode === 'light' ? 'cell-checked' : ''}}"
+      <view class="cell cell-radio cell--single {{manualMode === 'light' ? 'cell-checked' : ''}}"
             bindtap="pickManual" data-mode="light">
         <text class="cell-label">普通模式</text>
         <text class="cell-check" hidden="{{manualMode !== 'light'}}">✓</text>
       </view>
       <view class="cell-divider"></view>
-      <view class="cell cell-radio {{manualMode === 'dark' ? 'cell-checked' : ''}}"
+      <view class="cell cell-radio cell--single {{manualMode === 'dark' ? 'cell-checked' : ''}}"
             bindtap="pickManual" data-mode="dark">
         <text class="cell-label">深色模式</text>
         <text class="cell-check" hidden="{{manualMode !== 'dark'}}">✓</text>

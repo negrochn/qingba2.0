@@ -82,7 +82,6 @@ page {
   background: var(--card2);
   border-radius: 12rpx;
   padding: 20rpx 24rpx;
-  margin-bottom: 16rpx;
 }
 
 .stage-block:last-child {
@@ -136,7 +135,6 @@ page {
   font-size: calc(26rpx * var(--fs, 1));
   line-height: 1.65;
   color: var(--text2);
-  margin-bottom: 16rpx;
 }
 
 /* ===== 注意点块 ===== */

@@ -137,6 +137,10 @@ view, text {
   margin: 6rpx 6rpx 6rpx 0;
 }
 
+/* ===== 间距工具类（公共，单行单职责，统一分割/留白） =====
+   命名 mb-<n> = margin-bottom <n>rpx；当前仅 16，按需扩展 mb-8 / mb-24 等 */
+.mb-16 { margin-bottom: 16rpx; }
+
 /* ===== 全局深色适配（微信小程序深色规范） =====
    分类彩色标签：浅色为浅底深字，深色转为深底亮字 */
 .dm-dark .tag-group-main_picture_books { color: #7fb4f7; background: rgba(127, 180, 247, 0.16); }
@@ -253,11 +257,33 @@ view, text {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 88rpx;                /* cell-h 88rpx（点击热区） */
+  /* 行高由 cell--single / cell--desc 提供（min-height）；裸 .cell 无兜底，务必加 modifier */
   padding: 24rpx 32rpx;             /* cell-pad-x：左右 32rpx 对称 */
   box-sizing: border-box;
 }
 .cell:active { background: var(--cell-active); }
+
+/* 行高规格 modifier（设计稿 px → rpx，基准 750rpx = 375pt，1px = 2rpx）
+   用 min-height：常规字号下即 110/146rpx（等同固定高度），超大字号自动撑高不裁切 */
+.cell--single { min-height: 110rpx; }
+.cell--desc { min-height: 146rpx; }
+
+/* ===== 原语 1：.group 分组 section（全宽平铺，无圆角无侧边距） =====
+   来源：微信分组列表（设置 / 我的 / picker-page 等）。跨 settings / mine / darkMode /
+   stagePicker / importPicker / fontPicker / clearPicker 统一后合入本文件，各页不再重复定义。
+   段间间隙由需求决定，当前 .group 不设置 margin-bottom。 */
+.group-title {
+  padding: 32rpx 32px 16rpx 32rpx;   /* group-title-pad：上32 右32 下16 左32（右为 px） */
+  font-size: calc(26rpx * var(--fs, 1));   /* group-title 26rpx */
+  color: var(--text3);
+  line-height: 1;
+}
+.group-card {
+  background: var(--card);
+  margin: 0;                        /* 全宽平铺，无侧边距 */
+  border-radius: 0;                 /* 无圆角 */
+  overflow: hidden;                 /* spec：防子元素溢出 */
+}
 
 /* 主标题：直接作为 .cell 子元素时占满左侧，把右侧元素推到最右 */
 .cell-label {

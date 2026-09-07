@@ -31,38 +31,38 @@
     <view class="chapter-title">阶段参考</view>
   </view>
   <view class="chapter-card">
-    <view class="stage-block">
+    <view class="stage-block mb-16">
       <view class="stage-name">常规一阶段</view>
       <view class="stage-line">· 时间投入建议：<text class="hl">60-80H</text> ｜ 准入标准：<text class="hl">零基础</text> ｜ 晋级参考：<text class="hl">时间满足且小小优趣稳定新版phase5</text></view>
     </view>
 
-    <view class="stage-block">
+    <view class="stage-block mb-16">
       <view class="stage-name">常规二阶段</view>
       <view class="stage-line">· 时间投入建议：<text class="hl">60-80H</text> ｜ 准入标准：<text class="hl">phase5</text> ｜ 晋级参考：<text class="hl">时间满足且小小优趣稳定新版phase8</text></view>
     </view>
 
-    <view class="stage-block">
+    <view class="stage-block mb-16">
       <view class="stage-name">常规三阶段</view>
       <view class="stage-line">· 时间投入建议：<text class="hl">60-80H</text> ｜ 准入标准：<text class="hl">phase8</text> ｜ 晋级参考：<text class="hl">时间满足且小小优趣稳定新版phase12</text></view>
     </view>
 
-    <view class="stage-block">
+    <view class="stage-block mb-16">
       <view class="stage-name">常规四阶段</view>
       <view class="stage-line">· 时间投入建议：<text class="hl">60H</text> ｜ 准入标准：<text class="hl">phase12</text> ｜ 晋级参考：<text class="hl">时间满足且小小优趣稳定新版phase14</text></view>
     </view>
 
-    <view class="stage-block">
+    <view class="stage-block mb-16">
       <view class="stage-name">常规五阶段</view>
       <view class="stage-line">· 时间投入建议：<text class="hl">60H</text> ｜ 准入标准：<text class="hl">phase14</text> ｜ 晋级参考：<text class="hl">时间满足且小小优趣稳定新版phase16</text></view>
     </view>
 
-    <view class="stage-block">
+    <view class="stage-block mb-16">
       <view class="stage-name">常规六阶段</view>
       <view class="stage-line">· 时间投入建议：<text class="hl">60H</text> ｜ 准入标准：<text class="hl">phase16</text></view>
       <view class="stage-line">· 晋级参考：<text class="hl">佩奇可初步裸听</text>且从常规1累计投入时间不低于<text class="hl">400H</text>，最好小小优趣测试稳定<text class="hl">phase18</text>，到不了也没事，但不应低于<text class="hl">phase16</text></view>
     </view>
 
-    <view class="stage-block">
+    <view class="stage-block mb-16">
       <view class="stage-name">准桥梁阶段</view>
       <view class="stage-line">· 时间投入建议：<text class="hl">80-100H</text> ｜ 准入标准：<text class="hl">佩奇可初步裸听</text>且常规1-6累计投入时间不低于<text class="hl">400H</text></view>
       <view class="stage-line">· 晋级参考：<text class="hl">佩奇可裸听</text>且从常规1累计总投入时间不低于<text class="hl">480H</text>，小小优趣可不测（因为有科普词汇）。</view>
@@ -79,7 +79,7 @@
     <!-- 方式一：亲子共读 -->
     <view class="method-block">
       <view class="method-name">方式一：亲子共读</view>
-      <view class="method-op">· 参考方式：<text class="hl">孩子专注的看图和听，家长读英文（也可用点读笔点英文）</text></view>
+      <view class="method-op mb-16">· 参考方式：<text class="hl">孩子专注的看图和听，家长读英文（也可用点读笔点英文）</text></view>
 
       <view class="warn-block">
         <view class="warn-title">注意事项</view>
@@ -94,7 +94,7 @@
     <!-- 方式二：看动画 -->
     <view class="method-block">
       <view class="method-name">方式二：看动画</view>
-      <view class="method-op">· 参考方式：选择和孩子难度贴近的动画，<text class="hl">每天20-30分钟！常规4之前，动画可只看不听或少量听，如果孩子接受重复看，可多看多听，不用限制孩子喜欢素材的重复遍数！</text></view>
+      <view class="method-op mb-16">· 参考方式：选择和孩子难度贴近的动画，<text class="hl">每天20-30分钟！常规4之前，动画可只看不听或少量听，如果孩子接受重复看，可多看多听，不用限制孩子喜欢素材的重复遍数！</text></view>
 
       <view class="warn-block">
         <view class="warn-title">注意事项1：</view>
@@ -118,7 +118,7 @@
     <!-- 方式三：听音频 -->
     <view class="method-block">
       <view class="method-name">方式三：听音频</view>
-      <view class="method-op">· 参考方式：<text class="hl">读过的分级，看过的动画，如果孩子不排斥，都可让孩子听一听（动画音频的切入成功率会更高一些）！</text></view>
+      <view class="method-op mb-16">· 参考方式：<text class="hl">读过的分级，看过的动画，如果孩子不排斥，都可让孩子听一听（动画音频的切入成功率会更高一些）！</text></view>
 
       <view class="warn-block">
         <view class="warn-title">注意事项1：</view>

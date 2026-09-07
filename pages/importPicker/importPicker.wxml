@@ -6,7 +6,7 @@
       <block wx:for="{{modes}}" wx:key="key" wx:for-item="m" wx:for-index="i">
         <view class="cell-divider" wx:if="{{i > 0}}"></view>
         <view
-          class="cell cell-radio {{selectedKey === m.key ? 'cell-checked' : ''}}"
+          class="cell cell-radio cell--desc {{selectedKey === m.key ? 'cell-checked' : ''}}"
           bindtap="pick"
           data-key="{{m.key}}"
         >

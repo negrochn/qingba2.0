@@ -97,7 +97,7 @@
       <text class="st-group-title">{{isLastStage ? '阶段达成' : '阶段晋级'}}</text>
     </view>
     <view class="card promote-card">
-      <view class="promote-title">{{stage.stage_name}} 阶段进度</view>
+      <view class="promote-title mb-16">{{stage.stage_name}} 阶段进度</view>
       <view class="promote-bar-row">
         <progress
           class="promote-bar"
