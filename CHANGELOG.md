@@ -41,6 +41,13 @@
 - **`wx.getSystemInfoSync` 弃用告警修复**：`app.js` 读取系统深色偏好由原已弃用的 `wx.getSystemInfoSync` 改为 `wx.getAppBaseInfo`（旧基础库回退），消除弃用告警
 - `.gitignore` 中文注释存在 GBK 误编码残留，在 GitHub 上显示为乱码；已以 UTF-8 无 BOM 重新保存，忽略规则内容不变
 
+### 文档
+
+- **`ui-design-spec` skill 基于微信官方设计指南与 Tencent/weui 源码校准**：
+  - 新增 `design-guidelines.md`：沉淀微信官方《小程序设计指南》原则层（四大设计原则、视觉规范指针、导航 / Tab、加载与结果反馈、异常与层级、落地自检清单）；量化令牌并入 `design-tokens.md` §7（22/17/15/14/12pt 字号档、点击热区 7–9mm、设计稿 375/390、Tab 2–5、弹窗 1.5s）
+  - `design-tokens.md` 以克隆仓库 `D:\github\weui`（Tencent/weui 主干 `src/`）逐项核对：补全此前缺失的真实 token（BG-4/5、GLYPH、各色阶档、TAG、MATERIAL、SEPARATOR、STATELAYER 等）；修正深色 `BG-COLOR-ACTIVE` 为 `overlay(rgba(255,255,255,.05), #2c2c2c)`；新增 §8 care 模式（适老）配色档
+  - `components.md` 订正 dialog 部分（标题字重 500、正文 FG-1、底部留白 32px、主操作默认 LINK 蓝、补齐 hd/ft 结构），与 `widget/weui-tips/weui-dialog.less` 一致
+
 ## [2.3.1] - 2026-09-03
 
 > 自 `v2.3.0` 发布以来的全部改动。

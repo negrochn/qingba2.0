@@ -322,7 +322,7 @@ page {
 }
 
 .mp-ok {
-  background: linear-gradient(135deg, #00c25f 0%, #3fd98a 100%);
+  background: linear-gradient(135deg, #07C160 0%, #3fd98a 100%);
   color: #fff;
   font-weight: 600;
 }

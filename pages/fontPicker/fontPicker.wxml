@@ -8,7 +8,7 @@
         <view class="cell cell-radio cell--single {{selectedKey === l.key ? 'cell-checked' : ''}}"
               bindtap="pick" data-key="{{l.key}}">
           <text class="cell-label">{{l.label}}</text>
-          <text class="cell-check" hidden="{{selectedKey !== l.key}}">✓</text>
+          <text class="cell-check iconfont icon-check" hidden="{{selectedKey !== l.key}}"></text>
         </view>
       </block>
     </view>

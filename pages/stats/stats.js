@@ -144,7 +144,7 @@ Page({
       monthText: parseInt(m.ym.substring(5), 10) + '月',
       minutesText: checkin.fmtHoursDecimal(m.minutes),
       ratio: mMax ? Math.max(8, Math.round(m.minutes / mMax * 100)) : 0,
-      color: '#00c25f'
+      color: '#07C160'
     }))
 
     // 读完排行

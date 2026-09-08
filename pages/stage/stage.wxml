@@ -90,7 +90,7 @@
           class="promote-bar"
           percent="{{progressPercent}}"
           stroke-width="6"
-          activeColor="{{timeMet ? '#52c41a' : '#00c25f'}}"
+          activeColor="{{timeMet ? '#52c41a' : '#07C160'}}"
           backgroundColor="{{isDark ? '#3a3a3a' : '#ececec'}}"
           borderRadius="6"
         />

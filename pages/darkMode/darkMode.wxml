@@ -22,13 +22,13 @@
       <view class="cell cell-radio cell--single {{manualMode === 'light' ? 'cell-checked' : ''}}"
             bindtap="pickManual" data-mode="light">
         <text class="cell-label">普通模式</text>
-        <text class="cell-check" hidden="{{manualMode !== 'light'}}">✓</text>
+        <text class="cell-check iconfont icon-check" hidden="{{manualMode !== 'light'}}"></text>
       </view>
       <view class="cell-divider"></view>
       <view class="cell cell-radio cell--single {{manualMode === 'dark' ? 'cell-checked' : ''}}"
             bindtap="pickManual" data-mode="dark">
         <text class="cell-label">深色模式</text>
-        <text class="cell-check" hidden="{{manualMode !== 'dark'}}">✓</text>
+        <text class="cell-check iconfont icon-check" hidden="{{manualMode !== 'dark'}}"></text>
       </view>
     </view>
   </view>

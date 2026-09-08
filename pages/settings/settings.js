@@ -402,7 +402,7 @@ Page({
         content: `备份包含 ${recordCount} 条打卡记录，导入方式：${modeText}，是否继续？`,
         confirmText: '导入',
         cancelText: '取消',
-        confirmColor: '#00c25f',
+        confirmColor: '#07C160',
         success: (modalRes) => {
           if (modalRes.confirm) {
             this.doImport(data, this.data._importMode);
@@ -621,7 +621,7 @@ Page({
       content: '将生成模拟打卡数据（每阶段累计约80-90小时，每日15-60分钟，含缺卡日），会覆盖现有数据，是否继续？',
       confirmText: '生成',
       cancelText: '取消',
-      confirmColor: '#00c25f',
+      confirmColor: '#07C160',
       success: (res) => {
         if (res.confirm) {
           this.doStressTest();

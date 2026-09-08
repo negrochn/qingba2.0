@@ -12,7 +12,7 @@
             data-key="{{s.key}}"
           >
             <text class="cell-label">{{s.name}}</text>
-            <text class="cell-check" hidden="{{selectedKey !== s.key}}">✓</text>
+            <text class="cell-check iconfont icon-check" hidden="{{selectedKey !== s.key}}"></text>
           </view>
         </block>
       </block>

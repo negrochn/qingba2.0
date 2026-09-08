@@ -72,7 +72,7 @@ App({
       backgroundColor: isDark ? '#111111' : '#f5f5f5',
       borderStyle: isDark ? 'black' : 'white',
       color: isDark ? '#8a8f99' : '#191919',
-      selectedColor: '#00c25f',
+      selectedColor: '#07C160',
       fail: () => {}
     })
   },

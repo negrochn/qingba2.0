@@ -1,226 +1,245 @@
-# 微信 UI 设计 Token（基于截图逆向）
+# WeUI 设计令牌（design-tokens.md）
 
-> 本规范仅依据微信 iOS 客户端截图（设置 / 通知 / 听一听 / 消息提示音 / 删除确认弹层 / 多选转发 / 微信首页 等）逆向整理，**不参考任何项目既有布局**。
-> 单位 `rpx`（小程序响应式像素）。颜色以浅色（Light）为基准，深色（Dark）见第 5 节。
-
-## 1. 颜色（Light 实测色板）
-
-| 语义 | 值 | 用途 |
-|------|-----|------|
-| 页面背景 `bg` | `#ededed` | 分组标题带、整页底色（微信浅色实测，截图抓取） |
-| 单元格 / 行白底 `card` | `#FFFFFF` | 列表项、卡片、弹层面板、tabBar、device-banner |
-| 主文字 `text` | `#000000` | 导航标题、row 主文 |
-| 次级文字 `text-2` | `#8E8E93` | 分组标题、右侧值、行内描述、占位文字、聊天预览、时间 |
-| 弱文字 / 箭头 `chevron` | `#C7C7CC` | 揭示箭头、极弱文字、选择圈描边、静音图标 |
-| 系统绿 `success` | `#34C759` | 开关开启、picker 勾选、列表选中填充（iOS systemGreen） |
-| 系统红 `danger` | `#FF3B30` | 危险 / 销毁操作（iOS systemRed） |
-| 品牌绿 `brand` | `#07C160` | tabBar 选中、品牌元素（WeChat 官方绿，**独立于 `success`**） |
-| 未读红 `unread` | `#FA5151` | 未读徽标、tabBar 红点、消息计数（**独立于 `danger`**） |
-| 开关关闭底色 `switch-off` | `#E9E9EB` | 开关关闭态 |
-| 单元格间细分隔线 `divider-row` | `#C8C8CD` | 单元格间分隔线、tabBar 顶部分割 |
-| 行外说明 `caption` | `#8E8E93` | caption 文本（语义独立于 `text-2`） |
-| 搜索栏背景 `search-bg` | `#F2F2F7` | nav 下伪搜索框底色（iOS systemGray6） |
-| 选中圈白对勾 `check-on` | `#FFFFFF` | 选中绿圈内白对勾字色（**固定不参与主题切换**） |
-| 徽标白字 `badge-on` | `#FFFFFF` | 红/绿底徽标白字（**固定不参与主题切换**） |
-
-> 截图未出现、本规范暂不定义的颜色（如品牌主色、分类标签色）不在此列，待补充截图。
-
-### 颜色语义区分（关键约定）
-
-四种"红绿色"语义独立，禁止混用：
-
-| 语义色 | 值 | 适用场景 | **禁止**用于 |
-|--------|-----|---------|--------------|
-| `success` | `#34C759` | 开关开启、picker 勾选、列表选中填充（iOS systemGreen） | tabBar 选中、品牌元素 |
-| `brand` | `#07C160` | tabBar 选中、品牌元素（WeChat 官方绿） | 开关、勾选 |
-| `danger` | `#FF3B30` | 危险 / 销毁操作（iOS systemRed） | 未读徽标、链接装饰 |
-| `unread` | `#FA5151` | 未读徽标、tabBar 红点、消息计数 | 危险操作、报错提示 |
-
-四者**语义独立**，互不替代：
-- `success` 是 **iOS 系统级"开启 / 选中"指示色**（与系统交互一致）。
-- `brand` 是 **WeChat 品牌识别色**（与品牌一致，与系统无关）。
-- `danger` 是 **"危险 / 销毁"警告色**（与系统一致，红色慎用）。
-- `unread` 是 **消息计数 / 提醒色**（高频出现，需独立避免与 danger 冲突）。
-
-### 其他 token 说明
-
-- **`search-bg`**：仅用于 nav 下的"伪搜索框"（点击跳独立搜索页），不用于独立搜索页的真正 `<input>` 背景。
-- **`check-on`**：选中绿圈内的白色对勾字色，**固定 `#FFFFFF`**（不参与主题切换，对勾始终在绿底上保持白色）。
-- **`badge-on`**：徽标白字（红点 / 数字药丸 / 选中圆白对勾），**固定 `#FFFFFF`**。
-- **`brand` 与 `unread` 在深色下不切换**：WeChat 品牌绿 / 未读红在浅色 / 深色下保持同一色值。这是品牌一致性 + 强对比需求，**不**跟随系统。
-
-### 本项目代码对齐备注（qingba）
-
-- **字号缩放 `--fs` 已落地**：本项目 `fontPicker` / `darkMode` 等页用 `calc(34rpx * var(--fs, 1))` 派生字号，根节点由 `fs-small/normal/large/xlarge` class 切换（`utils/theme.js` + `app.js.applyFontLevel`）。即本规范第 2 节"默认固定值"已演进为"默认跟随 `--fs` 派生"，新页面应保持一致。
-- **CSS 变量命名对照**：项目既有的 `--bg/--card/--text/--text2/--text3/--divider/--cell-active` 分别对应本规范的 `bg/card/text`、`text-2`+`caption`（次级 / 弱文字）、`divider-row`、按下态。规范 token 名与实际变量名不同，语义一致。
-- **开关 / 对勾的绿色取值（重要）**：微信真机 toggle 与对勾是 **WeChat 品牌绿 `#07C160`**，并非 iOS systemGreen `#34C759`。本项目 `darkMode` 页的 `.switch-on` 与 `.cell-check` 即采用 `#07C160`（深浅模式统一、无深色变体）；而 `fontPicker` / `stagePicker` / `importPicker` / `clearPicker` 四个原语3 单选页的 `.cell-check` 统一用 `#34C759`（深色 `#30D158`，即 `success` token）。两处绿**不一致**，新代码建议统一为 `#07C160` 以贴合微信观感；若保留 `success`，至少保证单页内一致（如 picker 页深浅均走 `success`）。
-- **`--text3` 浅色取值 `#b2b2b2`**，用于分组标题 / 行内描述 / 弱文字；深色沿用 `rgba(255,255,255,0.42)`。
-
-## 2. 字号（Typography）
-
-按 iOS pt 折算 rpx，推荐以固定值直接定义：
-
-| 角色 | 值 | 说明 |
-|------|-----|------|
-| 导航栏标题 `nav-title` | `34rpx / 600` | 居中，不参与缩放 |
-| 正文 / row 主文 | `34rpx / regular` | 设置页 cell 主文 |
-| 右侧值 `value` | `34rpx / regular` | 字色 `text-2` |
-| 次级描述 `desc` | `28rpx / regular` | 设置页行内多行描述 |
-| 聊天标题 `chat-title` | `32rpx / 500` | 字色 `text`，聊天列表主文 |
-| 聊天预览 `chat-preview` | `28rpx / regular` | 字色 `text-2`，聊天列表副文 |
-| 时间 `chat-time` | `24rpx / regular` | 字色 `text-2`，与标题同行右对齐 |
-| 分组标题 `group-title` | `26rpx / regular` | 灰带小标题 |
-| 行外说明 `caption` | `28rpx / 行高 1.5` | 低于 row 主文一档 |
-| 弹层标题 `sheet-title` | `34rpx / 行高 1.4` | 字色 `text-2`，居中 |
-| 弹层操作行 `sheet-row` | `34rpx / regular` | 字色 `text`；危险行用 `danger` |
-| 搜索占位字 | `28rpx / regular` | 字色 `text-2` |
-| 选中圈内对勾 | `24rpx / 600` | 字色 `check-on`（白） |
-| tabBar 文字 `tabbar-label` | `24rpx / regular`，选中 `500` | 字色：未选 `text-2`、选中 `brand` |
-| 徽标字 `badge-fs` | `22rpx / 600` | 字色 `badge-on`（白），红/绿底通用 |
-| 设备状态条文字 `device-banner-text` | `28rpx / regular` | 字色 `text` |
-| 静音图标 | `24rpx` | 字色 `chevron` |
-
-> 如需跟随系统字号缩放，可将基准 `28rpx` 设为 `--fs` 变量，其余按倍数派生；本规范默认固定值。
-
-## 3. 间距与布局
-
-| 用途 | token | 值 |
-|------|-------|-----|
-| 列表 / 标题内部左内边距 | `page-pad-x` | `32rpx`（分组 section 全宽平铺，页面本身无侧边距） |
-| 圆角卡片组间距 | `group-gap` | `24rpx` |
-| 带 caption 的组间距 | `group-gap-lg` | `48rpx` |
-| row 最小高度（点击热区） | `cell-h` | `88rpx` |
-| row 左右内边距 | `cell-pad-x` | 左右 `32rpx`（对称）|
-| 多选 row 左侧预留 | `cell-checkable-pad-l` | `72rpx`（36rpx 圆 + 16rpx 间距 + 20rpx 边距） |
-| 分组标题带 padding | `group-title-pad` | `16rpx 32rpx` |
-| caption 上下内边距 | `caption-pad-y` | `16rpx 24rpx`（上紧下松） |
-| row → caption 间距 | — | `0`（紧贴，视觉一体） |
-| 开关控件尺寸 | `switch-size` | `104rpx × 56rpx` |
-| 单元格间分隔线缩进 | — | 左 `32rpx`、右 `0` |
-| 选中圈尺寸 | `check-circle-size` | `36rpx × 36rpx`，2rpx 描边 |
-| 弹层操作行高 | `sheet-row-h` | `88rpx` |
-| 弹层标题上下 padding | — | 上 `32rpx`、下 `24rpx` |
-| 弹层底部安全区 | — | `env(safe-area-inset-bottom)` |
-| 弹层分组间隙 | `sheet-gap-h` | `8rpx`（灰底窄条分隔操作组与取消组） |
-| 搜索栏高度 | `search-h` | `64rpx` |
-| 搜索栏左右内边距 | — | `24rpx` |
-| 搜索栏上下 margin | — | `16rpx` |
-| 搜索栏与列表间距 | — | `16rpx` |
-| tabBar 高度 | `tabbar-h` | `110rpx`（不含底部安全区）+ `env(safe-area-inset-bottom)` |
-| tabBar 图标 | `tabbar-icon` | `40rpx × 40rpx` |
-| tabBar 文字与图标间距 | — | `4rpx` |
-| tabBar 顶部分割线 | — | `1rpx solid divider-row` |
-| tabBar 徽标偏移 | — | 右上角 `-4rpx / -4rpx` |
-| 头像尺寸 | `avatar-size` | `88rpx × 88rpx` |
-| 头像圆角 | `avatar-radius` | `8rpx`（小圆角，正方形，**非正圆**） |
-| 头像与内容间距 | `chat-avatar-gap` | `24rpx` |
-| 聊天 row 高度 | `chat-row-h` | `~120rpx` |
-| 聊天 row 上下 padding | `chat-row-pad-y` | `20rpx` |
-| 聊天 row 左右 padding | `chat-row-pad-x` | `24rpx` |
-| 聊天标题与预览间距 | `chat-title-gap` | `8rpx` |
-| 红点徽标 | `badge-dot-size` | `16rpx × 16rpx`，`border-radius: 50%` |
-| 数字徽标药丸 | `badge-pill-h` | `32rpx` 高，最小宽 `32rpx`，自适应宽 |
-| 静音图标 | — | `24rpx`，字色 `chevron` |
-| 设备状态条 padding | `device-banner-pad` | `24rpx 32rpx` |
-| 设备状态条图标 | — | `32rpx`，字色 `text-2` |
-| 表单行高 `form-row-h` | `88rpx` | 与 `cell-h` 一致 |
-| 表单行左右 padding | `form-row-pad-x` | 左右 `32rpx`（与 `cell-pad-x` 一致） |
-| 表单 label 与 input 间距 | `form-label-gap` | `24rpx` |
-| 表单行间分隔线缩进 | — | 左 `32rpx`（与 cell divider 一致） |
-| 表单分组分隔间距 `form-section-gap` | `24rpx` | 视觉分段时 divider 上加 24rpx margin（图片中公司信息 ↔ 银行信息的分组断点） |
-| 分段控件项高 `seg-item-h` | `56rpx` | 单个选项框高度 |
-| 分段控件项左右 padding | `seg-item-pad-x` | `32rpx` |
-| 分段控件项间距 | `seg-gap` | `16rpx`（除首项外，每个项左 16rpx） |
-| 分段控件圆角 `radius-seg` | `8rpx` | 小圆角矩形，非胶囊 |
-| 分段控件边框 | `1rpx` | 浅色 `text-2`，深色 `chevron` |
-| 必填标记色 | `brand` | `#07C160`（与 tabBar 选中、seg-control 选中同源，**非** `danger`） |
-| 按钮高 `btn-h` | `88rpx` | = cell-h = 44pt iOS |
-| 按钮水平 padding | `btn-pad-x` | `32rpx` |
-| 按钮字号 `btn-fs` | `32rpx / 500` |  |
-| 按钮间距 | `btn-gap` | `24rpx`（并排布局时） |
-| 按钮圆角 `radius-btn` | `8rpx` | iOS 4pt，矩形圆角（**非胶囊**） |
-| 按钮胶囊圆角 `radius-pill` | `44rpx` | = btn-h / 2，半圆 |
-
-## 4. 圆角与阴影
-
-| 元素 | 值 |
-|------|-----|
-| 分组卡片圆角 `radius-card` | `0`（微信分组 section 全宽平铺，无圆角；区别于 iOS 原生 inset group） |
-| 单元格内部 | 无圆角（section 全宽平铺，cell 直接相邻，无首末圆角） |
-| 弹层顶部圆角 `radius-sheet` | `24rpx`（仅顶部两角，底部贴屏） |
-| 搜索栏圆角 `radius-search` | `16rpx`（小圆角，非胶囊） |
-| 按钮矩形圆角 `radius-btn` | `8rpx` | iOS 4pt |
-| 按钮胶囊圆角 `radius-pill` | `44rpx` | = btn-h / 2，半圆 |
-| 头像圆角 `radius-avatar` | `8rpx`（小圆角，正方形） |
-| 数字徽标药丸 | `16rpx`（半圆） |
-| 选中圈 | `50%`（正圆） |
-| 红点徽标 | `50%`（正圆） |
-| 阴影 | **无**（靠白底 / 灰底对比区分，不投影） |
-
-> **平台差异（重要）**：本规范的分组 section 采用**微信 Android 主导版**的扁平全宽风格——`group-card` 无侧边距、无圆角，段间灰色间隙由 `.group` 的 `margin-bottom`（`group-gap`）提供，分隔线从屏幕左缘缩进对齐文字。若需对齐 **iOS 微信**原生 grouped 风格，则 `group-card` 需加 `margin: 0 32rpx` + `border-radius: 20rpx`（首末 cell 贴合圆角）。两者互斥，按目标平台择一。
-
-## 5. 主题切换（Dark 对应）
-
-| 语义 | Dark 值 |
-|------|---------|
-| `bg` | `#1C1C1E` |
-| `card` | `#2C2C2E` |
-| `text` | `rgba(255,255,255,0.92)` |
-| `text-2` / `caption` | `rgba(235,235,245,0.6)` |
-| `chevron` | `rgba(235,235,245,0.3)` |
-| `success` | `#30D158` |
-| `danger-dark` | `#FF453A` |
-| `brand` | `#07C160`（**保持品牌色，不切换**） |
-| `unread` | `#FA5151`（**保持消息色，不切换**） |
-| `switch-off` | `#39393D` |
-| `divider-row` | `rgba(84,84,88,0.65)` |
-| `mask` | `rgba(0,0,0,0.7)` |
-| `tabbar-bg` | `#1C1C1E` |
-| `search-bg` | `rgba(118,118,128,0.24)`（iOS systemGray6 dark） |
-| `check-on` | `#FFFFFF`（固定） |
-| `badge-on` | `#FFFFFF`（固定） |
-| `btn-disabled-bg` | `#C7C7CC` | `#3A3A3C`（iOS systemGray3） |
-
-- **切换机制**：根节点 class `dm-light`（强制浅）/ `dm-dark`（强制深）/ `dm-auto`（跟随系统 `@media (prefers-color-scheme: dark)`）切换 CSS 变量。
-- 新增任何颜色，必须同时提供浅色与深色（含 `dm-auto`）定义。
-- **`brand` / `unread` / `badge-on` / `check-on` 不参与主题切换**（品牌一致 + 强对比）。
-
-## 6. 弹层 / 模态（Modal / Sheet）
-
-| 角色 | Light | Dark |
-|------|-------|------|
-| 遮罩 `mask` | `rgba(0,0,0,0.5)` | `rgba(0,0,0,0.7)` |
-| 顶部圆角 `radius-sheet` | `24rpx`（仅顶部两角） | 同 |
-| 操作行高 `sheet-row-h` | `88rpx` | 同 |
-| 分组间隙 `sheet-gap-h` | `8rpx`（灰底窄条） | 同 |
-| 面板背景 | `card`（`#FFFFFF`） | `card`（`#2C2C2E`） |
-| 标题字色 | `text-2`（`#8E8E93`） | `text-2`（`rgba(235,235,245,0.6)`） |
-| 危险文字 `danger` | `#FF3B30` | `#FF453A` |
-| 行间分隔线 | `divider-row` | `divider-row` |
-| 底部安全区 | `padding-bottom: env(safe-area-inset-bottom)` | 同 |
-
-详见 `components.md` 的「原语 4：`.action-sheet`」。
-
-## 7. 组件原语对照（详见 components.md）
-- `.group`：圆角卡片 + 灰色分组标题带（设置 / 通知页）。
-- `.group-flat`：裸白带 + 行外 caption（听一听页）。
-- `.picker-page`：单选 picker 页（消息提示音页）。
-- `.action-sheet`：底部确认弹层（删除确认弹层 / 多选转发）。
-- `.search-bar`：nav 下的伪搜索框。
-- `.cell-checkable`：列表多选行 + 选中圈（多选转发 / 消息多选）。
-- `.tab-bar`：底部 tab 导航（微信首页）。
-- `.chat-row`：聊天列表行 + 头像 + 预览 + 未读（微信首页）。
-- `.avatar`：单图 / 3×2 拼图 / 占位。
-- `.badge`：红点 / 数字药丸。
-- `.device-banner`：设备状态条（多端登录提示）。
-- `.btn`：按钮族（`.btn-primary` 主操作 brand 绿 / `.btn-secondary` 次操作灰底 / `.btn-danger` 危险红底 / `.btn-disabled` 禁用 systemGray3 / `.btn-pill` 胶囊变体 / `.btn-block` 全宽修饰 + `.btn-row` 内容区并排 / `.btn-bar` 整页底部带安全区）。
+> **权威来源**：Tencent/weui 仓库（`D:\github\weui`，主干 `src/` 的 Less 源）。
+> 变量前缀 `--weui-*`，由 `src/style/base/theme/fn.less` 的 `.setColor()` 注入；随
+> `[data-weui-theme='dark']` 或系统 `prefers-color-scheme: dark` 切换深色档；care 模式由
+> `[data-weui-mode='care']` 切换（详见 §8）。**深色档同名 token 取值不同**，务必引用变量名而非硬编码数值。
+> 小程序端换算：**1px = 2rpx**（设计稿基准 375px = 750rpx）。
+> 源码定位：颜色主表 `src/style/base/theme/vars/{light,dark,care-light,care-dark}.less`；组件尺寸 `src/style/base/variable/*.less`；组件样式 `src/style/widget/*`。
 
 ---
-## TODO：待补充
-- 截图未覆盖：居中 modal（UIAlert 风格）、空状态、加载/骨架屏、消息详情页（聊天界面 / 输入栏 / 表情 / 图片消息）等。
-- caption 超过 2 行的处理约定。
-- 字号系统缩放方案（是否引入 `--fs`）。
-- 弹层动效（遮罩淡入 / 面板滑入 / 退出动画）。
-- 选中圈 fade-in 动画时长。
-- 聊天预览是否支持 2 行省略（截图是单行）。
-- 强提醒 / 免打扰 / @全员 等群消息角标。
+
+## 1. 颜色（浅色 light / 深色 dark）
+
+### 1.1 基础背景与文字
+
+| token | 浅色 (light) | 深色 (dark) | 语义 / 典型用途 |
+|---|---|---|---|
+| `--weui-BG-0` | `#ededed` | `#111` | 页面背景（分组列表外的灰底） |
+| `--weui-BG-1` | `#f7f7f7` | `#1e1e1e` | 次级背景（输入区 / 栏内底） |
+| `--weui-BG-2` | `#fff` | `#191919` | 卡片 / 单元格背景 |
+| `--weui-BG-3` | `#f7f7f7` | `#202020` | 三级背景 |
+| `--weui-BG-4` | `#4c4c4c` | `#404040` | 辅助中性深灰填充 |
+| `--weui-BG-5` | `#fff` | `#2c2c2c` | 辅助填充 |
+| `--weui-FG-0` | `rgba(0,0,0,.9)` | `rgba(255,255,255,.8)` | 主文字 |
+| `--weui-FG-1` | `rgba(0,0,0,.55)` | `rgba(255,255,255,.5)` | 次级文字（值 / 说明） |
+| `--weui-FG-2` | `rgba(0,0,0,.3)` | `rgba(255,255,255,.3)` | 三级 / 占位文字 |
+| `--weui-FG-3` | `rgba(0,0,0,.1)` | `rgba(255,255,255,.1)` | 分隔线 / 描边 |
+| `--weui-FG-4` | `rgba(0,0,0,.15)` | `rgba(255,255,255,.15)` | 禁用文字 |
+| `--weui-FG-5` | `rgba(0,0,0,.05)` | `rgba(255,255,255,.1)` | 默认按钮底 / 按下态底 |
+| `--weui-FG-HALF` | `rgba(0,0,0,.9)` | `rgba(255,255,255,.6)` | dialog 默认按钮文字 |
+| `--weui-SECONDARY-BG` | `rgba(0,0,0,.05)` | `rgba(255,255,255,.1)` | 次级背景（同 BG-5 语义近） |
+| `--weui-WHITE` | `#fff` | `rgba(255,255,255,.8)` | 纯白（深色下转半透明白） |
+
+### 1.2 品牌与功能色
+
+| token | 浅色 (light) | 深色 (dark) | 语义 |
+|---|---|---|---|
+| `--weui-BRAND` | `#07c160` | `#07c160` | **品牌绿**（主按钮 / 选中 / 成功 / 对勾） |
+| `--weui-LINK` | `#576b95` | `#7d90a9` | 链接蓝 |
+| `--weui-RED` | `#fa5151` | `#fa5151` | 危险红（删除 / 警告操作） |
+| `--weui-ORANGE` | `#fa9d3b` | `#c87d2f` | 橙 |
+| `--weui-YELLOW` | `#ffc300` | `#cc9c00` | 黄（警示） |
+| `--weui-BLUE` | `#10aeff` | `#10aeff` | 蓝（进行中 / 信息） |
+| `--weui-ORANGERED` / `--weui-REDORANGE` | `#ff6146` | `#ff6146` | 橙红 |
+| `--weui-GREEN` | `#91d300` | `#74a800` | 绿 |
+| `--weui-LIGHTGREEN` | `#95ec69` | `#3eb575` | 浅绿 |
+| `--weui-INDIGO` | `#1485ee` | `#1196ff` | 靛蓝 |
+| `--weui-PURPLE` | `#6467f0` | `#8183ff` | 紫 |
+| `--weui-OVERLAY` | `rgba(0,0,0,.5)` | `rgba(0,0,0,.8)` | 弹窗蒙层 |
+| `--weui-BG-COLOR-ACTIVE` | `#ececec` | `overlay(rgba(255,255,255,.05), #2c2c2c)` | 单元格 / 按钮按下态底色 |
+| `--weui-DIALOG-LINE-COLOR` | `rgba(0,0,0,.1)` | `rgba(255,255,255,.1)` | 弹窗内部分隔线（**确为真实 token**） |
+
+> 品牌绿阶（对勾 / 进度 / 选中态描边与浅底）：`BRAND-100 #07c160`（主）、`BRAND-80 #059a4c`（按下）、`BRAND-90 #06ae56`、`BRAND-BG-100 #2aae67`、`BRAND-BG-90 #259c5c`（浅绿底，alpha .1 使用）。
+
+### 1.3 色阶档（*-100 / -80 / -90 / -120 / -170）
+
+源码为每个功能色提供多档：`-100`=基础色，`-80`=浅色模式按下/加深，`-90`=深色模式按下，`-120`=浅一档，`-170`=浅色 tint（常用于浅底），`-BG-100/-110/-130/-90`=背景填充档。下表为**浅色模式**取值，深色模式同名 token 取值见 `vars/dark.less`。
+
+| 基色 | -100 | -80 | -90 | -120 | -170 | -BG-100 |
+|---|---|---|---|---|---|---|
+| BRAND | `#07c160` | `#059a4c` | `#06ae56` | `#38cd7f` | `#b4ecce` | `#2aae67` |
+| RED | `#fa5151` | `#c84040` | `#e14949` | `#fb7373` | `#fdcaca` | `#cf5148` |
+| BLUE | `#10aeff` | `#0c8bcc` | `#0e9ce6` | `#3fbeff` | `#b7e6ff` | `#48a6e2` |
+| ORANGE | `#fa9d3b` | `#c87d2f` | `#e08c34` | `#fbb062` | `#fde1c3` | `#ea7800` |
+| YELLOW | `#ffc300` | `#cc9c00` | `#e6af00` | `#ffcf33` | `#ffecb2` | `#efb600` |
+| LINK | `#576b95` | `#455577` | `#4e6085` | `#7888aa` | `#ccd2de` | — |
+| GREEN / LIGHTGREEN / INDIGO / PURPLE | （见 `vars/light.less`） | | | | | |
+
+> 用法：主按钮按下态 `BRAND-80`，主操作文字 `BRAND-100`；浅绿底 `BRAND-BG-90` + 文字 `BRAND-100`；危险浅底 `RED-BG-100` + 文字 `RED-100`。
+
+### 1.4 图标 GLYPH
+
+| token | 浅色 | 深色 |
+|---|---|---|
+| `--weui-GLYPH-0` | `rgba(0,0,0,.9)` | `rgba(255,255,255,.8)` |
+| `--weui-GLYPH-1` | `rgba(0,0,0,.55)` | `rgba(255,255,255,.5)` |
+| `--weui-GLYPH-2` | `rgba(0,0,0,.3)` | `rgba(255,255,255,.3)` |
+| `--weui-GLYPH-WHITE-0/1/2/3` | `(.8)/(.5)/(.3)/#fff` | 同上 |
+
+### 1.5 标签 TAG（文字色 + 同色 0.1 alpha 底）
+
+| token | 浅色 | 深色 |
+|---|---|---|
+| `--weui-TAG-TEXT-ORANGE` | `#fa9d3b` | `rgba(250,157,59,.6)` |
+| `--weui-TAG-TEXT-GREEN` | `#06ae56` | `rgba(6,174,86,.6)` |
+| `--weui-TAG-TEXT-BLUE` | `#10aeff` | `rgba(16,174,255,.6)` |
+| `--weui-TAG-TEXT-RED` | `rgba(250,81,81,.6)` | `rgba(250,81,81,.6)` |
+| `--weui-TAG-TEXT-BLACK` | `rgba(0,0,0,.5)` | `rgba(255,255,255,.5)` |
+| `--weui-TAG-BACKGROUND-*` | 对应色 `0.1` alpha 底 | 同上 |
+
+### 1.6 材质 MATERIAL（毛玻璃导航栏 / 工具栏）
+
+| token | 浅色 | 深色 |
+|---|---|---|
+| `MATERIAL-NAVIGATIONBAR` | `rgba(237,237,237,.94)` | `rgba(18,18,18,.9)` |
+| `MATERIAL-TOOLBAR` | `rgba(246,246,246,.82)` | `rgba(35,35,35,.93)` |
+| `MATERIAL-THICK` | `rgba(247,247,247,.8)` | `rgba(34,34,34,.9)` |
+| `MATERIAL-REGULAR` | `rgba(247,247,247,.3)` | `rgba(37,37,37,.6)` |
+| `MATERIAL-THIN` | `rgba(255,255,255,.2)` | `rgba(95,95,95,.4)` |
+| `MATERIAL-ATTACHMENTCOLUMN` | `rgba(245,245,245,.95)` | `rgba(32,32,32,.93)` |
+
+### 1.7 分隔线 / 状态层 / 杂项
+
+| token | 浅色 | 深色 | 用途 |
+|---|---|---|---|
+| `--weui-SEPARATOR-0` | `rgba(0,0,0,.1)` | `rgba(255,255,255,.05)` | 分隔线 |
+| `--weui-SEPARATOR-1` | `rgba(0,0,0,.15)` | `rgba(255,255,255,.15)` | 分隔线（强） |
+| `--weui-STATELAYER-HOVERED` | `rgba(0,0,0,.02)` | `rgba(0,0,0,.02)` | 悬停态层 |
+| `--weui-STATELAYER-PRESSED` | `rgba(0,0,0,.1)` | `rgba(255,255,255,.1)` | 按下态层 |
+| `--weui-STATELAYER-PRESSEDSTRENGTHENED` | `rgba(0,0,0,.2)` | `rgba(255,255,255,.2)` | 强按下态层 |
+| `--weui-BTN-ACTIVE-MASK` | `rgba(0,0,0,.2)` | `rgba(255,255,255,.2)` | 按钮按下蒙版 |
+| `--weui-BTN-DEFAULT-ACTIVE-BG` | `overlay(rgba(0,0,0,.05), #f2f2f2)` | `overlay(rgba(255,255,255,.05), rgba(255,255,255,.08))` | 默认按钮按下底 |
+
+---
+
+## 2. 字号（px / rpx）、字族与行高
+
+| 用途 | px | rpx | 来源（src） |
+|---|---|---|---|
+| 导航标题 / cell 主文 / 按钮 / dialog 标题 / dialog 正文 | 17 | 34 | `weui-button.less` / `weui-cell.less` / `weui-dialog.less` |
+| 分组标题 / tips / 次级 / cell 描述 / 按钮 mini | 14 | 28 | 同上（mini 14px） |
+| cell 描述行（desc） | 12 | 24 | （本项目/WeUI 约定） |
+| **Android 风 dialog 标题** | 22 | 44 | `weui-dialog.less`（对应设计指南 22pt 大标题） |
+| 按钮 medium / mini 高度 | 40 / 32 px | 80 / 64 rpx | `--weui-BTN-HEIGHT-MEDIUM/SMALL` |
+| 徽标 / 角标 | 12–14 | 24–28 | — |
+
+- **字族**：`@weuiFontEN: system-ui, -apple-system, "Helvetica Neue"`；`@weuiFontCN: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei"`；默认 `@weuiFontDefault = system-ui, -apple-system, "Helvetica Neue", sans-serif`。
+- **全局行高**：`reset.less` 设 `line-height: 1.6`；组件内各自覆盖（dialog 1.4、button `(48-24)/17`）。
+- 设计指南列出的 22 / 17 / 15 / 14 / 12 pt 字号见 `design-guidelines.md` §7 令牌表。
+
+---
+
+## 3. 间距（px / rpx）
+
+| 用途 | px | rpx | 来源 |
+|---|---|---|---|
+| 页面左右边距 | 16 | 32 | 约定 |
+| cell 内边距（上下 + 左右，`@weuiCellGapV/H`） | 16 | 32 | `weui-cell.less` |
+| cell 内缩进（`@weuiCellInnerGapH`） | 16 | 32 | `weui-cell.less` |
+| 分组标题 `cells__title` margin-top（`@weuiCellsMarginTop`） | 8 | 16 | `weui-cell.less` |
+| 分组下说明 `cells__tips` margin-top | 8 | 16 | 约定 |
+| 按钮区 `btn-area` 外边距 | 上48 / 左右16 / 下8 | 上96 / 左右32 / 下16 | 约定 |
+| 并排按钮间距（`@weuiBtnDefaultGap`） | 16 | 32 | `weui-button.less` |
+| 单元格间分隔线左缩进 | 16 | 32 | 约定 |
+| 带箭头 cell 的 `ft` 右内边距 | 24 | 48 | 约定 |
+| 图标列与文字间距 | 8–16 | 16–32 | 约定 |
+| **dialog 内距（`@weuiDialogGapWidth`）** | 24 | 48 | `weui-dialog.less` |
+| **dialog 标题上内边距（hd padding-top）** | 32 | 64 | `weui-dialog.less` |
+| **dialog 正文下边距（bd margin-bottom）** | 32 | 64 | `weui-dialog.less` |
+| 上传组件格子（`@weuiUploaderSize`）/ 间距 | 96 / 8 | 192 / 16 | `weui-cell.less` |
+
+---
+
+## 4. 圆角（px / rpx）
+
+| 元素 | px | rpx | 来源 |
+|---|---|---|---|
+| 按钮（默认 / primary / warn，`@weuiBtnBorderRadius`） | 8 | 16 | `weui-button.less` |
+| 按钮 mini | 6 | 12 | 约定 |
+| 按钮 xmini | 4 | 8 | 约定 |
+| 对话框 `.weui-dialog`（`border-radius`） | 12 | 24 | `weui-dialog.less` |
+| 半屏弹窗 / actionsheet 顶部 | 12 | 24 | 约定 |
+| 分组卡片（iOS 风格圆角卡片，见原语 group） | 10pt ≈ 20 | 20 | 约定 |
+| 开关 `.weui-switch` | 跟随原生 | 跟随原生 | — |
+
+> WeUI 原生 `.weui-cells` **无圆角、无阴影**，分组靠 8px(16rpx) 上间距（`@weuiCellsMarginTop`）与灰底区分；若做 iOS「圆角分组卡片」观感，推荐 10pt(20rpx) 圆角（本项目 `.group` 已用 ~20rpx）。
+
+---
+
+## 5. 分隔线（divider）
+
+- 颜色：`--weui-FG-3`（浅）/ `--weui-FG-3`（深）；弹窗内线用 `--weui-DIALOG-LINE-COLOR`。
+- 实现：1px 实线 + `transform: scaleY(.5)` 得到 0.5px 视觉线；cell 内分隔线 `left: 16px(32rpx)` 缩进，**首行 `cell:first-child::before` 不显示**；cells 外框上下通栏。
+- 本项目 `app.wxss` 用兄弟节点 `.cell-divider`（`height:1rpx; background:var(--divider); margin-left:32rpx;`）实现同等效果（见 components.md「原语」）。
+
+---
+
+## 6. 组件尺寸变量（来自 `src/style/base/variable/*.less`）
+
+| 变量 | 值 | 说明 |
+|---|---|---|
+| `--weui-BTN-HEIGHT` | 48px / 96rpx | 默认按钮高 |
+| `--weui-BTN-HEIGHT-MEDIUM` | 40px / 80rpx | medium |
+| `--weui-BTN-HEIGHT-SMALL` | 32px / 64rpx | mini / small |
+| `@weuiCellHeight` | 56px / 112rpx | 单元格高（WeUI 默认，**非**本项目自定义值） |
+| `@weuiSwitchHeight` | 32px / 64rpx | 开关高 |
+| `@weuiUploaderSize` | 96px / 192rpx | 上传预览格 |
+| `@weuiBtnBorderRadius` | 8px / 16rpx | 按钮圆角 |
+| `@weuiDialogGapWidth` | 24px / 48rpx | dialog 内距 |
+| `@weuiCellsMarginTop` | 8px / 16rpx | 分组间距 |
+
+---
+
+## 7. 微信小程序设计指南补充令牌（来源 developers.weixin.qq.com/miniprogram/design）
+
+> 原则层见 `references/design-guidelines.md`；本节只沉淀可量化令牌。视觉细节指南未展开，以 WeUI 为本 skill 权威来源。
+
+| 令牌 | 量化值 | px / rpx | 说明 |
+|---|---|---|---|
+| **字号档** | 22 / 17 / 15 / 14 / 12 pt | 44/34/30/28/24 rpx | 指南列出的常用字号（系统字体）。1pt ≈ 1px(@1x)，故 1pt = 2rpx。22pt 用于大标题（Android dialog 标题即 22px）；17/14/12 与 WeUI 一致；15pt 为过渡次级字号 |
+| **点击热区** | 7–9mm（物理） | ≥ 44px / 88rpx 见方 | 手指精度低，可点项最小热区建议 ≥ 88rpx，避免误操作 |
+| **设计稿基准宽** | 375px（固定）/ 390px（响应式） | 750 / 780 rpx | rpx 换算 1px = 2rpx（以 375 为基准） |
+| **标签分页数** | 2–5 个，建议 ≤4 | — | 超出 5 个微信不推荐 |
+| **小程序菜单** | 右上角固定、深浅 2 套 | — | 微信统一放置、不可自定义；预留右上角空间，避免交互冲突 |
+| **弹出提示时长** | 1.5 秒 | — | 图标型 / 文字型 toast 自动消失；错误提示不宜用图标型 |
+| **加载动画数** | 同页 ≤ 1 个 | — | 长时间载入需提供取消操作 + 进度条 |
+
+---
+
+## 8. care 模式（适老 / 关怀模式）配色档
+
+由 `[data-weui-mode='care']` 切换，配色在 `src/style/base/theme/vars/care-light.less` 与 `care-dark.less`。
+特点：**更高对比度、加深的功能色**，便于可读性。
+
+| token | care-light | 对比 light |
+|---|---|---|
+| `--weui-FG-0` | `#000` | 原为 `rgba(0,0,0,.9)` |
+| `--weui-FG-1` | `rgba(0,0,0,.6)` | 原为 `.55` |
+| `--weui-FG-2` | `rgba(0,0,0,.42)` | 原为 `.3` |
+| `--weui-BRAND-100` | `#018942` | 原为 `#07c160`（更深绿，提升对比） |
+
+> 接入：根节点加 `data-weui-mode='care'`（如微信「关怀模式」）；其余 token 同名自动切换。本项目如需适老档，可参考此机制加 `care` 变量档。
+
+---
+
+## 9. 项目变量映射（qingba 自有 `--*`，已与 WeUI 对齐）
+
+本项目 `app.wxss` 用根节点 `dm-light / dm-dark / dm-auto` 切换自有变量；其取值已对齐 WeUI，可直接当作 WeUI token 的别名使用：
+
+| 项目变量 | 值 | 对应 WeUI |
+|---|---|---|
+| `--bg` | `#ededed` | BG-0 |
+| `--card` | `#ffffff` | BG-2 |
+| `--text` | `rgba(0,0,0,.9)` | FG-0 |
+| `--text2` | `#6b6b6b`（≈ FG-1 的 .55 黑） | FG-1 |
+| `--text3` | `#737373` | FG-1 |
+| `--text4` | `#b2b2b2` | FG-2 |
+| `--divider` | `#e5e5e5` | ≈ FG-3（.1 黑≈#e6e6e6） |
+| `--brand` | `#07c160` | BRAND |
+| `--danger` | `#fa5151` | RED |
+| `--cell-active` | `#f5f5f5` | ≈ BG-COLOR-ACTIVE（浅） |
+
+深色档：`--bg #111`、`--card #1c1c1e`、`--text rgba(255,255,255,.92)`、`--text2 rgba(255,255,255,.78)`、`--text3 rgba(255,255,255,.62)`、`--text4 rgba(255,255,255,.42)`、`--divider rgba(255,255,255,.1)`、`--brand #07c160`、`--danger #FF453A` ——对应 BG-0 / BG-2 / FG-0 / FG-1 / FG-2 / FG-3 / BRAND / RED 深色档。
+
+**约定**：新代码优先用项目 `--*` 变量（已对齐 WeUI），不要硬编码色值；如确需引用 WeUI 原始变量名，使用上表 `--weui-*` 值。

@@ -14,7 +14,7 @@
             <text class="cell-label">{{m.name}}</text>
             <text class="cell-desc">{{m.desc}}</text>
           </view>
-          <text class="cell-check" hidden="{{selectedKey !== m.key}}">✓</text>
+          <text class="cell-check iconfont icon-check" hidden="{{selectedKey !== m.key}}"></text>
         </view>
       </block>
     </view>
