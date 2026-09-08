@@ -108,13 +108,13 @@ page {
 
 .stage-arrow {
   font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
   font-weight: 300;
 }
 
 .stage-desc {
   font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text2);
+  color: var(--text3);
   margin-bottom: 10rpx;
   line-height: 1.5;
 }
@@ -198,11 +198,11 @@ page {
 }
 
 .stage-locked .stage-name {
-  color: var(--text2);
+  color: var(--text3);
 }
 
 .stage-locked .stage-desc {
-  color: var(--text3);
+  color: var(--text4);
 }
 
 .stage-locked .tag {
@@ -210,7 +210,7 @@ page {
 }
 
 .node-locked {
-  background: var(--text3);
+  background: var(--text4);
   color: var(--card);
 }
 

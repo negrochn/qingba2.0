@@ -1,6 +1,6 @@
 /* 我的页卡 - 与设置页同一套微信风格分组列表原语（无 group-title，cell 左侧带图标）
    组件原语：.group（全宽分组 section）+ .group-card（平铺无圆角）+ .cell 基类
-   主题：复用全局 --bg/--card/--text/--text2/--text3/--divider/--cell-active（同名 token）
+   主题：复用全局 --bg/--card/--text/--text3/--text4/--divider/--cell-active（同名 token）
    缩放：保留 --fs 机制（calc(Nrpx * var(--fs,1))），字号随系统档位缩放 */
 
 page {

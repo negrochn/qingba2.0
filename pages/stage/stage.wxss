@@ -1,15 +1,6 @@
-/* ====== 分组标题：复用全局 .group-title（app.wxss），本页不再重复定义；
-   阶段名与积累信息（res-hl-* 高亮）拼在同一行内 ====== */
-.group-title {
-  line-height: 1.4;
-}
-
 /* ====== 关键要点（方案A：紧凑列表）（支持深色模式） ====== */
 .key-point-card {
   background: var(--card);
-  border-radius: 16rpx;
-  padding: 20rpx 24rpx 24rpx;
-  margin: 0 24rpx 24rpx;
   position: relative;
 }
 
@@ -44,7 +35,7 @@
   width: 12rpx;
   height: 12rpx;
   border-radius: 50%;
-  background: var(--text3);
+  background: var(--text4);
   margin-right: 16rpx;
   margin-top: 12rpx;
 }
@@ -70,7 +61,7 @@
   min-width: 0;
   font-size: calc(26rpx * var(--fs, 1));
   line-height: 1.6;
-  color: var(--text2);
+  color: var(--text3);
 }
 
 .kp-item-hi .kp-text {
@@ -98,7 +89,7 @@
 
 /* 资源行里不可打卡的提示（灰色说明行） */
 .r-sub-note {
-  color: var(--text3);
+  color: var(--text4);
   font-style: italic;
 }
 
@@ -120,24 +111,24 @@
 .res-hl-phase {
   color: #fff;
   background: linear-gradient(135deg, #00c25f 0%, #3fd98a 100%);
-  padding: 2rpx 14rpx;
+  /* padding: 2rpx 14rpx; */
   border-radius: 10rpx;
   font-size: calc(26rpx * var(--fs, 1));
-  margin: 0 4rpx;
+  /* margin: 0 4rpx; */
   display: inline-block;
-  vertical-align: 2rpx;
+  /* vertical-align: 2rpx; */
 }
 
 .res-hl-sep {
-  color: var(--text3);
+  color: var(--text4);
 }
 
 .res-hl-paren {
-  color: var(--text3);
+  color: var(--text4);
 }
 
 .res-hl-text {
-  color: var(--text2);
+  color: var(--text3);
 }
 
 .rg-head {
@@ -221,7 +212,7 @@
 
 /* 默认 */
 .rg-dot-default { background: #888888; box-shadow: 0 0 8rpx rgba(136,136,136,0.5); }
-.rg-label-default { color: var(--text3); }
+.rg-label-default { color: var(--text4); }
 
 .rg-label {
   flex: 1;
@@ -240,7 +231,7 @@
 
 .rg-count {
   font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
 }
 
 /* 分组进度摘要 */
@@ -256,12 +247,12 @@
 }
 
 .rg-progress-empty {
-  color: var(--text3);
+  color: var(--text4);
   background: var(--cell-active);
 }
 
 .rg-progress-locked {
-  color: var(--text3);
+  color: var(--text4);
   background: var(--cell-active);
 }
 
@@ -288,12 +279,12 @@
 }
 
 .rg-collapsed-locked {
-  color: var(--text3) !important;
+  color: var(--text4) !important;
   font-style: italic;
 }
 
 .r-sub-locked {
-  color: var(--text3);
+  color: var(--text4);
   font-size: calc(26rpx * var(--fs, 1));
 }
 
@@ -303,17 +294,17 @@
 
 .rg-progress-sep {
   margin: 0 6rpx;
-  color: var(--text3);
+  color: var(--text4);
 }
 
 .rg-progress-read {
-  color: var(--text2);
+  color: var(--text3);
 }
 
 /* 展开/折叠箭头 */
 .rg-arrow {
   font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
   font-weight: 300;
   transition: transform 0.2s;
 }
@@ -336,12 +327,12 @@
 
 .rg-collapsed-hint {
   font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
   text-align: center;
 }
 
 .rg-collapsed-note {
-  color: var(--text3);
+  color: var(--text4);
   font-style: italic;
 }
 
@@ -356,9 +347,9 @@
 .r-row {
   display: flex;
   align-items: center;
-  padding: 22rpx 20rpx;
+  padding: 24rpx 32rpx;
   border-bottom: 1rpx solid var(--divider);
-  min-height: 92rpx;
+  min-height: 144rpx;
   box-sizing: border-box;
 }
 
@@ -379,17 +370,19 @@
 }
 
 .r-no {
-  width: 52rpx;
-  height: 52rpx;
-  line-height: 52rpx;
-  text-align: center;
-  border-radius: 14rpx;
+  flex-shrink: 0;
+  margin-right: 32rpx;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 12rpx;
   background: rgba(7, 193, 96, 0.10);
   color: #07C160;
   font-size: calc(26rpx * var(--fs, 1));
-  font-weight: 600;
-  margin-right: 18rpx;
-  flex-shrink: 0;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .r-no-char {
@@ -418,7 +411,7 @@
 }
 
 .r-sub-hint {
-  color: var(--text3);
+  color: var(--text4);
 }
 
 .r-right {
@@ -468,7 +461,7 @@
 }
 
 .r-arrow-gray {
-  color: var(--text3);
+  color: var(--text4);
   font-size: 58rpx;
 }
 
@@ -543,12 +536,12 @@
   line-height: 50rpx;
   text-align: center;
   font-size: 53rpx;
-  color: var(--text3);
+  color: var(--text4);
   border-radius: 50%;
 }
 .sheet-close:active {
   background: var(--cell-active);
-  color: var(--text2);
+  color: var(--text3);
 }
 
 /* 原语 13 .form-card（表单卡片：圆角白底，水平 padding 由 card 提供） */
@@ -593,7 +586,7 @@
 .form-unit {
   flex-shrink: 0;
   font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
   margin-left: 8rpx;
 }
 
@@ -643,7 +636,7 @@
 /* 原语 1 .cell-arrow（已读完行的 chevron） */
 .form-row .cell-arrow {
   font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
   line-height: 1;
   margin-left: 12rpx;
   flex-shrink: 0;
@@ -680,7 +673,7 @@
 .promote-percent {
   margin-left: 16rpx;
   font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text2);
+  color: var(--text3);
   width: 88rpx;
   text-align: right;
   flex-shrink: 0;
@@ -689,7 +682,7 @@
 .promote-meta {
   margin-top: 12rpx;
   font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
   margin-bottom: 24rpx;
 }
 
@@ -712,7 +705,7 @@
 }
 
 .promote-btn-disabled {
-  color: var(--text3);
+  color: var(--text4);
   background: var(--cell-active);
 }
 
@@ -778,13 +771,13 @@
   line-height: 50rpx;
   text-align: center;
   font-size: 53rpx;
-  color: var(--text3);
+  color: var(--text4);
   border-radius: 50%;
 }
 
 .pm-close:active {
   background: var(--cell-active);
-  color: var(--text2);
+  color: var(--text3);
 }
 
 .pm-stage-info {
@@ -802,7 +795,7 @@
 
 .pm-stage-tip {
   font-size: calc(29rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
   line-height: 1.5;
 }
 
@@ -863,7 +856,7 @@
 .pm-form-unit {
   flex-shrink: 0;
   font-size: calc(32rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
 }
 
 .pm-quick-row {
@@ -913,7 +906,7 @@
 
 .pm-btn-cancel {
   background: var(--cell-active);
-  color: var(--text2);
+  color: var(--text3);
   margin-right: 4%;
 }
 
@@ -958,8 +951,8 @@
 
 .dm-dark .rg-progress { color: #95de64; background: rgba(149, 222, 100, 0.12); }
 .dm-dark .rg-progress-val { color: #95de64; }
-.dm-dark .rg-progress-empty { color: var(--text3); background: var(--cell-active); }
-.dm-dark .rg-progress-locked { color: var(--text3); background: var(--cell-active); }
+.dm-dark .rg-progress-empty { color: var(--text4); background: var(--cell-active); }
+.dm-dark .rg-progress-locked { color: var(--text4); background: var(--cell-active); }
 
 .dm-dark .r-row-done {
   background: linear-gradient(90deg, #1e2a22 0%, #1c1c1e 55%);
@@ -969,7 +962,7 @@
 
 .dm-dark .r-no { color: #52e070; background: rgba(82, 196, 26, 0.22); }
 .dm-dark .r-no-char { background: linear-gradient(135deg, #4a8fd9 0%, #6eaaf0 100%); }
-.dm-dark .r-sub { color: var(--text3); }
+.dm-dark .r-sub { color: var(--text4); }
 
 .dm-dark .lock-bar {
   background: linear-gradient(135deg, #2a2416, #262014);
@@ -1019,8 +1012,8 @@
 
   .dm-auto .rg-progress { color: #95de64; background: rgba(149, 222, 100, 0.12); }
   .dm-auto .rg-progress-val { color: #95de64; }
-  .dm-auto .rg-progress-empty { color: var(--text3); background: var(--cell-active); }
-  .dm-auto .rg-progress-locked { color: var(--text3); background: var(--cell-active); }
+  .dm-auto .rg-progress-empty { color: var(--text4); background: var(--cell-active); }
+  .dm-auto .rg-progress-locked { color: var(--text4); background: var(--cell-active); }
 
   .dm-auto .r-row-done {
     background: linear-gradient(90deg, #1e2a22 0%, #1c1c1e 55%);
@@ -1030,7 +1023,7 @@
 
   .dm-auto .r-no { color: #52e070; background: rgba(82, 196, 26, 0.22); }
   .dm-auto .r-no-char { background: linear-gradient(135deg, #4a8fd9 0%, #6eaaf0 100%); }
-  .dm-auto .r-sub { color: var(--text3); }
+  .dm-auto .r-sub { color: var(--text4); }
 
   .dm-auto .lock-bar {
     background: linear-gradient(135deg, #2a2416, #262014);

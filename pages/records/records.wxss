@@ -24,7 +24,7 @@ page {
 
 .overview-year {
   font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
 }
 
 .overview-picker {
@@ -38,13 +38,13 @@ page {
 
 .overview-month {
   font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text2);
+  color: var(--text3);
   font-weight: 500;
 }
 
 .overview-arrow {
   font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
   transition: transform 0.2s;
 }
 
@@ -156,7 +156,7 @@ page {
 .record-date {
   flex-shrink: 0;
   font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
 }
 
 /* 第二行 */
@@ -199,7 +199,7 @@ page {
 .tag-group-fun_extensions { color: #389e0d; background: #f0ffe0; }
 .tag-group-science_extensions { color: #ad6800; background: #fffbe6; }
 .tag-group-fusion_apps { color: #531dab; background: #f5f0ff; }
-.tag-group-default { color: var(--text3); background: var(--cell-active); }
+.tag-group-default { color: var(--text4); background: var(--cell-active); }
 
 .record-remark {
   font-size: calc(26rpx * var(--fs, 1));
@@ -216,7 +216,7 @@ page {
   flex-shrink: 0;
   font-size: calc(34rpx * var(--fs, 1));
   font-weight: 600;
-  color: var(--text2);
+  color: var(--text3);
   font-family: 'DIN Alternate', -apple-system, Helvetica, Arial, sans-serif;
   line-height: 1;
   align-self: flex-end;
@@ -237,14 +237,14 @@ page {
 
 .empty-text {
   font-size: calc(30rpx * var(--fs, 1));
-  color: var(--text2);
+  color: var(--text3);
   font-weight: 500;
   margin-bottom: 12rpx;
 }
 
 .empty-hint {
   font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
 }
 
 /* ===== 月份选择器弹层（与首页一致） ===== */
@@ -318,7 +318,7 @@ page {
 
 .mp-cancel {
   background: var(--cell-active);
-  color: var(--text2);
+  color: var(--text3);
 }
 
 .mp-ok {

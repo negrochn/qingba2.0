@@ -16,13 +16,13 @@ page {
 
 .section-title {
   font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
   line-height: 1.4;
 }
 
 .section-count {
   font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
   line-height: 1.4;
 }
 
@@ -118,7 +118,7 @@ page {
 
 .today-label {
   font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
 }
 
 .today-num {
@@ -129,7 +129,7 @@ page {
 }
 
 .today-empty {
-  color: var(--text3);
+  color: var(--text4);
   font-weight: 400;
   font-size: calc(26rpx * var(--fs, 1));
 }
@@ -194,7 +194,7 @@ page {
 
 .sg-label {
   font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
   margin-bottom: 12rpx;
 }
 
@@ -215,7 +215,7 @@ page {
 .sg-unit {
   font-size: calc(22rpx * var(--fs, 1));
   font-weight: 400;
-  color: var(--text3);
+  color: var(--text4);
 }
 
 /* ===== 分组时长分布（纯 CSS 条形图） ===== */
@@ -248,7 +248,7 @@ page {
   flex-shrink: 0;
   width: 150rpx;
   font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text2);
+  color: var(--text3);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -274,7 +274,7 @@ page {
   text-align: right;
   font-size: calc(24rpx * var(--fs, 1));
   font-weight: 400;
-  color: var(--text2);
+  color: var(--text3);
   font-family: "DIN Alternate", -apple-system, Helvetica, Arial, sans-serif;
 }
 
@@ -311,7 +311,7 @@ page {
 .ob-desc {
   text-align: center;
   font-size: calc(28rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
   line-height: 1.8;
   margin-bottom: 48rpx;
 }
@@ -346,13 +346,13 @@ page {
 
 .ob-form-value {
   font-size: calc(30rpx * var(--fs, 1));
-  color: var(--text2);
+  color: var(--text3);
 }
 
 .ob-hint {
   padding: 16rpx 32rpx 24rpx;
   font-size: calc(22rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
   line-height: 1.6;
 }
 

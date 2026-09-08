@@ -43,7 +43,7 @@ page {
 
 .overview-arrow {
   font-size: calc(20rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
 }
 
 /* ===== 概览 ===== */
@@ -72,7 +72,7 @@ page {
 
 .overview-cap {
   font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
   margin-top: 12rpx;
 }
 
@@ -87,7 +87,7 @@ page {
 .seg-item {
   padding: 8rpx 24rpx;
   font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
   border-radius: 16rpx;
 }
 
@@ -115,7 +115,7 @@ page {
   flex-shrink: 0;
   width: 150rpx;
   font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text2);
+  color: var(--text3);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -140,7 +140,7 @@ page {
   width: 96rpx;
   text-align: right;
   font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
   font-family: 'DIN Alternate', -apple-system, Helvetica, Arial, sans-serif;
 }
 
@@ -193,7 +193,7 @@ page {
 .read-count {
   flex-shrink: 0;
   font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text2);
+  color: var(--text3);
 }
 
 /* ===== 空态 ===== */
@@ -201,5 +201,5 @@ page {
   padding: 40rpx;
   text-align: center;
   font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
 }

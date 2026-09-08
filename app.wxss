@@ -7,8 +7,8 @@ page {
   --card: #ffffff;
   --card2: #f7f8fa;
   --text: #1a1a1a;
-  --text2: #737373;
-  --text3: #b2b2b2;
+  --text3: #737373;
+  --text4: #b2b2b2;
   --divider: #ebedf0;
   --brand: #00c25f;
   --danger: #FF3B30;               /* iOS systemRed light */
@@ -41,8 +41,8 @@ view, text {
   --card: #ffffff;
   --card2: #f7f8fa;
   --text: #1a1a1a;
-  --text2: #737373;
-  --text3: #b2b2b2;
+  --text3: #737373;
+  --text4: #b2b2b2;
   --divider: #ebedf0;
   --brand: #00c25f;
   --danger: #FF3B30;               /* iOS systemRed light */
@@ -55,8 +55,8 @@ view, text {
   --card: #1c1c1e;
   --card2: #232326;
   --text: rgba(255, 255, 255, 0.92);
-  --text2: rgba(255, 255, 255, 0.62);
-  --text3: rgba(255, 255, 255, 0.42);
+  --text3: rgba(255, 255, 255, 0.62);
+  --text4: rgba(255, 255, 255, 0.42);
   --divider: rgba(255, 255, 255, 0.1);
   --brand: #33d17a;
   --danger: #FF453A;               /* iOS systemRed dark */
@@ -74,8 +74,8 @@ view, text {
     --card: #1c1c1e;
     --card2: #232326;
     --text: rgba(255, 255, 255, 0.92);
-    --text2: rgba(255, 255, 255, 0.62);
-    --text3: rgba(255, 255, 255, 0.42);
+    --text3: rgba(255, 255, 255, 0.62);
+    --text4: rgba(255, 255, 255, 0.42);
     --divider: rgba(255, 255, 255, 0.1);
     --brand: #33d17a;
     --danger: #FF453A;               /* iOS systemRed dark */
@@ -285,7 +285,7 @@ view, text {
 .group-title {
   padding: 32rpx 32px 16rpx 32rpx;   /* group-title-pad：上32 右32 下16 左32（右为 px） */
   font-size: calc(26rpx * var(--fs, 1));   /* group-title 26rpx */
-  color: var(--text3);
+  color: var(--text4);
   line-height: 1;
 }
 .group-card {
@@ -317,7 +317,7 @@ view, text {
 }
 .cell-desc {
   font-size: calc(26rpx * var(--fs, 1));   /* 原语：desc 26rpx */
-  color: var(--text3);
+  color: var(--text4);
   line-height: 1.4;
   margin-top: 4rpx;
 }
@@ -331,15 +331,15 @@ view, text {
 }
 .cell-value {
   font-size: calc(34rpx * var(--fs, 1));   /* 原语：value 34rpx */
-  color: var(--text2);
+  color: var(--text3);
 }
 .cell-value.placeholder {
-  color: var(--text2);
+  color: var(--text3);
   opacity: 0.6;
 }
 .cell-arrow {                              /* spec 对应 .cell-chevron；箭头改用 iconfont 的 icon-right 图标（见 .icon-right） */
   font-size: calc(34rpx * var(--fs, 1)) !important;   /* !important 覆盖 .iconfont 的 32rpx 默认图标字号，保持与 value 同高 */
-  color: var(--text3);
+  color: var(--text4);
   line-height: 1;
   margin-left: 12rpx;
 }
@@ -379,7 +379,7 @@ view, text {
 .cell-empty {
   padding: 48rpx 32rpx;
   font-size: calc(28rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
   text-align: center;
 }
 

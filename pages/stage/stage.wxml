@@ -1,15 +1,8 @@
 <view class="container {{fontClass}} {{darkClass}}" wx:if="{{stage}}">
   <!-- 阶段资源（核心：打卡）放在上半区，突出入口 -->
-  <block wx:if="{{resourceGroups.length}}">
+  <view wx:if="{{resourceGroups.length}}" class="group">
     <view class="group-title">
-      {{stage.stage_name}}
-      <text class="res-hl-text">积累</text>
-      <text class="res-hl-bold">{{stage.vocabulary_target}}</text>
-      <text class="res-hl-paren">（</text>
-      <text class="res-hl-time">{{stage.time_investment}}</text>
-      <text class="res-hl-sep">｜</text>
-      <text class="res-hl-phase">{{stage.target_phase}}</text>
-      <text class="res-hl-paren">）</text>
+      {{stage.stage_name + '：积累' + stage.vocabulary_target + '（' + stage.time_investment + ' | ' + stage.target_phase + '）'}}
     </view>
     <view class="res-wrap">
     <view class="res-list" wx:for="{{resourceGroups}}" wx:for-item="g" wx:for-index="gidx" wx:key="key">
@@ -68,10 +61,10 @@
       </view>
     </view>
     </view>
-  </block>
+  </view>
 
   <!-- 关键要点（移动到底部） -->
-  <block wx:if="{{stage.key_points.length}}">
+  <view wx:if="{{stage.key_points.length}}" class="group">
     <view class="group-title">关键要点</view>
     <view class="card key-point-card">
     <!-- 方案A：紧凑列表 -->
@@ -85,11 +78,11 @@
       </view>
     </view>
     </view>
-  </block>
+  </view>
 
   <!-- 晋级卡片（仅当前常规阶段展示） -->
-  <block wx:if="{{canPromote}}">
-    <view class="group-title">{{isLastStage ? '阶段达成' : '阶段晋级'}}</view>
+  <view wx:if="{{canPromote}}" class="group">
+    <view class="group-title">阶段达成</view>
     <view class="card promote-card">
       <view class="promote-title mb-16">{{stage.stage_name}} 阶段进度</view>
       <view class="promote-bar-row">
@@ -111,11 +104,11 @@
         class="promote-btn {{promoteEnabled ? 'promote-btn-active' : 'promote-btn-disabled'}}"
         bindtap="onPromoteTap"
       >
-        <text wx:if="{{promoteEnabled}}">{{isLastStage ? '完成阶段' : '申请晋级'}}</text>
-        <text wx:else>{{isLastStage ? '时间不足，暂不可完成' : '时间不足，暂不可晋级'}}</text>
+        <text wx:if="{{promoteEnabled}}">完成阶段</text>
+        <text wx:else>时间不足，暂不可完成</text>
       </view>
     </view>
-  </block>
+  </view>
 </view>
 
 <!-- 小小优趣测试结果弹窗 -->

@@ -28,7 +28,7 @@ page {
 
 .chapter-title {
   font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text4);
   line-height: 1.4;
 }
 
@@ -45,7 +45,7 @@ page {
 .para {
   font-size: calc(28rpx * var(--fs, 1));
   line-height: 1.65;
-  color: var(--text2);
+  color: var(--text3);
   margin-bottom: 24rpx;
   text-align: justify;
 }
@@ -70,7 +70,7 @@ page {
 .bullet {
   font-size: calc(28rpx * var(--fs, 1));
   line-height: 1.8;
-  color: var(--text2);
+  color: var(--text3);
 }
 
 /* ===== 阶段块（卡片风格） ===== */
@@ -94,7 +94,7 @@ page {
 .stage-line {
   font-size: calc(26rpx * var(--fs, 1));
   line-height: 1.6;
-  color: var(--text2);
+  color: var(--text3);
   margin-bottom: 6rpx;
 }
 
@@ -130,7 +130,7 @@ page {
 .method-op {
   font-size: calc(26rpx * var(--fs, 1));
   line-height: 1.65;
-  color: var(--text2);
+  color: var(--text3);
 }
 
 /* ===== 注意点块 ===== */
@@ -152,7 +152,7 @@ page {
 .warn-item {
   font-size: calc(26rpx * var(--fs, 1));
   line-height: 1.65;
-  color: var(--text2);
+  color: var(--text3);
   margin-bottom: 6rpx;
 }
 
@@ -183,7 +183,7 @@ page {
 .para-sm {
   font-size: calc(26rpx * var(--fs, 1));
   line-height: 1.6;
-  color: var(--text2);
+  color: var(--text3);
   margin-bottom: 10rpx;
 }
 
