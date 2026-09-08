@@ -4,14 +4,10 @@ page {
   background: var(--bg);
 }
 
-.container {
-  padding: 16rpx 0 calc(env(safe-area-inset-bottom) + 40rpx);
-}
-
 /* 卡片内第一行（分段控件右对齐） */
 .card-head {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   margin-bottom: 20rpx;
 }
 
@@ -26,7 +22,7 @@ page {
 /* ===== 顶部阶段选择（独立于所有模块） ===== */
 .section-head {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   padding: 8rpx 32rpx 12rpx;
 }
 
@@ -40,7 +36,7 @@ page {
 }
 
 .stage-picker-label {
-  font-size: calc(28rpx * var(--fs, 1));
+  font-size: calc(26rpx * var(--fs, 1));
   color: var(--text);
   font-weight: 500;
 }

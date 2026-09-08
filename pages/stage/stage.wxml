@@ -224,7 +224,7 @@
         <view class="form-label">已读完</view>
         <view class="form-right">
           <text class="form-read-count">{{currentReadCount}} 次</text>
-          <text class="cell-arrow">›</text>
+          <text class="cell-arrow iconfont icon-right"></text>
         </view>
       </view>
     </view>

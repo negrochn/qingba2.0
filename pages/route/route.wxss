@@ -4,18 +4,9 @@ page {
   background: var(--bg);
 }
 
-.container {
-  padding: 24rpx 24rpx 48rpx;
-  background: var(--bg);
-  min-height: 100vh;
-  box-sizing: border-box;
-}
-
 /* 时间线容器 */
 .timeline {
   background: var(--card);
-  border-radius: 16rpx;
-  padding: 8rpx 0;
   overflow: hidden;
 }
 
@@ -58,7 +49,7 @@ page {
 }
 
 .node-num {
-  font-size: calc(22rpx * var(--fs, 1));
+  font-size: calc(26rpx * var(--fs, 1));
   color: #ffffff;
   font-weight: 500;
 }
@@ -100,14 +91,14 @@ page {
 }
 
 .stage-name {
-  font-size: calc(30rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1));
   font-weight: 600;
   color: var(--text);
   line-height: 1.4;
 }
 
 .stage-phase {
-  font-size: calc(20rpx * var(--fs, 1));
+  font-size: calc(26rpx * var(--fs, 1));
   color: #576b95;
   background: #edf0f5;
   padding: 2rpx 12rpx;
@@ -116,13 +107,13 @@ page {
 }
 
 .stage-arrow {
-  font-size: calc(32rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1));
   color: var(--text3);
   font-weight: 300;
 }
 
 .stage-desc {
-  font-size: calc(24rpx * var(--fs, 1));
+  font-size: calc(26rpx * var(--fs, 1));
   color: var(--text2);
   margin-bottom: 10rpx;
   line-height: 1.5;
@@ -139,7 +130,7 @@ page {
 }
 
 .tag {
-  font-size: calc(20rpx * var(--fs, 1));
+  font-size: calc(26rpx * var(--fs, 1));
   padding: 4rpx 12rpx;
   border-radius: 6rpx;
   font-weight: 400;
@@ -192,7 +183,7 @@ page {
 }
 
 .node-icon {
-  font-size: calc(20rpx * var(--fs, 1));
+  font-size: calc(26rpx * var(--fs, 1));
   font-weight: 500;
   color: #ffffff;
 }
@@ -228,7 +219,7 @@ page {
 }
 
 .stage-lock-tag {
-  font-size: calc(18rpx * var(--fs, 1));
+  font-size: calc(26rpx * var(--fs, 1));
   color: #8c6d1f;
   background: #fffbe6;
   border-radius: 6rpx;
@@ -237,7 +228,7 @@ page {
 }
 
 .stage-done-tag {
-  font-size: calc(18rpx * var(--fs, 1));
+  font-size: calc(26rpx * var(--fs, 1));
   color: #389e0d;
   background: #f6fffa;
   border-radius: 6rpx;

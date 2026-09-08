@@ -4,10 +4,6 @@ page {
   background: var(--bg);
 }
 
-.container {
-  padding: 16rpx 0 calc(env(safe-area-inset-bottom) + 40rpx);
-}
-
 /* ===== 顶部 banner（微信风格渐变卡片） ===== */
 .page-banner {
   padding: 36rpx 24rpx 40rpx;

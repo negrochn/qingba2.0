@@ -4,10 +4,6 @@ page {
   background: var(--bg);
 }
 
-.container {
-  padding: 16rpx 0 calc(env(safe-area-inset-bottom) + 40rpx);
-}
-
 /* 分组样式已合入全局 app.wxss（原语 1 .group / .group-title / .group-card） */
 
 /* ===== 自定义 toggle（iOS 胶囊开关，深浅模式样式一致） ===== */

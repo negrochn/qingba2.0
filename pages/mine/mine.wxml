@@ -7,7 +7,7 @@
         <text class="cell-icon">📚</text>
         <view class="cell-label">关于庆爸2.0</view>
         <view class="cell-right">
-          <text class="cell-arrow">›</text>
+          <text class="cell-arrow iconfont icon-right"></text>
         </view>
       </view>
     </view>
@@ -20,7 +20,7 @@
         <text class="cell-icon">📅</text>
         <view class="cell-label">打卡记录</view>
         <view class="cell-right">
-          <text class="cell-arrow">›</text>
+          <text class="cell-arrow iconfont icon-right"></text>
         </view>
       </view>
 
@@ -30,7 +30,7 @@
         <text class="cell-icon">📊</text>
         <view class="cell-label">数据统计</view>
         <view class="cell-right">
-          <text class="cell-arrow">›</text>
+          <text class="cell-arrow iconfont icon-right"></text>
         </view>
       </view>
     </view>
@@ -43,7 +43,7 @@
         <text class="cell-icon">⚙️</text>
         <view class="cell-label">设置</view>
         <view class="cell-right">
-          <text class="cell-arrow">›</text>
+          <text class="cell-arrow iconfont icon-right"></text>
         </view>
       </view>
     </view>

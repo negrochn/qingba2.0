@@ -94,12 +94,11 @@ view, text {
   font-size: calc(28rpx * var(--fs, 1));
 }
 
+/* 公共容器：所有页面统一使用，后续调整容器留白只改此处 */
 .container {
-  padding: 24rpx;
-  font-size: calc(28rpx * var(--fs, 1));
-  min-height: 100vh;
-  background: var(--bg);
+  padding: 0 0 calc(env(safe-area-inset-bottom) + 32rpx);
   box-sizing: border-box;
+  min-height: 100vh;
 }
 
 .card {
@@ -327,8 +326,8 @@ view, text {
   color: var(--text2);
   opacity: 0.6;
 }
-.cell-arrow {                              /* spec 对应 .cell-chevron */
-  font-size: calc(34rpx * var(--fs, 1));
+.cell-arrow {                              /* spec 对应 .cell-chevron；箭头改用 iconfont 的 icon-right 图标（见 .icon-right） */
+  font-size: calc(34rpx * var(--fs, 1)) !important;   /* !important 覆盖 .iconfont 的 32rpx 默认图标字号，保持与 value 同高 */
   color: var(--text3);
   line-height: 1;
   margin-left: 12rpx;
@@ -379,3 +378,26 @@ view, text {
   background: var(--divider);
   margin-left: 32rpx;
 }
+
+/* ===== iconfont（Project id 5231154）
+   维护说明：后续在 iconfont.cn 增删图标后，重新下载并把 iconfont.ttf / iconfont.woff
+   覆盖到 assets/fonts/ 目录，运行 scripts/gen_iconfont_base64.ps1 生成新的 data URI，
+   替换 app.js 中 iconfontDataUri 常量，再按 iconfont.css 更新下方 .icon-* 类的 content 编码。
+   字体不再走 WXSS @font-face（本地路径会被开发者工具拦截），改由 app.js 的
+   wx.loadFontFace 在运行时以 base64 注册 'iconfont' 字族。 */
+
+.iconfont {
+  font-family: "iconfont" !important;
+  font-size: 32rpx;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-check:before { content: "\e645"; }
+.icon-right:before { content: "\e6a3"; }
+.icon-homefill:before { content: "\e6bb"; }
+.icon-lock:before { content: "\e6c0"; }
+.icon-unlock:before { content: "\e6c2"; }
+.icon-myfill:before { content: "\e78c"; }
+.icon-circlefill:before { content: "\e7b0"; }

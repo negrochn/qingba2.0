@@ -26,10 +26,15 @@
 - **`.group` 分组 section 家族统一并合入全局 `app.wxss`（原语 1）**：`settings` / `mine` / `darkMode` / `stagePicker` / `importPicker` / `fontPicker` / `clearPicker` 七页的 `.group-title` / `.group-card` 对齐为同一份定义迁到全局 `app.wxss`（全宽平铺 `margin:0` + `border-radius:0` + `overflow:hidden`，标题带 `padding:16rpx 32rpx` / `26rpx` / `text3`），各页删除重复块并留指向注释；`.group` 段间 `margin-bottom` 按需求不设置。`stats` / `home` 因采用圆角卡片（图表 / 统计）保留本地 `.group-card` 覆盖，不与列表 section 混用
 - **skill 新增原语 16 `.btn` 按钮族**：基于 WeChat 转账说明 / 评论 / 确认弹窗等截图，沉淀 `.btn` 基类（高度 88rpx = 44pt iOS、矩形圆角 8rpx）+ 4 变体（`.btn-primary` 品牌绿（项目 `var(--brand)` `#00c25f`）主操作 / `.btn-secondary` 灰底次操作 / `.btn-danger` iOS systemRed / `.btn-disabled` iOS systemGray3）`.btn-block` 全宽修饰 + `.btn-row` 内容区并排 / `.btn-bar` 整页底部带 `safe-area-inset-bottom` 布局；design-tokens.md 新增 `btn-h` / `btn-pad-x` / `btn-fs` / `btn-gap` / `radius-btn` / `radius-pill` / `btn-disabled-bg` token；约定"主左 / 次右"反 WeChat 习惯统一为"主右 / 次左"
 - **首页移除"今日打卡"明细模块**：删除首页今日打卡列表（含左滑删除手势）、对应 `home.wxss` 样式段（`.record-*` / `.swipe-*` / `.tag-group-*`）与 `home.js` 相关逻辑（数据聚合、`touchstart` / `touchmove` / `touchend` 手势、`deleteRecord` 删除方法）。顶部"今日状态条"（今日时长 · 打卡次数）保留；打卡记录页（records）为独立副本不受影响
-- **间距工具类与 tabBar 配色微调**：`app.wxss` 新增公共 `.mb-16` 间距工具类，替代 `about` / `records` / `stats` 等处本地 `margin-bottom`；tabBar 背景色由纯白 `#ffffff` 调整为 `#f5f5f5`（`app.json` / `app.js` 同步），视觉更柔和
+- **间距工具类与 tabBar 配色微调**：`app.wxss` 新增公共 `.mb-16` 间距工具类，替代 `about` / `records` / `stats` 等处本地 `margin-bottom`；tabBar 背景色由纯白 `#ffffff` 调整为 `#f5f5f5`、未选中文字色由 `#999999` 调深为 `#191919`（`app.json` / `app.js` 同步），视觉更柔和
+
+- **`.container` 容器样式收敛到公共 `app.wxss`**：各页 `.container` 的 `padding` / `box-sizing` / `min-height:100vh` / `safe-area-inset-bottom` 统一为一份迁到全局 `app.wxss`，各页删除重复定义，容器间距与底部安全区一致
+- **cell 右侧箭头改用 iconfont 图标**：列表项右侧 chevron 由文本 `›` 改为统一调用 `iconfont` 的 `icon-right`（`\e6a3`）图标，箭头与右侧值对齐并随字号变量 `--fs` 缩放
 
 ### 修复
 
+- **iconfont 字体加载修正**：原 `app.wxss` 的 `@font-face` 使用本地相对路径，在开发者工具 / 真机被强制改写（`-do-not-use-local-path-`）导致字体加载失败、图标不渲染；改为 `app.js` 在 `onLaunch` 通过 `wx.loadFontFace` 以 base64 data URI 注册 `iconfont` 字族（内联至 `app.js` 的 `iconfontDataUri` 常量），不再依赖 WXSS 本地字体路径；新增 `scripts/gen_iconfont_base64.ps1` 供更新图标后重新生成 data URI，`assets/fonts` 字体源文件保留
+- **`wx.getSystemInfoSync` 弃用告警修复**：`app.js` 读取系统深色偏好由原已弃用的 `wx.getSystemInfoSync` 改为 `wx.getAppBaseInfo`（旧基础库回退），消除弃用告警
 - `.gitignore` 中文注释存在 GBK 误编码残留，在 GitHub 上显示为乱码；已以 UTF-8 无 BOM 重新保存，忽略规则内容不变
 
 ## [2.3.1] - 2026-09-03

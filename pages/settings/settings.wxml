@@ -8,7 +8,7 @@
         <view class="cell-label">字体大小</view>
         <view class="cell-right">
           <text class="cell-value">{{fontLevelText}}</text>
-          <text class="cell-arrow">›</text>
+          <text class="cell-arrow iconfont icon-right"></text>
         </view>
       </view>
 
@@ -18,7 +18,7 @@
         <view class="cell-label">深色模式</view>
         <view class="cell-right">
           <text class="cell-value">{{darkModeText}}</text>
-          <text class="cell-arrow">›</text>
+          <text class="cell-arrow iconfont icon-right"></text>
         </view>
       </view>
     </view>
@@ -46,7 +46,7 @@
         <view class="cell-label">导出备份</view>
         <view class="cell-right">
           <text class="cell-value">word</text>
-          <text class="cell-arrow">›</text>
+          <text class="cell-arrow iconfont icon-right"></text>
         </view>
       </view>
 
@@ -56,7 +56,7 @@
         <view class="cell-label">导入备份</view>
         <view class="cell-right">
           <text class="cell-value">支持 txt/json/word</text>
-          <text class="cell-arrow">›</text>
+          <text class="cell-arrow iconfont icon-right"></text>
         </view>
       </view>
 
@@ -65,7 +65,7 @@
       <view class="cell cell--single cell-danger" bindtap="goClearPicker">
         <view class="cell-label">清空数据</view>
         <view class="cell-right">
-          <text class="cell-arrow">›</text>
+          <text class="cell-arrow iconfont icon-right"></text>
         </view>
       </view>
     </view>
@@ -79,7 +79,7 @@
         <view class="cell-label">当前阶段</view>
         <view class="cell-right">
           <text class="cell-value {{currentStage ? '' : 'placeholder'}}">{{currentStageDisplay || '未设置'}}</text>
-          <text class="cell-arrow">›</text>
+          <text class="cell-arrow iconfont icon-right"></text>
         </view>
       </view>
 
@@ -89,7 +89,7 @@
         <view class="cell-label">压力测试</view>
         <view class="cell-right">
           <text class="cell-value">每阶段约 80-90 小时</text>
-          <text class="cell-arrow">›</text>
+          <text class="cell-arrow iconfont icon-right"></text>
         </view>
       </view>
     </view>
