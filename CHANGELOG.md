@@ -32,6 +32,7 @@
 - **`.container` 容器样式收敛到公共 `app.wxss`**：各页 `.container` 的 `padding` / `box-sizing` / `min-height:100vh` / `safe-area-inset-bottom` 统一为一份迁到全局 `app.wxss`，各页删除重复定义，容器间距与底部安全区一致
 - **cell 右侧箭头改用 iconfont 图标**：列表项右侧 chevron 由文本 `›` 改为统一调用 `iconfont` 的 `icon-right`（`\e6a3`）图标，箭头与右侧值对齐并随字号变量 `--fs` 缩放
 - **CSS 变量 token 重命名**：全局 `--text2` 更名为 `--text3`、`--text3` 更名为 `--text4`（定义与全部引用同步改名，颜色取值保持不变），覆盖 `app.wxss` 与 `stats` / `records` / `mine` / `stage` / `settings` / `home` / `route` / `about` 各页 `.wxss`
+- **新增 `--text2` token**：`app.wxss` 浅色（`page` / `.dm-light`）定义为 `#6b6b6b`，深色（`.dm-dark` / `.dm-auto`）补等价浅色叠白 `rgba(255, 255, 255, 0.78)`，按 `--text → --text2 → --text3 → --text4` 梯度排序
 
 ### 修复
 
