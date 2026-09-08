@@ -470,8 +470,8 @@
    原语 4 变体 .sheet-handle（顶部抓手条）
    原语 13/15 .form-card / .form-row / .form-label / .form-right / .form-field / .form-unit
      原语 14 .seg-control + .seg-item（5 项等宽 variant：.seg-control-grid）
-   原语 1 .cell-divider / .cell-arrow
-   原语 16 .btn 按钮族（.btn-row 布局 + .btn-secondary 取消 + .btn-primary 打卡） */
+   原语 1 .weui-divider / .icon-right
+   原语 16 .weui-btn 按钮族（.weui-btn-area_inline 布局 + .weui-btn_default 取消 + .weui-btn_primary 打卡） */
 
 /* 原语 4 .sheet-mask + .action-sheet */
 .sheet-mask {
@@ -578,7 +578,7 @@
 }
 .form-field {
   flex: 1;
-  text-align: right;                        /* 与 settings 页 .cell-value 一致 */
+  text-align: right;                        /* 与 settings 页 .weui-cell__ft_value 一致 */
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);
   height: 64rpx;
@@ -590,8 +590,8 @@
   margin-left: 8rpx;
 }
 
-/* 原语 1 .cell-divider（行间分隔线，由 .form-card 限定全宽） */
-.form-card .cell-divider {
+/* 原语 1 .weui-divider（行间分隔线，由 .form-card 限定全宽） */
+.form-card .weui-divider {
   height: 1rpx;
   background: var(--divider);
   margin: 0;
@@ -633,8 +633,8 @@
   background: var(--card);
 }
 
-/* 原语 1 .cell-arrow（已读完行的 chevron） */
-.form-row .cell-arrow {
+/* 原语 1 .icon-right（已读完行的 chevron） */
+.form-row .icon-right {
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text4);
   line-height: 1;
@@ -642,10 +642,10 @@
   flex-shrink: 0;
 }
 
-/* 标准按钮族：复用 skill 原语 16 全局 .btn（见 app.wxss）
+/* 标准按钮族：复用 skill 原语 16 全局 .weui-btn（见 app.wxss）
    打卡弹窗按钮（iOS 矩形圆角，非胶囊）+ 两按钮等宽 */
-.action-sheet .btn { flex: 1; }                 /* 两按钮等宽 */
-.action-sheet .btn-row { margin-top: 16rpx; }   /* 与上方表单留白 */
+.action-sheet .weui-btn { flex: 1; }                 /* 两按钮等宽 */
+.action-sheet .weui-btn-area_inline { margin-top: 16rpx; }   /* 与上方表单留白 */
 
 /* ====== 晋级卡片（微信原生 progress 组件） ====== */
 .promote-card {

@@ -1,7 +1,9 @@
 <view class="container {{fontClass}} {{darkClass}}">
+
+  <!-- ① 阶段时间线：左竖线 + 圆形节点，右白卡片 -->
   <view class="timeline">
     <view
-      class="stage-item {{item._state === 'done' ? 'stage-done' : ''}} {{item._state === 'current' ? 'stage-current' : ''}} {{item._state === 'locked' ? 'stage-locked' : ''}}"
+      class="stage-item"
       wx:for="{{stages}}"
       wx:key="stage_id"
       id="stage-{{index}}"
@@ -10,34 +12,45 @@
       hover-class="stage-hover"
     >
       <view class="stage-rail">
-        <view class="stage-node {{item._state === 'current' ? 'node-current' : ''}} {{item._state === 'done' ? 'node-done' : ''}} {{item._state === 'locked' ? 'node-locked' : ''}}">
-          <text class="node-num" wx:if="{{item._state !== 'done'}}">{{index + 1}}</text>
-          <text class="node-icon" wx:else>✓</text>
-          <view class="node-current-dot" wx:if="{{item._state === 'current'}}"></view>
+        <view class="stage-node {{item._state}}">
+          <text wx:if="{{item._state !== 'done'}}">{{index + 1}}</text>
+          <text wx:else class="iconfont icon-check"></text>
         </view>
         <view class="stage-line" wx:if="{{index < stageCount - 1}}"></view>
       </view>
 
-      <view class="stage-body">
-        <view class="stage-head">
+      <view class="stage-card {{item._state}}">
+        <view class="stage-card-head">
           <view class="stage-title-row">
             <text class="stage-name">{{item.stage_name}}</text>
             <text class="stage-phase">{{item.target_phase}}</text>
-            <view class="stage-lock-tag" wx:if="{{item._state === 'locked'}}">🔒 未解锁</view>
-            <view class="stage-done-tag" wx:if="{{item._state === 'done'}}">✓ 已完成</view>
           </view>
-          <text class="stage-arrow">›</text>
+          <text class="iconfont icon-right stage-arrow"></text>
         </view>
 
-        <view class="stage-desc">{{item.vocabulary_target}} · {{item.time_investment}}</view>
-
-        <view class="stage-tags">
-          <view class="tag tag-entry">进入 {{item.entry_requirement}}</view>
+        <view class="stage-meta-row">
+          <text class="stage-meta-vocab">{{item.vocabulary_target}}</text>
+          <text class="stage-meta-dot">·</text>
+          <text class="stage-meta-time">{{item.time_investment}}</text>
+          <view class="stage-badge {{item._state}}">
+            <text wx:if="{{item._state === 'current'}}">当前</text>
+            <text wx:elif="{{item._state === 'done'}}">已完成</text>
+            <text wx:else>未解锁</text>
+          </view>
         </view>
-        <view class="stage-tags">
-          <view class="tag tag-promote">晋级 {{item.promotion_standard}}</view>
+
+        <view class="stage-info">
+          <view class="stage-info-row">
+            <text class="stage-info-label">进入</text>
+            <text class="stage-info-value">{{item.entry_requirement}}</text>
+          </view>
+          <view class="stage-info-row">
+            <text class="stage-info-label">晋级</text>
+            <text class="stage-info-value">{{item.promotion_standard}}</text>
+          </view>
         </view>
       </view>
     </view>
   </view>
+
 </view>

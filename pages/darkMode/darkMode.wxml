@@ -1,36 +1,31 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
   <!-- 跟随系统 toggle（始终显示） -->
-  <view class="group">
-    <view class="group-card">
-      <view class="cell cell-toggle cell--desc" bindtap="toggleFollowSystem">
-        <view class="cell-info">
-          <text class="cell-label">跟随系统</text>
-          <text class="cell-desc">开启后，将跟随系统打开或关闭深色模式</text>
-        </view>
-        <view class="switch {{followSystem ? 'switch-on' : ''}}">
-          <view class="switch-knob"></view>
-        </view>
+  <view class="weui-cells">
+    <view class="weui-cell" bindtap="toggleFollowSystem">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text">跟随系统</view>
+        <view class="weui-cell__desc">开启后，将跟随系统打开或关闭深色模式</view>
+      </view>
+      <view class="switch {{followSystem ? 'switch-on' : ''}}">
+        <view class="switch-knob"></view>
       </view>
     </view>
   </view>
 
   <!-- 手动选择（仅跟随系统关闭时显示） -->
-  <view class="group" wx:if="{{!followSystem}}">
-    <view class="group-title">手动选择</view>
-    <view class="group-card">
-      <view class="cell cell-radio cell--single {{manualMode === 'light' ? 'cell-checked' : ''}}"
-            bindtap="pickManual" data-mode="light">
-        <text class="cell-label">普通模式</text>
-        <text class="cell-check iconfont icon-check" hidden="{{manualMode !== 'light'}}"></text>
+  <block wx:if="{{!followSystem}}">
+    <view class="weui-cells__title">手动选择</view>
+    <view class="weui-cells weui-cells_radio">
+      <view class="weui-cell" bindtap="pickManual" data-mode="light">
+        <view class="weui-cell__bd">普通模式</view>
+        <text class="weui-icon-checked iconfont icon-check" hidden="{{manualMode !== 'light'}}"></text>
       </view>
-      <view class="cell-divider"></view>
-      <view class="cell cell-radio cell--single {{manualMode === 'dark' ? 'cell-checked' : ''}}"
-            bindtap="pickManual" data-mode="dark">
-        <text class="cell-label">深色模式</text>
-        <text class="cell-check iconfont icon-check" hidden="{{manualMode !== 'dark'}}"></text>
+      <view class="weui-cell" bindtap="pickManual" data-mode="dark">
+        <view class="weui-cell__bd">深色模式</view>
+        <text class="weui-icon-checked iconfont icon-check" hidden="{{manualMode !== 'dark'}}"></text>
       </view>
     </view>
-  </view>
+  </block>
 
 </view>

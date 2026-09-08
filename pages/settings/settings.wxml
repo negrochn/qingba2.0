@@ -1,112 +1,95 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
   <!-- 显示 -->
-  <view class="group">
-    <view class="group-title">显示</view>
-    <view class="group-card">
-      <view class="cell cell--single" bindtap="goFontPicker">
-        <view class="cell-label">字体大小</view>
-        <view class="cell-right">
-          <text class="cell-value">{{fontLevelText}}</text>
-          <text class="cell-arrow iconfont icon-right"></text>
-        </view>
+  <view class="weui-cells__title">显示</view>
+  <view class="weui-cells">
+    <view class="weui-cell weui-cell_access" bindtap="goFontPicker">
+      <view class="weui-cell__bd">字体大小</view>
+      <view class="weui-cell__ft">
+        <text class="weui-cell__ft_value">{{fontLevelText}}</text>
+        <text class="iconfont icon-right"></text>
       </view>
-
-      <view class="cell-divider"></view>
-
-      <view class="cell cell--single" bindtap="goDarkMode">
-        <view class="cell-label">深色模式</view>
-        <view class="cell-right">
-          <text class="cell-value">{{darkModeText}}</text>
-          <text class="cell-arrow iconfont icon-right"></text>
-        </view>
+    </view>
+    <view class="weui-cell weui-cell_access" bindtap="goDarkMode">
+      <view class="weui-cell__bd">深色模式</view>
+      <view class="weui-cell__ft">
+        <text class="weui-cell__ft_value">{{darkModeText}}</text>
+        <text class="iconfont icon-right"></text>
       </view>
     </view>
   </view>
 
   <!-- 学习计划 -->
-  <view class="group">
-    <view class="group-title">学习计划</view>
-    <view class="group-card">
-      <view class="cell cell--desc">
-        <view class="cell-info">
-          <view class="cell-label">小小优趣成长计划</view>
-          <view class="cell-desc">开启后，完成阶段会校验测试结果</view>
-        </view>
-        <switch checked="{{youquEnabled}}" bindchange="onYouquPlanChange" color="#34C759" />
+  <view class="weui-cells__title">学习计划</view>
+  <view class="weui-cells">
+    <view class="weui-cell">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text">小小优趣成长计划</view>
+        <view class="weui-cell__desc">开启后，完成阶段会校验测试结果</view>
       </view>
+      <switch checked="{{youquEnabled}}" bindchange="onYouquPlanChange" color="#07c160" />
     </view>
   </view>
 
   <!-- 数据管理 -->
-  <view class="group">
-    <view class="group-title">数据管理</view>
-    <view class="group-card">
-      <view class="cell cell--single" bindtap="onExport">
-        <view class="cell-label">导出备份</view>
-        <view class="cell-right">
-          <text class="cell-value">word</text>
-          <text class="cell-arrow iconfont icon-right"></text>
-        </view>
+  <view class="weui-cells__title">数据管理</view>
+  <view class="weui-cells">
+    <view class="weui-cell weui-cell_access" bindtap="onExport">
+      <view class="weui-cell__bd">导出备份</view>
+      <view class="weui-cell__ft">
+        <text class="weui-cell__ft_value">word</text>
+        <text class="iconfont icon-right"></text>
       </view>
-
-      <view class="cell-divider"></view>
-
-      <view class="cell cell--single" bindtap="goImportPicker">
-        <view class="cell-label">导入备份</view>
-        <view class="cell-right">
-          <text class="cell-value">支持 txt/json/word</text>
-          <text class="cell-arrow iconfont icon-right"></text>
-        </view>
+    </view>
+    <view class="weui-cell weui-cell_access" bindtap="goImportPicker">
+      <view class="weui-cell__bd">导入备份</view>
+      <view class="weui-cell__ft">
+        <text class="weui-cell__ft_value">支持 txt/json/word</text>
+        <text class="iconfont icon-right"></text>
       </view>
-
-      <view class="cell-divider"></view>
-
-      <view class="cell cell--single cell-danger" bindtap="goClearPicker">
-        <view class="cell-label">清空数据</view>
-        <view class="cell-right">
-          <text class="cell-arrow iconfont icon-right"></text>
-        </view>
+    </view>
+    <view class="weui-cell weui-cell_access weui-cell_warn" bindtap="goClearPicker">
+      <view class="weui-cell__bd">清空数据</view>
+      <view class="weui-cell__ft">
+        <text class="iconfont icon-right"></text>
       </view>
     </view>
   </view>
 
   <!-- 开发者工具（仅开发版显示） -->
-  <view class="group" wx:if="{{showDevTools}}">
-    <view class="group-title">开发者工具</view>
-    <view class="group-card">
-      <view class="cell cell--single" bindtap="goStagePicker">
-        <view class="cell-label">当前阶段</view>
-        <view class="cell-right">
-          <text class="cell-value {{currentStage ? '' : 'placeholder'}}">{{currentStageDisplay || '未设置'}}</text>
-          <text class="cell-arrow iconfont icon-right"></text>
+  <block wx:if="{{showDevTools}}">
+    <view class="weui-cells__title">开发者工具</view>
+    <view class="weui-cells">
+      <view class="weui-cell weui-cell_access" bindtap="goStagePicker">
+        <view class="weui-cell__bd">当前阶段</view>
+        <view class="weui-cell__ft">
+          <text class="weui-cell__ft_value {{currentStage ? '' : 'placeholder'}}">{{currentStageDisplay || '未设置'}}</text>
+          <text class="iconfont icon-right"></text>
         </view>
       </view>
-
-      <view class="cell-divider"></view>
-
-      <view class="cell cell--single" bindtap="onStressTest">
-        <view class="cell-label">压力测试</view>
-        <view class="cell-right">
-          <text class="cell-value">每阶段约 80-90 小时</text>
-          <text class="cell-arrow iconfont icon-right"></text>
+      <view class="weui-cell weui-cell_access" bindtap="onStressTest">
+        <view class="weui-cell__bd">压力测试</view>
+        <view class="weui-cell__ft">
+          <text class="weui-cell__ft_value">每阶段约 80-90 小时</text>
+          <text class="iconfont icon-right"></text>
         </view>
       </view>
     </view>
-  </view>
+  </block>
 
   <!-- 关于 -->
-  <view class="group">
-    <view class="group-title">关于</view>
-    <view class="group-card">
-      <view class="cell cell--single">
-        <view class="cell-label">关于小程序</view>
-        <text class="cell-value">版本{{appVersion}}</text>
+  <view class="weui-cells__title">关于</view>
+  <view class="weui-cells">
+    <view class="weui-cell">
+      <view class="weui-cell__bd">关于小程序</view>
+      <view class="weui-cell__ft">
+        <text class="weui-cell__ft_value">版本{{appVersion}}</text>
       </view>
-      <view class="cell-divider"></view>
-      <view class="cell cell--single">
-        <view class="cell-label">数据存储</view>
-        <text class="cell-value">本地存储</text>
+    </view>
+    <view class="weui-cell">
+      <view class="weui-cell__bd">数据存储</view>
+      <view class="weui-cell__ft">
+        <text class="weui-cell__ft_value">本地存储</text>
       </view>
     </view>
   </view>

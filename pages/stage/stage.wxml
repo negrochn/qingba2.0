@@ -1,7 +1,7 @@
 <view class="container {{fontClass}} {{darkClass}}" wx:if="{{stage}}">
   <!-- 阶段资源（核心：打卡）放在上半区，突出入口 -->
-  <view wx:if="{{resourceGroups.length}}" class="group">
-    <view class="group-title">
+  <view wx:if="{{resourceGroups.length}}">
+    <view class="weui-cells__title">
       {{stage.stage_name + '：积累' + stage.vocabulary_target + '（' + stage.time_investment + ' | ' + stage.target_phase + '）'}}
     </view>
     <view class="res-wrap">
@@ -64,9 +64,9 @@
   </view>
 
   <!-- 关键要点（移动到底部） -->
-  <view wx:if="{{stage.key_points.length}}" class="group">
-    <view class="group-title">关键要点</view>
-    <view class="card key-point-card">
+  <view wx:if="{{stage.key_points.length}}">
+    <view class="weui-cells__title">关键要点</view>
+    <view class="weui-panel key-point-card">
     <!-- 方案A：紧凑列表 -->
     <view class="kp-list">
       <view class="kp-item {{item.highlighted ? 'kp-item-hi' : ''}}" wx:for="{{stage.key_points}}" wx:key="text">
@@ -81,9 +81,9 @@
   </view>
 
   <!-- 晋级卡片（仅当前常规阶段展示） -->
-  <view wx:if="{{canPromote}}" class="group">
-    <view class="group-title">阶段达成</view>
-    <view class="card promote-card">
+  <view wx:if="{{canPromote}}">
+    <view class="weui-cells__title">阶段达成</view>
+    <view class="weui-panel promote-card">
       <view class="promote-title mb-16">{{stage.stage_name}} 阶段进度</view>
       <view class="promote-bar-row">
         <progress
@@ -182,7 +182,7 @@
           <text class="form-unit">分钟</text>
         </view>
       </view>
-      <view class="cell-divider"></view>
+      <view class="weui-divider"></view>
       <view class="form-row">
         <view class="seg-control seg-control-grid">
           <view class="seg-item {{durationInput==='10' ? 'seg-active' : ''}}" data-val="10" bindtap="quickDuration">10</view>
@@ -206,19 +206,19 @@
           maxlength="50"
         />
       </view>
-      <view class="cell-divider"></view>
+      <view class="weui-divider"></view>
       <view class="form-row" bindtap="onReadFinish">
         <view class="form-label">已读完</view>
         <view class="form-right">
           <text class="form-read-count">{{currentReadCount}} 次</text>
-          <text class="cell-arrow iconfont icon-right"></text>
+          <text class="iconfont icon-right"></text>
         </view>
       </view>
     </view>
 
-    <view class="btn-row">
-      <button class="btn btn-secondary" bindtap="closeCheckin">取消</button>
-      <button class="btn btn-primary" bindtap="submitCheckin">打卡</button>
+    <view class="weui-btn-area_inline">
+      <button class="weui-btn weui-btn_default" bindtap="closeCheckin">取消</button>
+      <button class="weui-btn weui-btn_primary" bindtap="submitCheckin">打卡</button>
     </view>
   </view>
 </view>

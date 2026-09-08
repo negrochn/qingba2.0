@@ -1,19 +1,4 @@
-/* 我的页卡 - 与设置页同一套微信风格分组列表原语（无 group-title，cell 左侧带图标）
-   组件原语：.group（全宽分组 section）+ .group-card（平铺无圆角）+ .cell 基类
-   主题：复用全局 --bg/--card/--text/--text3/--text4/--divider/--cell-active（同名 token）
-   缩放：保留 --fs 机制（calc(Nrpx * var(--fs,1))），字号随系统档位缩放 */
-
+/* 我的页 - WeUI 风格分组列表，组件原语见全局 app.wxss */
 page {
   background: var(--bg);
-}
-
-/* 分组样式已合入全局 app.wxss（原语 1 .group / .group-card） */
-
-
-
-/* 分隔线：左缩进 = pad(32) + icon(44) + gap(24) = 100rpx（对齐标题左缘） */
-.cell-divider {
-  height: 1rpx;
-  background: var(--divider);
-  margin-left: 100rpx;
 }

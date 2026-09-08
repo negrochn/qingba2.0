@@ -1,10 +1,4 @@
-/* 设置页 - 微信风格分组列表（依据 ui-design-spec 重构）
-   组件原语：原语 1 .group（全宽分组 section + 标题带）；`.cell` 列表项家族已合入全局 app.wxss（原语 1）
-   主题：复用全局 --bg/--card/--text/--text3/--text4/--divider/--cell-active（同名 token）
-   缩放：保留 --fs 机制（calc(Nrpx * var(--fs,1))），字号随系统档位缩放 */
-
+/* 设置页 - WeUI 风格分组列表，组件原语见全局 app.wxss（.weui-cells / .weui-cell 等） */
 page {
   background: var(--bg);
 }
-
-/* 分组样式已合入全局 app.wxss（原语 1 .group / .group-title / .group-card） */

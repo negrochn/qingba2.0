@@ -1,377 +1,155 @@
-/* 首页：微信原生风格重构（扁平白卡 + 发丝分隔线 + 统一间距）（支持深色模式） */
+/* ===== 首页样式（WeUI 令牌化） ===== */
 
-page {
-  background: var(--bg);
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* ===== 区块头（微信原生分组标题风格，与设置页 group-title 一致） ===== */
-.section-head {
+/* ① 欢迎条：左问候 / 右日期 */
+.home-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 16rpx 40rpx 12rpx;
+  padding: 40rpx 32rpx 16rpx;
 }
-
-.section-title {
-  font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text4);
+.home-greet-hi {
+  font-size: calc(40rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+.home-greet-sub {
+  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text2);
   line-height: 1.4;
+  margin-top: 4rpx;
 }
-
-.section-count {
-  font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text4);
-  line-height: 1.4;
-}
-
-/* ===== 阶段 Hero 卡 ===== */
-.hero-card {
-  background: linear-gradient(135deg, #07C160 0%, #3fd98a 100%);
-  border-radius: 16rpx;
-  padding: 32rpx;
-  color: #fff;
-  margin: 0 24rpx 24rpx;
-}
-
-.hero-name-row {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-}
-
-.hero-name {
-  font-size: 44rpx;
-  line-height: 1.2;
-}
-
-.hero-tag,
-.hero-badge {
-  font-size: calc(20rpx * var(--fs, 1));
-  padding: 4rpx 14rpx;
-  border-radius: 20rpx;
+.home-date {
   flex-shrink: 0;
-}
-
-.hero-tag {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.hero-badge {
-  background: rgba(255, 255, 255, 0.95);
-  color: #2e7d32;
-}
-
-.hero-desc {
-  font-size: calc(24rpx * var(--fs, 1));
-  opacity: 0.85;
-  margin-top: 12rpx;
-}
-
-.progress-track {
-  height: 16rpx;
-  background: rgba(255, 255, 255, 0.25);
-  border-radius: 8rpx;
-  margin-top: 28rpx;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #fff;
-  border-radius: 8rpx;
-  transition: width 0.3s;
-}
-
-.progress-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   margin-top: 10rpx;
-  font-size: calc(22rpx * var(--fs, 1));
-  opacity: 0.9;
+  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text2);
+  line-height: 1.4;
+  text-align: right;
 }
 
-.hero-hint {
-  font-size: calc(24rpx * var(--fs, 1));
-  opacity: 0.85;
-  margin-top: 16rpx;
+/* ② Hero 卡：品牌绿渐变 + 7 日柱状图 */
+.home-hero {
+  margin: 16rpx 32rpx 24rpx;
+  padding: 32rpx;
+  border-radius: 20rpx;
+  background: var(--card);             /* 白底卡片 */
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+  color: var(--text);                  /* 黑字 */
 }
-
-/* ===== 今日状态条 ===== */
-.today-card {
+.home-hero-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--card);
-  border-radius: 16rpx;
-  padding: 22rpx 28rpx;
-  margin: 0 24rpx 24rpx;
 }
-
-.today-left {
+.home-hero-title {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
+}
+.home-hero-scope {
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+}
+.home-hero-num {
   display: flex;
   align-items: baseline;
-  gap: 16rpx;
+  margin: 16rpx 0 8rpx;
 }
-
-.today-label {
-  font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text4);
+.home-hero-val {
+  font-size: calc(72rpx * var(--fs, 1));
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--text);
 }
-
-.today-num {
+.home-hero-unit {
   font-size: calc(30rpx * var(--fs, 1));
-  font-weight: 400;
-  color: var(--text);
-  font-family: "DIN Alternate", -apple-system, Helvetica, Arial, sans-serif;
+  margin-left: 8rpx;
+  color: var(--text2);
 }
-
-.today-empty {
-  color: var(--text4);
-  font-weight: 400;
-  font-size: calc(26rpx * var(--fs, 1));
-}
-
-.today-btn {
-  background: #07C160;
-  color: #fff;
-  font-size: calc(26rpx * var(--fs, 1));
-  padding: 12rpx 32rpx;
-  border-radius: 32rpx;
-}
-
-.today-btn:active {
-  opacity: 0.85;
-}
-
-/* ===== 阶段统计 2×2 网格（发丝分隔线，无渐变） ===== */
-.summary-card {
-  background: var(--card);
-  border-radius: 16rpx;
-  margin: 0 24rpx 24rpx;
-  overflow: hidden;
-}
-
-.sum-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  background: var(--card);
-}
-
-.sg-cell {
-  position: relative;
-  text-align: center;
-  padding: 28rpx 12rpx;
-  box-sizing: border-box;
-}
-
-/* 右列加左侧发丝线 */
-.sg-tr::before,
-.sg-br::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 22%;
-  bottom: 22%;
-  width: 1rpx;
-  background: var(--divider);
-}
-
-/* 第二行加顶部发丝线 */
-.sg-bl::after,
-.sg-br::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 12%;
-  right: 12%;
-  height: 1rpx;
-  background: var(--divider);
-}
-
-.sg-label {
+.home-hero-delta {
   font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text4);
-  margin-bottom: 12rpx;
-}
-
-.sg-num {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 4rpx;
-}
-
-.sg-val {
-  font-size: 48rpx;
-  color: var(--text);
-  line-height: 1.05;
-  font-family: "DIN Alternate", -apple-system, Helvetica, Arial, sans-serif;
-}
-
-.sg-unit {
-  font-size: calc(22rpx * var(--fs, 1));
-  font-weight: 400;
-  color: var(--text4);
-}
-
-/* ===== 分组时长分布（纯 CSS 条形图） ===== */
-.group-card {
-  background: var(--card);
-  border-radius: 16rpx;
-  padding: 8rpx 28rpx;
-  margin: 0 24rpx 24rpx;
-}
-
-.group-row {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  padding: 16rpx 0;
-}
-
-.group-row:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1rpx;
-  background: var(--divider);
-}
-
-.group-label {
-  flex-shrink: 0;
-  width: 150rpx;
-  font-size: calc(24rpx * var(--fs, 1));
+  margin-left: 16rpx;
   color: var(--text3);
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
-
-.group-track {
+.home-hero-bars {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 24rpx;
+  height: 176rpx;
+}
+.home-bar {
   flex: 1;
-  height: 14rpx;
-  background: var(--divider);
-  border-radius: 7rpx;
-  overflow: hidden;
-}
-
-.group-fill {
-  height: 100%;
-  background: #07C160;
-  border-radius: 7rpx;
-}
-
-.group-minutes {
-  flex-shrink: 0;
-  width: 96rpx;
-  text-align: right;
-  font-size: calc(24rpx * var(--fs, 1));
-  font-weight: 400;
-  color: var(--text3);
-  font-family: "DIN Alternate", -apple-system, Helvetica, Arial, sans-serif;
-}
-
-/* ===== 首次启动引导（全屏遮罩）===== */
-.ob-overlay {
-  position: fixed;
-  left: 0; top: 0; right: 0; bottom: 0;
-  z-index: 9999;
-  background: var(--bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.ob-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 80rpx 60rpx;
 }
-
-.ob-logo {
-  font-size: 120rpx;
-  line-height: 1;
-  margin-bottom: 32rpx;
-}
-
-.ob-title {
-  font-size: calc(48rpx * var(--fs, 1));
-  font-weight: 600;
-  color: var(--text);
-}
-
-.ob-desc {
-  text-align: center;
-  font-size: calc(28rpx * var(--fs, 1));
-  color: var(--text4);
-  line-height: 1.8;
-  margin-bottom: 48rpx;
-}
-
-.ob-form {
-  width: 100%;
-  background: var(--card);
-  border-radius: 16rpx;
-  margin-bottom: 48rpx;
+.home-bar-track {
+  width: 16rpx;
+  height: 128rpx;
+  background: rgba(0, 0, 0, 0.05);          /* 浅灰轨道 */
+  border-radius: 8rpx;
+  display: flex;
+  align-items: flex-end;
   overflow: hidden;
 }
-
-.ob-picker {
-  display: block;
+.home-bar-fill {
+  width: 100%;
+  background: rgba(7, 193, 96, 0.28);        /* 非今日：浅品牌绿 */
+  border-radius: 8rpx;
+}
+.home-bar-fill.is-today {
+  background: #07C160;                       /* 今日：品牌绿高亮 */
+}
+.home-bar-label {
+  font-size: calc(20rpx * var(--fs, 1));
+  margin-top: 10rpx;
+  opacity: 0.8;
+}
+.home-bar-label.is-today {
+  opacity: 1;
+  font-weight: 600;
 }
 
-.ob-form-row {
+/* ③ 2×2 指标卡 */
+.home-grid {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 28rpx 32rpx;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  padding: 0 24rpx;
 }
-
-.ob-picker:not(:first-child) .ob-form-row {
-  border-top: 1rpx solid var(--divider);
+.home-stat {
+  position: relative;
+  flex: 1 1 calc(50% - 8rpx);
+  min-width: calc(50% - 8rpx);
+  box-sizing: border-box;
+  background: var(--card);
+  border-radius: 16rpx;
+  padding: 32rpx 24rpx;
 }
-
-.ob-form-label {
-  font-size: calc(30rpx * var(--fs, 1));
-  color: var(--text);
-}
-
-.ob-form-value {
-  font-size: calc(30rpx * var(--fs, 1));
-  color: var(--text3);
-}
-
-.ob-hint {
-  padding: 16rpx 32rpx 24rpx;
-  font-size: calc(22rpx * var(--fs, 1));
+.home-stat-arrow {
+  position: absolute;
+  top: 24rpx;
+  right: 24rpx;
+  font-size: calc(28rpx * var(--fs, 1));
   color: var(--text4);
-  line-height: 1.6;
+  line-height: 1;
 }
-
-.ob-btn {
-  width: 480rpx;
-  height: 88rpx;
-  line-height: 88rpx;
-  border-radius: 44rpx;
-  font-size: calc(32rpx * var(--fs, 1));
-  background: #07C160;
-  color: #fff;
-  border: none;
-  padding: 0;
+.home-stat-num {
+  font-size: calc(56rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.1;
+  margin: 8rpx 0 12rpx;
 }
-
-.ob-btn::after {
-  border: none;
+.home-stat-unit {
+  font-size: calc(28rpx * var(--fs, 1));
+  font-weight: 400;
+  color: var(--text2);
+  margin-left: 4rpx;
 }
-
-.ob-btn:active {
-  background: #3a7bc0;
+.home-stat-label {
+  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text2);
+  line-height: 1.4;
 }

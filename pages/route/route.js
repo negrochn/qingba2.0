@@ -24,10 +24,10 @@ Page({
     // 首页"去打卡"跳转过来时，滚动到当前阶段
     let needScroll = false
     try {
-      const app = getApp()
-      if (app && app.globalData && app.globalData.scrollToCurrentStage) {
+      const app2 = getApp()
+      if (app2 && app2.globalData && app2.globalData.scrollToCurrentStage) {
         needScroll = true
-        app.globalData.scrollToCurrentStage = false
+        app2.globalData.scrollToCurrentStage = false
       }
     } catch (e) {}
 
@@ -38,7 +38,7 @@ Page({
     })
   },
 
-  // 加载当前阶段
+  // 加载当前阶段，预计算每阶段状态（done / current / locked）
   loadCurrentStage(cb) {
     const current = checkin.getCurrentStage();
     let currentIndex = -1
@@ -46,7 +46,6 @@ Page({
       if (current && s.stage_id === current.id) currentIndex = i
     })
     const doneIds = checkin.getCompletedStages()
-    // 预计算每阶段状态：done（已完成）/ current（当前）/ locked（未解锁）
     const stages = routeData.stages.map((s, i) => {
       let state
       if (doneIds.indexOf(s.stage_id) >= 0 || (currentIndex >= 0 && i < currentIndex)) {
@@ -67,6 +66,22 @@ Page({
     })
   },
 
+  // 卡片点击：进入阶段详情
+  toStage(e) {
+    const index = e.currentTarget.dataset.index
+    if (index === undefined || index === null) {
+      wx.showToast({ title: '数据异常', icon: 'none' })
+      return
+    }
+    wx.navigateTo({
+      url: `/pages/stage/stage?index=${index}`,
+      fail(err) {
+        console.error('navigateTo fail:', err)
+        wx.showToast({ title: '跳转失败', icon: 'none' })
+      }
+    })
+  },
+
   // 滚动到指定阶段（页面级滚动，元素距顶部留 120px）
   _scrollToStage(index) {
     if (index === undefined || index === null || index < 0) return
@@ -84,21 +99,6 @@ Page({
         scrollTop: target > 0 ? target : 0,
         duration: 300
       })
-    })
-  },
-
-  toStage(e) {
-    const index = e.currentTarget.dataset.index
-    if (index === undefined || index === null) {
-      wx.showToast({ title: '数据异常', icon: 'none' })
-      return
-    }
-    wx.navigateTo({
-      url: `/pages/stage/stage?index=${index}`,
-      fail(err) {
-        console.error('navigateTo fail:', err)
-        wx.showToast({ title: '跳转失败', icon: 'none' })
-      }
     })
   }
 })

@@ -1,111 +1,57 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- 阶段 Hero 卡 -->
-  <view class="hero-card">
-    <view class="hero-name-row">
-      <text class="hero-name">{{stageName || '未设置阶段'}}</text>
-      <text class="hero-badge" wx:if="{{stageCompleted}}">✓ 已达成目标</text>
-      <text class="hero-badge" wx:elif="{{stageDone}}">✓ 已达标</text>
-      <text class="hero-tag" wx:elif="{{stageName}}">当前阶段</text>
+  <!-- ① 欢迎条：时间问候 + 当前日期（不含昵称） -->
+  <view class="home-header">
+    <view class="home-greet">
+      <view class="home-greet-hi">{{greetText}}</view>
+      <view class="home-greet-sub">欢迎回来</view>
     </view>
-    <view class="hero-desc" wx:if="{{stageDesc}}">{{stageDesc}}</view>
-    <block wx:if="{{hasTarget}}">
-      <view class="progress-track">
-        <view class="progress-fill" style="width: {{stagePercent}}%"></view>
-      </view>
-      <view class="progress-meta">
-        <text>{{stageHoursText}}h / {{targetHoursText}}</text>
-        <text>{{stagePercent}}%</text>
-      </view>
-    </block>
-    <view class="hero-hint" wx:if="{{!stageName}}">在「路线」页设置当前阶段后开始打卡</view>
+    <view class="home-date">{{dateText}}</view>
   </view>
 
-  <!-- 今日状态条 -->
-  <view class="today-card">
-    <view class="today-left">
-      <text class="today-label">今日</text>
-      <text class="today-num" wx:if="{{todayCount > 0}}">{{todayMinutesText}} · {{todayCount}}次打卡</text>
-      <text class="today-num today-empty" wx:else>今天还没打卡</text>
+  <!-- ② Hero 卡：本周时长 + 周一~周日柱状图 -->
+  <view class="home-hero">
+    <view class="home-hero-head">
+      <view class="home-hero-title">本周时长</view>
+      <view class="home-hero-scope">{{stageName || '未设置阶段'}}</view>
     </view>
-    <view class="today-btn" bindtap="goRoute">去打卡</view>
-  </view>
-
-  <!-- 阶段统计 2×2（纯阶段口径） -->
-  <view class="section-head">
-    <text class="section-title">阶段统计</text>
-    <text class="section-count">{{stageName}}</text>
-  </view>
-  <view class="summary-card">
-    <view class="sum-grid">
-      <view class="sg-cell sg-tl">
-        <view class="sg-label">阶段累计</view>
-        <view class="sg-num">
-          <text class="sg-val">{{stageTotalHours}}</text>
-          <text class="sg-unit">h</text>
+    <view class="home-hero-num">
+      <text class="home-hero-val">{{weekHours}}</text>
+      <text class="home-hero-unit">h</text>
+      <text class="home-hero-delta">{{weekDeltaText}}</text>
+    </view>
+    <view class="home-hero-bars">
+      <view class="home-bar" wx:for="{{weekBars}}" wx:key="day">
+        <view class="home-bar-track">
+          <view class="home-bar-fill {{item.isToday ? 'is-today' : ''}}" style="height: {{item.percent}}%"></view>
         </view>
-      </view>
-      <view class="sg-cell sg-tr">
-        <view class="sg-label">已读完</view>
-        <view class="sg-num">
-          <text class="sg-val">{{stageReadCount}}</text>
-          <text class="sg-unit">次</text>
-        </view>
-      </view>
-      <view class="sg-cell sg-bl">
-        <view class="sg-label">本周</view>
-        <view class="sg-num">
-          <text class="sg-val">{{stageWeekHours}}</text>
-          <text class="sg-unit">h</text>
-        </view>
-      </view>
-      <view class="sg-cell sg-br">
-        <view class="sg-label">打卡天数</view>
-        <view class="sg-num">
-          <text class="sg-val">{{stageDaysCount}}</text>
-          <text class="sg-unit">天</text>
-        </view>
+        <text class="home-bar-label {{item.isToday ? 'is-today' : ''}}">{{item.label}}</text>
       </view>
     </view>
   </view>
 
-  <!-- 分组时长分布 -->
-  <block wx:if="{{hasGroupData}}">
-    <view class="section-head group-head">
-      <text class="section-title">分组时长分布</text>
-      <text class="section-count">累计占比</text>
+  <!-- ③ 2×2 关键指标（累计时长仅统计当前阶段） -->
+  <view class="home-grid">
+    <view class="home-stat">
+      <text class="home-stat-arrow">↗</text>
+      <view class="home-stat-num">{{todayHours}}<text class="home-stat-unit">h</text></view>
+      <view class="home-stat-label">今日时长</view>
     </view>
-    <view class="group-card">
-      <view class="group-row" wx:for="{{groupBars}}" wx:key="key" wx:for-item="g">
-        <text class="group-label">{{g.label}}</text>
-        <view class="group-track">
-          <view class="group-fill" style="width: {{g.percent}}%"></view>
-        </view>
-        <text class="group-minutes">{{g.minutesText}}</text>
-      </view>
+    <view class="home-stat">
+      <text class="home-stat-arrow">↗</text>
+      <view class="home-stat-num">{{totalHours}}<text class="home-stat-unit">h</text></view>
+      <view class="home-stat-label">累计时长</view>
     </view>
-  </block>
-
-</view>
-
-<!-- 首次启动引导（全屏遮罩，覆盖 tabBar） -->
-<view class="ob-overlay {{fontClass}} {{darkClass}}" wx:if="{{showOnboard}}" catchtouchmove="noop">
-  <view class="ob-content">
-    <view class="ob-logo">📚</view>
-    <view class="ob-title mb-16">庆爸 2.0</view>
-    <view class="ob-desc">孩子英语听力训练打卡工具<br/>常规1-6 → 准桥梁，逐级解锁</view>
-
-    <view class="ob-form">
-      <picker class="ob-picker" mode="selector" range="{{stageOptions}}" range-key="name" value="{{onboardStageIndex}}" bindchange="onStageChange">
-        <view class="ob-form-row">
-          <text class="ob-form-label">当前阶段</text>
-          <text class="ob-form-value">{{stageOptions[onboardStageIndex].name}}</text>
-        </view>
-      </picker>
-
-      <view class="ob-hint">所选阶段之前的所有阶段将标记为已完成</view>
+    <view class="home-stat">
+      <text class="home-stat-arrow">↗</text>
+      <view class="home-stat-num">{{stagePercent}}<text class="home-stat-unit">%</text></view>
+      <view class="home-stat-label">阶段进度</view>
     </view>
-
-    <button class="ob-btn" bindtap="confirmOnboard">开始使用</button>
+    <view class="home-stat">
+      <text class="home-stat-arrow">↗</text>
+      <view class="home-stat-num">{{checkinDays}}</view>
+      <view class="home-stat-label">打卡天数</view>
+    </view>
   </view>
+
 </view>

@@ -1,51 +1,34 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
   <!-- 关于 -->
-  <view class="group mb-16">
-    <view class="group-card">
-      <view class="cell cell--single" bindtap="goAbout">
-        <text class="cell-icon">📚</text>
-        <view class="cell-label">关于庆爸2.0</view>
-        <view class="cell-right">
-          <text class="cell-arrow iconfont icon-right"></text>
-        </view>
-      </view>
+  <view class="weui-cells mb-16">
+    <view class="weui-cell weui-cell_access" bindtap="goAbout">
+      <view class="weui-cell__hd">📚</view>
+      <view class="weui-cell__bd">关于庆爸2.0</view>
+      <view class="weui-cell__ft"><text class="iconfont icon-right"></text></view>
     </view>
   </view>
 
   <!-- 功能 -->
-  <view class="group mb-16">
-    <view class="group-card">
-      <view class="cell cell--single" bindtap="goRecords">
-        <text class="cell-icon">📅</text>
-        <view class="cell-label">打卡记录</view>
-        <view class="cell-right">
-          <text class="cell-arrow iconfont icon-right"></text>
-        </view>
-      </view>
-
-      <view class="cell-divider"></view>
-
-      <view class="cell cell--single" bindtap="goStats">
-        <text class="cell-icon">📊</text>
-        <view class="cell-label">数据统计</view>
-        <view class="cell-right">
-          <text class="cell-arrow iconfont icon-right"></text>
-        </view>
-      </view>
+  <view class="weui-cells mb-16">
+    <view class="weui-cell weui-cell_access" bindtap="goRecords">
+      <view class="weui-cell__hd">📅</view>
+      <view class="weui-cell__bd">打卡记录</view>
+      <view class="weui-cell__ft"><text class="iconfont icon-right"></text></view>
+    </view>
+    <view class="weui-cell weui-cell_access" bindtap="goStats">
+      <view class="weui-cell__hd">📊</view>
+      <view class="weui-cell__bd">数据统计</view>
+      <view class="weui-cell__ft"><text class="iconfont icon-right"></text></view>
     </view>
   </view>
 
   <!-- 设置 -->
-  <view class="group mb-16">
-    <view class="group-card">
-      <view class="cell cell--single" bindtap="goSettings">
-        <text class="cell-icon">⚙️</text>
-        <view class="cell-label">设置</view>
-        <view class="cell-right">
-          <text class="cell-arrow iconfont icon-right"></text>
-        </view>
-      </view>
+  <view class="weui-cells mb-16">
+    <view class="weui-cell weui-cell_access" bindtap="goSettings">
+      <view class="weui-cell__hd">⚙️</view>
+      <view class="weui-cell__bd">设置</view>
+      <view class="weui-cell__ft"><text class="iconfont icon-right"></text></view>
     </view>
   </view>
 

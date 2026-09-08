@@ -1,215 +1,151 @@
 const checkin = require('../../utils/checkin.js')
-const data = require('../../utils/data.js')
 
-// 首次启动引导用：阶段选项
-const stageOptions = data.routeData.stages.map(s => ({ id: s.stage_id, name: s.stage_name }))
+const WEEK_CN = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+const DAY_LABELS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 
-// 小时数显示：去尾零（2.50 -> 2.5, 2.00 -> 2）
+// 按小时给出时间问候
+function greetByHour(h) {
+  if (h < 6) return '凌晨好'
+  if (h < 11) return '早上好'
+  if (h < 13) return '中午好'
+  if (h < 18) return '下午好'
+  if (h < 22) return '晚上好'
+  return '夜深了'
+}
+
+// 分钟 -> 小时文本（去尾零：12.5 / 0 / 60）
 function fmtHours(minutes) {
-  return (minutes / 60).toFixed(2).replace(/\.?0+$/, '') || '0'
+  const v = Number(minutes) / 60
+  if (!v) return '0'
+  return v % 1 === 0 ? String(v) : v.toFixed(1)
+}
+
+// 解析目标时长: '60-80H' -> {min:60,max:80}，'60H' -> {min:60,max:60}
+function parseTarget(text) {
+  if (!text) return null
+  const range = String(text).match(/(\d+)\s*-\s*(\d+)/)
+  if (range) return { min: +range[1], max: +range[2] }
+  const single = String(text).match(/(\d+)/)
+  if (single) return { min: +single[1], max: +single[1] }
+  return null
 }
 
 Page({
   data: {
-    // 阶段 Hero 卡
+    fontClass: '',
+    greetText: '',
+    dateText: '',
     stageName: '',
-    stageDesc: '',          // '目标 phase5 · 200-300词 · 60-80H'
-    stageHoursText: '0',    // 阶段已投入小时
-    targetHoursText: '',    // 目标下限小时，如 '60'
-    stagePercent: 0,        // 0-100
-    hasTarget: false,       // 能否解析目标时长
-    stageDone: false,       // 已达下限目标
-    // 今日状态条
-    todayMinutesText: '0m',
-    todayCount: 0,
-    // 阶段统计 2×2（纯阶段口径）
-    stageTotalHours: '0',
-    stageReadCount: 0,
-    stageWeekHours: '0',
-    stageDaysCount: 0,
-    // 分组时长分布
-    groupBars: [],
-    hasGroupData: false,
-    // 首次启动引导
-    showOnboard: false,
-    stageOptions,
-    onboardStageIndex: 0,
-    fontClass: ''
+    weekHours: '0',
+    weekDeltaText: '—',
+    weekBars: [],
+    todayHours: '0',
+    totalHours: '0',
+    stagePercent: 0,
+    checkinDays: 0
   },
 
   onLoad() {
     const app = getApp()
     if (app && app.applyFontLevel) app.applyFontLevel(this)
-    // 数据统一由 onShow 加载，避免首屏重复计算两次
   },
 
   onShow() {
     const app = getApp()
     if (app && app.applyFontLevel) app.applyFontLevel(this)
-
     this._refresh()
-
-    // 首次启动引导：未引导过时弹出欢迎层
-    if (!checkin.hasOnboarded()) {
-      const cur = checkin.getCurrentStage()
-      let idx = 0
-      if (cur) {
-        const fi = stageOptions.findIndex(s => s.id === cur.id)
-        if (fi >= 0) idx = fi
-      }
-      this.setData({ showOnboard: true, onboardStageIndex: idx })
-    }
-  },
-
-  // 引导中选择当前阶段
-  onStageChange(e) {
-    this.setData({ onboardStageIndex: parseInt(e.detail.value) })
-  },
-
-  // 确认首次启动引导：写入阶段与已完成名单
-  confirmOnboard() {
-    const idx = this.data.onboardStageIndex
-    const stage = data.routeData.stages[idx]
-    const stageData = {
-      id: stage.stage_id,
-      name: stage.stage_name,
-      targetPhase: stage.target_phase,
-      vocabularyTarget: stage.vocabulary_target,
-      timeInvestment: stage.time_investment
-    }
-    checkin.setCurrentStage(stageData)
-
-    // 所选阶段之前的所有阶段标记为已完成
-    const done = data.routeData.stages.slice(0, idx).map(s => s.stage_id)
-    checkin.setCompletedStages(done)
-
-    checkin.setOnboarded()
-    this.setData({ showOnboard: false })
-    this._refresh()
-  },
-
-  // 关闭首次启动引导并标记已引导
-  closeOnboard() {
-    checkin.setOnboarded()
-    this.setData({ showOnboard: false })
   },
 
   // 主刷新：全部以「当前阶段」为口径聚合
   _refresh() {
-    const curStage = checkin.getCurrentStage()
-    const stageId = curStage ? curStage.id : ''
-    const stageInfo = (data.routeData.stages || []).find(s => s.stage_id === stageId) || null
-
-    // ---- 阶段全部记录聚合（一次遍历） ----
     const now = new Date()
-    const dayOfWeek = now.getDay()
-    const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+    const h = now.getHours()
+    const wd = now.getDay()
+    const dateText = `${now.getMonth() + 1}月${now.getDate()}日 ${WEEK_CN[wd]}`
+
+    const cur = checkin.getCurrentStage()
+    const stageId = cur ? cur.id : ''
+
+    // 本周一（周一为周起点）
+    const daysSinceMonday = wd === 0 ? 6 : wd - 1
     const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday)
+    const todayStr = checkin.todayStr(now)
     const weekStartStr = checkin.todayStr(monday)
-    const today = checkin.todayStr()
+    // 上周同区间起点（前 7 天）
+    const lastMonday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() - 7)
+    const lastWeekStartStr = checkin.todayStr(lastMonday)
 
     const all = checkin.getAll()
-    let stageMinutes = 0
-    let weekMinutes = 0
+    const weekDayMinutes = {}
+    let thisWeek = 0
+    let lastWeek = 0
     let todayMinutes = 0
-    let todayCount = 0
+    let totalMinutes = 0
     const daysSet = new Set()
-    const groupMinutes = {}
-    const groupLabels = {}
 
     for (const day in all) {
-      for (const r of all[day]) {
-        if (r.stageId !== stageId) continue
-        const min = r.durationMinutes || 0
-        stageMinutes += min
+      const list = all[day] || []
+      for (const r of list) {
+        if (r.stageId !== stageId) continue          // 只统计当前阶段
+        const min = Number(r.durationMinutes) || 0
+        totalMinutes += min                            // 累计时长（当前阶段）
         daysSet.add(day)
-        if (day >= weekStartStr) weekMinutes += min
-        if (r.groupKey) {
-          groupMinutes[r.groupKey] = (groupMinutes[r.groupKey] || 0) + min
-          if (!groupLabels[r.groupKey]) groupLabels[r.groupKey] = r.groupLabel || r.groupKey
-        }
-        if (day === today) {
-          todayMinutes += min
-          todayCount++
+        if (day === todayStr) todayMinutes += min
+        if (day >= weekStartStr && day <= todayStr) {
+          weekDayMinutes[day] = (weekDayMinutes[day] || 0) + min
+          thisWeek += min
+        } else if (day >= lastWeekStartStr && day < weekStartStr) {
+          lastWeek += min
         }
       }
     }
 
-    // ---- Hero：阶段信息 + 进度 ----
-    let stageName = curStage ? (curStage.name || '') : ''
-    let stageDesc = ''
-    if (stageInfo) {
-      stageName = stageInfo.stage_name
-      stageDesc = `目标 ${stageInfo.target_phase} · ${stageInfo.vocabulary_target} · ${stageInfo.time_investment}`
+    // 柱状图：本周 7 天（周一~周日），按周内最大值归一
+    let maxVal = 0
+    const bars = []
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i)
+      const ds = checkin.todayStr(d)
+      const val = weekDayMinutes[ds] || 0
+      if (val > maxVal) maxVal = val
+      bars.push({ day: ds, label: DAY_LABELS[i], isToday: ds === todayStr })
     }
-
-    const target = this._parseTarget(stageInfo && stageInfo.time_investment)
-    let stagePercent = 0
-    let hasTarget = false
-    let stageDone = false
-    let targetHoursText = ''
-    if (target) {
-      hasTarget = true
-      targetHoursText = `${target.min}h`
-      const hours = stageMinutes / 60
-      stagePercent = Math.min(100, Math.round(hours / target.min * 100))
-      stageDone = hours >= target.min
-    }
-    const stageCompleted = checkin.isStageDone(stageId)
-
-    // ---- 分组时长分布（按时长降序） ----
-    const groupKeys = Object.keys(groupMinutes).sort((a, b) => groupMinutes[b] - groupMinutes[a])
-    const maxGroupMin = groupKeys.length ? groupMinutes[groupKeys[0]] : 0
-    const groupBars = groupKeys.map(key => ({
-      key,
-      label: groupLabels[key] || key,
-      minutesText: checkin.fmtHoursDecimal(groupMinutes[key]),
-      percent: maxGroupMin ? Math.max(6, Math.round(groupMinutes[key] / maxGroupMin * 100)) : 0
+    const weekBars = bars.map(b => ({
+      day: b.day,
+      label: b.label,
+      isToday: b.isToday,
+      percent: maxVal > 0 ? Math.max(6, Math.round(weekDayMinutes[b.day] / maxVal * 100)) : 6
     }))
 
-    this.setData({
-      stageName,
-      stageDesc,
-      stageHoursText: fmtHours(stageMinutes),
-      targetHoursText,
-      stagePercent,
-      hasTarget,
-      stageDone,
-      stageCompleted,
-      todayMinutesText: checkin.fmtMinutes(todayMinutes),
-      todayCount,
-      stageTotalHours: fmtHours(stageMinutes),
-      stageReadCount: checkin.totalReadCountByStage(stageId),
-      stageWeekHours: fmtHours(weekMinutes),
-      stageDaysCount: daysSet.size,
-      groupBars,
-      hasGroupData: groupBars.length > 0
-    })
-  },
+    // 周环比
+    let weekDeltaText = '—'
+    if (thisWeek > 0 && lastWeek > 0) {
+      const pct = Math.round((thisWeek - lastWeek) / lastWeek * 100)
+      weekDeltaText = pct >= 0 ? `较上周 +${pct}%` : `较上周 ${pct}%`
+    } else if (thisWeek > 0) {
+      weekDeltaText = '较上周 +100%'
+    }
 
-  // 解析目标时长: '60-80H' -> {min:60,max:80}，'60H' -> {min:60,max:60}
-  _parseTarget(text) {
-    if (!text) return null
-    const range = text.match(/(\d+)\s*-\s*(\d+)/)
-    if (range) return { min: +range[1], max: +range[2] }
-    const single = text.match(/(\d+)/)
-    if (single) return { min: +single[1], max: +single[1] }
-    return null
-  },
-
-  // 阻止弹层内容区点击冒泡关闭
-  noop() {},
-
-  // ===== 跳转 =====
-  goRoute() {
-    // 标记：跳转后路线页需滚动到当前阶段
-    try {
-      const app = getApp();
-      if (app && app.globalData) {
-        app.globalData.scrollToCurrentStage = true;
+    // 阶段进度（对目标下限）
+    let stagePercent = 0
+    if (cur && cur.timeInvestment) {
+      const target = parseTarget(cur.timeInvestment)
+      if (target && target.min > 0) {
+        stagePercent = Math.min(100, Math.round((totalMinutes / 60) / target.min * 100))
       }
-    } catch (e) {}
+    }
 
-    wx.switchTab({ url: '/pages/route/route' })
+    this.setData({
+      greetText: greetByHour(h),
+      dateText,
+      stageName: cur ? (cur.name || '') : '',
+      weekHours: fmtHours(thisWeek),
+      weekDeltaText,
+      weekBars,
+      todayHours: fmtHours(todayMinutes),
+      totalHours: fmtHours(totalMinutes),   // 当前阶段累计，非全阶段
+      stagePercent,
+      checkinDays: daysSet.size
+    })
   }
 })

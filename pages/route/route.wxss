@@ -1,85 +1,105 @@
-/* 路线页卡 - 微信小程序风格（支持深色模式） */
+/* ===== 路线页（WeUI 风格重构） ===== */
 
-page {
-  background: var(--bg);
-}
-
-/* 时间线容器 */
+/* ① 时间线 */
 .timeline {
-  background: var(--card);
-  overflow: hidden;
+  padding: 0 32rpx;
 }
 
-/* 阶段项 */
 .stage-item {
   display: flex;
   align-items: stretch;
-  padding: 20rpx 28rpx;
-  transition: background 0.15s ease;
+  padding-top: 8rpx;
 }
+.stage-hover { opacity: 0.85; }
 
-.stage-hover {
-  background: var(--cell-active);
-}
-
-/* 左侧轨道 */
 .stage-rail {
-  width: 64rpx;
+  width: 56rpx;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  position: relative;
+  padding-top: 28rpx;
 }
 
-/* 阶段节点 */
 .stage-node {
-  width: 40rpx;
-  height: 40rpx;
-  line-height: 1;
+  width: 36rpx;
+  height: 36rpx;
   border-radius: 50%;
-  background: #d8d8d8;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  background: var(--card);
+  color: var(--text3);
+  font-size: calc(22rpx * var(--fs, 1));
+  font-weight: 600;
+  border: 2rpx solid var(--divider);
+  box-sizing: border-box;
   position: relative;
   z-index: 2;
   transition: all 0.2s ease;
 }
+.stage-node .iconfont {
+  font-size: calc(20rpx * var(--fs, 1)) !important;
+  font-weight: normal;
+}
 
-.node-num {
-  font-size: calc(26rpx * var(--fs, 1));
-  color: #ffffff;
-  font-weight: 500;
+.stage-node.done {
+  background: rgba(7, 193, 96, 0.15);
+  color: var(--brand);
+  border-color: rgba(7, 193, 96, 0.4);
+}
+
+.stage-node.current {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 4rpx rgba(7, 193, 96, 0.15);
+}
+
+.stage-node.locked {
+  background: var(--card);
+  color: var(--text4);
 }
 
 .stage-line {
-  width: 2rpx;
   flex: 1;
+  width: 2rpx;
   background: var(--divider);
-  margin-top: 6rpx;
+  margin: 8rpx 0 0;
   min-height: 32rpx;
 }
 
-/* 右侧内容 */
-.stage-body {
+/* ③ 阶段卡片 */
+.stage-card {
   flex: 1;
-  padding: 4rpx 0 20rpx 20rpx;
-  border-bottom: 1rpx solid var(--divider);
-  min-width: 0;
+  margin: 16rpx 0 0 0;
+  padding: 24rpx 24rpx 20rpx 28rpx;
+  background: var(--card);
+  border-radius: 16rpx;
+  position: relative;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+  border-left: 4rpx solid var(--divider);
+  box-sizing: border-box;
 }
 
-.stage-item:last-child .stage-body {
-  border-bottom: none;
-  padding-bottom: 4rpx;
+.stage-card.current {
+  border-left-color: var(--brand);
+  background: rgba(7, 193, 96, 0.04);
 }
 
-.stage-head {
+.stage-card.done {
+  border-left-color: rgba(7, 193, 96, 0.5);
+}
+
+.stage-card.locked {
+  opacity: 0.65;
+  border-left-color: var(--divider);
+}
+
+.stage-card-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8rpx;
 }
 
 .stage-title-row {
@@ -87,214 +107,111 @@ page {
   align-items: center;
   gap: 12rpx;
   flex-wrap: wrap;
-  min-width: 0;
 }
 
 .stage-name {
-  font-size: calc(34rpx * var(--fs, 1));
+  font-size: calc(32rpx * var(--fs, 1));
   font-weight: 600;
   color: var(--text);
   line-height: 1.4;
 }
 
 .stage-phase {
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(22rpx * var(--fs, 1));
   color: #576b95;
-  background: #edf0f5;
-  padding: 2rpx 12rpx;
+  background: rgba(87, 107, 149, 0.1);
+  padding: 2rpx 10rpx;
   border-radius: 6rpx;
   font-weight: 400;
+  line-height: 1.3;
 }
 
 .stage-arrow {
-  font-size: calc(34rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1)) !important;
   color: var(--text4);
-  font-weight: 300;
+  line-height: 1;
 }
 
-.stage-desc {
-  font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text3);
-  margin-bottom: 10rpx;
-  line-height: 1.5;
-}
-
-.stage-tags {
+.stage-meta-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8rpx;
-}
-
-.stage-body .stage-tags + .stage-tags {
+  align-items: center;
   margin-top: 8rpx;
+  flex-wrap: wrap;
+  gap: 4rpx;
 }
 
-.tag {
+.stage-meta-vocab,
+.stage-meta-time {
   font-size: calc(26rpx * var(--fs, 1));
-  padding: 4rpx 12rpx;
-  border-radius: 6rpx;
-  font-weight: 400;
+  color: var(--text2);
   line-height: 1.4;
 }
 
-.tag-entry {
-  color: #c77600;
-  background: #fffbe6;
-}
-
-.tag-promote {
-  color: #3370ff;
-  background: #eaf2ff;
-}
-
-/* 当前阶段 - 绿色主色 */
-.stage-current .stage-node {
-  background: #07c160;
-  box-shadow: 0 0 0 6rpx rgba(7, 193, 96, 0.15);
-}
-
-.stage-current .node-current-dot {
-  position: absolute;
-  width: 14rpx;
-  height: 14rpx;
-  background: #ffffff;
-  border-radius: 50%;
-  top: -4rpx;
-  right: -4rpx;
-  border: 2rpx solid #07c160;
-}
-
-.stage-current .stage-name {
-  color: #07c160;
-}
-
-.stage-current .stage-body {
-  background: #f6fffa;
-  border-radius: 0 12rpx 12rpx 0;
-}
-
-/* 已完成阶段 - 浅绿 */
-.stage-done .stage-node {
-  background: #95d6a7;
-}
-
-.stage-done .stage-name {
-  color: #576b95;
-}
-
-.node-icon {
+.stage-meta-dot {
+  margin: 0 6rpx;
   font-size: calc(26rpx * var(--fs, 1));
-  font-weight: 500;
-  color: #ffffff;
-}
-
-.stage-done .stage-line {
-  background: #d4edda;
-}
-
-/* 锁定阶段 - 灰色 */
-.stage-locked {
-  opacity: 0.85;
-}
-
-.stage-locked .stage-name {
-  color: var(--text3);
-}
-
-.stage-locked .stage-desc {
   color: var(--text4);
 }
 
-.stage-locked .tag {
-  opacity: 0.85;
-}
-
-.node-locked {
-  background: var(--text4);
-  color: var(--card);
-}
-
-.stage-locked .stage-line {
-  background: var(--divider);
-}
-
-.stage-lock-tag {
-  font-size: calc(26rpx * var(--fs, 1));
-  color: #8c6d1f;
-  background: #fffbe6;
+.stage-badge {
+  margin-left: auto;
+  padding: 2rpx 10rpx;
+  font-size: calc(22rpx * var(--fs, 1));
   border-radius: 6rpx;
-  padding: 2rpx 8rpx;
-  margin-left: 4rpx;
+  line-height: 1.3;
+  font-weight: 400;
 }
 
-.stage-done-tag {
+.stage-badge.current {
+  color: #fff;
+  background: var(--brand);
+}
+
+.stage-badge.done {
+  color: var(--brand);
+  background: rgba(7, 193, 96, 0.12);
+}
+
+.stage-badge.locked {
+  color: var(--text3);
+  background: var(--card2);
+}
+
+.stage-info {
+  margin-top: 16rpx;
+  padding-top: 12rpx;
+  border-top: 1rpx solid var(--divider);
+}
+
+.stage-info-row {
+  display: flex;
+  align-items: baseline;
+  margin-top: 6rpx;
   font-size: calc(26rpx * var(--fs, 1));
-  color: #389e0d;
-  background: #f6fffa;
-  border-radius: 6rpx;
-  padding: 2rpx 8rpx;
-  margin-left: 4rpx;
+  line-height: 1.5;
+}
+.stage-info-row:first-child { margin-top: 0; }
+
+.stage-info-label {
+  flex-shrink: 0;
+  width: 80rpx;
+  color: var(--text3);
 }
 
-/* ===== 深色模式适配（微信小程序深色规范） ===== */
-.dm-dark .stage-node { background: #3a3a3c; }
-
-.dm-dark .stage-phase {
-  color: #9aaecf;
-  background: rgba(154, 174, 207, 0.16);
+.stage-info-value {
+  flex: 1;
+  color: var(--text2);
 }
 
-.dm-dark .tag-entry { color: #ffd666; background: rgba(255, 214, 102, 0.16); }
-.dm-dark .tag-promote { color: #8ab4ff; background: rgba(138, 180, 255, 0.16); }
-
-.dm-dark .stage-current .stage-body {
-  background: rgba(7, 193, 96, 0.1);
-}
-
-.dm-dark .stage-done .stage-name {
-  color: #9aaecf;
-}
-
-.dm-dark .stage-done .stage-line {
-  background: #2e3f33;
-}
-
-.dm-dark .node-locked {
-  background: #4a4a4e;
-  color: #d8d8d8;
-}
-
-.dm-dark .stage-lock-tag { color: #ffd666; background: rgba(255, 214, 102, 0.16); }
-.dm-dark .stage-done-tag { color: #95de64; background: rgba(149, 222, 100, 0.16); }
+/* ===== 深色模式 ===== */
+.dm-dark .stage-node.locked { background: var(--card); }
+.dm-dark .stage-card { box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.2); }
+.dm-dark .stage-card.current { background: rgba(7, 193, 96, 0.08); }
+.dm-dark .stage-phase { color: #9aaecf; background: rgba(154, 174, 207, 0.16); }
 
 @media (prefers-color-scheme: dark) {
-  .dm-auto .stage-node { background: #3a3a3c; }
-
-  .dm-auto .stage-phase {
-    color: #9aaecf;
-    background: rgba(154, 174, 207, 0.16);
-  }
-
-  .dm-auto .tag-entry { color: #ffd666; background: rgba(255, 214, 102, 0.16); }
-  .dm-auto .tag-promote { color: #8ab4ff; background: rgba(138, 180, 255, 0.16); }
-
-  .dm-auto .stage-current .stage-body {
-    background: rgba(7, 193, 96, 0.1);
-  }
-
-  .dm-auto .stage-done .stage-name {
-    color: #9aaecf;
-  }
-
-  .dm-auto .stage-done .stage-line {
-    background: #2e3f33;
-  }
-
-  .dm-auto .node-locked {
-    background: #4a4a4e;
-    color: #d8d8d8;
-  }
-
-  .dm-auto .stage-lock-tag { color: #ffd666; background: rgba(255, 214, 102, 0.16); }
-  .dm-auto .stage-done-tag { color: #95de64; background: rgba(149, 222, 100, 0.16); }
+  .dm-auto .stage-node.locked { background: var(--card); }
+  .dm-auto .stage-card { box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.2); }
+  .dm-auto .stage-card.current { background: rgba(7, 193, 96, 0.08); }
+  .dm-auto .stage-phase { color: #9aaecf; background: rgba(154, 174, 207, 0.16); }
 }

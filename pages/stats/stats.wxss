@@ -11,12 +11,10 @@ page {
   margin-bottom: 20rpx;
 }
 
-.group-card {
-  background: var(--card);
+.weui-panel {
   margin: 0 24rpx;
-  border-radius: 16rpx;
-  overflow: hidden;
   padding: 16rpx 0;
+  box-shadow: none;
 }
 
 /* ===== 顶部阶段选择（独立于所有模块） ===== */

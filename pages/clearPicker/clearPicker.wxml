@@ -1,23 +1,16 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- 原语 3：picker-page（整页一个 group 卡片，无 group-title） -->
-  <view class="group">
-    <view class="group-card">
-      <block wx:if="{{scopes.length > 0}}">
-        <block wx:for="{{scopes}}" wx:key="key" wx:for-item="s" wx:for-index="i">
-          <view class="cell-divider" wx:if="{{i > 0}}"></view>
-          <view
-            class="cell cell-radio cell--single {{selectedKey === s.key ? 'cell-checked' : ''}}"
-            bindtap="pick"
-            data-key="{{s.key}}"
-          >
-            <text class="cell-label">{{s.name}}</text>
-            <text class="cell-check iconfont icon-check" hidden="{{selectedKey !== s.key}}"></text>
-          </view>
-        </block>
+  <!-- 清空范围选择（整页单选列表，选中品牌绿对勾） -->
+  <view class="weui-cells weui-cells_radio">
+    <block wx:if="{{scopes.length > 0}}">
+      <block wx:for="{{scopes}}" wx:key="key" wx:for-item="s" wx:for-index="i">
+        <view class="weui-cell" bindtap="pick" data-key="{{s.key}}">
+          <view class="weui-cell__bd">{{s.name}}</view>
+          <text class="weui-icon-checked iconfont icon-check" hidden="{{selectedKey !== s.key}}"></text>
+        </view>
       </block>
-      <view wx:else class="cell-empty">暂无数据可清空</view>
-    </view>
+    </block>
+    <view wx:else class="weui-cell_empty">暂无数据可清空</view>
   </view>
 
 </view>

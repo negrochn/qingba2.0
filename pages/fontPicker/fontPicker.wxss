@@ -1,9 +1,4 @@
-/* 字体大小选择页 - 原语 3：picker-page（整页单选列表，选中绿色对勾，支持深色模式） */
-
+/* 字体大小选择页 - 原语：picker-page 整页单选列表，组件原语见全局 app.wxss */
 page {
   background: var(--bg);
 }
-
-/* 分组样式已合入全局 app.wxss（原语 1 .group / .group-card） */
-
-

@@ -1,17 +1,13 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- 原语 3：picker-page（整页一个 group 卡片，无 group-title） -->
-  <view class="group">
-    <view class="group-card">
-      <block wx:for="{{levels}}" wx:key="key" wx:for-item="l" wx:for-index="i">
-        <view wx:if="{{i > 0}}" class="cell-divider"></view>
-        <view class="cell cell-radio cell--single {{selectedKey === l.key ? 'cell-checked' : ''}}"
-              bindtap="pick" data-key="{{l.key}}">
-          <text class="cell-label">{{l.label}}</text>
-          <text class="cell-check iconfont icon-check" hidden="{{selectedKey !== l.key}}"></text>
-        </view>
-      </block>
-    </view>
+  <!-- 字体大小选择（整页单选列表，选中品牌绿对勾） -->
+  <view class="weui-cells weui-cells_radio">
+    <block wx:for="{{levels}}" wx:key="key" wx:for-item="l" wx:for-index="i">
+      <view class="weui-cell" bindtap="pick" data-key="{{l.key}}">
+        <view class="weui-cell__bd">{{l.label}}</view>
+        <text class="weui-icon-checked iconfont icon-check" hidden="{{selectedKey !== l.key}}"></text>
+      </view>
+    </block>
   </view>
 
 </view>

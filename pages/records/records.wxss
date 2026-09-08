@@ -184,7 +184,7 @@ page {
   border-radius: 6rpx;
 }
 
-.tag-group {
+.weui-tag {
   font-size: calc(26rpx * var(--fs, 1));
   padding: 2rpx 10rpx;
   border-radius: 6rpx;
