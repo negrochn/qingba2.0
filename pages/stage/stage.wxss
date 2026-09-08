@@ -1,28 +1,7 @@
-/* ====== 分组标题（微信原生风格，位于卡片外） ====== */
-.st-group-head {
-  display: flex;
-  align-items: center;
-  padding: 16rpx 40rpx 12rpx;
-}
-
-.st-group-title {
-  font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text3);
+/* ====== 分组标题：复用全局 .group-title（app.wxss），本页不再重复定义；
+   阶段名与积累信息（res-hl-* 高亮）拼在同一行内 ====== */
+.group-title {
   line-height: 1.4;
-  flex-shrink: 0;
-}
-
-.st-group-sub {
-  flex: 1;
-  min-width: 0;
-  margin-left: 16rpx;
-  font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text2);
-  line-height: 1.5;
-  text-align: right;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 /* ====== 关键要点（方案A：紧凑列表）（支持深色模式） ====== */
