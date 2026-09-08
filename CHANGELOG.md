@@ -37,6 +37,7 @@
 ### 修复
 
 - **iconfont 字体跨页面渲染修复**：上一版在 `App.onLaunch` 用 `wx.loadFontFace` 以 base64 注册字族，但微信小程序各页面为独立 webview，该注册仅作用于 App 所在 webview，不会下发给各页面，导致 `cell-right` 等图标在「我的 / 设置」等页仍未渲染（显示为缺字形方框）。改为在全局 `app.wxss` 顶部用 `@font-face` 内联 base64 data URI 注册字族（WXSS 注入每个页面 webview 时自动带入），既避开开发者工具对本地 `@font-face` 路径的改写拦截、又真正跨页面生效；同步清理 `app.js` 中已无用的 `iconfontDataUri` 常量与 `loadIconFont` 方法。`scripts/gen_iconfont_base64.ps1` 与 `assets/fonts` 字体源文件保留供后续更新图标
+- **iconfont 开发者工具模拟器渲染修复（data URI MIME 兼容）**：上版将 base64 内联到全局 `app.wxss` 的 `@font-face` 解决了跨页面不渲染的问题，但开发者工具内置的旧版 Chromium 不识别 data URI 的 `font/woff` MIME（IANA 新登记类型），仍把 iconfont 字符回退为 `□`；真机 System WebView / WKWebView 较新可识别。改用兼容性最广的 `application/font-woff` 后，开发者工具与真机均能正常加载字体
 - **`wx.getSystemInfoSync` 弃用告警修复**：`app.js` 读取系统深色偏好由原已弃用的 `wx.getSystemInfoSync` 改为 `wx.getAppBaseInfo`（旧基础库回退），消除弃用告警
 - `.gitignore` 中文注释存在 GBK 误编码残留，在 GitHub 上显示为乱码；已以 UTF-8 无 BOM 重新保存，忽略规则内容不变
 
