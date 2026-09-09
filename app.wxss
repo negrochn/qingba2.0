@@ -4,17 +4,17 @@
 
 /* ===== 主题色板（--* 变量，已对齐 WeUI） =====
    浅色为默认；深色通过根节点 class（dm-light / dm-dark / dm-auto）切换 CSS 变量。
-   对应 WeUI：--bg=BG-0 / --card=BG-2 / --text=FG-0 / --text2≈FG-1(次级) / --text3≈FG-1(次级) /
-   --text4≈FG-2(占位/弱化) / --divider≈FG-3 / --brand=BRAND / --danger=RED / --cell-active≈BG-COLOR-ACTIVE */
+   对应 WeUI：--bg=BG-0 / --card=BG-2 / --text=FG-0(主文字) / --text2=FG-1(次级) /
+   --text3=FG-2(三级·占位) / --divider≈FG-3 / --brand=BRAND /
+   --danger=RED / --cell-active≈BG-COLOR-ACTIVE */
 page {
   --bg: #ededed;
   --card: #ffffff;
   --card2: #f7f8fa;
-  --text: #1a1a1a;
-  --text2: #737373;                 /* FG-1 rgba(0,0,0,.55) */
-  --text3: #737373;                 /* FG-1 rgba(0,0,0,.55) */
-  --text4: #b2b2b2;                 /* FG-2 rgba(0,0,0,.3) */
-  --divider: #e5e5e5;
+  --text: #1a1a1a;                  /* FG-0 rgba(0,0,0,.9) 主文字 */
+  --text2: #737373;                 /* FG-1 rgba(0,0,0,.55) 次级：标题 / 说明 / cell 值 */
+  --text3: #b2b2b2;                 /* FG-2 rgba(0,0,0,.3) 三级 / 占位 */
+  --divider: #e5e5e5;               /* ≈FG-3 rgba(0,0,0,.1) 分隔线 */
   --brand: #07C160;
   --danger: #fa5151;               /* RED light */
   --cell-active: #f5f5f5;
@@ -58,25 +58,23 @@ view, text {
   --bg: #ededed;
   --card: #ffffff;
   --card2: #f7f8fa;
-  --text: #1a1a1a;
-  --text2: #737373;                 /* FG-1 rgba(0,0,0,.55) */
-  --text3: #737373;                 /* FG-1 rgba(0,0,0,.55) */
-  --text4: #b2b2b2;                 /* FG-2 rgba(0,0,0,.3) */
-  --divider: #e5e5e5;
+  --text: #1a1a1a;                  /* FG-0 主文字 */
+  --text2: #737373;                 /* FG-1 次级 */
+  --text3: #b2b2b2;                 /* FG-2 三级 / 占位 */
+  --divider: #e5e5e5;               /* ≈FG-3 分隔线 */
   --brand: #07C160;
   --danger: #fa5151;               /* RED light */
   --cell-active: #f5f5f5;
 }
 
-/* 手动深色（微信官方深色色板：BG #111 / 卡片 #1C1C1E / 文字 rgba(255,255,255,.9/.6/.35)） */
+/* 手动深色（微信官方深色色板：BG #111 / 卡片 #1C1C1E / 文字 FG-0 .8 / FG-1 .5 / FG-2 .3） */
 .dm-dark {
   --bg: #111111;
   --card: #1c1c1e;
   --card2: #232326;
-  --text: rgba(255, 255, 255, 0.92);
-  --text2: rgba(255, 255, 255, 0.55);   /* FG-1 dark */
-  --text3: rgba(255, 255, 255, 0.55);   /* FG-1 dark */
-  --text4: rgba(255, 255, 255, 0.3);    /* FG-2 dark */
+  --text: rgba(255, 255, 255, 0.8);     /* FG-0 dark 主文字 */
+  --text2: rgba(255, 255, 255, 0.5);    /* FG-1 dark 次级 */
+  --text3: rgba(255, 255, 255, 0.3);    /* FG-2 dark 三级 / 占位 */
   --divider: rgba(255, 255, 255, 0.1);
   --brand: #07C160;
   --danger: #fa5151;               /* RED dark（与浅色一致，WeUI RED 不随深浅变化） */
@@ -89,10 +87,9 @@ view, text {
     --bg: #111111;
     --card: #1c1c1e;
     --card2: #232326;
-    --text: rgba(255, 255, 255, 0.92);
-    --text2: rgba(255, 255, 255, 0.55);   /* FG-1 dark */
-    --text3: rgba(255, 255, 255, 0.55);   /* FG-1 dark */
-    --text4: rgba(255, 255, 255, 0.3);    /* FG-2 dark */
+    --text: rgba(255, 255, 255, 0.8);     /* FG-0 dark 主文字 */
+    --text2: rgba(255, 255, 255, 0.5);    /* FG-1 dark 次级 */
+    --text3: rgba(255, 255, 255, 0.3);    /* FG-2 dark 三级 / 占位 */
     --divider: rgba(255, 255, 255, 0.1);
     --brand: #07C160;
     --danger: #fa5151;               /* RED dark（与浅色一致，WeUI RED 不随深浅变化） */
@@ -148,7 +145,7 @@ view, text {
 
 /* 分组标题 / 说明（纯灰文字，无彩色竖条；margin-top/margin-bottom 已合入 padding，左右统一 32rpx） */
 .weui-cells__title {
-  padding: 32rpx 32rpx 16rpx;      /* 上=原 margin-top，左右 32rpx，下=原 margin-bottom 16rpx */
+  padding: 32rpx 32rpx 6rpx;       /* 上=原 margin-top，左右 32rpx，下=WeUI 原 margin-bottom 3px(6rpx) */
   color: var(--text2);
   font-size: calc(28rpx * var(--fs, 1));   /* 14px 分组标题 */
   line-height: 1.4;
@@ -214,7 +211,7 @@ view, text {
 .weui-cell__desc {                 /* 描述文字（12px FG-2） */
   display: block;
   font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text4);
+  color: var(--text3);
   line-height: 1.4;
   margin-top: 4rpx;
 }
@@ -222,14 +219,14 @@ view, text {
   flex-shrink: 0;
   max-width: 60%;
   text-align: right;
-  color: var(--text3);
+  color: var(--text2);
   display: flex;
   align-items: center;
   justify-content: flex-end;
 }
 .weui-cell__ft_value {             /* 右侧值文字（34rpx，FG-1） */
   font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text2);
   line-height: 1.41176471;
 }
 .weui-cell__ft_value.placeholder { opacity: 0.6; }
@@ -237,7 +234,7 @@ view, text {
 /* 箭头（iconfont .icon-right，色随 FG-2） */
 .weui-cell__ft .icon-right {
   font-size: calc(34rpx * var(--fs, 1)) !important;
-  color: var(--text4);
+  color: var(--text3);
   line-height: 1.4;
   margin-left: 12rpx;
 }
@@ -249,7 +246,7 @@ view, text {
 .weui-cell_empty {
   padding: 48rpx 32rpx;
   font-size: calc(28rpx * var(--fs, 1));
-  color: var(--text4);
+  color: var(--text3);
   text-align: center;
   min-height: auto;
 }
@@ -356,7 +353,7 @@ view, text {
   border-radius: 8rpx;
   line-height: 1.4;
 }
-.weui-tag_default { color: var(--text3); background: var(--card2); }
+.weui-tag_default { color: var(--text2); background: var(--card2); }
 
 /* ============================================================
    原语 8：弹窗类 Dialog / ActionSheet / Toast

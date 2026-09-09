@@ -28,7 +28,7 @@ page {
 
 .chapter-title {
   font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text4);
+  color: var(--text3);
   line-height: 1.4;
 }
 
@@ -45,7 +45,7 @@ page {
 .para {
   font-size: calc(28rpx * var(--fs, 1));
   line-height: 1.65;
-  color: var(--text3);
+  color: var(--text2);
   margin-bottom: 24rpx;
   text-align: justify;
 }
@@ -70,7 +70,7 @@ page {
 .bullet {
   font-size: calc(28rpx * var(--fs, 1));
   line-height: 1.8;
-  color: var(--text3);
+  color: var(--text2);
 }
 
 /* ===== 阶段块（卡片风格） ===== */
@@ -92,9 +92,9 @@ page {
 }
 
 .stage-line {
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
   line-height: 1.6;
-  color: var(--text3);
+  color: var(--text2);
   margin-bottom: 6rpx;
 }
 
@@ -128,9 +128,9 @@ page {
 }
 
 .method-op {
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
   line-height: 1.65;
-  color: var(--text3);
+  color: var(--text2);
 }
 
 /* ===== 注意点块 ===== */
@@ -143,16 +143,16 @@ page {
 }
 
 .warn-title {
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
   font-weight: 600;
   color: #c0392b;
   margin-bottom: 10rpx;
 }
 
 .warn-item {
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
   line-height: 1.65;
-  color: var(--text3);
+  color: var(--text2);
   margin-bottom: 6rpx;
 }
 
@@ -174,16 +174,16 @@ page {
 }
 
 .sub-title {
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
   font-weight: 600;
   color: #1a5fb0;
   margin-bottom: 10rpx;
 }
 
 .para-sm {
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
   line-height: 1.6;
-  color: var(--text3);
+  color: var(--text2);
   margin-bottom: 10rpx;
 }
 

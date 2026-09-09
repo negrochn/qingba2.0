@@ -11,8 +11,8 @@ page {
 .section-head {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0 0 16rpx;
+  justify-content: flex-start;
+  padding: 0 32rpx 16rpx;
 }
 
 /* 月份选择器（头部右侧，与首页一致） */
@@ -23,8 +23,8 @@ page {
 }
 
 .overview-year {
-  font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text3);
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
 }
 
 .overview-picker {
@@ -37,14 +37,14 @@ page {
 }
 
 .overview-month {
-  font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text3);
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
   font-weight: 500;
 }
 
 .overview-arrow {
-  font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text4);
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
   transition: transform 0.2s;
 }
 
@@ -155,8 +155,8 @@ page {
 
 .record-date {
   flex-shrink: 0;
-  font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text3);
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
 }
 
 /* 第二行 */
@@ -192,10 +192,10 @@ page {
 .tag-group-fun_extensions { color: #389e0d; background: #f0ffe0; }
 .tag-group-science_extensions { color: #ad6800; background: #fffbe6; }
 .tag-group-fusion_apps { color: #531dab; background: #f5f0ff; }
-.tag-group-default { color: var(--text4); background: var(--cell-active); }
+.tag-group-default { color: var(--text3); background: var(--cell-active); }
 
 .record-remark {
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
   color: #52c41a;
   background: #f0fff0;
   padding: 2rpx 10rpx;
@@ -230,14 +230,14 @@ page {
 
 .empty-text {
   font-size: calc(30rpx * var(--fs, 1));
-  color: var(--text3);
+  color: var(--text2);
   font-weight: 500;
   margin-bottom: 12rpx;
 }
 
 .empty-hint {
-  font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text4);
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
 }
 
 /* ===== 月份选择器弹层（与首页一致） ===== */
@@ -311,7 +311,7 @@ page {
 
 .mp-cancel {
   background: var(--cell-active);
-  color: var(--text3);
+  color: var(--text2);
 }
 
 .mp-ok {

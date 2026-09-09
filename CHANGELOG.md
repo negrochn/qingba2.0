@@ -49,6 +49,11 @@
 - **完成进度百分比由 `Math.round` 改为 `Math.floor`（向下取整）**
 - **`getRequiredHours` 修正**：常规6 / 准桥梁的晋级进度改为按"当前阶段自身时长"评估，不再误匹配跨阶段累计投入规则（常规1-6 累计不低于 400H / 常规1 累计总投入不低于 480H）
 - **`app.wxss` 满宽按钮特异性修正**：`.weui-btn_block` 改为 `.weui-btn.weui-btn_block`（并重置左右 margin），特异性 (0,2,0) 盖过微信原生 `wx-button:not([size=mini])` 的 `width:184px`（0,1,1），确保 `weui-btn_block` 满宽真正生效
+- **文字色变量对齐 WeUI FG 并收敛为三档**：`--text` / `--text2` / `--text3` 严格对应 FG-0 / FG-1 / FG-2；深色档取值由 `.92 / .55` 改为官方 `.8 / .5`（`--text4` 原已是 FG-2 `.3`）。原 `--text3`（FG-1）与 `--text2` 重复，合并入 `--text2`，原 `--text4`（FG-2）整体提升为 `--text3`，`--text4` 移除；全站 69 处引用按「先 3→2、后 4→3」顺序替换（覆盖 `app` 与 `stage` / `records` / `route` / `about` / `stats` / `home` 各页），渲染结果不变
+- **全站字号统一到 WeUI 规范档**：36 处 `26rpx`（13px，非规范档）统一为 `28rpx`（14px）；打卡弹窗按比例放大的遗留值收敛——`.pm-stage-name` / `.pm-btn` 36→34rpx、`.pm-form-unit` / `.pm-quick-btn` 32→28rpx、`.pm-stage-tip` 29→28rpx、`.pm-num-input` 41→34rpx；`.home-bar-label` 与 `stats` 的 `.overview-arrow` 由 20rpx 提到 24rpx（后者与 `records` 同名类对齐，消除两页箭头不一致）。现主力档位为 34（17px 主文）/ 28（14px 次级）/ 24（12px 辅助），`26 / 29 / 32 / 36 / 41rpx` 已清零
+- **关键要点模块改造为 WeUI cell 列表（stage）**：`.weui-panel` + `.kp-list` 点状卡片改为 `.weui-cells` + `.weui-cell`；去掉小圆点、序号与「重要」标签，只展示文字；重点条目文字用 `--text`、其余用 `--text2` 区分层级；字号 26→28rpx；清理 `.kp-list` / `.kp-item` / `.kp-dot` / `.kp-body` / `.kp-tag` 等约 100 行废弃样式，以及 `.dm-dark` / `.dm-auto` 下的配套覆盖（深浅切换改由变量自动完成）
+- **`.weui-cells__title` 下间距回归官方**：`padding` 由 `32rpx 32rpx 16rpx` 改为 `32rpx 32rpx 6rpx`（官方 `margin-bottom: 3px`）；margin 合入 padding 的做法保留，深色模式卡片背景依旧连续铺满
+- **打卡记录页（records）头部对齐**：`.section-head` 补左右内距 `padding: 0 32rpx`，日期 / 月份选择器由居中 `center` 改为左对齐 `flex-start`
 
 ### 修复
 
@@ -68,6 +73,7 @@
   - `components.md` 订正 dialog 部分（标题字重 500、正文 FG-1、底部留白 32px、主操作默认 LINK 蓝、补齐 hd/ft 结构），与 `widget/weui-tips/weui-dialog.less` 一致
   - 新增「列表分组间距」约定：`.weui-cells` 不设 `margin-top`、`.weui-cells__title` 的 margin 合入 padding、深色模式下卡片背景连续铺满；间距摘要标注分组标题间距改由 `padding-top` 提供
   - `ui-design-spec` skill 同步本次 WeUI 风格重构结论：`design-tokens.md` 更新 `--text2/3/4`/`--danger` 实际取值与 FG 映射、分隔线实现改为真实 1rpx（去 `scaleY(.5)`）；`SKILL.md` 新增「扁平纯色、禁止渐变/外发光」「`.weui-tag` 无 margin」「分组容器 `border-bottom` 通栏分隔线」项目约定；`components.md` 标签/按钮补纯色与去 margin 备注
+  - `design-tokens.md` §9 同步本轮收敛结论：项目文字色映射表更新为三档（FG-0 / FG-1 / FG-2）并标注 `--text4` 已合并移除；新增「项目字号档」约定——34 / 28 / 24rpx 三档分别对应 17 / 14 / 12px，`26rpx` 及 `29 / 32 / 36 / 41rpx` 列为已废弃，大号数字除外
 
 ## [2.3.1] - 2026-09-03
 

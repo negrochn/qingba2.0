@@ -66,17 +66,12 @@
   <!-- 关键要点（移动到底部） -->
   <view wx:if="{{stage.key_points.length}}">
     <view class="weui-cells__title">关键要点</view>
-    <view class="weui-panel key-point-card">
-    <!-- 方案A：紧凑列表 -->
-    <view class="kp-list">
-      <view class="kp-item {{item.highlighted ? 'kp-item-hi' : ''}}" wx:for="{{stage.key_points}}" wx:key="text">
-        <view class="kp-dot {{item.highlighted ? 'kp-dot-hi' : ''}}"></view>
-        <view class="kp-body">
-          <text class="kp-text">{{item.text}}</text>
-          <view class="kp-tag kp-tag-hi" wx:if="{{item.highlighted}}">重要</view>
+    <view class="weui-cells">
+      <view class="weui-cell" wx:for="{{stage.key_points}}" wx:key="text">
+        <view class="weui-cell__bd">
+          <text class="kp-text {{item.highlighted ? 'kp-text-hi' : ''}}">{{item.text}}</text>
         </view>
       </view>
-    </view>
     </view>
   </view>
 

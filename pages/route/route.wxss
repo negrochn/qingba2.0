@@ -29,8 +29,8 @@
   align-items: center;
   justify-content: center;
   background: var(--card);
-  color: var(--text3);
-  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text2);
+  font-size: calc(28rpx * var(--fs, 1));
   font-weight: 600;
   border: 2rpx solid var(--divider);
   box-sizing: border-box;
@@ -39,7 +39,7 @@
   transition: all 0.2s ease;
 }
 .stage-node .iconfont {
-  font-size: calc(26rpx * var(--fs, 1)) !important;
+  font-size: calc(28rpx * var(--fs, 1)) !important;
   font-weight: normal;
 }
 
@@ -58,7 +58,7 @@
 
 .stage-node.locked {
   background: var(--card);
-  color: var(--text4);
+  color: var(--text3);
 }
 
 .stage-line {
@@ -117,7 +117,7 @@
 }
 
 .stage-phase {
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
   color: #576b95;
   background: rgba(87, 107, 149, 0.1);
   padding: 2rpx 10rpx;
@@ -128,7 +128,7 @@
 
 .stage-arrow {
   font-size: calc(28rpx * var(--fs, 1)) !important;
-  color: var(--text4);
+  color: var(--text3);
   line-height: 1;
 }
 
@@ -142,21 +142,21 @@
 
 .stage-meta-vocab,
 .stage-meta-time {
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
   color: var(--text2);
   line-height: 1.4;
 }
 
 .stage-meta-dot {
   margin: 0 6rpx;
-  font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text4);
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
 }
 
 .stage-badge {
   margin-left: auto;
   padding: 2rpx 10rpx;
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
   border-radius: 6rpx;
   line-height: 1.3;
   font-weight: 400;
@@ -173,7 +173,7 @@
 }
 
 .stage-badge.locked {
-  color: var(--text3);
+  color: var(--text2);
   background: var(--card2);
 }
 
@@ -187,7 +187,7 @@
   display: flex;
   align-items: baseline;
   margin-top: 6rpx;
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
   line-height: 1.5;
 }
 .stage-info-row:first-child { margin-top: 0; }
@@ -195,7 +195,7 @@
 .stage-info-label {
   flex-shrink: 0;
   width: 80rpx;
-  color: var(--text3);
+  color: var(--text2);
 }
 
 .stage-info-value {

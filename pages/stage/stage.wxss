@@ -1,93 +1,19 @@
-/* ====== 关键要点（紧凑列表，WeUI 风格：扁平、纯色，无渐变/发光） ====== */
-.key-point-card {
-  background: var(--card);
-  position: relative;
-}
-
-/* 要点列表 */
-.kp-list {
-  margin-top: 8rpx;
-}
-
-/* 单条要点 */
-.kp-item {
-  display: flex;
-  align-items: flex-start;
-  padding: 20rpx 16rpx;
-  border-radius: 12rpx;
-  margin-bottom: 8rpx;
-  background: var(--card2);
-}
-
-.kp-item:last-child {
-  margin-bottom: 0;
-}
-
-/* 重要条目高亮：浅琥珀底 + 左侧色条（纯色，无渐变） */
-.kp-item-hi {
-  background: rgba(255, 122, 69, 0.08);
-  border-left: 6rpx solid #ff7a45;
-}
-
-/* 小圆点 */
-.kp-dot {
-  flex-shrink: 0;
-  width: 12rpx;
-  height: 12rpx;
-  border-radius: 50%;
-  background: var(--text4);
-  margin-right: 16rpx;
-  margin-top: 12rpx;
-}
-
-.kp-dot-hi {
-  background: #ff7a45;
-}
-
-/* 内容区 */
-.kp-body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 10rpx;
-}
-
-/* 文本 */
+/* ====== 关键要点（WeUI cell 列表：无序号 / 无圆点，重点文字 --text，其余 --text2 区分） ====== */
 .kp-text {
-  flex: 1;
-  min-width: 0;
-  font-size: calc(26rpx * var(--fs, 1));
+  display: block;
+  font-size: calc(34rpx * var(--fs, 1));   /* 14px，WeUI 次级正文档 */
   line-height: 1.6;
-  color: var(--text3);
+  color: var(--text2);
 }
 
-.kp-item-hi .kp-text {
-  color: #8a4a20;
-}
-
-/* 重要标签 */
-.kp-tag {
-  display: inline-flex;
-  align-items: center;
-  font-size: calc(26rpx * var(--fs, 1));
-  color: #ff7a45;
-  background: #fff2e8;
-  padding: 2rpx 12rpx;
-  border-radius: 10rpx;
-  line-height: 1.5;
-  flex-shrink: 0;
-}
-
-.kp-tag-hi {
-  color: #fff;
-  background: #ff7a45;
+/* 重点要点：提到主文字色，与普通要点形成层级区分 */
+.kp-text-hi {
+  color: var(--text);
 }
 
 /* 资源行里不可打卡的提示（灰色说明行） */
 .r-sub-note {
-  color: var(--text4);
+  color: var(--text3);
   font-style: italic;
 }
 
@@ -111,20 +37,20 @@
   color: #fff;
   background: var(--brand);
   border-radius: 10rpx;
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
   display: inline-block;
 }
 
 .res-hl-sep {
-  color: var(--text4);
+  color: var(--text3);
 }
 
 .res-hl-paren {
-  color: var(--text4);
+  color: var(--text3);
 }
 
 .res-hl-text {
-  color: var(--text3);
+  color: var(--text2);
 }
 
 .rg-head {
@@ -209,7 +135,7 @@
 
 /* 默认 */
 .rg-dot-default { background: #888888; }
-.rg-label-default { color: var(--text4); }
+.rg-label-default { color: var(--text3); }
 
 .rg-label {
   flex: 1;
@@ -228,15 +154,15 @@
 }
 
 .rg-count {
-  font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text4);
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
 }
 
 /* 分组进度摘要（品牌绿浅底标签） */
 .rg-progress {
   display: flex;
   align-items: center;
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
   color: var(--brand);
   margin-right: 12rpx;
   background: rgba(7, 193, 96, 0.1);
@@ -245,12 +171,12 @@
 }
 
 .rg-progress-empty {
-  color: var(--text4);
+  color: var(--text3);
   background: var(--cell-active);
 }
 
 .rg-progress-locked {
-  color: var(--text4);
+  color: var(--text3);
   background: var(--cell-active);
 }
 
@@ -267,23 +193,23 @@
 
 .lock-icon {
   margin-right: 12rpx;
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
 }
 
 .lock-text {
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
   color: #8b6914;
   line-height: 1.5;
 }
 
 .rg-collapsed-locked {
-  color: var(--text4) !important;
+  color: var(--text3) !important;
   font-style: italic;
 }
 
 .r-sub-locked {
-  color: var(--text4);
-  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text3);
+  font-size: calc(28rpx * var(--fs, 1));
 }
 
 .rg-progress-val {
@@ -292,17 +218,17 @@
 
 .rg-progress-sep {
   margin: 0 6rpx;
-  color: var(--text4);
+  color: var(--text3);
 }
 
 .rg-progress-read {
-  color: var(--text3);
+  color: var(--text2);
 }
 
 /* 展开/折叠箭头 */
 .rg-arrow {
   font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text4);
+  color: var(--text3);
   font-weight: 300;
   transition: transform 0.2s;
 }
@@ -324,13 +250,13 @@
 }
 
 .rg-collapsed-hint {
-  font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text4);
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
   text-align: center;
 }
 
 .rg-collapsed-note {
-  color: var(--text4);
+  color: var(--text3);
   font-style: italic;
 }
 
@@ -404,13 +330,13 @@
 
 .r-sub {
   margin-top: 6rpx;
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
   color: var(--brand);
   line-height: 1.4;
 }
 
 .r-sub-hint {
-  color: var(--text4);
+  color: var(--text3);
 }
 
 .r-right {
@@ -426,7 +352,7 @@
   color: #d48806;
   padding: 4rpx 12rpx;
   border-radius: 16rpx;
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
 }
 
 /* 读完按钮 */
@@ -436,7 +362,7 @@
   border: 1rpx solid #ffd1a8;
   padding: 4rpx 16rpx;
   border-radius: 16rpx;
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
   line-height: 1.4;
 }
 .r-read-btn:active {
@@ -449,13 +375,13 @@
   color: #fff;
   padding: 6rpx 16rpx;
   border-radius: 20rpx;
-  font-size: calc(26rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
   margin-right: 8rpx;
 }
 
 /* 行尾箭头：品牌绿 */
 .r-arrow {
-  color: var(--text4);
+  color: var(--text3);
   font-size: 49rpx;
   line-height: 1;
   font-weight: 300;
@@ -532,12 +458,12 @@
   line-height: 50rpx;
   text-align: center;
   font-size: 53rpx;
-  color: var(--text4);
+  color: var(--text3);
   border-radius: 50%;
 }
 .sheet-close:active {
   background: var(--cell-active);
-  color: var(--text3);
+  color: var(--text2);
 }
 
 /* 原语 13 .form-card（表单卡片：圆角白底） */
@@ -582,7 +508,7 @@
 .form-unit {
   flex-shrink: 0;
   font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text4);
+  color: var(--text3);
   margin-left: 8rpx;
 }
 
@@ -632,7 +558,7 @@
 /* 原语 1 .icon-right（已读完行的 chevron） */
 .form-row .icon-right {
   font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text4);
+  color: var(--text3);
   line-height: 1;
   margin-left: 12rpx;
   flex-shrink: 0;
@@ -647,7 +573,7 @@
    未达成走 weui-btn_default(灰底+深字)，达成 100% 走 weui-btn_primary(品牌绿+白字)；
    进度由内联渐变(品牌绿从左填充)叠加在底色上，文字随状态自动切换 */
 .promote-btn-area {
-  margin-top: 32rpx;
+  margin: 32rpx 32rpx 0;
 }
 
 /* ====== 晋级弹窗 ====== */
@@ -712,13 +638,13 @@
   line-height: 50rpx;
   text-align: center;
   font-size: 53rpx;
-  color: var(--text4);
+  color: var(--text3);
   border-radius: 50%;
 }
 
 .pm-close:active {
   background: var(--cell-active);
-  color: var(--text3);
+  color: var(--text2);
 }
 
 .pm-stage-info {
@@ -729,14 +655,14 @@
 }
 
 .pm-stage-name {
-  font-size: calc(36rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);
   margin-bottom: 8rpx;
 }
 
 .pm-stage-tip {
-  font-size: calc(29rpx * var(--fs, 1));
-  color: var(--text4);
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
   line-height: 1.5;
 }
 
@@ -788,7 +714,7 @@
 .pm-num-input {
   flex: 1;
   text-align: right;
-  font-size: calc(41rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);
   height: 64rpx;
   padding: 0 16rpx;
@@ -796,8 +722,8 @@
 
 .pm-form-unit {
   flex-shrink: 0;
-  font-size: calc(32rpx * var(--fs, 1));
-  color: var(--text4);
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
 }
 
 .pm-quick-row {
@@ -813,7 +739,7 @@
   text-align: center;
   background: var(--cell-active);
   color: var(--brand);
-  font-size: calc(32rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));
   border-radius: 12rpx;
 }
 
@@ -833,7 +759,7 @@
   height: 88rpx;
   line-height: 88rpx;
   border-radius: 16rpx;
-  font-size: calc(36rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1));
   border: none;
   text-align: center;
   display: flex !important;
@@ -848,7 +774,7 @@
 
 .pm-btn-cancel {
   background: var(--cell-active);
-  color: var(--text3);
+  color: var(--text2);
   margin-right: 4%;
 }
 
@@ -866,16 +792,6 @@
 }
 
 /* ====== 深色模式适配（微信小程序深色规范） ====== */
-.dm-dark .kp-item-hi {
-  background: rgba(255, 122, 69, 0.14);
-}
-
-.dm-dark .kp-item-hi .kp-text {
-  color: #e0a56a;
-}
-
-.dm-dark .kp-tag { color: #ff9c6e; background: rgba(255, 156, 110, 0.16); }
-
 .dm-dark .res-hl-bold { color: #7fb4f7; }
 .dm-dark .res-hl-time { color: #8ab4ff; }
 
@@ -891,8 +807,8 @@
 
 .dm-dark .rg-progress { color: var(--brand); background: rgba(7, 193, 96, 0.16); }
 .dm-dark .rg-progress-val { color: var(--brand); }
-.dm-dark .rg-progress-empty { color: var(--text4); background: var(--cell-active); }
-.dm-dark .rg-progress-locked { color: var(--text4); background: var(--cell-active); }
+.dm-dark .rg-progress-empty { color: var(--text3); background: var(--cell-active); }
+.dm-dark .rg-progress-locked { color: var(--text3); background: var(--cell-active); }
 
 /* 已打卡行：深色纯色浅底 */
 .dm-dark .r-row-done {
@@ -926,16 +842,6 @@
 .dm-dark .pm-quick-btn { color: var(--brand); }
 
 @media (prefers-color-scheme: dark) {
-  .dm-auto .kp-item-hi {
-    background: rgba(255, 122, 69, 0.14);
-  }
-
-  .dm-auto .kp-item-hi .kp-text {
-    color: #e0a56a;
-  }
-
-  .dm-auto .kp-tag { color: #ff9c6e; background: rgba(255, 156, 110, 0.16); }
-
   .dm-auto .res-hl-bold { color: #7fb4f7; }
   .dm-auto .res-hl-time { color: #8ab4ff; }
 
@@ -950,8 +856,8 @@
 
   .dm-auto .rg-progress { color: var(--brand); background: rgba(7, 193, 96, 0.16); }
   .dm-auto .rg-progress-val { color: var(--brand); }
-  .dm-auto .rg-progress-empty { color: var(--text4); background: var(--cell-active); }
-  .dm-auto .rg-progress-locked { color: var(--text4); background: var(--cell-active); }
+  .dm-auto .rg-progress-empty { color: var(--text3); background: var(--cell-active); }
+  .dm-auto .rg-progress-locked { color: var(--text3); background: var(--cell-active); }
 
   .dm-auto .r-row-done {
     background: rgba(7, 193, 96, 0.14);
