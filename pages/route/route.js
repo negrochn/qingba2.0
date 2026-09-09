@@ -1,4 +1,4 @@
-const { routeData } = require('../../utils/data.js')
+const { routeData, getRequiredHours } = require('../../utils/data.js')
 const checkin = require('../../utils/checkin.js')
 
 Page({
@@ -7,6 +7,7 @@ Page({
     stageCount: routeData.stages.length,
     currentStageId: '',
     currentStageIndex: -1,
+    currentCard: null,
     fontClass: ''
   },
 
@@ -57,10 +58,30 @@ Page({
       }
       return Object.assign({}, s, { _state: state })
     })
+    // 顶部当前阶段：阶段名 + 进度百分比（与 stage 详情页同口径）
+    let currentCard = null
+    if (currentIndex >= 0) {
+      const s = routeData.stages[currentIndex]
+      // 进度与 stage 详情页完全同口径：按 required.type 决定取阶段自身还是累计时长
+      const required = getRequiredHours(s)
+      const minutes = required.type === 'accumulated'
+        ? checkin.getAccumulatedMinutes(s.stage_id)
+        : checkin.getStageMinutes(s.stage_id)
+      const hours = minutes / 60
+      const progress = required.hours > 0
+        ? Math.min(100, Math.floor(hours / required.hours * 100))
+        : 0
+      currentCard = {
+        name: s.stage_name,
+        progress
+      }
+    }
+
     this.setData({
       stages,
       currentStageId: current ? current.id : '',
-      currentStageIndex: currentIndex
+      currentStageIndex: currentIndex,
+      currentCard
     }, () => {
       if (typeof cb === 'function') cb()
     })

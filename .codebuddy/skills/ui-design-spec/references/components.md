@@ -275,6 +275,46 @@ WeUI 提供 `weui-icon-*`（mask + `background-color: currentColor` 方案，色
 
 ---
 
+## 原语 12：时间线列表 Timeline（项目 `.route-cell` / `.route-node`）
+
+用于「有先后顺序 + 带状态」的列表（如学习阶段路线）。由原语 1 / 2 组合而成：外层 `.weui-cells`，每行 `.weui-cell`，行首用圆形节点 + 1rpx 竖线串联。
+
+```html
+<view class="weui-cells">
+  <view class="weui-cell weui-cell_access route-cell">
+    <view class="weui-cell__hd route-node-wrap">
+      <view class="route-node {{state}}">
+        <text wx:if="{{state !== 'done'}}">{{index + 1}}</text>
+        <text wx:else class="iconfont icon-check"></text>
+      </view>
+      <view class="route-node-line" wx:if="{{!isLast}}"></view>
+    </view>
+    <view class="weui-cell__bd">
+      <view class="weui-cell__bd_text">阶段名</view>
+      <view class="weui-cell__desc route-meta">phase · 目标</view>
+    </view>
+    <view class="weui-cell__ft">
+      <text class="route-chip {{state}}">当前</text>
+      <text class="iconfont icon-right"></text>
+    </view>
+  </view>
+</view>
+```
+
+```css
+.route-cell { align-items: stretch; }                    /* 撑满行高，供竖线延伸 */
+.route-node-wrap { flex-direction: column; align-items: center; margin-right: 24rpx; }
+.route-node { width: 36rpx; height: 36rpx; border-radius: 50%; font-size: calc(24rpx * var(--fs,1)); }
+.route-node-line { flex: 1; width: 1rpx; background: var(--divider); }   /* 末行不渲染 */
+```
+
+- **节点三态（纯色，禁止渐变 / 外发光）**：当前 `var(--brand)` 实心 + 白字序号；已完成 `rgba(7,193,96,.15)` + `var(--brand)` 对勾；未解锁 `var(--card2)` + `var(--text3)`
+- **状态 chip**：`.route-chip` 扁平（`border-radius:8rpx` / `padding:2rpx 12rpx` / `font-size:calc(24rpx * var(--fs,1))`），三态配色与节点一致
+- 连接线用 `var(--divider)`，深色自动适配；**末行不渲染** `.route-node-line`
+- 字号：主文 34rpx、副信息 28rpx、节点内序号 24rpx
+
+---
+
 ## 设计原则速记
 1. 颜色、字号、间距一律引用 token（`--weui-*` 或项目 `--*`），禁止硬编码同质值。
 2. 深色模式只切变量，不写独立样式。

@@ -1,54 +1,67 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- ① 阶段时间线：左竖线 + 圆形节点，右白卡片 -->
-  <view class="timeline">
+  <!-- 当前阶段：分组标题 + cell，右侧为当前阶段进度 -->
+  <block wx:if="{{currentCard}}">
+    <view class="weui-cells__title">当前阶段</view>
+    <view class="weui-cells current-panel">
+      <view
+        class="weui-cell weui-cell_access current-cell"
+        data-index="{{currentStageIndex}}"
+        bindtap="toStage"
+        hover-class="current-cell-hover"
+      >
+        <view class="weui-cell__bd">
+          <view class="weui-cell__bd_text">{{currentCard.name}}</view>
+        </view>
+        <view class="weui-cell__ft">
+          <text class="weui-cell__ft_value">{{currentCard.progress}}%</text>
+          <text class="iconfont icon-right"></text>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 路线时间线 -->
+  <view class="weui-cells__title">学习路线</view>
+  <view class="weui-cells">
     <view
-      class="stage-item"
+      class="weui-cell weui-cell_access route-cell"
       wx:for="{{stages}}"
       wx:key="stage_id"
       id="stage-{{index}}"
       data-index="{{index}}"
       bindtap="toStage"
-      hover-class="stage-hover"
     >
-      <view class="stage-rail">
-        <view class="stage-node {{item._state}}">
+      <view class="weui-cell__hd route-node-wrap">
+        <view class="route-node {{item._state}}">
           <text wx:if="{{item._state !== 'done'}}">{{index + 1}}</text>
           <text wx:else class="iconfont icon-check"></text>
         </view>
-        <view class="stage-line" wx:if="{{index < stageCount - 1}}"></view>
+        <view class="route-node-line" wx:if="{{index < stageCount - 1}}"></view>
       </view>
 
-      <view class="stage-card {{item._state}}">
-        <view class="stage-card-head">
-          <view class="stage-title-row">
-            <text class="stage-name">{{item.stage_name}}</text>
-            <text class="stage-phase">{{item.target_phase}}</text>
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text route-name">{{item.stage_name}}</view>
+        <view class="weui-cell__desc route-meta">{{item.target_phase}} · {{item.vocabulary_target}} · {{item.time_investment}}</view>
+        <view class="route-req">
+          <view class="route-req-row">
+            <text class="route-req-label">进入</text>
+            <text class="route-req-value">{{item.entry_requirement}}</text>
           </view>
-          <text class="iconfont icon-right stage-arrow"></text>
+          <view class="route-req-row">
+            <text class="route-req-label">晋级</text>
+            <text class="route-req-value">{{item.promotion_standard}}</text>
+          </view>
         </view>
+      </view>
 
-        <view class="stage-meta-row">
-          <text class="stage-meta-vocab">{{item.vocabulary_target}}</text>
-          <text class="stage-meta-dot">·</text>
-          <text class="stage-meta-time">{{item.time_investment}}</text>
-          <view class="stage-badge {{item._state}}">
-            <text wx:if="{{item._state === 'current'}}">当前</text>
-            <text wx:elif="{{item._state === 'done'}}">已完成</text>
-            <text wx:else>未解锁</text>
-          </view>
-        </view>
-
-        <view class="stage-info">
-          <view class="stage-info-row">
-            <text class="stage-info-label">进入</text>
-            <text class="stage-info-value">{{item.entry_requirement}}</text>
-          </view>
-          <view class="stage-info-row">
-            <text class="stage-info-label">晋级</text>
-            <text class="stage-info-value">{{item.promotion_standard}}</text>
-          </view>
-        </view>
+      <view class="weui-cell__ft">
+        <text class="route-chip {{item._state}}">
+          <block wx:if="{{item._state === 'current'}}">当前</block>
+          <block wx:elif="{{item._state === 'done'}}">已完成</block>
+          <block wx:else>未解锁</block>
+        </text>
+        <text class="iconfont icon-right"></text>
       </view>
     </view>
   </view>

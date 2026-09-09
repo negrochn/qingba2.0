@@ -55,6 +55,9 @@
 - **`.weui-cells__title` 下间距回归官方**：`padding` 由 `32rpx 32rpx 16rpx` 改为 `32rpx 32rpx 6rpx`（官方 `margin-bottom: 3px`）；margin 合入 padding 的做法保留，深色模式卡片背景依旧连续铺满
 - **打卡记录页（records）头部对齐**：`.section-head` 补左右内距 `padding: 0 32rpx`，日期 / 月份选择器由居中 `center` 改为左对齐 `flex-start`
 - **设置页「当前阶段」移出开发者工具**：原与「压力测试」同属「开发者工具」分组且仅开发版可见（`showDevTools: env === 'develop'`），导致正式版 / 体验版用户在首次启动引导之后无法再修改阶段。现移入原「学习计划」分组并置于首位，该分组同步更名为「学习设置」——涵盖「阶段状态」与「规则开关」两类配置，避免与同组具体功能「小小优趣成长计划」产生层级混淆；为「当前阶段」补 `.weui-cell__desc` 说明「决定路线页解锁与推荐资源」，与同组另一项描述写法一致。切换阶段仍按覆盖式重算前序完成标记（`setCompletedStages`），阶段往回调不会残留已完成状态；`README.md` 设置页说明同步
+- **路线页（route）WeUI 重设计**：原卡片式时间线（`.timeline` + `.stage-card`）改为 WeUI 分组列表——外层 `.weui-cells`、每行 `.weui-cell weui-cell_access`；行首节点由 48rpx 缩为 36rpx，并用 1rpx 竖线串联（末行无线），节点三态为纯色：当前 = 品牌绿实心 + 序号、已完成 = 浅绿底 + 绿色对勾、未解锁 = 灰底 + 序号；右侧状态改为扁平 chip（`.route-chip`：当前绿底白字 / 已完成浅绿底绿字 / 未解锁灰底）。保留「进入 / 晋级」两行条件，字号对齐规范档：阶段名 34rpx、phase 与词汇/时长 28rpx、进入与晋级 28rpx。清理卡片阴影、左侧色条、节点外发光、`stage-phase` 蓝紫色块，以及 `.dm-dark` / `.dm-auto` 下 6 条硬编码覆盖（改由变量自动适配）
+- **顶部「当前阶段」模块改为「分组标题 + cell」**：`weui-cells__title` 展示「当前阶段」，其下单条 cell 显示阶段名，右侧 `.weui-cell__ft_value` 展示该阶段进度百分比；进度与阶段详情页完全同口径（按 `required.type` 取 `getStageMinutes` / `getAccumulatedMinutes`，`Math.floor` 向下取整、上限 100%）。已移除原「已投入 / 目标时长」文案与「当前」chip
+- **阶段晋级口径函数收敛到 `utils/data.js`**：`parseTargetHours` 与 `getRequiredHours` 由 `stage.js` 私有函数提为共享导出，`stage.js` 与 `route.js` 统一引用，避免两处各写一份解析逻辑导致进度数字不一致
 
 ### 修复
 
@@ -75,6 +78,7 @@
   - 新增「列表分组间距」约定：`.weui-cells` 不设 `margin-top`、`.weui-cells__title` 的 margin 合入 padding、深色模式下卡片背景连续铺满；间距摘要标注分组标题间距改由 `padding-top` 提供
   - `ui-design-spec` skill 同步本次 WeUI 风格重构结论：`design-tokens.md` 更新 `--text2/3/4`/`--danger` 实际取值与 FG 映射、分隔线实现改为真实 1rpx（去 `scaleY(.5)`）；`SKILL.md` 新增「扁平纯色、禁止渐变/外发光」「`.weui-tag` 无 margin」「分组容器 `border-bottom` 通栏分隔线」项目约定；`components.md` 标签/按钮补纯色与去 margin 备注
   - `design-tokens.md` §9 同步本轮收敛结论：项目文字色映射表更新为三档（FG-0 / FG-1 / FG-2）并标注 `--text4` 已合并移除；新增「项目字号档」约定——34 / 28 / 24rpx 三档分别对应 17 / 14 / 12px，`26rpx` 及 `29 / 32 / 36 / 41rpx` 列为已废弃，大号数字除外
+  - `components.md` 新增「原语 12：时间线列表 Timeline」：沉淀路线页的节点 + 竖线串联结构、节点三态纯色配色（禁止渐变 / 外发光）、状态 chip 写法与字号约定（主文 34 / 副信息 28 / 节点序号 24rpx），末行不渲染连接线
 
 ## [2.3.1] - 2026-09-03
 

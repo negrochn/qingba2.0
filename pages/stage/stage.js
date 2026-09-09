@@ -1,4 +1,4 @@
-const { routeData, resourceLabels } = require('../../utils/data.js')
+const { routeData, resourceLabels, getRequiredHours } = require('../../utils/data.js')
 const checkin = require('../../utils/checkin.js')
 const theme = require('../../utils/theme.js')
 
@@ -14,16 +14,6 @@ const CLICKABLE_GROUPS = [
   'fusion_apps'           // 融合APP
 ]
 
-// 解析目标时长: '60-80H' -> {min:60,max:80}，'60H' -> {min:60,max:60}
-function parseTargetHours(text) {
-  if (!text) return null
-  const range = text.match(/(\d+)\s*-\s*(\d+)/)
-  if (range) return { min: +range[1], max: +range[2] }
-  const single = text.match(/(\d+)/)
-  if (single) return { min: +single[1], max: +single[1] }
-  return null
-}
-
 // 从 phase 字符串中提取数字，如 'phase5' -> 5
 function parsePhaseNumber(text) {
   if (!text) return 0
@@ -34,33 +24,6 @@ function parsePhaseNumber(text) {
 // 是否为常规阶段（含准桥梁，均支持晋级/达成目标）
 function isRegularStage(stageId) {
   return /^regular_\d+$/.test(stageId) || stageId === 'pre_bridge'
-}
-
-// 解析阶段晋级所需时长（小时）
-// 优先从 promotion_standard 中提取；涉及“累计”时返回累计小时
-function getRequiredHours(stage) {
-  const standard = stage.promotion_standard || ''
-
-  // 常规6 / 准桥梁：进度按“当前阶段自身时长”评估，不按跨阶段累计投入
-  if (stage.stage_id !== 'regular_6' && stage.stage_id !== 'pre_bridge') {
-    // 累计投入时间，如“常规1-6累计投入时间不低于400H”
-    const accumulated = standard.match(/累计.*?投入.*?不低于\s*(\d+)\s*[Hh]/)
-    if (accumulated) {
-      return { type: 'accumulated', hours: +accumulated[1] }
-    }
-    // 累计总投入时间，如“从常规1累计总投入不低于480H”
-    const total = standard.match(/累计总投入.*?不低于\s*(\d+)\s*[Hh]/)
-    if (total) {
-      return { type: 'accumulated', hours: +total[1] }
-    }
-  }
-
-  // 普通时间要求，回退到 time_investment（当前阶段自身时长）
-  const target = parseTargetHours(stage.time_investment)
-  if (target) {
-    return { type: 'stage', hours: target.min }
-  }
-  return { type: 'stage', hours: 0 }
 }
 
 Page({
