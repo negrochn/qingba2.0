@@ -36,6 +36,14 @@
 - **深色模式切换到微信原生 darkmode 配置**：`app.json` 开启 `darkmode: true` + `themeLocation: "theme.json"`，`window` / `tabBar` 颜色键全部改 `@key` 占位符（含 `backgroundColorTop` / `backgroundColorBottom` 覆盖 iOS 下拉 / 上拉橡皮筋区），新增 `theme.json` 提供 light / dark 两套配色；导航栏、页面背景、tabBar 全部由微信框架按系统主题直接渲染，不再依赖 JS 时机。`app.js` 移除 `applyChrome()`（`wx.setNavigationBarColor` / `wx.setTabBarStyle` / `wx.setBackgroundColor` JS 覆盖）与系统深色探测（`wx.getAppBaseInfo`），自定义深色开关仅控制内容区 `darkClass`（dm-light / dm-dark / dm-auto）
 - **列表分组间距收紧**：`.weui-cells` 移除 `margin-top`；`.weui-cells__title` 的 `margin-top` / `margin-bottom` 全部合入 `padding`（现为 `padding: 32rpx 32rpx 16rpx`），不再使用 margin，确保深色模式卡片背景连续铺满、避免标题上下露出页面底色
 - **路线页时间线节点与字号放大**：`.stage-node` 36rpx → 48rpx，`.stage-name` 32rpx → 34rpx，节点内图标 / 徽标 / phase 字号 22rpx → 26rpx
+- **WeUI 风格系统性重构：纯色化、去渐变 / 外发光、矩形圆角**：
+  - 路线页（stage）与打卡记录页（records）全面去除 `linear-gradient` 与 `box-shadow` 外发光，统一改用扁平纯色（品牌绿 `var(--brand)`、橙 `#ff7a45`、蓝 `#4a8fd9` 等），深色档同步收敛为纯色低透明叠加，消除渐变 / 辉光观感偏差
+  - 圆角对齐 WeUI：弹层 / 月份按钮 `border-radius: 16rpx`（去胶囊 40rpx）、月份选择器 chip `8rpx`、`.weui-panel` 卡片 `20rpx`(10pt)；记录头像由 `96rpx` 渐变改为 `80rpx` 纯色 `#5a9af0`
+  - 文字档位对齐 WeUI FG：浅色 `--text2` `#6b6b6b`→`#737373`（FG-1 .55），深色 `--text2/3` `.78/.62`→`.55`、`--text4` `.42`→`.3`；危险红 `--danger` `#FF3B30/#FF453A`→`#fa5151`（WeUI RED，深浅一致）；`.overview-year`/`.record-date` 由 `text4` 提至 `text3`、时长字色由 `text3` 提至主文 `text`
+- **分组分隔线重构（stage `.res-list`）**：原分隔线挂在「折叠态组头」`.rg-head-folded`（仅折叠态生效，展开态分组间缺线），改为挂在分组容器 `.res-list` 底部 `border-bottom: 1rpx solid var(--divider)`（通栏 1px，展开 / 折叠均生效），末组去线；移除冗余 `.rg-head-folded` 样式与 `r-arrow-gray` 类
+- **全局分隔线去除 `scaleY(.5)` 缩放**：`.weui-cells::before/::after`、`.weui-cell::before`、dialog 内线均改真实 `1rpx`（rpx 已含高分屏亚像素；scaleY(.5) 在 cells 通栏线因 top/bottom 偏移导致位置偏差），`.weui-cells` 通栏线定位由 `0` 调为 `-1rpx` 避免与首行 cell 线重叠
+- **`.weui-tag` 去除 margin**：标签间距改由父级 flex `gap` 控制；records 页 `tag-stage` / `record-remark` 补 `weui-tag` 类统一走全局标签原语，删除页面内重复 `.weui-tag` 定义
+- **按钮 / 间距微调**：`.weui-btn-area` 上内边距对齐 `@weuiBtnAreaGap`（96rpx）、并排按钮 `gap` 16px(32rpx)；`.weui-cell__hd` 右间距 24rpx→16rpx(8px)；dialog 主操作注释明确为 BRAND 绿（项目约定）
 
 ### 修复
 
@@ -52,6 +60,7 @@
   - `design-tokens.md` 以克隆仓库 `D:\github\weui`（Tencent/weui 主干 `src/`）逐项核对：补全此前缺失的真实 token（BG-4/5、GLYPH、各色阶档、TAG、MATERIAL、SEPARATOR、STATELAYER 等）；修正深色 `BG-COLOR-ACTIVE` 为 `overlay(rgba(255,255,255,.05), #2c2c2c)`；新增 §8 care 模式（适老）配色档
   - `components.md` 订正 dialog 部分（标题字重 500、正文 FG-1、底部留白 32px、主操作默认 LINK 蓝、补齐 hd/ft 结构），与 `widget/weui-tips/weui-dialog.less` 一致
   - 新增「列表分组间距」约定：`.weui-cells` 不设 `margin-top`、`.weui-cells__title` 的 margin 合入 padding、深色模式下卡片背景连续铺满；间距摘要标注分组标题间距改由 `padding-top` 提供
+  - `ui-design-spec` skill 同步本次 WeUI 风格重构结论：`design-tokens.md` 更新 `--text2/3/4`/`--danger` 实际取值与 FG 映射、分隔线实现改为真实 1rpx（去 `scaleY(.5)`）；`SKILL.md` 新增「扁平纯色、禁止渐变/外发光」「`.weui-tag` 无 margin」「分组容器 `border-bottom` 通栏分隔线」项目约定；`components.md` 标签/按钮补纯色与去 margin 备注
 
 ## [2.3.1] - 2026-09-03
 

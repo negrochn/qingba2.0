@@ -24,7 +24,7 @@ page {
 
 .overview-year {
   font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text4);
+  color: var(--text3);
 }
 
 .overview-picker {
@@ -33,7 +33,7 @@ page {
   gap: 8rpx;
   padding: 8rpx 16rpx;
   background: var(--cell-active);
-  border-radius: 24rpx;
+  border-radius: 8rpx;
 }
 
 .overview-month {
@@ -115,12 +115,12 @@ page {
 /* 首字小图标 */
 .record-avatar {
   flex-shrink: 0;
-  width: 96rpx;
-  height: 96rpx;
+  width: 80rpx;
+  height: 80rpx;
   border-radius: 12rpx;
-  background: linear-gradient(135deg, #5a9af0 0%, #7fb4f7 100%);
+  background: #5a9af0;
   color: #fff;
-  font-size: calc(48rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1));
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -156,7 +156,7 @@ page {
 .record-date {
   flex-shrink: 0;
   font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text4);
+  color: var(--text3);
 }
 
 /* 第二行 */
@@ -177,15 +177,8 @@ page {
 }
 
 .tag-stage {
-  font-size: calc(26rpx * var(--fs, 1));
   color: #7a5200;
   background: #fff7e6;
-  padding: 2rpx 10rpx;
-  border-radius: 6rpx;
-}
-
-.weui-tag {
-  font-size: calc(26rpx * var(--fs, 1));
   padding: 2rpx 10rpx;
   border-radius: 6rpx;
 }
@@ -215,8 +208,8 @@ page {
 .record-duration {
   flex-shrink: 0;
   font-size: calc(34rpx * var(--fs, 1));
-  font-weight: 600;
-  color: var(--text3);
+  font-weight: 500;
+  color: var(--text);
   font-family: 'DIN Alternate', -apple-system, Helvetica, Arial, sans-serif;
   line-height: 1;
   align-self: flex-end;
@@ -305,7 +298,7 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 40rpx;
+  border-radius: 16rpx;
   font-size: calc(28rpx * var(--fs, 1));
   border: none;
   padding: 0;
@@ -322,7 +315,7 @@ page {
 }
 
 .mp-ok {
-  background: linear-gradient(135deg, #07C160 0%, #3fd98a 100%);
+  background: var(--brand);
   color: #fff;
   font-weight: 600;
 }

@@ -259,6 +259,8 @@ WeUI 开关用小程序原生组件，勾选态跟随 `color` 品牌绿：
 .weui-tag_red    { color: var(--weui-TAG-TEXT-RED);     background: rgba(250,81,81,.1); }
 ```
 
+> 项目实现：全局 `.weui-tag`（`app.wxss`）为 `padding:4rpx 16rpx; border-radius:8rpx; line-height:1.4`，**不带 margin**——标签间距由父级 flex `gap` 控制（如 records 页 `.record-tags { gap:8rpx }`）。禁止在页面内重复定义 `.weui-tag`，新增标签直接复用。
+
 ---
 
 ## 原语 11：图标 Icons

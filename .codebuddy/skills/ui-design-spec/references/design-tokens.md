@@ -170,7 +170,7 @@
 ## 5. 分隔线（divider）
 
 - 颜色：`--weui-FG-3`（浅）/ `--weui-FG-3`（深）；弹窗内线用 `--weui-DIALOG-LINE-COLOR`。
-- 实现：1px 实线 + `transform: scaleY(.5)` 得到 0.5px 视觉线；cell 内分隔线 `left: 16px(32rpx)` 缩进，**首行 `cell:first-child::before` 不显示**；cells 外框上下通栏。
+- 实现：本项目用 **真实 `1rpx` 实线**（rpx 在微信渲染已含高分屏亚像素，无需 `scaleY(.5)`；`.5` 缩放会在 cells 通栏线因 `top/bottom` 偏移导致位置偏差，已移除）。cell 内分隔线 `left: 16px(32rpx)` 缩进，**首行 `cell:first-child::before` 不显示**；cells 外框上下通栏（定位 `top/bottom: -1rpx` 避开与首行 cell 线重叠）。
 - 本项目 `app.wxss` 用兄弟节点 `.cell-divider`（`height:1rpx; background:var(--divider); margin-left:32rpx;`）实现同等效果（见 components.md「原语」）。
 
 ---
@@ -232,14 +232,14 @@
 | `--bg` | `#ededed` | BG-0 |
 | `--card` | `#ffffff` | BG-2 |
 | `--text` | `rgba(0,0,0,.9)` | FG-0 |
-| `--text2` | `#6b6b6b`（≈ FG-1 的 .55 黑） | FG-1 |
-| `--text3` | `#737373` | FG-1 |
+| `--text2` | `#737373`（FG-1 次级，.55 黑） | FG-1 |
+| `--text3` | `#737373`（FG-1 次级，.55 黑） | FG-1 |
 | `--text4` | `#b2b2b2` | FG-2 |
 | `--divider` | `#e5e5e5` | ≈ FG-3（.1 黑≈#e6e6e6） |
 | `--brand` | `#07c160` | BRAND |
 | `--danger` | `#fa5151` | RED |
 | `--cell-active` | `#f5f5f5` | ≈ BG-COLOR-ACTIVE（浅） |
 
-深色档：`--bg #111`、`--card #1c1c1e`、`--text rgba(255,255,255,.92)`、`--text2 rgba(255,255,255,.78)`、`--text3 rgba(255,255,255,.62)`、`--text4 rgba(255,255,255,.42)`、`--divider rgba(255,255,255,.1)`、`--brand #07c160`、`--danger #FF453A` ——对应 BG-0 / BG-2 / FG-0 / FG-1 / FG-2 / FG-3 / BRAND / RED 深色档。
+深色档：`--bg #111`、`--card #1c1c1e`、`--text rgba(255,255,255,.92)`、`--text2 rgba(255,255,255,.55)`、`--text3 rgba(255,255,255,.55)`、`--text4 rgba(255,255,255,.3)`、`--divider rgba(255,255,255,.1)`、`--brand #07c160`、`--danger #fa5151` ——对应 BG-0 / BG-2 / FG-0 / FG-1 / FG-2 / FG-3 / BRAND / RED 深色档（RED 深浅一致）。
 
 **约定**：新代码优先用项目 `--*` 变量（已对齐 WeUI），不要硬编码色值；如确需引用 WeUI 原始变量名，使用上表 `--weui-*` 值。

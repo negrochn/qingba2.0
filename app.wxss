@@ -4,19 +4,19 @@
 
 /* ===== 主题色板（--* 变量，已对齐 WeUI） =====
    浅色为默认；深色通过根节点 class（dm-light / dm-dark / dm-auto）切换 CSS 变量。
-   对应 WeUI：--bg=BG-0 / --card=BG-2 / --text=FG-0 / --text2=FG-1 / --text3=FG-1 /
-   --text4=FG-2 / --divider≈FG-3 / --brand=BRAND / --danger=RED / --cell-active≈BG-COLOR-ACTIVE */
+   对应 WeUI：--bg=BG-0 / --card=BG-2 / --text=FG-0 / --text2≈FG-1(次级) / --text3≈FG-1(次级) /
+   --text4≈FG-2(占位/弱化) / --divider≈FG-3 / --brand=BRAND / --danger=RED / --cell-active≈BG-COLOR-ACTIVE */
 page {
   --bg: #ededed;
   --card: #ffffff;
   --card2: #f7f8fa;
   --text: #1a1a1a;
-  --text2: #6b6b6b;
-  --text3: #737373;
-  --text4: #b2b2b2;
+  --text2: #737373;                 /* FG-1 rgba(0,0,0,.55) */
+  --text3: #737373;                 /* FG-1 rgba(0,0,0,.55) */
+  --text4: #b2b2b2;                 /* FG-2 rgba(0,0,0,.3) */
   --divider: #e5e5e5;
   --brand: #07C160;
-  --danger: #FF3B30;               /* RED light */
+  --danger: #fa5151;               /* RED light */
   --cell-active: #f5f5f5;
   /* 默认浅色背景；系统深色时由下方 media query 覆盖为深色。
      这里不能用 var(--bg) —— dm-light/dm-dark 类挂在 .container 上，
@@ -59,12 +59,12 @@ view, text {
   --card: #ffffff;
   --card2: #f7f8fa;
   --text: #1a1a1a;
-  --text2: #6b6b6b;
-  --text3: #737373;
-  --text4: #b2b2b2;
+  --text2: #737373;                 /* FG-1 rgba(0,0,0,.55) */
+  --text3: #737373;                 /* FG-1 rgba(0,0,0,.55) */
+  --text4: #b2b2b2;                 /* FG-2 rgba(0,0,0,.3) */
   --divider: #e5e5e5;
   --brand: #07C160;
-  --danger: #FF3B30;               /* RED light */
+  --danger: #fa5151;               /* RED light */
   --cell-active: #f5f5f5;
 }
 
@@ -74,12 +74,12 @@ view, text {
   --card: #1c1c1e;
   --card2: #232326;
   --text: rgba(255, 255, 255, 0.92);
-  --text2: rgba(255, 255, 255, 0.78);
-  --text3: rgba(255, 255, 255, 0.62);
-  --text4: rgba(255, 255, 255, 0.42);
+  --text2: rgba(255, 255, 255, 0.55);   /* FG-1 dark */
+  --text3: rgba(255, 255, 255, 0.55);   /* FG-1 dark */
+  --text4: rgba(255, 255, 255, 0.3);    /* FG-2 dark */
   --divider: rgba(255, 255, 255, 0.1);
   --brand: #07C160;
-  --danger: #FF453A;               /* RED dark */
+  --danger: #fa5151;               /* RED dark（与浅色一致，WeUI RED 不随深浅变化） */
   --cell-active: #2c2c2e;
 }
 
@@ -90,12 +90,12 @@ view, text {
     --card: #1c1c1e;
     --card2: #232326;
     --text: rgba(255, 255, 255, 0.92);
-    --text2: rgba(255, 255, 255, 0.78);
-    --text3: rgba(255, 255, 255, 0.62);
-    --text4: rgba(255, 255, 255, 0.42);
+    --text2: rgba(255, 255, 255, 0.55);   /* FG-1 dark */
+    --text3: rgba(255, 255, 255, 0.55);   /* FG-1 dark */
+    --text4: rgba(255, 255, 255, 0.3);    /* FG-2 dark */
     --divider: rgba(255, 255, 255, 0.1);
     --brand: #07C160;
-    --danger: #FF453A;               /* RED dark */
+    --danger: #fa5151;               /* RED dark（与浅色一致，WeUI RED 不随深浅变化） */
     --cell-active: #2c2c2e;
   }
 }
@@ -141,11 +141,10 @@ view, text {
   left: 0; right: 0;
   height: 1rpx;
   border-top: 1rpx solid var(--divider);
-  transform: scaleY(.5);
   pointer-events: none;
 }
-.weui-cells::before { top: 0; }
-.weui-cells::after { bottom: 0; }
+.weui-cells::before { top: -1rpx; }
+.weui-cells::after { bottom: -1rpx; }
 
 /* 分组标题 / 说明（纯灰文字，无彩色竖条；margin-top/margin-bottom 已合入 padding，左右统一 32rpx） */
 .weui-cells__title {
@@ -190,13 +189,12 @@ view, text {
   left: 32rpx; right: 0; top: 0;
   height: 1rpx;
   border-top: 1rpx solid var(--divider);
-  transform: scaleY(.5);
 }
 .weui-cell:first-child::before { display: none; }
 .weui-cell:active { background-color: var(--cell-active); }
 
 .weui-cell__hd {                   /* 行首图标列 */
-  margin-right: 24rpx;
+  margin-right: 16rpx;             /* 8px(16rpx) */
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -305,14 +303,14 @@ view, text {
 
 /* 按钮区：居中堆叠（上 48px） / 并排 / 底部固定栏 */
 .weui-btn-area {
-  padding: 32rpx;
+  padding: 96rpx 32rpx 16rpx;     /* 上48px(96rpx) 左右16px(32rpx) 下8px(16rpx)，对齐 @weuiBtnAreaGap */
   box-sizing: border-box;
 }
 .weui-btn-area_inline {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 24rpx;                      /* @weuiBtnDefaultGap 16px */
+  gap: 32rpx;                      /* @weuiBtnDefaultGap 16px(32rpx) */
   padding: 16rpx 32rpx;
   box-sizing: border-box;
 }
@@ -321,7 +319,7 @@ view, text {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 24rpx;
+  gap: 32rpx;
   padding: 16rpx 32rpx calc(env(safe-area-inset-bottom) + 32rpx);
   background: var(--card);
   box-sizing: border-box;
@@ -348,14 +346,13 @@ view, text {
   padding: 4rpx 16rpx;
   font-size: calc(24rpx * var(--fs, 1));
   border-radius: 8rpx;
-  margin: 6rpx 6rpx 6rpx 0;
   line-height: 1.4;
 }
 .weui-tag_default { color: var(--text3); background: var(--card2); }
 
 /* ============================================================
    原语 8：弹窗类 Dialog / ActionSheet / Toast
-   蒙层 OVERLAY；dialog 卡片 #fff 圆角 12px(24rpx)；主操作默认 LINK 蓝
+   蒙层 OVERLAY；dialog 卡片 #fff 圆角 12px(24rpx)；主操作 BRAND(品牌绿，项目约定)
    ============================================================ */
 .weui-mask {
   position: fixed;
@@ -390,7 +387,6 @@ view, text {
   left: 0; right: 0; top: 0;
   height: 1rpx;
   border-top: 1rpx solid var(--divider);   /* DIALOG-LINE-COLOR */
-  transform: scaleY(.5);
 }
 .weui-dialog__btn {
   flex: 1;
@@ -407,7 +403,6 @@ view, text {
   left: 0; top: 0; bottom: 0;
   width: 1rpx;
   border-left: 1rpx solid var(--divider);
-  transform: scaleX(.5);
 }
 .weui-dialog__btn:first-child::before { display: none; }
 .weui-dialog__btn:active { background: var(--cell-active); }
@@ -453,7 +448,7 @@ view, text {
    ============================================================ */
 .weui-panel {
   background: var(--card);
-  border-radius: 16rpx;
+  border-radius: 20rpx;           /* iOS 分组卡片圆角 10pt(20rpx) */
   padding: 28rpx;
   margin-bottom: 24rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);

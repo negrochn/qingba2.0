@@ -32,7 +32,7 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - **字号**：导航/主文/按钮 17px(34rpx) 行高 1.41176471；分组标题/tips/次级 14px(28rpx)；描述 12px(24rpx)。
 - **间距**：页面边距 16px(32rpx)，cell 内边距 16px(32rpx)，分组标题 padding-top 16px(32rpx)（其 margin-top 已合入 padding，见下「项目实现备注」），按钮区上 48px(96rpx)。
 - **圆角**：按钮 8px(16rpx)、mini 6px(12rpx)、弹窗 12px(24rpx)、iOS 分组卡片 20rpx(10pt)；cells 默认无圆角无阴影。
-- **分隔线**：1px `FG-3` + `scaleY(.5)` 实现 0.5px；cell 内线 `left:16px(32rpx)` 缩进、首行无；或本项目 `.cell-divider` 兄弟节点。
+- **分隔线**：本项目用真实 `1rpx`（`scaleY(.5)` 在 cells 通栏线会因偏移导致位置偏差，已弃用）；cell 内线 `left:16px(32rpx)` 缩进、首行无；或本项目 `.cell-divider` 兄弟节点。分组块（如 `.res-list`）用容器 `border-bottom` 通栏分隔相邻分组（展开/折叠均生效），末组去线。
 - **按钮**：`.weui-btn` 默认高 48px(96rpx)、圆角 8px；变体 `primary`(BRAND 绿)/`default`(灰底)/`warn`(RED)/`disabled`；尺寸 `medium`(40px)/`mini`(32px)、`block`/`inline`。项目 `.btn` 族高 88rpx（44pt iOS），新按钮沿用。
 - **单元格**：`.weui-cell` 内边距 16px(32rpx)、主文 17px(34rpx)；`__bd` flex:1、`__ft` 右对齐 FG-1；`__desc` 12px(24rpx) FG-2。变体 `access`(箭头)/`link`(蓝)/`warn`(红)。项目 `.cell` 家族：`cell--single`(110rpx)/`cell--desc`(146rpx)/`cell-radio`/`cell-check`(iconfont 品牌绿对勾)/`cell-divider`。
 - **开关**：原生 `<switch color="#07c160">`；项目自绘 `.switch`（开 `#07c160`/关 `#e9e9e9`）。
@@ -51,6 +51,9 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - **列表分组间距（项目实现）**：`.weui-cells` 容器**不设 `margin-top`**（避免与上层卡片/分组间距叠加，分组留白改用 `.mb-16` 工具类或父容器 padding 控制）。`.weui-cells__title`（分组标题）的 `margin-top`/`margin-bottom` **均已合入 `padding`**（当前 `padding: 32rpx 32rpx 16rpx`），不再使用任何 margin——目的是让深色模式下卡片背景连续铺满、避免标题上下露出页面底色。新代码如需分组标题与内容之间留白，统一用 `padding` 而非 `margin`。
 - **项目 CSS 变量**：`--bg/--card/--text/--text2/--text3/--text4/--divider/--brand/--danger/--cell-active` 对应 WeUI 的 BG-0/BG-2/FG-0/FG-1/FG-2/FG-3/BRAND/RED/BG-COLOR-ACTIVE（见 `design-tokens.md` 末节映射表）。
 - **`.group-title` 项目取值（与规范差异）**：全局 `.group-title`（`app.wxss`）`padding: 32rpx 32px 16rpx 32rpx`，**右内边距是 `32px`（像素）而非 `32rpx`**（疑似笔误）；新代码建议统一为 `32rpx`。
+- **扁平纯色，禁止渐变 / 外发光（项目约定）**：所有色块 / 标签 / 按钮一律用扁平纯色（`var(--brand)`、固定 HEX 或低透明叠加），**禁止 `linear-gradient` 与 `box-shadow` 外发光**；深色档同理用纯色低透明（如 `rgba(7,193,96,.14)`）替代渐变。
+- **`.weui-tag` 不带 margin（项目约定）**：标签间距由父级 flex `gap` 控制，避免与 `tag-group-*` 等内联背景 / 多标签混排时多出右侧空白；新增标签复用全局 `.weui-tag`，不在页面内重复定义。
+- **分组容器 `border-bottom` 通栏分隔线（项目约定）**：相邻分组用分组块容器（如 `.res-list`）的 `border-bottom: 1rpx solid var(--divider)` 分隔（展开/折叠均生效），末组 `:last-child` 去线；区别于 cell 内 `left:32rpx` 缩进的行间线。
 
 ## Resources
 ### references/

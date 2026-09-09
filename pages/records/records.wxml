@@ -39,9 +39,9 @@
               </view>
               <view class="record-line2">
                 <view class="record-tags">
-                  <text class="tag-stage">{{r.stageName}}</text>
+                  <text class="weui-tag tag-stage">{{r.stageName}}</text>
                   <text class="weui-tag tag-group-{{r.groupKey}}">{{r.groupLabel}}</text>
-                  <text class="record-remark" wx:if="{{r.remark}}">{{r.remark}}</text>
+                  <text class="weui-tag record-remark" wx:if="{{r.remark}}">{{r.remark}}</text>
                 </view>
                 <view class="record-duration">{{r.durationText}}</view>
               </view>

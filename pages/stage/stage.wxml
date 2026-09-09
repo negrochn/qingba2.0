@@ -55,7 +55,7 @@
           <view class="r-right">
             <view class="r-badge" wx:if="{{resTotals[g.key + '|' + rname]}}">{{resTotals[g.key + '|' + rname]}}m</view>
             <view class="r-arrow" wx:if="{{g.clickable && !stageLocked}}">›</view>
-            <view class="r-arrow r-arrow-gray" wx:else>·</view>
+            <view class="r-arrow" wx:else>·</view>
           </view>
         </view>
       </view>
