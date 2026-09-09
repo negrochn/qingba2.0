@@ -22,15 +22,15 @@
 }
 
 .stage-node {
-  width: 36rpx;
-  height: 36rpx;
+  width: 48rpx;
+  height: 48rpx;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--card);
   color: var(--text3);
-  font-size: calc(22rpx * var(--fs, 1));
+  font-size: calc(26rpx * var(--fs, 1));
   font-weight: 600;
   border: 2rpx solid var(--divider);
   box-sizing: border-box;
@@ -39,7 +39,7 @@
   transition: all 0.2s ease;
 }
 .stage-node .iconfont {
-  font-size: calc(20rpx * var(--fs, 1)) !important;
+  font-size: calc(26rpx * var(--fs, 1)) !important;
   font-weight: normal;
 }
 
@@ -110,14 +110,14 @@
 }
 
 .stage-name {
-  font-size: calc(32rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1));
   font-weight: 600;
   color: var(--text);
   line-height: 1.4;
 }
 
 .stage-phase {
-  font-size: calc(22rpx * var(--fs, 1));
+  font-size: calc(26rpx * var(--fs, 1));
   color: #576b95;
   background: rgba(87, 107, 149, 0.1);
   padding: 2rpx 10rpx;
@@ -156,7 +156,7 @@
 .stage-badge {
   margin-left: auto;
   padding: 2rpx 10rpx;
-  font-size: calc(22rpx * var(--fs, 1));
+  font-size: calc(26rpx * var(--fs, 1));
   border-radius: 6rpx;
   line-height: 1.3;
   font-weight: 400;

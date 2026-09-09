@@ -18,11 +18,20 @@ page {
   --brand: #07C160;
   --danger: #FF3B30;               /* RED light */
   --cell-active: #f5f5f5;
-  background-color: var(--bg);
+  /* 默认浅色背景；系统深色时由下方 media query 覆盖为深色。
+     这里不能用 var(--bg) —— dm-light/dm-dark 类挂在 .container 上，
+     变量只能向下继承，page 上解析到的永远是基础值 #ededed。*/
+  background-color: #ededed;
   color: var(--text);
   font-size: calc(28rpx * var(--fs, 1));
   line-height: 1.6;
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* 跟随系统深色：把 page 背景改为深色，覆盖 app.json.backgroundColor 的固定值。
+   解决 nav bar 下方露出 page 浅色底的小亮色条问题。*/
+@media (prefers-color-scheme: dark) {
+  page { background-color: #111; }
 }
 
 view, text {
@@ -76,10 +85,6 @@ view, text {
 
 /* 跟随系统 */
 @media (prefers-color-scheme: dark) {
-  page {
-    --bg: #111111;
-  }
-
   .dm-auto {
     --bg: #111111;
     --card: #1c1c1e;
@@ -103,10 +108,13 @@ view, text {
 .fs-xlarge { --fs: 1.3; font-size: calc(28rpx * var(--fs, 1)); }
 
 /* ===== 页面容器（统一底部安全区留白） ===== */
+/* 注：页面背景挂在 .container 上而非 page 上 —— dm-light/dm-dark 类挂在此元素，
+   var(--bg) 才能正确解析跟随；page 上的 var(--bg) 永远是基础值 */
 .container {
   padding: 0 0 calc(env(safe-area-inset-bottom) + 32rpx);
   box-sizing: border-box;
   min-height: 100vh;
+  background-color: var(--bg);
 }
 
 /* ===== 间距工具类（统一分割/留白，按需扩展） =====
@@ -122,7 +130,6 @@ view, text {
    靠上间距与灰底分组；上下 1px 通栏分隔线）
    ============================================================ */
 .weui-cells {
-  margin-top: 16rpx;                /* @weuiCellsMarginTop 8px */
   background-color: var(--card);
   position: relative;
   overflow: hidden;
@@ -140,11 +147,9 @@ view, text {
 .weui-cells::before { top: 0; }
 .weui-cells::after { bottom: 0; }
 
-/* 分组标题 / 说明（纯灰文字，无彩色竖条；右内边距统一 32rpx，修正旧 32px 笔误） */
+/* 分组标题 / 说明（纯灰文字，无彩色竖条；margin-top/margin-bottom 已合入 padding，左右统一 32rpx） */
 .weui-cells__title {
-  margin-top: 32rpx;
-  margin-bottom: 16rpx;
-  padding: 0 32rpx;                /* 左右 16px，无 px 笔误 */
+  padding: 32rpx 32rpx 16rpx;      /* 上=原 margin-top，左右 32rpx，下=原 margin-bottom 16rpx */
   color: var(--text2);
   font-size: calc(28rpx * var(--fs, 1));   /* 14px 分组标题 */
   line-height: 1.4;

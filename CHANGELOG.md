@@ -33,6 +33,9 @@
 - **cell 右侧箭头改用 iconfont 图标**：列表项右侧 chevron 由文本 `›` 改为统一调用 `iconfont` 的 `icon-right`（`\e6a3`）图标，箭头与右侧值对齐并随字号变量 `--fs` 缩放
 - **CSS 变量 token 重命名**：全局 `--text2` 更名为 `--text3`、`--text3` 更名为 `--text4`（定义与全部引用同步改名，颜色取值保持不变），覆盖 `app.wxss` 与 `stats` / `records` / `mine` / `stage` / `settings` / `home` / `route` / `about` 各页 `.wxss`
 - **新增 `--text2` token**：`app.wxss` 浅色（`page` / `.dm-light`）定义为 `#6b6b6b`，深色（`.dm-dark` / `.dm-auto`）补等价浅色叠白 `rgba(255, 255, 255, 0.78)`，按 `--text → --text2 → --text3 → --text4` 梯度排序
+- **深色模式切换到微信原生 darkmode 配置**：`app.json` 开启 `darkmode: true` + `themeLocation: "theme.json"`，`window` / `tabBar` 颜色键全部改 `@key` 占位符（含 `backgroundColorTop` / `backgroundColorBottom` 覆盖 iOS 下拉 / 上拉橡皮筋区），新增 `theme.json` 提供 light / dark 两套配色；导航栏、页面背景、tabBar 全部由微信框架按系统主题直接渲染，不再依赖 JS 时机。`app.js` 移除 `applyChrome()`（`wx.setNavigationBarColor` / `wx.setTabBarStyle` / `wx.setBackgroundColor` JS 覆盖）与系统深色探测（`wx.getAppBaseInfo`），自定义深色开关仅控制内容区 `darkClass`（dm-light / dm-dark / dm-auto）
+- **列表分组间距收紧**：`.weui-cells` 移除 `margin-top`；`.weui-cells__title` 的 `margin-top` / `margin-bottom` 全部合入 `padding`（现为 `padding: 32rpx 32rpx 16rpx`），不再使用 margin，确保深色模式卡片背景连续铺满、避免标题上下露出页面底色
+- **路线页时间线节点与字号放大**：`.stage-node` 36rpx → 48rpx，`.stage-name` 32rpx → 34rpx，节点内图标 / 徽标 / phase 字号 22rpx → 26rpx
 
 ### 修复
 
@@ -40,6 +43,7 @@
 - **iconfont 开发者工具模拟器渲染修复（data URI MIME 兼容）**：上版将 base64 内联到全局 `app.wxss` 的 `@font-face` 解决了跨页面不渲染的问题，但开发者工具内置的旧版 Chromium 不识别 data URI 的 `font/woff` MIME（IANA 新登记类型），仍把 iconfont 字符回退为 `□`；真机 System WebView / WKWebView 较新可识别。改用兼容性最广的 `application/font-woff` 后，开发者工具与真机均能正常加载字体
 - **`wx.getSystemInfoSync` 弃用告警修复**：`app.js` 读取系统深色偏好由原已弃用的 `wx.getSystemInfoSync` 改为 `wx.getAppBaseInfo`（旧基础库回退），消除弃用告警
 - `.gitignore` 中文注释存在 GBK 误编码残留，在 GitHub 上显示为乱码；已以 UTF-8 无 BOM 重新保存，忽略规则内容不变
+- **系统深色模式下页面留白（导航栏下方亮条 + 下拉 / 上拉橡皮筋区露白）**：根因是页面背景与 overscroll 区域由微信原生层控制、读 `app.json` 固定浅色底、且 WXSS 改不到；改用微信原生 darkmode + `wx.setBackgroundColor` 双重保障，整窗背景（含下拉 / 上拉橡皮筋区）随系统深色变深
 
 ### 文档
 
@@ -47,6 +51,7 @@
   - 新增 `design-guidelines.md`：沉淀微信官方《小程序设计指南》原则层（四大设计原则、视觉规范指针、导航 / Tab、加载与结果反馈、异常与层级、落地自检清单）；量化令牌并入 `design-tokens.md` §7（22/17/15/14/12pt 字号档、点击热区 7–9mm、设计稿 375/390、Tab 2–5、弹窗 1.5s）
   - `design-tokens.md` 以克隆仓库 `D:\github\weui`（Tencent/weui 主干 `src/`）逐项核对：补全此前缺失的真实 token（BG-4/5、GLYPH、各色阶档、TAG、MATERIAL、SEPARATOR、STATELAYER 等）；修正深色 `BG-COLOR-ACTIVE` 为 `overlay(rgba(255,255,255,.05), #2c2c2c)`；新增 §8 care 模式（适老）配色档
   - `components.md` 订正 dialog 部分（标题字重 500、正文 FG-1、底部留白 32px、主操作默认 LINK 蓝、补齐 hd/ft 结构），与 `widget/weui-tips/weui-dialog.less` 一致
+  - 新增「列表分组间距」约定：`.weui-cells` 不设 `margin-top`、`.weui-cells__title` 的 margin 合入 padding、深色模式下卡片背景连续铺满；间距摘要标注分组标题间距改由 `padding-top` 提供
 
 ## [2.3.1] - 2026-09-03
 

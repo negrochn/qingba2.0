@@ -1,7 +1,5 @@
 /* 深色模式选择页 - 跟随系统 toggle + 手动选择（原语：picker-page 单选） */
-page {
-  background: var(--bg);
-}
+/* 页面背景由 app.wxss 的 .container 提供（避免 page 上 var(--bg) 永远取默认值） */
 
 /* 自定义 iOS 胶囊开关（深浅模式样式一致；项目原语，见 skill ui-design-spec） */
 .switch {

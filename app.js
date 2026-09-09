@@ -2,14 +2,6 @@ const theme = require('./utils/theme.js')
 
 App({
   onLaunch() {
-    // 读取系统深色偏好（auto 模式时跟随系统）；getSystemInfoSync 已弃用，改用 getAppBaseInfo（旧基础库回退）
-    try {
-      const getBaseInfo = wx.getAppBaseInfo || wx.getSystemInfoSync
-      const info = getBaseInfo()
-      this._systemDark = info.theme === 'dark'
-    } catch (e) {
-      this._systemDark = false
-    }
     this.globalData.fontLevel = theme.getFontLevel()
     this.globalData.darkMode = theme.getDarkMode()
     this.initUpdateManager()
@@ -44,7 +36,9 @@ App({
   },
 
   // 在页面 onLoad / onShow 中调用：getApp().applyFontLevel(this)
-  // 同时应用深色模式 class 与系统栏配色
+  // 仅下发字号 + 内容区深色模式 class（dm-light / dm-dark / dm-auto）
+  // 导航栏 / tabBar / 页面背景（含下拉/上拉橡皮筋区）已交给 app.json + theme.json
+  // 的微信原生 darkmode 配置，不再用 JS 覆盖
   applyFontLevel(page) {
     const level = theme.getFontLevel()
     const darkMode = theme.getDarkMode()
@@ -57,24 +51,6 @@ App({
         darkClass: theme.getDarkClass()
       })
     }
-    this.applyChrome()
-  },
-
-  // 导航栏 + tabBar 配色跟随深色模式
-  applyChrome() {
-    const isDark = theme.isDarkMode(this._systemDark)
-    wx.setNavigationBarColor({
-      frontColor: isDark ? '#ffffff' : '#000000',
-      backgroundColor: isDark ? '#111111' : '#ededed',
-      fail: () => {}
-    })
-    wx.setTabBarStyle({
-      backgroundColor: isDark ? '#111111' : '#f5f5f5',
-      borderStyle: isDark ? 'black' : 'white',
-      color: isDark ? '#8a8f99' : '#191919',
-      selectedColor: '#07C160',
-      fail: () => {}
-    })
   },
 
   globalData: {

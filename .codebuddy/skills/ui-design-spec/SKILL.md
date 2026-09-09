@@ -30,7 +30,7 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 ## 已沉淀的规范要点（摘要，完整见 references）
 - **配色**：页面 `#ededed`(BG-0)、卡片 `#fff`(BG-2)、主文字 `rgba(0,0,0,.9)`(FG-0)、次级 `rgba(0,0,0,.55)`(FG-1)、占位 `rgba(0,0,0,.3)`(FG-2)、分隔线 `rgba(0,0,0,.1)`(FG-3)、**品牌绿 `#07c160`(BRAND)**、链接蓝 `#576b95`(LINK)、危险红 `#fa5151`(RED)、橙/黄/蓝 `#fa9d3b`/`#ffc300`/`#10aeff`、蒙层 `rgba(0,0,0,.5)`(OVERLAY)。
 - **字号**：导航/主文/按钮 17px(34rpx) 行高 1.41176471；分组标题/tips/次级 14px(28rpx)；描述 12px(24rpx)。
-- **间距**：页面边距 16px(32rpx)，cell 内边距 16px(32rpx)，分组标题上 16px(32rpx)，按钮区上 48px(96rpx)。
+- **间距**：页面边距 16px(32rpx)，cell 内边距 16px(32rpx)，分组标题 padding-top 16px(32rpx)（其 margin-top 已合入 padding，见下「项目实现备注」），按钮区上 48px(96rpx)。
 - **圆角**：按钮 8px(16rpx)、mini 6px(12rpx)、弹窗 12px(24rpx)、iOS 分组卡片 20rpx(10pt)；cells 默认无圆角无阴影。
 - **分隔线**：1px `FG-3` + `scaleY(.5)` 实现 0.5px；cell 内线 `left:16px(32rpx)` 缩进、首行无；或本项目 `.cell-divider` 兄弟节点。
 - **按钮**：`.weui-btn` 默认高 48px(96rpx)、圆角 8px；变体 `primary`(BRAND 绿)/`default`(灰底)/`warn`(RED)/`disabled`；尺寸 `medium`(40px)/`mini`(32px)、`block`/`inline`。项目 `.btn` 族高 88rpx（44pt iOS），新按钮沿用。
@@ -48,6 +48,7 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - **单元格间分隔线（项目实现）**：qingba **不用** `border-bottom`，而是在相邻 cell 间插入兄弟节点 `<view class="cell-divider">`（`height:1rpx; background:var(--divider); margin-left:32rpx;`）；wxml 用 `wx:if="{{i>0}}"` 在 `wx:for` 循环项之间自动插入。`.cell-divider` 与 `.cell` 同级，都放在 `.group-card` 内。
 - **`.cell` 行高由 modifier 提供（项目实现）**：qingba 的 `.cell` 基类**不设** `min-height`；行高由 `cell--single`(min-height 110rpx≈55pt) / `cell--desc`(146rpx≈73pt) 提供，每个 `.cell` 必须挂其一，否则无高度。
 - **间距工具类 `.mb-16`**：`app.wxss` 提供 `.mb-16 { margin-bottom:16rpx }`，按需扩展 `mb-8`/`mb-24`，用于卡片/分组间统一留白。
+- **列表分组间距（项目实现）**：`.weui-cells` 容器**不设 `margin-top`**（避免与上层卡片/分组间距叠加，分组留白改用 `.mb-16` 工具类或父容器 padding 控制）。`.weui-cells__title`（分组标题）的 `margin-top`/`margin-bottom` **均已合入 `padding`**（当前 `padding: 32rpx 32rpx 16rpx`），不再使用任何 margin——目的是让深色模式下卡片背景连续铺满、避免标题上下露出页面底色。新代码如需分组标题与内容之间留白，统一用 `padding` 而非 `margin`。
 - **项目 CSS 变量**：`--bg/--card/--text/--text2/--text3/--text4/--divider/--brand/--danger/--cell-active` 对应 WeUI 的 BG-0/BG-2/FG-0/FG-1/FG-2/FG-3/BRAND/RED/BG-COLOR-ACTIVE（见 `design-tokens.md` 末节映射表）。
 - **`.group-title` 项目取值（与规范差异）**：全局 `.group-title`（`app.wxss`）`padding: 32rpx 32px 16rpx 32rpx`，**右内边距是 `32px`（像素）而非 `32rpx`**（疑似笔误）；新代码建议统一为 `32rpx`。
 
