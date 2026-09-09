@@ -19,9 +19,19 @@
     </view>
   </view>
 
-  <!-- 学习计划 -->
-  <view class="weui-cells__title">学习计划</view>
+  <!-- 学习设置 -->
+  <view class="weui-cells__title">学习设置</view>
   <view class="weui-cells">
+    <view class="weui-cell weui-cell_access" bindtap="goStagePicker">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text">当前阶段</view>
+        <view class="weui-cell__desc">决定路线页解锁与推荐资源</view>
+      </view>
+      <view class="weui-cell__ft">
+        <text class="weui-cell__ft_value {{currentStage ? '' : 'placeholder'}}">{{currentStageDisplay || '未设置'}}</text>
+        <text class="iconfont icon-right"></text>
+      </view>
+    </view>
     <view class="weui-cell">
       <view class="weui-cell__bd">
         <view class="weui-cell__bd_text">小小优趣成长计划</view>
@@ -60,13 +70,6 @@
   <block wx:if="{{showDevTools}}">
     <view class="weui-cells__title">开发者工具</view>
     <view class="weui-cells">
-      <view class="weui-cell weui-cell_access" bindtap="goStagePicker">
-        <view class="weui-cell__bd">当前阶段</view>
-        <view class="weui-cell__ft">
-          <text class="weui-cell__ft_value {{currentStage ? '' : 'placeholder'}}">{{currentStageDisplay || '未设置'}}</text>
-          <text class="iconfont icon-right"></text>
-        </view>
-      </view>
       <view class="weui-cell weui-cell_access" bindtap="onStressTest">
         <view class="weui-cell__bd">压力测试</view>
         <view class="weui-cell__ft">

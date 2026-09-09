@@ -54,6 +54,7 @@
 - **关键要点模块改造为 WeUI cell 列表（stage）**：`.weui-panel` + `.kp-list` 点状卡片改为 `.weui-cells` + `.weui-cell`；去掉小圆点、序号与「重要」标签，只展示文字；重点条目文字用 `--text`、其余用 `--text2` 区分层级；字号 26→28rpx；清理 `.kp-list` / `.kp-item` / `.kp-dot` / `.kp-body` / `.kp-tag` 等约 100 行废弃样式，以及 `.dm-dark` / `.dm-auto` 下的配套覆盖（深浅切换改由变量自动完成）
 - **`.weui-cells__title` 下间距回归官方**：`padding` 由 `32rpx 32rpx 16rpx` 改为 `32rpx 32rpx 6rpx`（官方 `margin-bottom: 3px`）；margin 合入 padding 的做法保留，深色模式卡片背景依旧连续铺满
 - **打卡记录页（records）头部对齐**：`.section-head` 补左右内距 `padding: 0 32rpx`，日期 / 月份选择器由居中 `center` 改为左对齐 `flex-start`
+- **设置页「当前阶段」移出开发者工具**：原与「压力测试」同属「开发者工具」分组且仅开发版可见（`showDevTools: env === 'develop'`），导致正式版 / 体验版用户在首次启动引导之后无法再修改阶段。现移入原「学习计划」分组并置于首位，该分组同步更名为「学习设置」——涵盖「阶段状态」与「规则开关」两类配置，避免与同组具体功能「小小优趣成长计划」产生层级混淆；为「当前阶段」补 `.weui-cell__desc` 说明「决定路线页解锁与推荐资源」，与同组另一项描述写法一致。切换阶段仍按覆盖式重算前序完成标记（`setCompletedStages`），阶段往回调不会残留已完成状态；`README.md` 设置页说明同步
 
 ### 修复
 
