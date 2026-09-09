@@ -40,16 +40,22 @@ function isRegularStage(stageId) {
 // 优先从 promotion_standard 中提取；涉及“累计”时返回累计小时
 function getRequiredHours(stage) {
   const standard = stage.promotion_standard || ''
-  // 累计投入时间，如“常规1-6累计投入时间不低于400H”
-  const accumulated = standard.match(/累计.*?投入.*?不低于\s*(\d+)\s*[Hh]/)
-  if (accumulated) {
-    return { type: 'accumulated', hours: +accumulated[1] }
+
+  // 常规6 / 准桥梁：进度按“当前阶段自身时长”评估，不按跨阶段累计投入
+  if (stage.stage_id !== 'regular_6' && stage.stage_id !== 'pre_bridge') {
+    // 累计投入时间，如“常规1-6累计投入时间不低于400H”
+    const accumulated = standard.match(/累计.*?投入.*?不低于\s*(\d+)\s*[Hh]/)
+    if (accumulated) {
+      return { type: 'accumulated', hours: +accumulated[1] }
+    }
+    // 累计总投入时间，如“从常规1累计总投入不低于480H”
+    const total = standard.match(/累计总投入.*?不低于\s*(\d+)\s*[Hh]/)
+    if (total) {
+      return { type: 'accumulated', hours: +total[1] }
+    }
   }
-  const total = standard.match(/累计总投入.*?不低于\s*(\d+)\s*[Hh]/)
-  if (total) {
-    return { type: 'accumulated', hours: +total[1] }
-  }
-  // 普通时间要求，回退到 time_investment
+
+  // 普通时间要求，回退到 time_investment（当前阶段自身时长）
   const target = parseTargetHours(stage.time_investment)
   if (target) {
     return { type: 'stage', hours: target.min }
@@ -95,6 +101,8 @@ Page({
     investedHoursText: '0',
     timeMet: false,
     progressPercent: 0,
+    promoteFillStyle: '',
+    remainHoursText: '',
     // 晋级弹窗
     showPromoteModal: false,
     promoteTargetPhase: 0,
@@ -211,8 +219,14 @@ Page({
     }
     const hours = minutes / 60
     const timeMet = required.hours > 0 ? hours >= required.hours : false
-    const progressPercent = required.hours > 0 ? Math.min(100, Math.round(hours / required.hours * 100)) : 0
+    const progressPercent = required.hours > 0 ? Math.min(100, Math.floor(hours / required.hours * 100)) : 0
     const targetPhaseNum = parsePhaseNumber(stage.target_phase)
+    const remainHours = required.hours > 0 ? Math.max(0, required.hours - hours) : 0
+    const remainText = `${(+remainHours).toFixed(1)}`.replace(/\.0$/, '')
+    // 进度填色：底色为普通按钮色，已达成部分用品牌绿从左向右填充
+    const fillStyle = `background-image:linear-gradient(to right, var(--brand) 0, var(--brand) ${progressPercent}%, transparent ${progressPercent}%, transparent 100%);`
+    // 按钮文案：最后阶段(准桥梁)为“完成阶段”，其余阶段为“晋级下一阶段”
+    const promoteLabel = isLastStage ? '完成阶段' : '晋级下一阶段'
 
     this.setData({
       canPromote: isRegular && isCurrent && !alreadyDone,
@@ -224,6 +238,9 @@ Page({
       investedHoursText: `${(+hours).toFixed(1)}`.replace(/\.0$/, ''),
       timeMet,
       progressPercent,
+      promoteFillStyle: fillStyle,
+      promoteLabel,
+      remainHoursText: remainText,
       promoteTargetPhase: targetPhaseNum,
       promoteTargetPhaseText: targetPhaseNum ? `phase${targetPhaseNum}` : ''
     })
@@ -232,7 +249,16 @@ Page({
   // 点击晋级按钮
   onPromoteTap() {
     const stage = this.data.stage
-    if (!stage || !this.data.promoteEnabled) return
+    if (!stage) return
+
+    if (!this.data.promoteEnabled) {
+      const remain = this.data.remainHoursText
+      wx.showToast({
+        title: remain > 0 ? `还需 ${remain}h 达成目标` : '暂不可完成',
+        icon: 'none'
+      })
+      return
+    }
 
     const youquEnabled = checkin.isYouquPlanEnabled()
     if (youquEnabled && this.data.promoteTargetPhase > 0) {
@@ -555,6 +581,9 @@ Page({
       [`resTotals.${resKey}`]: newTotal,
       groupProgress
     })
+
+    // 打卡成功后刷新阶段进度（按钮填色 / 已投入时长 / 可完成态）
+    this._refreshPromoteInfo()
 
     wx.showToast({
       title: `已打卡 ${checkin.fmtMinutes(minutes)}`,

@@ -643,67 +643,11 @@
 .action-sheet .weui-btn { flex: 1; }                 /* 两按钮等宽 */
 .action-sheet .weui-btn-area_inline { margin-top: 16rpx; }   /* 与上方表单留白 */
 
-/* ====== 晋级卡片（微信原生 progress 组件） ====== */
-.promote-card {
-  background: var(--card);
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin: 0 24rpx 24rpx;
-}
-
-.promote-title {
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text);
-}
-
-.promote-bar-row {
-  display: flex;
-  align-items: center;
-}
-
-.promote-bar {
-  flex: 1;
-  min-width: 0;
-}
-
-.promote-percent {
-  margin-left: 16rpx;
-  font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text3);
-  width: 88rpx;
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.promote-meta {
-  margin-top: 12rpx;
-  font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text4);
-  margin-bottom: 24rpx;
-}
-
-/* 晋级按钮：WeUI 矩形圆角（无胶囊），纯色品牌绿 */
-.promote-btn {
-  height: 88rpx;
-  line-height: 88rpx;
-  text-align: center;
-  border-radius: 16rpx;
-  font-size: calc(34rpx * var(--fs, 1));
-  margin: 0;
-}
-
-.promote-btn-active {
-  color: #fff;
-  background: var(--brand);
-}
-
-.promote-btn-active:active {
-  opacity: 0.88;
-}
-
-.promote-btn-disabled {
-  color: var(--text4);
-  background: var(--cell-active);
+/* ====== 完成阶段按钮：复用 WeUI 按钮令牌 ======
+   未达成走 weui-btn_default(灰底+深字)，达成 100% 走 weui-btn_primary(品牌绿+白字)；
+   进度由内联渐变(品牌绿从左填充)叠加在底色上，文字随状态自动切换 */
+.promote-btn-area {
+  margin-top: 32rpx;
 }
 
 /* ====== 晋级弹窗 ====== */

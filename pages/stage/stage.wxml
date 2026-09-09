@@ -80,34 +80,16 @@
     </view>
   </view>
 
-  <!-- 晋级卡片（仅当前常规阶段展示） -->
-  <view wx:if="{{canPromote}}">
-    <view class="weui-cells__title">阶段达成</view>
-    <view class="weui-panel promote-card">
-      <view class="promote-title mb-16">{{stage.stage_name}} 阶段进度</view>
-      <view class="promote-bar-row">
-        <progress
-          class="promote-bar"
-          percent="{{progressPercent}}"
-          stroke-width="6"
-          activeColor="{{timeMet ? '#52c41a' : '#07C160'}}"
-          backgroundColor="{{isDark ? '#3a3a3a' : '#ececec'}}"
-          borderRadius="6"
-        />
-        <text class="promote-percent">{{progressPercent}}%</text>
-      </view>
-      <view class="promote-meta">
-        <text>已投入 {{investedHoursText}}h</text>
-        <text wx:if="{{requiredHours}}"> · 目标 {{requiredHours}}h</text>
-      </view>
-      <view
-        class="promote-btn {{promoteEnabled ? 'promote-btn-active' : 'promote-btn-disabled'}}"
-        bindtap="onPromoteTap"
-      >
-        <text wx:if="{{promoteEnabled}}">完成阶段</text>
-        <text wx:else>时间不足，暂不可完成</text>
-      </view>
-    </view>
+  <!-- 完成阶段按钮（仅当前常规阶段展示）：填色展示进度，复用 WeUI 按钮令牌 -->
+  <view wx:if="{{canPromote}}" class="promote-btn-area">
+    <button
+      class="weui-btn weui-btn_block {{promoteEnabled ? 'weui-btn_primary' : 'weui-btn_default'}}"
+      style="{{promoteFillStyle}}"
+      bindtap="onPromoteTap"
+    >
+      <text wx:if="{{promoteEnabled}}">{{promoteLabel}}</text>
+      <text wx:else>{{promoteLabel}} · {{progressPercent}}%</text>
+    </button>
   </view>
 </view>
 

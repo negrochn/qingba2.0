@@ -44,6 +44,11 @@
 - **全局分隔线去除 `scaleY(.5)` 缩放**：`.weui-cells::before/::after`、`.weui-cell::before`、dialog 内线均改真实 `1rpx`（rpx 已含高分屏亚像素；scaleY(.5) 在 cells 通栏线因 top/bottom 偏移导致位置偏差），`.weui-cells` 通栏线定位由 `0` 调为 `-1rpx` 避免与首行 cell 线重叠
 - **`.weui-tag` 去除 margin**：标签间距改由父级 flex `gap` 控制；records 页 `tag-stage` / `record-remark` 补 `weui-tag` 类统一走全局标签原语，删除页面内重复 `.weui-tag` 定义
 - **按钮 / 间距微调**：`.weui-btn-area` 上内边距对齐 `@weuiBtnAreaGap`（96rpx）、并排按钮 `gap` 16px(32rpx)；`.weui-cell__hd` 右间距 24rpx→16rpx(8px)；dialog 主操作注释明确为 BRAND 绿（项目约定）
+- **阶段详情（stage）"完成阶段"按钮重构为 WeUI 风格进度填充长按钮**：移除原"晋级卡片"（分组标题 + 微信原生 `progress` 进度条 + 已投入/目标时长 + 自定义按钮），改为单个 `weui-btn weui-btn_block` 按钮——底色普通按钮灰（`weui-btn_default`），已达成部分用品牌绿从左向右填充（内联 `linear-gradient`），达成 100% 转 `weui-btn_primary` 品牌绿 + 白字；复用全局按钮令牌，删除本页全部 `.promote-*` 重复样式
+- **按钮文案动态化**：最后阶段（准桥梁）显示"完成阶段"，其余常规阶段显示"晋级下一阶段"（与确认弹窗"晋级"术语一致），进度中显示"文案 · 百分比%"
+- **完成进度百分比由 `Math.round` 改为 `Math.floor`（向下取整）**
+- **`getRequiredHours` 修正**：常规6 / 准桥梁的晋级进度改为按"当前阶段自身时长"评估，不再误匹配跨阶段累计投入规则（常规1-6 累计不低于 400H / 常规1 累计总投入不低于 480H）
+- **`app.wxss` 满宽按钮特异性修正**：`.weui-btn_block` 改为 `.weui-btn.weui-btn_block`（并重置左右 margin），特异性 (0,2,0) 盖过微信原生 `wx-button:not([size=mini])` 的 `width:184px`（0,1,1），确保 `weui-btn_block` 满宽真正生效
 
 ### 修复
 
@@ -52,6 +57,8 @@
 - **`wx.getSystemInfoSync` 弃用告警修复**：`app.js` 读取系统深色偏好由原已弃用的 `wx.getSystemInfoSync` 改为 `wx.getAppBaseInfo`（旧基础库回退），消除弃用告警
 - `.gitignore` 中文注释存在 GBK 误编码残留，在 GitHub 上显示为乱码；已以 UTF-8 无 BOM 重新保存，忽略规则内容不变
 - **系统深色模式下页面留白（导航栏下方亮条 + 下拉 / 上拉橡皮筋区露白）**：根因是页面背景与 overscroll 区域由微信原生层控制、读 `app.json` 固定浅色底、且 WXSS 改不到；改用微信原生 darkmode + `wx.setBackgroundColor` 双重保障，整窗背景（含下拉 / 上拉橡皮筋区）随系统深色变深
+- **"完成阶段"按钮未达成态点击反馈**：此前静默无反应，现弹出"还需 Xh 达成目标"（或"暂不可完成"）提示
+- **打卡成功后刷新阶段进度**：补 `this._refreshPromoteInfo()`，使按钮填充 / 已投入时长 / 可完成态在打卡后即时更新
 
 ### 文档
 

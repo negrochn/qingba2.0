@@ -298,7 +298,15 @@ view, text {
 .weui-btn_disabled:active { opacity: 1; }
 .dm-dark .weui-btn_disabled { background-color: #3A3A3C; }
 
-.weui-btn_block { display: block; width: 100%; max-width: none; }
+/* 满宽：用 .weui-btn.weui-btn_block 提高特异性(0,2,0)，盖过原生 button 默认
+   wx-button:not([size=mini]) 的 width:184px(0,1,1)，否则满宽不生效 */
+.weui-btn.weui-btn_block {
+  display: block;
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+}
 .weui-btn_inline { display: inline-block; }
 
 /* 按钮区：居中堆叠（上 48px） / 并排 / 底部固定栏 */
