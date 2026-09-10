@@ -39,24 +39,11 @@
 .route-node.current .iconfont { color: var(--text3); }   /* 当前节点图标用正常箭头色，而非品牌绿 */
 .route-node.done    { border-color: var(--brand); color: var(--brand); }   /* 未解锁沿用基类灰描边 + 灰图标 */
 
-/* 连接线：贯穿整行内容高度（末行无线）。
-   cell 上下各 32rpx 内边距 + 下一行 wrap 的 4rpx padding-top 会形成 ~68rpx 断口，
-   用伪元素向下补齐，使整条时间线跨行连续 */
+/* 连接线：无节点时贯穿整行高度（末行无线） */
 .route-node-line {
-  position: relative;
   flex: 1;
   width: 1rpx;
   background: var(--divider);
-}
-.route-node-line::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 100%;
-  width: 1rpx;
-  height: 68rpx;
-  background: var(--divider);
-  z-index: 1;                       /* 盖过下一行 cell 背景（如绿底当前行），避免断口 */
 }
 
 /* ③ 阶段名 / 副信息 */

@@ -69,6 +69,7 @@
 - **路线页（route）容器回归 WeUI 默认外观**：移除 `.current-panel`（原 `background: transparent` + `.weui-cells::before/::after { display:none }`）——透明底会覆盖 `.weui-cells` 自身的 `background-color: var(--card)`，使顶部「当前阶段」组实际透出页面灰底而非白色卡片；隐藏通栏线又让它与下方「学习路线」组（白底 + 上下通栏线）外观不一致。现容器恢复 `.weui-cells` 默认，同页两组一致
 - **路线页时间线连接线跨行连续**：`.route-node-line` 原先只在 cell 内容盒内延伸，cell 上下各 32rpx 内边距 + 下一行 `.route-node-wrap` 的 4rpx `padding-top` 会形成约 68rpx 断口，整条时间线呈「分段虚线」。新增 `.route-node-line::after` 向下补齐 68rpx，并加 `z-index:1`，避免延伸段落入下一行 cell 时被该行背景（如绿底当前行）盖掉线尾
 - **路线页样式语义与冗余清理**：副信息行去掉 `.weui-cell__desc`（其 24rpx / `--text3` 被 `.route-meta` 的 28rpx / `--text2` 全覆盖，类名与实际表现不符，只保留 `.route-meta`）；`.route-name` 去掉 `font-weight:500`，与全局 `.weui-cell__bd_text`（400）一致；删除 `.route-node` 已失效的 `font-size:24rpx` / `font-weight:600`（三态已全为 iconfont 图标，无作用对象）、与基类取值重复的 `.route-node.locked`、wxml 死类 `route-ft`，并更新三处过期注释
+- **路线页连接线还原为简单实现**：移除上一条引入的 `.route-node-line::after` 伪元素补丁（连同 `position: relative` 与 `z-index:1`），恢复为 `flex:1` 的内容盒连接线、末行不渲染；`ui-design-spec` 原语 12 同步还原该段约定。其余改动（副信息只挂 `.route-meta`、`.route-name` 不设字重、容器保持 WeUI 默认外观）保留
 
 ### 修复
 
