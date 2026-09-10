@@ -134,7 +134,7 @@ Page({
 
     // 欢迎语：时段问候 + 连续打卡天数
     let greetText = greetByHour(h)
-    greetText += streakDays > 0 ? ` · ${streakDays}-day streak` : ', start today'
+    greetText += streakDays > 0 ? `, ${streakDays}-day streak` : ', start today'
 
     // 阶段进度（与 route / stage 详情页完全同口径）
     let stagePercent = 0
