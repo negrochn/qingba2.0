@@ -1,16 +1,18 @@
 const checkin = require('../../utils/checkin.js')
+const { routeData, getRequiredHours } = require('../../utils/data.js')
 
-const WEEK_CN = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-const DAY_LABELS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const MONTH_EN = ['January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December']
 
-// 按小时给出时间问候
+// 按小时给出时间问候（英文）
 function greetByHour(h) {
-  if (h < 6) return '凌晨好'
-  if (h < 11) return '早上好'
-  if (h < 13) return '中午好'
-  if (h < 18) return '下午好'
-  if (h < 22) return '晚上好'
-  return '夜深了'
+  if (h < 6) return 'Early morning'
+  if (h < 11) return 'Good morning'
+  if (h < 13) return 'Good noon'
+  if (h < 18) return 'Good afternoon'
+  if (h < 22) return 'Good evening'
+  return 'Good night'
 }
 
 // 分钟 -> 小时文本（去尾零：12.5 / 0 / 60）
@@ -20,22 +22,13 @@ function fmtHours(minutes) {
   return v % 1 === 0 ? String(v) : v.toFixed(1)
 }
 
-// 解析目标时长: '60-80H' -> {min:60,max:80}，'60H' -> {min:60,max:60}
-function parseTarget(text) {
-  if (!text) return null
-  const range = String(text).match(/(\d+)\s*-\s*(\d+)/)
-  if (range) return { min: +range[1], max: +range[2] }
-  const single = String(text).match(/(\d+)/)
-  if (single) return { min: +single[1], max: +single[1] }
-  return null
-}
-
 Page({
   data: {
     fontClass: '',
-    greetText: '',
     dateText: '',
+    greetText: '',
     stageName: '',
+    todayCount: 0,
     weekHours: '0',
     weekDeltaText: '—',
     weekBars: [],
@@ -61,7 +54,7 @@ Page({
     const now = new Date()
     const h = now.getHours()
     const wd = now.getDay()
-    const dateText = `${now.getMonth() + 1}月${now.getDate()}日 ${WEEK_CN[wd]}`
+    const dateText = `${MONTH_EN[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`
 
     const cur = checkin.getCurrentStage()
     const stageId = cur ? cur.id : ''
@@ -80,6 +73,7 @@ Page({
     let thisWeek = 0
     let lastWeek = 0
     let todayMinutes = 0
+    let todayCount = 0
     let totalMinutes = 0
     const daysSet = new Set()
 
@@ -88,9 +82,12 @@ Page({
       for (const r of list) {
         if (r.stageId !== stageId) continue          // 只统计当前阶段
         const min = Number(r.durationMinutes) || 0
-        totalMinutes += min                            // 累计时长（当前阶段）
+        totalMinutes += min                            // 阶段时长（当前阶段）
         daysSet.add(day)
-        if (day === todayStr) todayMinutes += min
+        if (day === todayStr) {
+          todayMinutes += min
+          todayCount += 1                          // 今日打卡次数（当前阶段口径）
+        }
         if (day >= weekStartStr && day <= todayStr) {
           weekDayMinutes[day] = (weekDayMinutes[day] || 0) + min
           thisWeek += min
@@ -126,23 +123,43 @@ Page({
       weekDeltaText = '较上周 +100%'
     }
 
-    // 阶段进度（对目标下限）
+    // 连续打卡天数（当前阶段口径）：今天未打卡则从昨天起算，避免当天还没打就归零
+    let streakDays = 0
+    const startOffset = daysSet.has(todayStr) ? 0 : 1
+    for (let i = startOffset; i < 365; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i)
+      if (daysSet.has(checkin.todayStr(d))) streakDays++
+      else break
+    }
+
+    // 欢迎语：时段问候 + 连续打卡天数
+    let greetText = greetByHour(h)
+    greetText += streakDays > 0 ? ` · ${streakDays}-day streak` : ', start today'
+
+    // 阶段进度（与 route / stage 详情页完全同口径）
     let stagePercent = 0
-    if (cur && cur.timeInvestment) {
-      const target = parseTarget(cur.timeInvestment)
-      if (target && target.min > 0) {
-        stagePercent = Math.min(100, Math.round((totalMinutes / 60) / target.min * 100))
+    if (cur) {
+      const stageFull = routeData.stages.find(s => s.stage_id === cur.id)
+      if (stageFull) {
+        const required = getRequiredHours(stageFull)
+        const minutes = required.type === 'accumulated'
+          ? checkin.getAccumulatedMinutes(cur.id)
+          : totalMinutes
+        stagePercent = required.hours > 0
+          ? Math.min(100, Math.floor((minutes / 60) / required.hours * 100))
+          : 0
       }
     }
 
     this.setData({
-      greetText: greetByHour(h),
       dateText,
+      greetText,
       stageName: cur ? (cur.name || '') : '',
       weekHours: fmtHours(thisWeek),
       weekDeltaText,
       weekBars,
       todayHours: fmtHours(todayMinutes),
+      todayCount,
       totalHours: fmtHours(totalMinutes),   // 当前阶段累计，非全阶段
       stagePercent,
       checkinDays: daysSet.size

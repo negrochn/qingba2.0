@@ -1,19 +1,21 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- ① 欢迎条：时间问候 + 当前日期（不含昵称） -->
+  <!-- ① 欢迎条：英文日期 + 欢迎语（左），当前阶段（右） -->
   <view class="home-header">
     <view class="home-greet">
-      <view class="home-greet-hi">{{greetText}}</view>
-      <view class="home-greet-sub">欢迎回来</view>
+      <view class="home-date">{{dateText}}</view>
+      <view class="home-greet-sub">{{greetText}}</view>
     </view>
-    <view class="home-date">{{dateText}}</view>
+    <view class="home-stage">
+      <view class="home-stage-name">{{stageName || '未设置阶段'}}</view>
+      <view class="home-stage-percent" wx:if="{{stageName}}">{{stagePercent}}%</view>
+    </view>
   </view>
 
   <!-- ② Hero 卡：本周时长 + 周一~周日柱状图 -->
   <view class="home-hero">
     <view class="home-hero-head">
       <view class="home-hero-title">本周时长</view>
-      <view class="home-hero-scope">{{stageName || '未设置阶段'}}</view>
     </view>
     <view class="home-hero-num">
       <text class="home-hero-val">{{weekHours}}</text>
@@ -30,7 +32,7 @@
     </view>
   </view>
 
-  <!-- ③ 2×2 关键指标（累计时长仅统计当前阶段） -->
+  <!-- ③ 2×2 关键指标（阶段时长、今日打卡、打卡天数均为当前阶段口径） -->
   <view class="home-grid">
     <view class="home-stat">
       <text class="home-stat-arrow">↗</text>
@@ -39,13 +41,13 @@
     </view>
     <view class="home-stat">
       <text class="home-stat-arrow">↗</text>
-      <view class="home-stat-num">{{totalHours}}<text class="home-stat-unit">h</text></view>
-      <view class="home-stat-label">累计时长</view>
+      <view class="home-stat-num">{{todayCount}}<text class="home-stat-unit">次</text></view>
+      <view class="home-stat-label">今日打卡</view>
     </view>
     <view class="home-stat">
       <text class="home-stat-arrow">↗</text>
-      <view class="home-stat-num">{{stagePercent}}<text class="home-stat-unit">%</text></view>
-      <view class="home-stat-label">阶段进度</view>
+      <view class="home-stat-num">{{totalHours}}<text class="home-stat-unit">h</text></view>
+      <view class="home-stat-label">阶段时长</view>
     </view>
     <view class="home-stat">
       <text class="home-stat-arrow">↗</text>

@@ -1,31 +1,45 @@
 /* ===== 首页样式（WeUI 令牌化） ===== */
 
-/* ① 欢迎条：左问候 / 右日期 */
+/* ① 欢迎条：左「英文日期 + 欢迎语」/ 右「当前阶段」 */
 .home-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   padding: 40rpx 32rpx 16rpx;
 }
-.home-greet-hi {
-  font-size: calc(40rpx * var(--fs, 1));
+.home-greet {
+  flex: 1;
+  min-width: 0;
+}
+.home-date {
+  font-size: calc(28rpx * var(--fs, 1));   /* 14px 次级 */
+  font-weight: 400;
+  color: var(--text2);
+  line-height: 1.4;
+}
+.home-greet-sub {
+  font-size: calc(34rpx * var(--fs, 1));   /* 17px 主文 */
   font-weight: 600;
   color: var(--text);
   line-height: 1.3;
-}
-.home-greet-sub {
-  font-size: calc(28rpx * var(--fs, 1));
-  color: var(--text2);
-  line-height: 1.4;
   margin-top: 4rpx;
 }
-.home-date {
+.home-stage {
   flex-shrink: 0;
-  margin-top: 10rpx;
-  font-size: calc(28rpx * var(--fs, 1));
+  margin-left: 24rpx;
+  padding-top: 4rpx;
+  text-align: right;
+}
+.home-stage-name {
+  font-size: calc(28rpx * var(--fs, 1));   /* 14px 次级，右侧值 */
   color: var(--text2);
   line-height: 1.4;
-  text-align: right;
+}
+.home-stage-percent {
+  margin-top: 4rpx;
+  font-size: calc(24rpx * var(--fs, 1));   /* 12px 辅助 */
+  color: var(--text3);
+  line-height: 1.4;
 }
 
 /* ② Hero 卡：品牌绿渐变 + 7 日柱状图 */
@@ -43,13 +57,10 @@
   justify-content: space-between;
 }
 .home-hero-title {
-  font-size: calc(28rpx * var(--fs, 1));
+  font-size: calc(30rpx * var(--fs, 1));
   color: var(--text2);
 }
-.home-hero-scope {
-  font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text2);
-}
+
 .home-hero-num {
   display: flex;
   align-items: baseline;
@@ -76,7 +87,7 @@
   justify-content: space-between;
   align-items: flex-end;
   margin-top: 24rpx;
-  height: 176rpx;
+  height: auto;                     /* 由 track(192rpx) + 标签自然撑开 */
 }
 .home-bar {
   flex: 1;
@@ -85,18 +96,18 @@
   align-items: center;
 }
 .home-bar-track {
-  width: 16rpx;
-  height: 128rpx;
-  background: rgba(0, 0, 0, 0.05);          /* 浅灰轨道 */
-  border-radius: 8rpx;
+  width: 64rpx;
+  height: 192rpx;
+  background: transparent;                   /* 透明轨道，数据完全由 fill 体现 */
+  border-radius: 28rpx;
   display: flex;
   align-items: flex-end;
   overflow: hidden;
 }
 .home-bar-fill {
   width: 100%;
-  background: rgba(7, 193, 96, 0.28);        /* 非今日：浅品牌绿 */
-  border-radius: 8rpx;
+  background: rgba(0, 0, 0, 0.05);           /* 非今日：浅灰 */
+  border-radius: 28rpx;
 }
 .home-bar-fill.is-today {
   background: #07C160;                       /* 今日：品牌绿高亮 */
@@ -108,7 +119,6 @@
 }
 .home-bar-label.is-today {
   opacity: 1;
-  font-weight: 600;
 }
 
 /* ③ 2×2 指标卡 */
@@ -136,11 +146,11 @@
   line-height: 1;
 }
 .home-stat-num {
-  font-size: calc(56rpx * var(--fs, 1));
+  font-size: calc(72rpx * var(--fs, 1));
   font-weight: 400;
   color: var(--text);
   line-height: 1.1;
-  margin: 8rpx 0 12rpx;
+  margin: 0 0 32rpx;
 }
 .home-stat-unit {
   font-size: calc(28rpx * var(--fs, 1));
