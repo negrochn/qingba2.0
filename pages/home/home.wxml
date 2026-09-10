@@ -35,22 +35,22 @@
   <!-- ③ 2×2 关键指标（阶段时长、今日打卡、打卡天数均为当前阶段口径） -->
   <view class="home-grid">
     <view class="home-stat">
-      <text class="home-stat-arrow">↗</text>
+      <text class="home-stat-arrow iconfont icon-right"></text>
       <view class="home-stat-num">{{todayHours}}<text class="home-stat-unit">h</text></view>
       <view class="home-stat-label">今日时长</view>
     </view>
     <view class="home-stat">
-      <text class="home-stat-arrow">↗</text>
+      <text class="home-stat-arrow iconfont icon-right"></text>
       <view class="home-stat-num">{{todayCount}}<text class="home-stat-unit">次</text></view>
       <view class="home-stat-label">今日打卡</view>
     </view>
     <view class="home-stat">
-      <text class="home-stat-arrow">↗</text>
+      <text class="home-stat-arrow iconfont icon-right"></text>
       <view class="home-stat-num">{{totalHours}}<text class="home-stat-unit">h</text></view>
       <view class="home-stat-label">阶段时长</view>
     </view>
     <view class="home-stat">
-      <text class="home-stat-arrow">↗</text>
+      <text class="home-stat-arrow iconfont icon-right"></text>
       <view class="home-stat-num">{{checkinDays}}</view>
       <view class="home-stat-label">打卡天数</view>
     </view>

@@ -42,14 +42,13 @@
   line-height: 1.4;
 }
 
-/* ② Hero 卡：品牌绿渐变 + 7 日柱状图 */
+/* ② Hero 卡：白底卡片 + 7 日柱状图（扁平纯色，无阴影） */
 .home-hero {
   margin: 16rpx 32rpx 24rpx;
   padding: 32rpx;
   border-radius: 20rpx;
-  background: var(--card);             /* 白底卡片 */
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
-  color: var(--text);                  /* 黑字 */
+  background: var(--card);             /* 卡片背景 */
+  color: var(--text);                  /* 主文字 */
 }
 .home-hero-head {
   display: flex;
@@ -57,7 +56,7 @@
   justify-content: space-between;
 }
 .home-hero-title {
-  font-size: calc(30rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));   /* 14px 次级 */
   color: var(--text2);
 }
 
@@ -106,7 +105,7 @@
 }
 .home-bar-fill {
   width: 100%;
-  background: rgba(0, 0, 0, 0.05);           /* 非今日：浅灰 */
+  background: var(--card2);                  /* 非今日：主题自适应灰 */
   border-radius: 28rpx;
 }
 .home-bar-fill.is-today {
@@ -126,7 +125,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 16rpx;
-  padding: 0 24rpx;
+  padding: 0 32rpx;
 }
 .home-stat {
   position: relative;
