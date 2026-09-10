@@ -320,6 +320,64 @@ WeUI 提供 `weui-icon-*`（mask + `background-color: currentColor` 方案，色
 
 ---
 
+## 原语 17：数据看板卡片 Dashboard（项目 `.home-hero` / `.home-stat`）
+
+用于统计 / 概览类「非列表」页面（如首页）。由白底圆角卡片 + 大号数字 + 可选图表构成，**扁平纯色、无阴影 / 无渐变**（与 WeUI 卡片一致）。
+
+```html
+<!-- Hero 卡：主数据 + 7 日柱状图 -->
+<view class="home-hero">
+  <view class="home-hero-num">
+    <text class="home-hero-val">{{weekHours}}</text>
+    <text class="home-hero-unit">h</text>
+    <text class="home-hero-delta">{{weekDeltaText}}</text>
+  </view>
+  <view class="home-hero-bars">
+    <view class="home-bar" wx:for="{{weekBars}}" wx:key="day">
+      <view class="home-bar-track">
+        <view class="home-bar-fill {{item.isToday ? 'is-today' : ''}}" style="height:{{item.percent}}%"></view>
+      </view>
+      <text class="home-bar-label">{{item.label}}</text>
+    </view>
+  </view>
+</view>
+
+<!-- 指标卡：右上角 iconfont 箭头 + 大号数字 + 说明 -->
+<view class="home-stat">
+  <text class="home-stat-arrow iconfont icon-right"></text>
+  <view class="home-stat-num">{{todayHours}}<text class="home-stat-unit">h</text></view>
+  <view class="home-stat-label">今日时长</view>
+</view>
+```
+
+```css
+.home-hero {                                 /* 白底圆角卡：20rpx 圆角，无阴影 */
+  margin: 16rpx 32rpx 24rpx;                 /* 左右对齐页面边距 32rpx */
+  padding: 32rpx;
+  border-radius: 20rpx;                      /* 10pt iOS 卡片圆角 */
+  background: var(--card);
+  color: var(--text);
+}
+.home-hero-val, .home-stat-num {
+  font-size: calc(72rpx * var(--fs, 1));     /* 大号数字：不受 34/28/24 档约束 */
+  font-weight: 400; line-height: 1.1; color: var(--text);
+}
+.home-hero-unit, .home-stat-unit,
+.home-stat-label { font-size: calc(28rpx * var(--fs, 1)); color: var(--text2); }
+.home-bar-fill { background: var(--card2); }              /* 非今日：主题自适应灰 */
+.home-bar-fill.is-today { background: #07C160; }          /* 今日：品牌绿高亮 */
+.home-stat-arrow { position: absolute; top: 24rpx; right: 24rpx;
+  font-size: calc(28rpx * var(--fs, 1)); color: var(--text3); line-height: 1; }
+```
+
+- **无阴影 / 无渐变**：卡片靠 `--card`（白）与页面 `--bg`（灰）的对比分层，**不要**用 `box-shadow`；柱体 / 进度等填充一律纯色。
+- **图表填充用 token**：「今日 / 高亮」用 `var(--brand)`；「非今日 / 底色」用 `var(--card2)`（浅 `#f7f8fa` / 深 `#232326`），**不要硬编码 `rgba(0,0,0,.05)`**（深色档不可见）。
+- **大号数字**：统计主数据用 40 / 44 / 56 / 72rpx（`72rpx` ≈ 36pt），`font-weight: 400`；单位 / 标签用 28rpx `--text2`（对应 `design-tokens.md` §9 字号档的「数据展示除外」）。
+- **箭头用 iconfont**：卡片内「指示 / 进入」箭头用 `<text class="iconfont icon-right">`（色 `--text3` FG-2），**不要用裸字符 `↗` / `›`**（跨字体渲染不一致）。
+- **指标网格**：2×2 用 `display:flex; flex-wrap:wrap; gap:16rpx; padding:0 32rpx;`，卡片 `flex:1 1 calc(50% - 8rpx)` / `min-width:calc(50% - 8rpx)`；网格左右内距 32rpx 与 Hero 卡 / 页面边距一致。
+
+---
+
 ## 设计原则速记
 1. 颜色、字号、间距一律引用 token（`--weui-*` 或项目 `--*`），禁止硬编码同质值。
 2. 深色模式只切变量，不写独立样式。

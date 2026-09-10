@@ -14,6 +14,7 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - 做深色模式（`dm-light` / `dm-dark` / `dm-auto`）适配。
 - 引入新复用组件，需确认是否符合微信原生观感。
 - 需要判断某段样式是否「像微信」。
+- 实现统计 / 概览类看板页（大号数字 + 卡片 + 图表，见 `components.md` 原语 17）。
 
 ## 设计原则
 1. 所有颜色、字号、间距以 `design-tokens.md` 的 token 为准；禁止硬编码同质值。
@@ -40,6 +41,7 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - **弹窗**：蒙层 OVERLAY；dialog 卡片 `#fff` 圆角 12px，主操作 BRAND；actionsheet 底部上滑、取消独立灰带；toast 反白居中。
 - **导航/标签栏**：原生组件，颜色在 `app.json`（导航栏 `#ededed`、tabBar 选中 `#07c160`）。
 - **图标**：本项目用内联 iconfont（`@font-face` base64 注册于 `app.wxss`，跨页面生效）`.iconfont` + `.icon-*:before`；可用字形：`icon-check` 对勾（走 `var(--brand)`）/ `icon-right` 右箭头 / `icon-lock` `icon-unlock` / `icon-info` / `icon-squarecheck` / `icon-rank` / `icon-settings` / `icon-location` / `icon-home` `icon-homefill` / `icon-my` `icon-myfill` / `icon-circle` `icon-circlefill`。箭头 `icon-right` 统一取 `var(--text3)`（FG-2）作为「正常箭头色」。
+- **数据看板卡片（原语 17）**：统计 / 概览类「非列表」页用白底圆角卡片（`--card` + 20rpx 圆角，**无阴影**）；主数据用大号数字（40/44/56/72rpx），单位与说明走 28rpx `--text2`；图表「今日」用 `var(--brand)`、「非今日」用 `var(--card2)`（主题自适应灰，勿硬编码 `rgba(0,0,0,.05)`）；角标箭头用 `.iconfont .icon-right`（`--text3`），勿用裸字符 `↗`；指标网格左右内距 32rpx 对齐页面边距。
 - **设计原则 / 交互规范**：四大原则（友好 / 清晰 / 便捷 / 统一）、导航（小程序菜单右上固定且深浅两套、Tab 2–5 建议≤4）、反馈（局部加载优先、同页 ≤1 加载动画、成功 toast 1.5s）、层级（模态阻断 / 弹出不打断）——详见 `references/design-guidelines.md`；量化令牌（22/17/15/14/12pt、热区 7–9mm、设计稿 375/390、弹窗 1.5s 等）见 `design-tokens.md` §7。
 
 ## 项目实现备注（与 qingba 代码对齐）
@@ -49,7 +51,7 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - **`.cell` 行高由 modifier 提供（项目实现）**：qingba 的 `.cell` 基类**不设** `min-height`；行高由 `cell--single`(min-height 110rpx≈55pt) / `cell--desc`(146rpx≈73pt) 提供，每个 `.cell` 必须挂其一，否则无高度。
 - **间距工具类 `.mb-16`**：`app.wxss` 提供 `.mb-16 { margin-bottom:16rpx }`，按需扩展 `mb-8`/`mb-24`，用于卡片/分组间统一留白。
 - **列表分组间距（项目实现）**：`.weui-cells` 容器**不设 `margin-top`**（避免与上层卡片/分组间距叠加，分组留白改用 `.mb-16` 工具类或父容器 padding 控制）。`.weui-cells__title`（分组标题）的 `margin-top`/`margin-bottom` **均已合入 `padding`**（当前 `padding: 32rpx 32rpx 16rpx`），不再使用任何 margin——目的是让深色模式下卡片背景连续铺满、避免标题上下露出页面底色。新代码如需分组标题与内容之间留白，统一用 `padding` 而非 `margin`。
-- **项目 CSS 变量**：`--bg/--card/--text/--text2/--text3/--text4/--divider/--brand/--danger/--cell-active` 对应 WeUI 的 BG-0/BG-2/FG-0/FG-1/FG-2/FG-3/BRAND/RED/BG-COLOR-ACTIVE（见 `design-tokens.md` 末节映射表）。
+- **项目 CSS 变量**：`--bg/--card/--card2/--text/--text2/--text3/--divider/--brand/--danger/--cell-active` 对应 WeUI 的 BG-0/BG-2/BG-3/FG-0/FG-1/FG-2/FG-3/BRAND/RED/BG-COLOR-ACTIVE（见 `design-tokens.md` 末节映射表）；早期 `--text4` 已并入 `--text3` 移除，勿再引用。
 - **`.group-title` 项目取值（与规范差异）**：全局 `.group-title`（`app.wxss`）`padding: 32rpx 32px 16rpx 32rpx`，**右内边距是 `32px`（像素）而非 `32rpx`**（疑似笔误）；新代码建议统一为 `32rpx`。
 - **扁平纯色，禁止渐变 / 外发光（项目约定）**：所有色块 / 标签 / 按钮一律用扁平纯色（`var(--brand)`、固定 HEX 或低透明叠加），**禁止 `linear-gradient` 与 `box-shadow` 外发光**；深色档同理用纯色低透明（如 `rgba(7,193,96,.14)`）替代渐变。
 - **`.weui-tag` 不带 margin（项目约定）**：标签间距由父级 flex `gap` 控制，避免与 `tag-group-*` 等内联背景 / 多标签混排时多出右侧空白；新增标签复用全局 `.weui-tag`，不在页面内重复定义。
