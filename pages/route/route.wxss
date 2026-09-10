@@ -1,19 +1,12 @@
-/* ===== 路线页（WeUI 风格：顶部当前阶段高亮卡 + 时间线分组列表） ===== */
+/* ===== 路线页（WeUI 风格：顶部当前阶段入口 + 时间线分组列表） ===== */
 
-/* ① 当前阶段：高亮底色只作用于「当前」那一行（.current-cell），容器仅作圆角卡 */
-.current-panel {
-  overflow: hidden;
-  background: transparent;          /* 通栏绿底已下放，避免已完成/未解锁也变绿 */
-}
-/* 圆角卡片不需要 weui-cells 的上下通栏线 */
-.current-panel::before,
-.current-panel::after { display: none; }
-
+/* ① 当前阶段：高亮底色只作用于「当前」那一行（.current-cell）；
+      容器回归 .weui-cells 默认（白底 + 上下通栏线），与下方「学习路线」组外观一致 */
 .current-cell { background: rgba(7, 193, 96, 0.10); }
 .current-cell:active { background: rgba(7, 193, 96, 0.18); }
 .current-cell-hover  { background: rgba(7, 193, 96, 0.18); }
 
-/* ② 时间线列表：行首节点 + 竖向连接线 */
+/* ② 时间线列表：右侧节点（weui-cell__ft）+ 竖向连接线 */
 .route-cell {
   align-items: stretch;                    /* 节点列撑满行高，供连接线延伸 */
 }
@@ -34,33 +27,41 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(24rpx * var(--fs, 1));   /* 12px 辅助 */
-  font-weight: 600;
   background: var(--card2);
   color: var(--text3);
   box-sizing: border-box;
 }
 .route-node .iconfont {
   font-size: calc(34rpx * var(--fs, 1)) !important;
-  font-weight: normal;
 }
 
 .route-node.current { border: 0; background: transparent; }   /* 当前节点去描边/底色，仅靠 cell 绿底 + 箭头表达 */
 .route-node.current .iconfont { color: var(--text3); }   /* 当前节点图标用正常箭头色，而非品牌绿 */
-.route-node.done    { border-color: var(--brand); color: var(--brand); }
-.route-node.locked  { border-color: var(--text3); color: var(--text3); }
+.route-node.done    { border-color: var(--brand); color: var(--brand); }   /* 未解锁沿用基类灰描边 + 灰图标 */
 
-/* 连接线：无节点时贯穿整行高度（末行无线） */
+/* 连接线：贯穿整行内容高度（末行无线）。
+   cell 上下各 32rpx 内边距 + 下一行 wrap 的 4rpx padding-top 会形成 ~68rpx 断口，
+   用伪元素向下补齐，使整条时间线跨行连续 */
 .route-node-line {
+  position: relative;
   flex: 1;
   width: 1rpx;
   background: var(--divider);
 }
+.route-node-line::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 100%;
+  width: 1rpx;
+  height: 68rpx;
+  background: var(--divider);
+  z-index: 1;                       /* 盖过下一行 cell 背景（如绿底当前行），避免断口 */
+}
 
 /* ③ 阶段名 / 副信息 */
 .route-name {
-  font-size: calc(34rpx * var(--fs, 1));   /* 17px 主文 */
-  font-weight: 500;
+  font-size: calc(34rpx * var(--fs, 1));   /* 17px 主文，字重同全局 .weui-cell__bd_text（400） */
   color: var(--text);
 }
 .route-meta {

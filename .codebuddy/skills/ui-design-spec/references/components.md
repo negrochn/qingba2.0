@@ -284,9 +284,10 @@ WeUI 提供 `weui-icon-*`（mask + `background-color: currentColor` 方案，色
   <view class="weui-cell weui-cell_access route-cell {{state === 'current' ? 'current-cell' : ''}}">
     <view class="weui-cell__bd">
       <view class="weui-cell__bd_text route-name">阶段名</view>
-      <view class="weui-cell__desc route-meta">phase · 目标</view>
+      <!-- 次级信息只挂 route-meta（28rpx / --text2）；不挂 __desc（那是 24rpx / --text3） -->
+      <view class="route-meta">phase · 目标</view>
     </view>
-    <view class="weui-cell__ft route-ft">
+    <view class="weui-cell__ft">
       <view class="route-node-wrap">
         <view class="route-node {{state}}">
           <text wx:if="{{state === 'current'}}" class="iconfont icon-right"></text>
@@ -305,15 +306,34 @@ WeUI 提供 `weui-icon-*`（mask + `background-color: currentColor` 方案，色
 .route-node-wrap { flex-direction: column; align-items: center; }
 .route-node { width: 44rpx; height: 44rpx; border-radius: 50%; border: 2rpx solid var(--text3); background: var(--card2); }
 .route-node .iconfont { font-size: calc(34rpx * var(--fs,1)) !important; }
-.route-node-line { flex: 1; width: 1rpx; background: var(--divider); }   /* 末行不渲染 */
-.current-cell { background: rgba(7,193,96,.12); }        /* 仅「当前」那一行 */
+.current-cell { background: rgba(7,193,96,.10); }        /* 仅「当前」那一行 */
+
+/* 连接线：末行不渲染。cell 上下各 32rpx 内边距 + 下一行 wrap 的 4rpx padding-top
+   会造成 ~68rpx 断口，用伪元素向下补齐；z-index 保证不被下一行 cell 背景盖住 */
+.route-node-line {
+  position: relative;
+  flex: 1;
+  width: 1rpx;
+  background: var(--divider);
+}
+.route-node-line::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 100%;
+  width: 1rpx;
+  height: 68rpx;
+  background: var(--divider);
+  z-index: 1;
+}
 ```
 
-- **节点三态（描边圆 + iconfont 图标，禁止渐变 / 外发光）**：当前 `border:0` + `background:transparent` + `.icon-right`（`var(--text3)` 正常箭头色，读作「点击进入」）；已完成 `border-color:var(--brand)` + `.icon-check`（`var(--brand)`）；未解锁 `border-color:var(--text3)` + `.icon-lock`（`var(--text3)`）
+- **节点三态（描边圆 + iconfont 图标，禁止渐变 / 外发光）**：当前 `border:0` + `background:transparent` + `.icon-right`（`var(--text3)` 正常箭头色，读作「点击进入」）；已完成 `border-color:var(--brand)` + `.icon-check`（`var(--brand)`）；未解锁沿用基类（灰描边 + 灰图标，无需单独写 `.locked`）
 - **当前行高亮用 cell 级底色，禁止容器级染色**：「当前」整行加 `.current-cell` 浅绿底（深色 `rgba(7,193,96,.20)`、按下 `.28`）。**不要**把底色加到 `.weui-cells` 容器上——容器染色会把已完成 / 未解锁行一起染绿，三态失去区分度
+- **`.weui-cells` 容器保持 WeUI 默认外观**：不要给容器设 `background: transparent`，也不要用 `::before/::after { display:none }` 隐藏通栏线。前者会盖掉 `.weui-cells` 的 `var(--card)` 使分组透出页面底色，后者会让该组变成无边界裸块，与同页其他分组（白底 + 上下通栏线）不一致。分组要区分就改 cell，不改容器
+- **连接线必须跨行连续**：`.route-node-line` 只在 cell 内容盒内延伸，务必用 `::after` 补齐 cell 内边距造成的 ~68rpx 断口，并加 `z-index:1`——否则延伸段落入下一行 cell 时，会被该行背景（如绿底当前行）盖掉线尾
 - **不设状态 chip**：状态由节点图标 + 当前行底色共同表达，避免与右侧辅助信息重复（原 `.route-chip` 已移除）
-- 连接线用 `var(--divider)`，深色自动适配；**末行不渲染** `.route-node-line`
-- 字号：主文 34rpx、副信息 28rpx、节点图标 34rpx
+- 字号：主文 34rpx、副信息 28rpx、节点图标 34rpx；`.route-name` **不设 `font-weight`**，与全局 `.weui-cell__bd_text`（400）一致
 
 ---
 

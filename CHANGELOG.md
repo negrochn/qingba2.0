@@ -66,6 +66,9 @@
 - **`app.json` 移除 `lazyCodeLoading: "requiredComponents"`**：页面数量少、体积可控，按需注入收益有限，去掉以避免偶发的组件注入时序问题
 - **阶段详情（stage）样式死代码清理与深色变量化**：`stage.wxss` 由 766 行精简到 495 行——删除已无 wxml 引用的 `.lock-*` / `.pm-picker` / `.res-hl-*` / `.rg-collapsed-*` / `.rg-tag` / `.r-read-*` 等规则，移除 `.dm-dark` / `.dm-auto` 下 20+ 条硬编码深色覆盖（改由 `--brand-softer` 等变量自动适配），多行规则压缩为单行。已按选择器集合逐项比对，确认无在用样式丢失（`rg-head-active` 仅含 `cursor:pointer`，小程序内无效，移除无影响）
 - **关于页（about）改用 WeUI 文章原语**：原私有类（`.para` / `.sub-title` / `.stage-block` / `.warn-block` / `.method-block` / `.hl` / `.disclaimer` / `.bullet` / `.banner-*` / `.chapter-*`）改为 `.weui-article` + `.weui-article__h2` / `__p` 与 `.about-*`（`.about-stage` / `.about-method` / `.about-note` / `.about-desc` / `.about-li` / `.about-strong` / `.about-sub`）命名，同步移除 `.dm-dark` / `.dm-auto` 下 7 条深色硬编码覆盖
+- **路线页（route）容器回归 WeUI 默认外观**：移除 `.current-panel`（原 `background: transparent` + `.weui-cells::before/::after { display:none }`）——透明底会覆盖 `.weui-cells` 自身的 `background-color: var(--card)`，使顶部「当前阶段」组实际透出页面灰底而非白色卡片；隐藏通栏线又让它与下方「学习路线」组（白底 + 上下通栏线）外观不一致。现容器恢复 `.weui-cells` 默认，同页两组一致
+- **路线页时间线连接线跨行连续**：`.route-node-line` 原先只在 cell 内容盒内延伸，cell 上下各 32rpx 内边距 + 下一行 `.route-node-wrap` 的 4rpx `padding-top` 会形成约 68rpx 断口，整条时间线呈「分段虚线」。新增 `.route-node-line::after` 向下补齐 68rpx，并加 `z-index:1`，避免延伸段落入下一行 cell 时被该行背景（如绿底当前行）盖掉线尾
+- **路线页样式语义与冗余清理**：副信息行去掉 `.weui-cell__desc`（其 24rpx / `--text3` 被 `.route-meta` 的 28rpx / `--text2` 全覆盖，类名与实际表现不符，只保留 `.route-meta`）；`.route-name` 去掉 `font-weight:500`，与全局 `.weui-cell__bd_text`（400）一致；删除 `.route-node` 已失效的 `font-size:24rpx` / `font-weight:600`（三态已全为 iconfont 图标，无作用对象）、与基类取值重复的 `.route-node.locked`、wxml 死类 `route-ft`，并更新三处过期注释
 
 ### 修复
 
@@ -89,6 +92,8 @@
   - `components.md` 新增「原语 12：时间线列表 Timeline」：沉淀路线页的节点 + 竖线串联结构、节点三态纯色配色（禁止渐变 / 外发光）、状态 chip 写法与字号约定（主文 34 / 副信息 28 / 节点序号 24rpx），末行不渲染连接线
   - `components.md`「原语 12」同步本次路线页重构：节点由行首 `weui-cell__hd` 移到右侧 `weui-cell__ft`、三态由「纯色圆 + 序号/对勾」改为「描边圆 + iconfont 图标」（当前 `.icon-right` 走 `var(--text3)` 正常箭头色 / 已完成 `.icon-check` / 未解锁 `.icon-lock`）、移除状态 chip，并新增「当前行高亮用 cell 级底色 `.current-cell`，禁止容器级染色」约定
   - `SKILL.md` 补充 iconfont 可用字形清单与「正常箭头色 = `var(--text3)`」约定，新增「当前项高亮用 cell 级底色」「iconfont 维护方式（base64 内联注册与重新生成流程）」两条项目实现备注
+  - `components.md`「原语 12」同步本轮路线页规范修正：补「连接线跨行连续」实现（`::after` 补齐 cell 内边距造成的 68rpx 断口 + `z-index` 防下一行背景遮挡）、新增「`.weui-cells` 容器保持默认白底 / 通栏线」约定，并修正副信息类名（次级信息不挂 `.weui-cell__desc`）与 `.route-name` 不设字重
+  - `SKILL.md` 项目实现备注新增「`.weui-cells` 容器保持 WeUI 默认外观」约定：禁止在页面内给容器改背景或用 `::before/::after { display:none }` 隐藏通栏线，分组需区分时改 cell 而非容器
 
 ## [2.3.1] - 2026-09-03
 

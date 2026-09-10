@@ -55,6 +55,7 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - **`.weui-tag` 不带 margin（项目约定）**：标签间距由父级 flex `gap` 控制，避免与 `tag-group-*` 等内联背景 / 多标签混排时多出右侧空白；新增标签复用全局 `.weui-tag`，不在页面内重复定义。
 - **分组容器 `border-bottom` 通栏分隔线（项目约定）**：相邻分组用分组块容器（如 `.res-list`）的 `border-bottom: 1rpx solid var(--divider)` 分隔（展开/折叠均生效），末组 `:last-child` 去线；区别于 cell 内 `left:32rpx` 缩进的行间线。
 - **「当前项」高亮用 cell 级底色，禁止容器级染色（项目约定）**：列表中某项需要底色区分时（如路线页 `.current-cell`），底色加在**单个 cell** 上，**不要**加在 `.weui-cells` / 分组容器上——容器染色会连带同组其他状态的行一起变色，导致「当前 / 已完成 / 未解锁」失去区分度。深色覆盖同样挂在 cell 级选择器上。
+- **`.weui-cells` 容器保持 WeUI 默认外观（项目约定）**：不要在页面里给 `.weui-cells` 设 `background: transparent`，也不要用 `::before/::after { display:none }` 隐藏通栏线。前者会盖掉 `.weui-cells` 自身的 `background-color: var(--card)`，使该分组透出页面底色；后者让它变成无边界裸块，与同页其他分组（白底 + 上下通栏线）外观不一致。分组需要视觉区分时，改 cell（见上一条），不改容器。
 - **iconfont 维护方式（项目实现）**：`app.wxss` 以 `@font-face` 内联 base64（ttf + woff 双格式，woff 的 MIME 用 `application/font-woff` 以兼容开发者工具内置旧 Chromium），全局注册字族 `iconfont`，随 WXSS 注入每个页面 webview 而跨页生效。新增图标需更新 `assets/fonts` 源文件，用 `scripts/gen_iconfont_base64.ps1` 重新生成 base64，再替换 `app.wxss` 的 data URI 并补 `.icon-*:before` 映射。
 
 ## Resources
