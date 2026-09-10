@@ -37,7 +37,7 @@
 }
 .home-stage-percent {
   margin-top: 4rpx;
-  font-size: calc(24rpx * var(--fs, 1));   /* 12px 辅助 */
+  font-size: calc(28rpx * var(--fs, 1));   /* 14px 次级 */
   color: var(--text3);
   line-height: 1.4;
 }
