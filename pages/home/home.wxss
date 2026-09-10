@@ -78,7 +78,7 @@
   color: var(--text2);
 }
 .home-hero-delta {
-  font-size: calc(24rpx * var(--fs, 1));
+  font-size: calc(28rpx * var(--fs, 1));   /* 14px 次级 */
   margin-left: 16rpx;
   color: var(--text2);
 }
