@@ -2,3 +2,10 @@
 page {
   background: var(--bg);
 }
+
+/* 左侧入口图标：与右侧箭头(icon-right)保持一致的视觉权重 */
+.weui-cell__hd .iconfont {
+  font-size: 40rpx;
+  color: var(--text2);
+  margin-right: 8rpx;
+}

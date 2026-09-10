@@ -1,264 +1,82 @@
-/* 关于庆爸2.0 详情页 - 微信原生分组风格（标题与卡片样式与设置页统一，支持深色模式） */
+/* ====== 关于庆爸2.0 - 纯文章写法（WeUI article） ======
+   整页 .weui-article：h1 大标题 + h2 章节 + p 段落 + section，无卡片框/列表框
+   去除所有彩色背景块与渐变；重点用主色加粗（WeUI 标准强调）
+   配色走全局 --* 令牌，深色模式自动跟随，无需 .dm-dark 重复规则
 
-page {
-  background: var(--bg);
+   字号对齐微信官方字体档位（设计指南 5.1）：22 / 17 / 15 / 14 / 12 pt
+   小程序 750rpx 对应 375pt 基准 → 44 / 34 / 30 / 28 / 24 rpx；var(--fs) 跟随全局字体缩放 */
+
+/* ===== WeUI 文章原语（官方 article 体系） ===== */
+.weui-article {
+  padding: 48rpx 32rpx 40rpx;
+  font-size: calc(30rpx * var(--fs, 1));   /* 15pt 正文基准 */
+  color: var(--text2);
+  line-height: 1.65;
 }
-
-/* ===== 顶部 banner（微信风格渐变卡片） ===== */
-.page-banner {
-  padding: 36rpx 24rpx 40rpx;
-  text-align: center;
-}
-
-.banner-text {
-  display: inline-block;
-  font-size: 36rpx;
+.weui-article__h2 {                       /* 章节标题 17pt */
+  font-size: calc(34rpx * var(--fs, 1));
   font-weight: 600;
-  color: #fff;
-  background: linear-gradient(135deg, #07C160 0%, #3fd98a 100%);
-  padding: 14rpx 44rpx;
-  border-radius: 12rpx;
-  letter-spacing: 4rpx;
+  color: var(--text);
+  margin: 40rpx 0 16rpx;
 }
-
-/* ===== 章节标题（微信原生分组标题风格，与设置页 group-title 一致） ===== */
-.chapter-head {
-  padding: 16rpx 40rpx 12rpx;
+.weui-article__p {                        /* 正文 15pt */
+  font-size: calc(30rpx * var(--fs, 1));
+  line-height: 1.65;
+  color: var(--text2);
+  margin-bottom: 16rpx;
 }
+.weui-article__p:last-child { margin-bottom: 0; }
 
-.chapter-title {
+/* ===== 文章内语义类 ===== */
+.about-desc {                             /* 副标题 14pt */
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
+  margin-bottom: 8rpx;
+}
+.about-note {                             /* 辅助说明 12pt */
   font-size: calc(24rpx * var(--fs, 1));
   color: var(--text3);
-  line-height: 1.4;
-}
-
-/* ===== 章节卡片（微信原生卡片风格，与设置页 group-card 一致） ===== */
-.chapter-card {
-  margin: 0 24rpx 28rpx;
-  background: var(--card);
-  border-radius: 16rpx;
-  padding: 28rpx;
-  overflow: hidden;
-}
-
-/* ===== 段落 ===== */
-.para {
-  font-size: calc(28rpx * var(--fs, 1));
-  line-height: 1.65;
-  color: var(--text2);
-  margin-bottom: 24rpx;
   text-align: justify;
 }
-
-.para.highlight {
-  color: #c0392b;
+.about-strong-p {                         /* 重点提示段：主色（区别于周围次级灰） */
+  color: var(--text);
   font-weight: 500;
-  background: #fff8f6;
-  padding: 16rpx 20rpx;
-  border-radius: 12rpx;
-  border-left: 4rpx solid #ff7a45;
 }
-
-/* ===== 列表 ===== */
-.bullets {
-  margin: 20rpx 0 28rpx;
-  background: var(--card2);
-  border-radius: 12rpx;
-  padding: 20rpx 24rpx;
+.about-strong {                           /* 行内/序号强调：主色加粗（替代原红字 .hl） */
+  color: var(--text);
+  font-weight: 600;
 }
-
-.bullet {
-  font-size: calc(28rpx * var(--fs, 1));
-  line-height: 1.8;
+.about-li {                               /* 列表项（· 前缀），继承正文 15pt */
   color: var(--text2);
 }
 
-/* ===== 阶段块（卡片风格） ===== */
-.stage-block {
-  background: var(--card2);
-  border-radius: 12rpx;
-  padding: 20rpx 24rpx;
+/* ===== 阶段参考（文章内段落式，无 cell 框） ===== */
+.about-stage { margin-bottom: 20rpx; }
+.about-stage:last-child { margin-bottom: 0; }
+.about-stage__name {                      /* 阶段名 17pt 加粗 */
+  font-size: calc(34rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text);
+}
+.about-stage__line {                      /* 标准 15pt */
+  font-size: calc(30rpx * var(--fs, 1));
+  line-height: 1.6;
+  color: var(--text2);
+  margin-top: 6rpx;
 }
 
-.stage-block:last-child {
+/* ===== 使用说明（方式分区，文章内间距分隔，无卡片框） ===== */
+.about-method { margin-bottom: 32rpx; }
+.about-method:last-child { margin-bottom: 0; }
+.about-method__name {                     /* 方式名 17pt 加粗 */
+  font-size: calc(34rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text);
   margin-bottom: 12rpx;
 }
-
-.stage-name {
-  font-size: calc(28rpx * var(--fs, 1));
+.about-sub {                              /* 子标题 15pt 加粗 */
+  font-size: calc(30rpx * var(--fs, 1));
   font-weight: 600;
   color: var(--text);
-  margin-bottom: 10rpx;
-}
-
-.stage-line {
-  font-size: calc(28rpx * var(--fs, 1));
-  line-height: 1.6;
-  color: var(--text2);
-  margin-bottom: 6rpx;
-}
-
-.stage-line:last-child {
-  margin-bottom: 0;
-}
-
-.hl {
-  color: #c0392b;
-  font-weight: 600;
-}
-
-/* ===== 方法块 ===== */
-.method-block {
-  margin-bottom: 32rpx;
-  padding-bottom: 24rpx;
-  border-bottom: 1rpx solid var(--divider);
-}
-
-.method-block:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-  padding-bottom: 0;
-}
-
-.method-name {
-  font-size: calc(28rpx * var(--fs, 1));
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 14rpx;
-}
-
-.method-op {
-  font-size: calc(28rpx * var(--fs, 1));
-  line-height: 1.65;
-  color: var(--text2);
-}
-
-/* ===== 注意点块 ===== */
-.warn-block {
-  background: #fff6f2;
-  border-radius: 14rpx;
-  padding: 18rpx 22rpx;
-  margin-bottom: 14rpx;
-  border-left: 4rpx solid #ff7a45;
-}
-
-.warn-title {
-  font-size: calc(28rpx * var(--fs, 1));
-  font-weight: 600;
-  color: #c0392b;
-  margin-bottom: 10rpx;
-}
-
-.warn-item {
-  font-size: calc(28rpx * var(--fs, 1));
-  line-height: 1.65;
-  color: var(--text2);
-  margin-bottom: 6rpx;
-}
-
-.warn-item:last-child {
-  margin-bottom: 0;
-}
-
-.warn-num {
-  color: #ff7a45;
-  font-weight: 600;
-}
-
-/* ===== 子块（小小优趣等） ===== */
-.sub-block {
-  background: var(--card2);
-  border-radius: 12rpx;
-  padding: 18rpx 22rpx;
-  margin-top: 16rpx;
-}
-
-.sub-title {
-  font-size: calc(28rpx * var(--fs, 1));
-  font-weight: 600;
-  color: #1a5fb0;
-  margin-bottom: 10rpx;
-}
-
-.para-sm {
-  font-size: calc(28rpx * var(--fs, 1));
-  line-height: 1.6;
-  color: var(--text2);
-  margin-bottom: 10rpx;
-}
-
-.para-sm:last-child {
-  margin-bottom: 0;
-}
-
-/* ===== 声明条 ===== */
-.disclaimer {
-  margin: 0 24rpx 28rpx;
-  background: #eef6ff;
-  border: 2rpx solid #cfe4fb;
-  border-radius: 12rpx;
-  padding: 18rpx 22rpx;
-  font-size: calc(24rpx * var(--fs, 1));
-  line-height: 1.6;
-  color: #4a6b8a;
-  text-align: justify;
-}
-
-/* ===== 深色模式适配（微信小程序深色规范） ===== */
-.dm-dark .para.highlight {
-  background: #2a2016;
-  color: #e57373;
-}
-
-.dm-dark .warn-block {
-  background: #2a1f1a;
-}
-
-.dm-dark .warn-title,
-.dm-dark .hl {
-  color: #e57373;
-}
-
-.dm-dark .warn-num {
-  color: #ff9c6e;
-}
-
-.dm-dark .sub-title {
-  color: #7fb4f7;
-}
-
-.dm-dark .disclaimer {
-  background: #1f2b3a;
-  border-color: #2c3f52;
-  color: #8fa8c0;
-}
-
-@media (prefers-color-scheme: dark) {
-  .dm-auto .para.highlight {
-    background: #2a2016;
-    color: #e57373;
-  }
-
-  .dm-auto .warn-block {
-    background: #2a1f1a;
-  }
-
-  .dm-auto .warn-title,
-  .dm-auto .hl {
-    color: #e57373;
-  }
-
-  .dm-auto .warn-num {
-    color: #ff9c6e;
-  }
-
-  .dm-auto .sub-title {
-    color: #7fb4f7;
-  }
-
-  .dm-auto .disclaimer {
-    background: #1f2b3a;
-    border-color: #2c3f52;
-    color: #8fa8c0;
-  }
+  margin: 16rpx 0 8rpx;
 }

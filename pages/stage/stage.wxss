@@ -1,58 +1,86 @@
-/* ====== 关键要点（WeUI cell 列表：无序号 / 无圆点，重点文字 --text，其余 --text2 区分） ====== */
+/* ====== 阶段详情页样式（按 WeUI 规范重构） ======
+   设计令牌统一引用全局 --*（已对齐 WeUI，见 ui-design-spec / app.wxss）：
+   --bg/--card/--card2/--text/--text2/--text3/--divider/--brand/--danger/--cell-active
+   字号：主文 34rpx(17px) · 次级/分组标题 28rpx(14px) · 三级/占位 24rpx(12px)
+   间距：页面与 cell 内边距 32rpx · 圆角 按钮 16rpx / 卡片 16~24rpx / 徽标 16~20rpx
+   深色模式：仅分类色与品牌绿低透明底需两套值，集中在下方变量块覆盖，其余颜色走 var() 自动跟随。 */
+
+/* === 颜色变量：浅色默认（挂在根节点 .container，随 dm-* 切换） === */
+.container {
+  /* 8 类资源语义色（区分分类；浅色为实色） */
+  --dot-mpb: #e74c3c;   /* 主线绘本 */
+  --dot-mgr: #e67e22;   /* 主线分级 */
+  --dot-man: #f1c40f;   /* 主线动画 */
+  --dot-sgr: #2ecc71;   /* 辅线分级 */
+  --dot-san: #1abc9c;   /* 辅线动画 */
+  --dot-fex: #3498db;   /* 趣味拓展 */
+  --dot-sex: #9b59b6;   /* 科普拓展 */
+  --dot-fap: #8e44ad;   /* 融合APP */
+  --dot-def: #888888;   /* 默认 */
+  /* 品牌绿低透明底（扁平纯色，无渐变） */
+  --brand-soft: rgba(7, 193, 96, 0.1);
+  --brand-softer: rgba(7, 193, 96, 0.06);
+  /* 序号首字母方块底色 / 行尾箭头色（深浅各一档） */
+  --no-char: #5a9af0;
+  --row-arrow: var(--text3);
+}
+
+/* 深色：分类色提亮 + 品牌绿底加深 + 箭头转品牌绿（仅一处覆盖，免去逐条 .dm-dark） */
+.dm-dark {
+  --dot-mpb: #ff6b6b;
+  --dot-mgr: #f5b041;
+  --dot-man: #f7dc6f;
+  --dot-sgr: #58d68d;
+  --dot-san: #48c9b0;
+  --dot-fex: #5dade2;
+  --dot-sex: #bb8fce;
+  --dot-fap: #af7ac5;
+  --dot-def: #b2b2b2;
+  --brand-soft: rgba(7, 193, 96, 0.16);
+  --brand-softer: rgba(7, 193, 96, 0.14);
+  --no-char: #4a8fd9;
+  --row-arrow: var(--brand);
+}
+
+@media (prefers-color-scheme: dark) {
+  .dm-auto {
+    --dot-mpb: #ff6b6b;
+    --dot-mgr: #f5b041;
+    --dot-man: #f7dc6f;
+    --dot-sgr: #58d68d;
+    --dot-san: #48c9b0;
+    --dot-fex: #5dade2;
+    --dot-sex: #bb8fce;
+    --dot-fap: #af7ac5;
+    --dot-def: #b2b2b2;
+    --brand-soft: rgba(7, 193, 96, 0.16);
+    --brand-softer: rgba(7, 193, 96, 0.14);
+    --no-char: #4a8fd9;
+    --row-arrow: var(--brand);
+  }
+}
+
+/* ====== 关键要点（复用全局 .weui-cell，文字走 token） ====== */
 .kp-text {
   display: block;
-  font-size: calc(34rpx * var(--fs, 1));   /* 14px，WeUI 次级正文档 */
+  font-size: calc(34rpx * var(--fs, 1));
   line-height: 1.6;
   color: var(--text2);
 }
+.kp-text-hi { color: var(--text); }
 
-/* 重点要点：提到主文字色，与普通要点形成层级区分 */
-.kp-text-hi {
-  color: var(--text);
-}
-
-/* 资源行里不可打卡的提示（灰色说明行） */
-.r-sub-note {
-  color: var(--text3);
-  font-style: italic;
-}
-
-/* ====== 阶段资源（核心打卡，上半区） ====== */
+/* ====== 阶段资源分组（核心打卡，上半区） ====== */
 .res-wrap {
   background: var(--card);
   position: relative;
   overflow: hidden;
 }
 
-.res-hl-bold {
-  color: #1f5fb0;
-}
+/* 每个分组块底部通栏分割线，分隔相邻分组（展开/折叠都生效） */
+.res-list { border-bottom: 1rpx solid var(--divider); }
+.res-list:last-child { border-bottom: none; }
 
-.res-hl-time {
-  color: #2a5896;
-}
-
-/* 阶段标记（纯色品牌绿，无渐变） */
-.res-hl-phase {
-  color: #fff;
-  background: var(--brand);
-  border-radius: 10rpx;
-  font-size: calc(28rpx * var(--fs, 1));
-  display: inline-block;
-}
-
-.res-hl-sep {
-  color: var(--text3);
-}
-
-.res-hl-paren {
-  color: var(--text3);
-}
-
-.res-hl-text {
-  color: var(--text2);
-}
-
+/* 分组头（左：彩色圆点+标签+数量；右：进度摘要+箭头） */
 .rg-head {
   display: flex;
   align-items: center;
@@ -60,34 +88,8 @@
   min-height: 110rpx;
   padding: 24rpx 32rpx;
 }
-
-/* 每个分组块底部通栏分割线，分隔相邻分组（展开/折叠都生效） */
-.res-list {
-  border-bottom: 1rpx solid var(--divider);
-}
-
-/* 最后一个分组不需要分割线 */
-.res-list:last-child {
-  border-bottom: none;
-}
-
-.rg-head-left {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  min-width: 0;
-}
-
-.rg-head-right {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.rg-head-active {
-  cursor: pointer;
-}
-
+.rg-head-left { display: flex; align-items: center; flex: 1; min-width: 0; }
+.rg-head-right { display: flex; align-items: center; flex-shrink: 0; }
 .rg-head-active:active {
   background: var(--cell-active);
   border-radius: 12rpx;
@@ -100,58 +102,31 @@
   border-radius: 50%;
   margin-right: 12rpx;
   flex-shrink: 0;
+  background: var(--dot-def);
 }
-/* 主线绘本（红） */
-.rg-dot-main_picture_books { background: #e74c3c; }
-.rg-label-main_picture_books { color: #e74c3c; }
-
-/* 主线分级（橙） */
-.rg-dot-main_graded_readers { background: #e67e22; }
-.rg-label-main_graded_readers { color: #e67e22; }
-
-/* 主线动画（黄） */
-.rg-dot-main_animations { background: #f1c40f; }
-.rg-label-main_animations { color: #d4a017; }
-
-/* 辅线分级（绿） */
-.rg-dot-sub_graded_readers { background: #2ecc71; }
-.rg-label-sub_graded_readers { color: #27ae60; }
-
-/* 辅线动画（青） */
-.rg-dot-sub_animations { background: #1abc9c; }
-.rg-label-sub_animations { color: #16a085; }
-
-/* 趣味拓展（蓝） */
-.rg-dot-fun_extensions { background: #3498db; }
-.rg-label-fun_extensions { color: #2980b9; }
-
-/* 科普拓展（靛） */
-.rg-dot-science_extensions { background: #9b59b6; }
-.rg-label-science_extensions { color: #8e44ad; }
-
-/* 融合APP（紫） */
-.rg-dot-fusion_apps { background: #8e44ad; }
-.rg-label-fusion_apps { color: #7d3c98; }
-
-/* 默认 */
-.rg-dot-default { background: #888888; }
-.rg-label-default { color: var(--text3); }
+.rg-dot-main_picture_books { background: var(--dot-mpb); }
+.rg-dot-main_graded_readers { background: var(--dot-mgr); }
+.rg-dot-main_animations { background: var(--dot-man); }
+.rg-dot-sub_graded_readers { background: var(--dot-sgr); }
+.rg-dot-sub_animations { background: var(--dot-san); }
+.rg-dot-fun_extensions { background: var(--dot-fex); }
+.rg-dot-science_extensions { background: var(--dot-sex); }
+.rg-dot-fusion_apps { background: var(--dot-fap); }
 
 .rg-label {
   flex: 1;
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);
 }
-
-/* 分组类型标签（纯色品牌绿，无渐变） */
-.rg-tag {
-  font-size: calc(24rpx * var(--fs, 1));
-  color: #fff;
-  background: var(--brand);
-  padding: 4rpx 14rpx;
-  border-radius: 20rpx;
-  margin-right: 12rpx;
-}
+.rg-label-main_picture_books { color: var(--dot-mpb); }
+.rg-label-main_graded_readers { color: var(--dot-mgr); }
+.rg-label-main_animations { color: var(--dot-man); }
+.rg-label-sub_graded_readers { color: var(--dot-sgr); }
+.rg-label-sub_animations { color: var(--dot-san); }
+.rg-label-fun_extensions { color: var(--dot-fex); }
+.rg-label-science_extensions { color: var(--dot-sex); }
+.rg-label-fusion_apps { color: var(--dot-fap); }
+.rg-label-default { color: var(--text3); }
 
 .rg-count {
   font-size: calc(28rpx * var(--fs, 1));
@@ -165,65 +140,15 @@
   font-size: calc(28rpx * var(--fs, 1));
   color: var(--brand);
   margin-right: 12rpx;
-  background: rgba(7, 193, 96, 0.1);
+  background: var(--brand-soft);
   padding: 4rpx 14rpx;
   border-radius: 16rpx;
 }
-
-.rg-progress-empty {
-  color: var(--text3);
-  background: var(--cell-active);
-}
-
-.rg-progress-locked {
-  color: var(--text3);
-  background: var(--cell-active);
-}
-
-/* 锁定提示条 */
-.lock-bar {
-  display: flex;
-  align-items: center;
-  background: rgba(255, 214, 102, 0.12);
-  border: 2rpx solid #f5d99a;
-  border-radius: 12rpx;
-  padding: 16rpx 24rpx;
-  margin-bottom: 20rpx;
-}
-
-.lock-icon {
-  margin-right: 12rpx;
-  font-size: calc(28rpx * var(--fs, 1));
-}
-
-.lock-text {
-  font-size: calc(28rpx * var(--fs, 1));
-  color: #8b6914;
-  line-height: 1.5;
-}
-
-.rg-collapsed-locked {
-  color: var(--text3) !important;
-  font-style: italic;
-}
-
-.r-sub-locked {
-  color: var(--text3);
-  font-size: calc(28rpx * var(--fs, 1));
-}
-
-.rg-progress-val {
-  color: var(--brand);
-}
-
-.rg-progress-sep {
-  margin: 0 6rpx;
-  color: var(--text3);
-}
-
-.rg-progress-read {
-  color: var(--text2);
-}
+.rg-progress-empty,
+.rg-progress-locked { color: var(--text3); background: var(--cell-active); }
+.rg-progress-val { color: var(--brand); }
+.rg-progress-sep { margin: 0 6rpx; color: var(--text3); }
+.rg-progress-read { color: var(--text2); }
 
 /* 展开/折叠箭头 */
 .rg-arrow {
@@ -232,41 +157,16 @@
   font-weight: 300;
   transition: transform 0.2s;
 }
+.rg-arrow-open { transform: rotate(90deg); }
 
-.rg-arrow-open {
-  transform: rotate(90deg);
-}
-
-/* 折叠状态提示 */
-.rg-body-collapsed {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20rpx;
-  min-height: 64rpx;
-  background: var(--card);
-  border-radius: 12rpx;
-  border: 2rpx dashed var(--divider);
-}
-
-.rg-collapsed-hint {
-  font-size: calc(28rpx * var(--fs, 1));
-  color: var(--text3);
-  text-align: center;
-}
-
-.rg-collapsed-note {
-  color: var(--text3);
-  font-style: italic;
-}
-
-/* 展开内容区（扁平，无圆角/阴影/边框，仅顶部细分隔线） */
+/* 展开内容区（扁平，顶部细分隔线） */
 .rg-body {
   background: var(--card);
   border-top: 1rpx solid var(--divider);
   overflow: hidden;
 }
 
+/* 资源行（序号/首字母 + 名称/副文 + 徽标/箭头） */
 .r-row {
   display: flex;
   align-items: center;
@@ -275,32 +175,21 @@
   min-height: 144rpx;
   box-sizing: border-box;
 }
-
-.r-row:last-child {
-  border-bottom: none;
-}
-
-.r-row-click:active {
-  background: var(--cell-active);
-}
+.r-row:last-child { border-bottom: none; }
+.r-row-click:active { background: var(--cell-active); }
 
 /* 已打卡行：品牌绿浅底（纯色，无渐变） */
-.r-row-done {
-  background: rgba(7, 193, 96, 0.06);
-}
+.r-row-done { background: var(--brand-softer); }
+.r-row-done:active { background: var(--brand-soft); }
 
-.r-row-done:active {
-  background: rgba(7, 193, 96, 0.12);
-}
-
-/* 序号方块：纯色品牌绿浅底 */
+/* 序号方块：品牌绿浅底 */
 .r-no {
   flex-shrink: 0;
   margin-right: 32rpx;
   width: 80rpx;
   height: 80rpx;
   border-radius: 12rpx;
-  background: rgba(7, 193, 96, 0.1);
+  background: var(--brand-soft);
   color: var(--brand);
   font-size: calc(34rpx * var(--fs, 1));
   font-weight: 500;
@@ -309,67 +198,28 @@
   justify-content: center;
   line-height: 1;
 }
+/* 首字母占位：纯色蓝 */
+.r-no-char { background: var(--no-char); color: #fff; }
 
-/* 首字母占位：纯色蓝（无渐变） */
-.r-no-char {
-  background: #5a9af0;
-  color: #fff;
-}
-
-.r-body {
-  flex: 1;
-  min-width: 0;
-  margin-right: 12rpx;
-}
-
+.r-body { flex: 1; min-width: 0; margin-right: 12rpx; }
 .r-name {
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);
   line-height: 1.4;
 }
-
 .r-sub {
   margin-top: 6rpx;
   font-size: calc(28rpx * var(--fs, 1));
   color: var(--brand);
   line-height: 1.4;
 }
+.r-sub-hint { color: var(--text3); }
+.r-sub-locked { color: var(--text3); font-size: calc(28rpx * var(--fs, 1)); }
+.r-sub-note { color: var(--text3); font-style: italic; }
 
-.r-sub-hint {
-  color: var(--text3);
-}
+.r-right { display: flex; align-items: center; flex-shrink: 0; gap: 8rpx; }
 
-.r-right {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  gap: 8rpx;
-}
-
-/* 已读次数徽标 */
-.r-read-badge {
-  background: #fff7e6;
-  color: #d48806;
-  padding: 4rpx 12rpx;
-  border-radius: 16rpx;
-  font-size: calc(28rpx * var(--fs, 1));
-}
-
-/* 读完按钮 */
-.r-read-btn {
-  background: var(--card);
-  color: #ff7a45;
-  border: 1rpx solid #ffd1a8;
-  padding: 4rpx 16rpx;
-  border-radius: 16rpx;
-  font-size: calc(28rpx * var(--fs, 1));
-  line-height: 1.4;
-}
-.r-read-btn:active {
-  background: #fff7e6;
-}
-
-/* 时长徽标（纯色品牌绿，无渐变） */
+/* 时长徽标（品牌绿，无渐变） */
 .r-badge {
   background: var(--brand);
   color: #fff;
@@ -379,52 +229,41 @@
   margin-right: 8rpx;
 }
 
-/* 行尾箭头：品牌绿 */
+/* 行尾箭头：跟随 --row-arrow（浅色占位灰 / 深色品牌绿） */
 .r-arrow {
-  color: var(--text3);
+  color: var(--row-arrow);
   font-size: 49rpx;
   line-height: 1;
   font-weight: 300;
 }
 
-/* ====== 打卡弹窗（skill 原语组合）
-   原语 4 .sheet-mask + .action-sheet
-   原语 4 变体 .sheet-handle（顶部抓手条）
-   原语 13/15 .form-card / .form-row / .form-label / .form-right / .form-field / .form-unit
-     原语 14 .seg-control + .seg-item（5 项等宽 variant：.seg-control-grid）
-   原语 1 .weui-divider / .icon-right
-   原语 16 .weui-btn 按钮族（.weui-btn-area_inline 布局 + .weui-btn_default 取消 + .weui-btn_primary 打卡） */
+/* ====== 完成阶段按钮（复用全局 .weui-btn，仅控制外边距） ====== */
+.promote-btn-area { margin: 32rpx 32rpx 0; }
 
-/* 原语 4 .sheet-mask + .action-sheet */
+/* ====== 打卡弹窗（action-sheet 原语 + 表单原语） ====== */
 .sheet-mask {
   position: fixed;
   left: 0; right: 0; top: 0; bottom: 0;
-  background: rgba(0,0,0,0);
+  background: rgba(0, 0, 0, 0);
   z-index: 1000;
   pointer-events: none;
   transition: background 0.2s ease;
   display: flex;
   align-items: flex-end;
 }
-.sheet-mask-show {
-  background: rgba(0,0,0,0.45);
-  pointer-events: auto;
-}
+.sheet-mask-show { background: rgba(0, 0, 0, 0.5); pointer-events: auto; }
 .action-sheet {
   width: 100%;
   background: var(--card);
-  border-top-left-radius: 24rpx;            /* radius-sheet */
+  border-top-left-radius: 24rpx;
   border-top-right-radius: 24rpx;
   padding: 16rpx 32rpx calc(env(safe-area-inset-bottom) + 32rpx);
   box-sizing: border-box;
   transform: translateY(100%);
   transition: transform 0.25s ease;
 }
-.sheet-mask-show .action-sheet {
-  transform: translateY(0);
-}
+.sheet-mask-show .action-sheet { transform: translateY(0); }
 
-/* 原语 4 变体：顶部抓手条（iOS 风格，可选） */
 .sheet-handle {
   width: 72rpx;
   height: 8rpx;
@@ -432,8 +271,6 @@
   border-radius: 4rpx;
   margin: 8rpx auto 24rpx;
 }
-
-/* sheet 头部（标题 + 关闭） */
 .sheet-head {
   display: flex;
   align-items: center;
@@ -461,35 +298,28 @@
   color: var(--text3);
   border-radius: 50%;
 }
-.sheet-close:active {
-  background: var(--cell-active);
-  color: var(--text2);
-}
+.sheet-close:active { background: var(--cell-active); color: var(--text2); }
 
-/* 原语 13 .form-card（表单卡片：圆角白底） */
+/* 表单卡片（圆角白底） */
 .form-card {
   background: var(--card);
   border-radius: 16rpx;
-  padding: 0 32rpx;                         /* form-row-pad-x（与 cell-pad-x 一致） */
+  padding: 0 32rpx;
   margin-bottom: 20rpx;
 }
-
-/* 原语 15 .form-row / .form-label / .form-right / .form-field / .form-unit */
 .form-row {
   display: flex;
   align-items: center;
-  min-height: 88rpx;                        /* form-row-h = cell-h */
+  min-height: 88rpx;
   padding: 16rpx 0;
   box-sizing: border-box;
 }
-.form-row:active {
-  background: var(--cell-active);
-}
+.form-row:active { background: var(--cell-active); }
 .form-label {
   flex-shrink: 0;
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);
-  width: 140rpx;                            /* 固定宽，保证 label 右沿对齐 */
+  width: 140rpx;
 }
 .form-right {
   flex: 1;
@@ -500,7 +330,7 @@
 }
 .form-field {
   flex: 1;
-  text-align: right;                        /* 与 settings 页 .weui-cell__ft_value 一致 */
+  text-align: right;
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);
   height: 64rpx;
@@ -511,51 +341,30 @@
   color: var(--text3);
   margin-left: 8rpx;
 }
+.form-card .weui-divider { height: 1rpx; background: var(--divider); margin: 0; }
 
-/* 原语 1 .weui-divider（行间分隔线，由 .form-card 限定全宽） */
-.form-card .weui-divider {
-  height: 1rpx;
-  background: var(--divider);
-  margin: 0;
-}
-
-/* 原语 14 .seg-control + .seg-item（5 项等宽 variant：.seg-control-grid） */
-.seg-control {
-  display: flex;
-  align-items: center;
-  flex: 1;                      /* 在 form-row(flex) 内占满宽度，子项 flex:1 才能等宽撑开 */
-}
-.seg-control-grid .seg-item {
-  flex: 1;
-  text-align: center;
-}
+/* 快捷时长分段控件（等宽 variant：.seg-control-grid） */
+.seg-control { display: flex; align-items: center; flex: 1; }
+.seg-control-grid .seg-item { flex: 1; text-align: center; }
 .seg-item {
-  height: 56rpx;                            /* seg-item-h */
-  padding: 0 32rpx;                         /* seg-item-pad-x */
-  margin-left: 16rpx;                       /* seg-gap，除首个外 */
+  height: 56rpx;
+  padding: 0 32rpx;
+  margin-left: 16rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1rpx solid var(--divider);
-  border-radius: 8rpx;                      /* radius-seg */
+  border-radius: 8rpx;
   background: var(--card);
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);
   box-sizing: border-box;
 }
-.seg-item:first-child {
-  margin-left: 0;
-}
-.seg-item:active {
-  background: var(--cell-active);
-}
-.seg-active {
-  border-color: var(--brand);               /* 项目主色绿 #07C160，原语 14 约定 */
-  color: var(--brand);
-  background: var(--card);
-}
+.seg-item:first-child { margin-left: 0; }
+.seg-item:active { background: var(--cell-active); }
+.seg-active { border-color: var(--brand); color: var(--brand); background: var(--card); }
 
-/* 原语 1 .icon-right（已读完行的 chevron） */
+/* 已读完行 chevron */
 .form-row .icon-right {
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text3);
@@ -564,25 +373,14 @@
   flex-shrink: 0;
 }
 
-/* 标准按钮族：复用 skill 原语 16 全局 .weui-btn（见 app.wxss）
-   打卡弹窗按钮（iOS 矩形圆角，非胶囊）+ 两按钮等宽 */
-.action-sheet .weui-btn { flex: 1; }                 /* 两按钮等宽 */
-.action-sheet .weui-btn-area_inline { margin-top: 16rpx; }   /* 与上方表单留白 */
+/* 弹窗内按钮：两按钮等宽 + 与表单留白 */
+.action-sheet .weui-btn { flex: 1; }
+.action-sheet .weui-btn-area_inline { margin-top: 16rpx; }
 
-/* ====== 完成阶段按钮：复用 WeUI 按钮令牌 ======
-   未达成走 weui-btn_default(灰底+深字)，达成 100% 走 weui-btn_primary(品牌绿+白字)；
-   进度由内联渐变(品牌绿从左填充)叠加在底色上，文字随状态自动切换 */
-.promote-btn-area {
-  margin: 32rpx 32rpx 0;
-}
-
-/* ====== 晋级弹窗 ====== */
+/* ====== 晋级测试弹窗 ====== */
 .pm-mask {
   position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
+  left: 0; right: 0; top: 0; bottom: 0;
   background: rgba(0, 0, 0, 0);
   z-index: 1000;
   pointer-events: none;
@@ -590,12 +388,7 @@
   display: flex;
   align-items: flex-end;
 }
-
-.pm-mask-show {
-  background: rgba(0, 0, 0, 0.45);
-  pointer-events: auto;
-}
-
+.pm-mask-show { background: rgba(0, 0, 0, 0.5); pointer-events: auto; }
 .pm-sheet {
   width: 100%;
   background: var(--card);
@@ -606,10 +399,7 @@
   transform: translateY(100%);
   transition: transform 0.25s ease;
 }
-
-.pm-mask-show .pm-sheet {
-  transform: translateY(0);
-}
+.pm-mask-show .pm-sheet { transform: translateY(0); }
 
 .pm-handle {
   width: 72rpx;
@@ -618,20 +408,13 @@
   border-radius: 4rpx;
   margin: 8rpx auto 24rpx;
 }
-
 .pm-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 24rpx;
 }
-
-.pm-title {
-  flex: 1;
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text);
-}
-
+.pm-title { flex: 1; font-size: calc(34rpx * var(--fs, 1)); color: var(--text); }
 .pm-close {
   width: 56rpx;
   height: 56rpx;
@@ -641,11 +424,7 @@
   color: var(--text3);
   border-radius: 50%;
 }
-
-.pm-close:active {
-  background: var(--cell-active);
-  color: var(--text2);
-}
+.pm-close:active { background: var(--cell-active); color: var(--text2); }
 
 .pm-stage-info {
   background: var(--card2);
@@ -653,13 +432,11 @@
   padding: 24rpx;
   margin-bottom: 24rpx;
 }
-
 .pm-stage-name {
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);
   margin-bottom: 8rpx;
 }
-
 .pm-stage-tip {
   font-size: calc(28rpx * var(--fs, 1));
   color: var(--text3);
@@ -672,7 +449,6 @@
   padding: 0 24rpx;
   margin-bottom: 20rpx;
 }
-
 .pm-form-item {
   display: flex;
   align-items: center;
@@ -680,29 +456,19 @@
   padding: 16rpx 0;
   border-bottom: 1rpx solid var(--divider);
 }
-
-.pm-picker {
-  display: block;
-}
-
-.pm-form-item:last-child {
-  border-bottom: none;
-}
-
+.pm-form-item:last-child { border-bottom: none; }
 .pm-form-label {
   flex-shrink: 0;
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);
   width: 160rpx;
 }
-
 .pm-form-value {
   flex: 1;
   text-align: right;
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--brand);
 }
-
 .pm-form-control {
   flex: 1;
   display: flex;
@@ -710,7 +476,6 @@
   justify-content: flex-end;
   gap: 12rpx;
 }
-
 .pm-num-input {
   flex: 1;
   text-align: right;
@@ -719,19 +484,12 @@
   height: 64rpx;
   padding: 0 16rpx;
 }
-
 .pm-form-unit {
   flex-shrink: 0;
   font-size: calc(28rpx * var(--fs, 1));
   color: var(--text3);
 }
-
-.pm-quick-row {
-  display: flex;
-  gap: 12rpx;
-  margin-bottom: 32rpx;
-}
-
+.pm-quick-row { display: flex; gap: 12rpx; margin-bottom: 32rpx; }
 .pm-quick-btn {
   height: 64rpx;
   line-height: 64rpx;
@@ -742,16 +500,8 @@
   font-size: calc(28rpx * var(--fs, 1));
   border-radius: 12rpx;
 }
-
-.pm-quick-btn:active {
-  background: var(--divider);
-}
-
-.pm-actions {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+.pm-quick-btn:active { background: var(--divider); }
+.pm-actions { display: flex; justify-content: center; align-items: center; }
 
 /* 弹窗底部按钮：WeUI 矩形圆角（无胶囊） */
 .pm-btn {
@@ -767,128 +517,12 @@
   align-items: center;
   padding: 0 !important;
 }
+.pm-btn::after { border: none; }
+.pm-btn-cancel { background: var(--cell-active); color: var(--text2); margin-right: 4%; }
+.pm-btn-cancel:active { background: var(--divider); }
+.pm-btn-ok { background: var(--brand); color: #fff; }
+.pm-btn-ok:active { opacity: 0.88; }
 
-.pm-btn::after {
-  border: none;
-}
-
-.pm-btn-cancel {
-  background: var(--cell-active);
-  color: var(--text2);
-  margin-right: 4%;
-}
-
-.pm-btn-cancel:active {
-  background: var(--divider);
-}
-
-.pm-btn-ok {
-  background: var(--brand);
-  color: #fff;
-}
-
-.pm-btn-ok:active {
-  opacity: 0.88;
-}
-
-/* ====== 深色模式适配（微信小程序深色规范） ====== */
-.dm-dark .res-hl-bold { color: #7fb4f7; }
-.dm-dark .res-hl-time { color: #8ab4ff; }
-
-/* 分类标签文字：深色下提亮（彩虹色序） */
-.dm-dark .rg-label-main_picture_books { color: #ff6b6b; }
-.dm-dark .rg-label-main_graded_readers { color: #f5b041; }
-.dm-dark .rg-label-main_animations { color: #f7dc6f; }
-.dm-dark .rg-label-sub_graded_readers { color: #58d68d; }
-.dm-dark .rg-label-sub_animations { color: #48c9b0; }
-.dm-dark .rg-label-fun_extensions { color: #5dade2; }
-.dm-dark .rg-label-science_extensions { color: #bb8fce; }
-.dm-dark .rg-label-fusion_apps { color: #af7ac5; }
-
-.dm-dark .rg-progress { color: var(--brand); background: rgba(7, 193, 96, 0.16); }
-.dm-dark .rg-progress-val { color: var(--brand); }
-.dm-dark .rg-progress-empty { color: var(--text3); background: var(--cell-active); }
-.dm-dark .rg-progress-locked { color: var(--text3); background: var(--cell-active); }
-
-/* 已打卡行：深色纯色浅底 */
-.dm-dark .r-row-done {
-  background: rgba(7, 193, 96, 0.14);
-}
-
-.dm-dark .r-row-done:active { background: rgba(7, 193, 96, 0.22); }
-
-.dm-dark .r-no { color: #52e070; background: rgba(7, 193, 96, 0.22); }
-.dm-dark .r-no-char { background: #4a8fd9; }
-.dm-dark .r-sub { color: var(--brand); }
-
-.dm-dark .lock-bar {
-  background: rgba(255, 214, 102, 0.12);
-  border-color: #57451f;
-}
-
-.dm-dark .lock-text { color: #e0a56a; }
-
-.dm-dark .r-read-badge { color: #ffd666; background: rgba(255, 214, 102, 0.16); }
-.dm-dark .r-read-btn { color: #ff9c6e; border-color: rgba(255, 156, 110, 0.4); }
-.dm-dark .r-read-btn:active { background: rgba(255, 214, 102, 0.16); }
-
-.dm-dark .r-arrow { color: var(--brand); }
-
-.dm-dark .pm-title {
-  color: var(--text);
-}
-
-.dm-dark .pm-form-value { color: var(--brand); }
-.dm-dark .pm-quick-btn { color: var(--brand); }
-
-@media (prefers-color-scheme: dark) {
-  .dm-auto .res-hl-bold { color: #7fb4f7; }
-  .dm-auto .res-hl-time { color: #8ab4ff; }
-
-  .dm-auto .rg-label-main_picture_books { color: #ff6b6b; }
-  .dm-auto .rg-label-main_graded_readers { color: #f5b041; }
-  .dm-auto .rg-label-main_animations { color: #f7dc6f; }
-  .dm-auto .rg-label-sub_graded_readers { color: #58d68d; }
-  .dm-auto .rg-label-sub_animations { color: #48c9b0; }
-  .dm-auto .rg-label-fun_extensions { color: #5dade2; }
-  .dm-auto .rg-label-science_extensions { color: #bb8fce; }
-  .dm-auto .rg-label-fusion_apps { color: #af7ac5; }
-
-  .dm-auto .rg-progress { color: var(--brand); background: rgba(7, 193, 96, 0.16); }
-  .dm-auto .rg-progress-val { color: var(--brand); }
-  .dm-auto .rg-progress-empty { color: var(--text3); background: var(--cell-active); }
-  .dm-auto .rg-progress-locked { color: var(--text3); background: var(--cell-active); }
-
-  .dm-auto .r-row-done {
-    background: rgba(7, 193, 96, 0.14);
-  }
-
-  .dm-auto .r-row-done:active { background: rgba(7, 193, 96, 0.22); }
-
-  .dm-auto .r-no { color: #52e070; background: rgba(7, 193, 96, 0.22); }
-  .dm-auto .r-no-char { background: #4a8fd9; }
-  .dm-auto .r-sub { color: var(--brand); }
-
-  .dm-auto .lock-bar {
-    background: rgba(255, 214, 102, 0.12);
-    border-color: #57451f;
-  }
-
-  .dm-auto .lock-text { color: #e0a56a; }
-
-  .dm-auto .r-read-badge { color: #ffd666; background: rgba(255, 214, 102, 0.16); }
-  .dm-auto .r-read-btn { color: #ff9c6e; border-color: rgba(255, 156, 110, 0.4); }
-  .dm-auto .r-read-btn:active { background: rgba(255, 214, 102, 0.16); }
-
-  .dm-auto .r-arrow { color: var(--brand); }
-
-  .dm-auto .pm-title {
-    color: var(--text);
-  }
-
-  .dm-auto .pm-form-value { color: var(--brand); }
-  .dm-auto .pm-quick-btn { color: var(--brand); }
-}
-
-/* 详情页字体基准：常规路径 34rpx 起算（覆盖全局 28rpx 基准；子节点 calc(Nrpx*var(--fs)) 已同步按 34/28 放大） */
-.sheet-mask { font-size: calc(34rpx * var(--fs, 1)); }
+/* 详情页字体基准：常规路径 34rpx 起算（子节点 calc(Nrpx*var(--fs)) 已同步；此处供 input 继承） */
+.sheet-mask,
+.pm-mask { font-size: calc(34rpx * var(--fs, 1)); }

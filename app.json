@@ -50,7 +50,6 @@
     ]
   },
   "style": "v2",
- "lazyCodeLoading": "requiredComponents",
   "darkmode": true,
   "themeLocation": "theme.json",
   "sitemapLocation": "sitemap.json"

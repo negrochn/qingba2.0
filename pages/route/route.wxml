@@ -25,21 +25,13 @@
   <view class="weui-cells__title">学习路线</view>
   <view class="weui-cells">
     <view
-      class="weui-cell weui-cell_access route-cell"
+      class="weui-cell weui-cell_access route-cell {{item._state === 'current' ? 'current-cell' : ''}}"
       wx:for="{{stages}}"
       wx:key="stage_id"
       id="stage-{{index}}"
       data-index="{{index}}"
       bindtap="toStage"
     >
-      <view class="weui-cell__hd route-node-wrap">
-        <view class="route-node {{item._state}}">
-          <text wx:if="{{item._state !== 'done'}}">{{index + 1}}</text>
-          <text wx:else class="iconfont icon-check"></text>
-        </view>
-        <view class="route-node-line" wx:if="{{index < stageCount - 1}}"></view>
-      </view>
-
       <view class="weui-cell__bd">
         <view class="weui-cell__bd_text route-name">{{item.stage_name}}</view>
         <view class="weui-cell__desc route-meta">{{item.target_phase}} · {{item.vocabulary_target}} · {{item.time_investment}}</view>
@@ -55,13 +47,16 @@
         </view>
       </view>
 
-      <view class="weui-cell__ft">
-        <text class="route-chip {{item._state}}">
-          <block wx:if="{{item._state === 'current'}}">当前</block>
-          <block wx:elif="{{item._state === 'done'}}">已完成</block>
-          <block wx:else>未解锁</block>
-        </text>
-        <text class="iconfont icon-right"></text>
+      <view class="weui-cell__ft route-ft">
+        <!-- 仅保留右侧时间线（节点 + 连接线） -->
+        <view class="route-node-wrap">
+          <view class="route-node {{item._state}}">
+            <text wx:if="{{item._state === 'current'}}" class="iconfont icon-right"></text>
+            <text wx:elif="{{item._state === 'locked'}}" class="iconfont icon-lock"></text>
+            <text wx:else class="iconfont icon-check"></text>
+          </view>
+          <view class="route-node-line" wx:if="{{index < stageCount - 1}}"></view>
+        </view>
       </view>
     </view>
   </view>

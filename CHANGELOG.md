@@ -58,6 +58,14 @@
 - **路线页（route）WeUI 重设计**：原卡片式时间线（`.timeline` + `.stage-card`）改为 WeUI 分组列表——外层 `.weui-cells`、每行 `.weui-cell weui-cell_access`；行首节点由 48rpx 缩为 36rpx，并用 1rpx 竖线串联（末行无线），节点三态为纯色：当前 = 品牌绿实心 + 序号、已完成 = 浅绿底 + 绿色对勾、未解锁 = 灰底 + 序号；右侧状态改为扁平 chip（`.route-chip`：当前绿底白字 / 已完成浅绿底绿字 / 未解锁灰底）。保留「进入 / 晋级」两行条件，字号对齐规范档：阶段名 34rpx、phase 与词汇/时长 28rpx、进入与晋级 28rpx。清理卡片阴影、左侧色条、节点外发光、`stage-phase` 蓝紫色块，以及 `.dm-dark` / `.dm-auto` 下 6 条硬编码覆盖（改由变量自动适配）
 - **顶部「当前阶段」模块改为「分组标题 + cell」**：`weui-cells__title` 展示「当前阶段」，其下单条 cell 显示阶段名，右侧 `.weui-cell__ft_value` 展示该阶段进度百分比；进度与阶段详情页完全同口径（按 `required.type` 取 `getStageMinutes` / `getAccumulatedMinutes`，`Math.floor` 向下取整、上限 100%）。已移除原「已投入 / 目标时长」文案与「当前」chip
 - **阶段晋级口径函数收敛到 `utils/data.js`**：`parseTargetHours` 与 `getRequiredHours` 由 `stage.js` 私有函数提为共享导出，`stage.js` 与 `route.js` 统一引用，避免两处各写一份解析逻辑导致进度数字不一致
+- **路线页（route）时间线节点移到右侧并改为三态图标**：原行首 `weui-cell__hd` 的序号节点移到右侧 `weui-cell__ft`（`.route-node-wrap` 节点 + 1rpx 连接线，`align-items:stretch` 让竖线贯穿整行高度、跨行连续），中区只保留阶段名 + 概要 +「进入 / 晋级」条件；节点由「序号 / 对勾」改为 iconfont 三态图标——当前 `.icon-right`（`var(--text3)` 正常箭头色，读作「点击进入」）、已完成 `.icon-check`（`var(--brand)`）、未解锁 `.icon-lock`（`var(--text3)`），图标字号 34rpx；移除原右侧状态 chip（`.route-chip` 的「当前 / 已完成 / 未解锁」文字）
+- **路线页「当前阶段」高亮改为整行底色（`.current-cell`）**：此前高亮加在 `weui-cells` 容器 `.current-panel` 上，会把已完成 / 未解锁行一并染绿，导致三态失去区分度；现将底色下放到「当前」那一行（`.current-cell` 浅绿 `rgba(7,193,96,.12)`、按下 `.18`，深色 `.20` / `.28`），容器仅保留圆角卡外观（去通栏绿底）。当前节点同步去掉描边与底色（`border:0` / `background:transparent`），由整行绿底承担区分
+- **我的页（mine）入口图标由 emoji 改为 iconfont**：「关于 / 打卡记录 / 数据统计 / 设置」的 📚 📅 📊 ⚙️ 改为 `icon-info` / `icon-squarecheck` / `icon-rank` / `icon-settings`，新增 `.weui-cell__hd .iconfont`（40rpx、`var(--text2)`、`margin-right:8rpx`），与右侧 `.icon-right` 箭头视觉权重一致，避免 emoji 在不同系统 / 深浅模式下配色与基线不一致
+- **iconfont 字体扩充**：`app.wxss` 内联的 base64 字体更新（ttf 2872→5420 字节、woff 1816→3072 字节），新增 `icon-right`、`icon-lock`、`icon-unlock`、`icon-info`、`icon-squarecheck`、`icon-rank`、`icon-settings`、`icon-location`、`icon-home`/`icon-homefill`、`icon-my`/`icon-myfill`、`icon-circle`/`icon-circlefill` 等字形
+- **tabBar 配色再调整与图标更新（theme.json）**：未选中文字 `#191919` → `#7A7E83`（微信标准未选中灰）、背景 `#f5f5f5` → `#F7F7F7`、上边框 `white` → `black`；同步更新 6 张 tabBar 图标（home / route / mine 的普通态与选中态）
+- **`app.json` 移除 `lazyCodeLoading: "requiredComponents"`**：页面数量少、体积可控，按需注入收益有限，去掉以避免偶发的组件注入时序问题
+- **阶段详情（stage）样式死代码清理与深色变量化**：`stage.wxss` 由 766 行精简到 495 行——删除已无 wxml 引用的 `.lock-*` / `.pm-picker` / `.res-hl-*` / `.rg-collapsed-*` / `.rg-tag` / `.r-read-*` 等规则，移除 `.dm-dark` / `.dm-auto` 下 20+ 条硬编码深色覆盖（改由 `--brand-softer` 等变量自动适配），多行规则压缩为单行。已按选择器集合逐项比对，确认无在用样式丢失（`rg-head-active` 仅含 `cursor:pointer`，小程序内无效，移除无影响）
+- **关于页（about）改用 WeUI 文章原语**：原私有类（`.para` / `.sub-title` / `.stage-block` / `.warn-block` / `.method-block` / `.hl` / `.disclaimer` / `.bullet` / `.banner-*` / `.chapter-*`）改为 `.weui-article` + `.weui-article__h2` / `__p` 与 `.about-*`（`.about-stage` / `.about-method` / `.about-note` / `.about-desc` / `.about-li` / `.about-strong` / `.about-sub`）命名，同步移除 `.dm-dark` / `.dm-auto` 下 7 条深色硬编码覆盖
 
 ### 修复
 
@@ -79,6 +87,8 @@
   - `ui-design-spec` skill 同步本次 WeUI 风格重构结论：`design-tokens.md` 更新 `--text2/3/4`/`--danger` 实际取值与 FG 映射、分隔线实现改为真实 1rpx（去 `scaleY(.5)`）；`SKILL.md` 新增「扁平纯色、禁止渐变/外发光」「`.weui-tag` 无 margin」「分组容器 `border-bottom` 通栏分隔线」项目约定；`components.md` 标签/按钮补纯色与去 margin 备注
   - `design-tokens.md` §9 同步本轮收敛结论：项目文字色映射表更新为三档（FG-0 / FG-1 / FG-2）并标注 `--text4` 已合并移除；新增「项目字号档」约定——34 / 28 / 24rpx 三档分别对应 17 / 14 / 12px，`26rpx` 及 `29 / 32 / 36 / 41rpx` 列为已废弃，大号数字除外
   - `components.md` 新增「原语 12：时间线列表 Timeline」：沉淀路线页的节点 + 竖线串联结构、节点三态纯色配色（禁止渐变 / 外发光）、状态 chip 写法与字号约定（主文 34 / 副信息 28 / 节点序号 24rpx），末行不渲染连接线
+  - `components.md`「原语 12」同步本次路线页重构：节点由行首 `weui-cell__hd` 移到右侧 `weui-cell__ft`、三态由「纯色圆 + 序号/对勾」改为「描边圆 + iconfont 图标」（当前 `.icon-right` 走 `var(--text3)` 正常箭头色 / 已完成 `.icon-check` / 未解锁 `.icon-lock`）、移除状态 chip，并新增「当前行高亮用 cell 级底色 `.current-cell`，禁止容器级染色」约定
+  - `SKILL.md` 补充 iconfont 可用字形清单与「正常箭头色 = `var(--text3)`」约定，新增「当前项高亮用 cell 级底色」「iconfont 维护方式（base64 内联注册与重新生成流程）」两条项目实现备注
 
 ## [2.3.1] - 2026-09-03
 

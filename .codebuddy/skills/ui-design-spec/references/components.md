@@ -277,41 +277,43 @@ WeUI 提供 `weui-icon-*`（mask + `background-color: currentColor` 方案，色
 
 ## 原语 12：时间线列表 Timeline（项目 `.route-cell` / `.route-node`）
 
-用于「有先后顺序 + 带状态」的列表（如学习阶段路线）。由原语 1 / 2 组合而成：外层 `.weui-cells`，每行 `.weui-cell`，行首用圆形节点 + 1rpx 竖线串联。
+用于「有先后顺序 + 带状态」的列表（如学习阶段路线）。由原语 1 / 2 组合而成：外层 `.weui-cells`，每行 `.weui-cell`；时间线节点统一置于**右侧** `.weui-cell__ft`，中区只放阶段信息，状态由「节点图标 + 当前行底色」表达。
 
 ```html
 <view class="weui-cells">
-  <view class="weui-cell weui-cell_access route-cell">
-    <view class="weui-cell__hd route-node-wrap">
-      <view class="route-node {{state}}">
-        <text wx:if="{{state !== 'done'}}">{{index + 1}}</text>
-        <text wx:else class="iconfont icon-check"></text>
-      </view>
-      <view class="route-node-line" wx:if="{{!isLast}}"></view>
-    </view>
+  <view class="weui-cell weui-cell_access route-cell {{state === 'current' ? 'current-cell' : ''}}">
     <view class="weui-cell__bd">
-      <view class="weui-cell__bd_text">阶段名</view>
+      <view class="weui-cell__bd_text route-name">阶段名</view>
       <view class="weui-cell__desc route-meta">phase · 目标</view>
     </view>
-    <view class="weui-cell__ft">
-      <text class="route-chip {{state}}">当前</text>
-      <text class="iconfont icon-right"></text>
+    <view class="weui-cell__ft route-ft">
+      <view class="route-node-wrap">
+        <view class="route-node {{state}}">
+          <text wx:if="{{state === 'current'}}" class="iconfont icon-right"></text>
+          <text wx:elif="{{state === 'locked'}}" class="iconfont icon-lock"></text>
+          <text wx:else class="iconfont icon-check"></text>
+        </view>
+        <view class="route-node-line" wx:if="{{!isLast}}"></view>
+      </view>
     </view>
   </view>
 </view>
 ```
 
 ```css
-.route-cell { align-items: stretch; }                    /* 撑满行高，供竖线延伸 */
-.route-node-wrap { flex-direction: column; align-items: center; margin-right: 24rpx; }
-.route-node { width: 36rpx; height: 36rpx; border-radius: 50%; font-size: calc(24rpx * var(--fs,1)); }
+.route-cell .weui-cell__ft { display: flex; align-items: stretch; }   /* 撑满行高，供竖线延伸 */
+.route-node-wrap { flex-direction: column; align-items: center; }
+.route-node { width: 44rpx; height: 44rpx; border-radius: 50%; border: 2rpx solid var(--text3); background: var(--card2); }
+.route-node .iconfont { font-size: calc(34rpx * var(--fs,1)) !important; }
 .route-node-line { flex: 1; width: 1rpx; background: var(--divider); }   /* 末行不渲染 */
+.current-cell { background: rgba(7,193,96,.12); }        /* 仅「当前」那一行 */
 ```
 
-- **节点三态（纯色，禁止渐变 / 外发光）**：当前 `var(--brand)` 实心 + 白字序号；已完成 `rgba(7,193,96,.15)` + `var(--brand)` 对勾；未解锁 `var(--card2)` + `var(--text3)`
-- **状态 chip**：`.route-chip` 扁平（`border-radius:8rpx` / `padding:2rpx 12rpx` / `font-size:calc(24rpx * var(--fs,1))`），三态配色与节点一致
+- **节点三态（描边圆 + iconfont 图标，禁止渐变 / 外发光）**：当前 `border:0` + `background:transparent` + `.icon-right`（`var(--text3)` 正常箭头色，读作「点击进入」）；已完成 `border-color:var(--brand)` + `.icon-check`（`var(--brand)`）；未解锁 `border-color:var(--text3)` + `.icon-lock`（`var(--text3)`）
+- **当前行高亮用 cell 级底色，禁止容器级染色**：「当前」整行加 `.current-cell` 浅绿底（深色 `rgba(7,193,96,.20)`、按下 `.28`）。**不要**把底色加到 `.weui-cells` 容器上——容器染色会把已完成 / 未解锁行一起染绿，三态失去区分度
+- **不设状态 chip**：状态由节点图标 + 当前行底色共同表达，避免与右侧辅助信息重复（原 `.route-chip` 已移除）
 - 连接线用 `var(--divider)`，深色自动适配；**末行不渲染** `.route-node-line`
-- 字号：主文 34rpx、副信息 28rpx、节点内序号 24rpx
+- 字号：主文 34rpx、副信息 28rpx、节点图标 34rpx
 
 ---
 

@@ -4,10 +4,10 @@
     "navTxtStyle": "black",
     "bgColor": "#ededed",
     "bgTextStyle": "dark",
-    "tabColor": "#191919",
+    "tabColor": "#7A7E83",
     "tabSelectedColor": "#07C160",
-    "tabBgColor": "#f5f5f5",
-    "tabBorderStyle": "white"
+    "tabBgColor": "#F7F7F7",
+    "tabBorderStyle": "black"
   },
   "dark": {
     "navBgColor": "#111111",

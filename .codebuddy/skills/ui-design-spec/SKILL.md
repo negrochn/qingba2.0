@@ -39,7 +39,7 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - **单选/多选**：选中标记统一品牌绿 `#07c160`（圆底绿勾 / 对勾）。
 - **弹窗**：蒙层 OVERLAY；dialog 卡片 `#fff` 圆角 12px，主操作 BRAND；actionsheet 底部上滑、取消独立灰带；toast 反白居中。
 - **导航/标签栏**：原生组件，颜色在 `app.json`（导航栏 `#ededed`、tabBar 选中 `#07c160`）。
-- **图标**：本项目用自绘 iconfont（`.iconfont` + `.icon-*:before`），对勾 `.icon-check` 走 `var(--brand)`。
+- **图标**：本项目用内联 iconfont（`@font-face` base64 注册于 `app.wxss`，跨页面生效）`.iconfont` + `.icon-*:before`；可用字形：`icon-check` 对勾（走 `var(--brand)`）/ `icon-right` 右箭头 / `icon-lock` `icon-unlock` / `icon-info` / `icon-squarecheck` / `icon-rank` / `icon-settings` / `icon-location` / `icon-home` `icon-homefill` / `icon-my` `icon-myfill` / `icon-circle` `icon-circlefill`。箭头 `icon-right` 统一取 `var(--text3)`（FG-2）作为「正常箭头色」。
 - **设计原则 / 交互规范**：四大原则（友好 / 清晰 / 便捷 / 统一）、导航（小程序菜单右上固定且深浅两套、Tab 2–5 建议≤4）、反馈（局部加载优先、同页 ≤1 加载动画、成功 toast 1.5s）、层级（模态阻断 / 弹出不打断）——详见 `references/design-guidelines.md`；量化令牌（22/17/15/14/12pt、热区 7–9mm、设计稿 375/390、弹窗 1.5s 等）见 `design-tokens.md` §7。
 
 ## 项目实现备注（与 qingba 代码对齐）
@@ -54,6 +54,8 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - **扁平纯色，禁止渐变 / 外发光（项目约定）**：所有色块 / 标签 / 按钮一律用扁平纯色（`var(--brand)`、固定 HEX 或低透明叠加），**禁止 `linear-gradient` 与 `box-shadow` 外发光**；深色档同理用纯色低透明（如 `rgba(7,193,96,.14)`）替代渐变。
 - **`.weui-tag` 不带 margin（项目约定）**：标签间距由父级 flex `gap` 控制，避免与 `tag-group-*` 等内联背景 / 多标签混排时多出右侧空白；新增标签复用全局 `.weui-tag`，不在页面内重复定义。
 - **分组容器 `border-bottom` 通栏分隔线（项目约定）**：相邻分组用分组块容器（如 `.res-list`）的 `border-bottom: 1rpx solid var(--divider)` 分隔（展开/折叠均生效），末组 `:last-child` 去线；区别于 cell 内 `left:32rpx` 缩进的行间线。
+- **「当前项」高亮用 cell 级底色，禁止容器级染色（项目约定）**：列表中某项需要底色区分时（如路线页 `.current-cell`），底色加在**单个 cell** 上，**不要**加在 `.weui-cells` / 分组容器上——容器染色会连带同组其他状态的行一起变色，导致「当前 / 已完成 / 未解锁」失去区分度。深色覆盖同样挂在 cell 级选择器上。
+- **iconfont 维护方式（项目实现）**：`app.wxss` 以 `@font-face` 内联 base64（ttf + woff 双格式，woff 的 MIME 用 `application/font-woff` 以兼容开发者工具内置旧 Chromium），全局注册字族 `iconfont`，随 WXSS 注入每个页面 webview 而跨页生效。新增图标需更新 `assets/fonts` 源文件，用 `scripts/gen_iconfont_base64.ps1` 重新生成 base64，再替换 `app.wxss` 的 data URI 并补 `.icon-*:before` 映射。
 
 ## Resources
 ### references/

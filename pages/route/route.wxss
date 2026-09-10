@@ -1,17 +1,17 @@
 /* ===== 路线页（WeUI 风格：顶部当前阶段高亮卡 + 时间线分组列表） ===== */
 
-/* ① 当前阶段：weui-cell 结构 + 浅品牌绿底突出（无阴影，圆角同 WeUI panel） */
+/* ① 当前阶段：高亮底色只作用于「当前」那一行（.current-cell），容器仅作圆角卡 */
 .current-panel {
   overflow: hidden;
-  background: rgba(7, 193, 96, 0.10);
+  background: transparent;          /* 通栏绿底已下放，避免已完成/未解锁也变绿 */
 }
 /* 圆角卡片不需要 weui-cells 的上下通栏线 */
 .current-panel::before,
 .current-panel::after { display: none; }
 
-.current-cell { background: transparent; }
-.current-cell:active { background: rgba(7, 193, 96, 0.16); }
-.current-cell-hover  { background: rgba(7, 193, 96, 0.16); }
+.current-cell { background: rgba(7, 193, 96, 0.10); }
+.current-cell:active { background: rgba(7, 193, 96, 0.18); }
+.current-cell-hover  { background: rgba(7, 193, 96, 0.18); }
 
 /* ② 时间线列表：行首节点 + 竖向连接线 */
 .route-cell {
@@ -22,15 +22,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-right: 24rpx;
   padding-top: 4rpx;
 }
 
 .route-node {
   flex-shrink: 0;
-  width: 36rpx;
-  height: 36rpx;
+  width: 44rpx;
+  height: 44rpx;
   border-radius: 50%;
+  border: 2rpx solid var(--text3);   /* 描边式节点：状态由 border-color 区分 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -41,20 +41,20 @@
   box-sizing: border-box;
 }
 .route-node .iconfont {
-  font-size: calc(24rpx * var(--fs, 1)) !important;
+  font-size: calc(34rpx * var(--fs, 1)) !important;
   font-weight: normal;
 }
 
-.route-node.current { background: var(--brand); color: #fff; }
-.route-node.done    { background: rgba(7, 193, 96, 0.15); color: var(--brand); }
-.route-node.locked  { background: var(--card2); color: var(--text3); }
+.route-node.current { border: 0; background: transparent; }   /* 当前节点去描边/底色，仅靠 cell 绿底 + 箭头表达 */
+.route-node.current .iconfont { color: var(--text3); }   /* 当前节点图标用正常箭头色，而非品牌绿 */
+.route-node.done    { border-color: var(--brand); color: var(--brand); }
+.route-node.locked  { border-color: var(--text3); color: var(--text3); }
 
-/* 连接线：填满节点下方剩余高度（末行无线） */
+/* 连接线：无节点时贯穿整行高度（末行无线） */
 .route-node-line {
   flex: 1;
   width: 1rpx;
   background: var(--divider);
-  margin-top: 8rpx;
 }
 
 /* ③ 阶段名 / 副信息 */
@@ -94,25 +94,16 @@
   line-height: 1.5;
 }
 
-/* ④ 状态徽标：扁平 chip，与标题顶部对齐 */
+/* ④ 右侧：仅保留时间线（节点 + 连接线），整体靠右 */
 .route-cell .weui-cell__ft {
-  align-items: flex-start;
-  padding-top: 4rpx;
+  display: flex;
+  align-items: stretch;            /* 让连接线撑满整行高度，跨行连续 */
 }
-.route-chip {
-  flex-shrink: 0;
-  margin-right: 8rpx;
-  padding: 2rpx 12rpx;
-  border-radius: 8rpx;
-  font-size: calc(28rpx * var(--fs, 1));
-  line-height: 1.3;
-}
-.route-chip.current { color: #fff;      background: var(--brand); }
-.route-chip.done    { color: var(--brand); background: rgba(7, 193, 96, 0.12); }
-.route-chip.locked  { color: var(--text2); background: var(--card2); }
 
-/* ⑤ 深色：仅高亮卡底色需加深，其余走变量自动适配 */
-.dm-dark .current-panel { background: rgba(7, 193, 96, 0.18); }
+/* ⑤ 深色：仅当前阶段高亮底色需加深，其余走变量自动适配 */
+.dm-dark .current-cell { background: rgba(7, 193, 96, 0.20); }
+.dm-dark .current-cell:active { background: rgba(7, 193, 96, 0.28); }
 @media (prefers-color-scheme: dark) {
-  .dm-auto .current-panel { background: rgba(7, 193, 96, 0.18); }
+  .dm-auto .current-cell { background: rgba(7, 193, 96, 0.20); }
+  .dm-auto .current-cell:active { background: rgba(7, 193, 96, 0.28); }
 }
