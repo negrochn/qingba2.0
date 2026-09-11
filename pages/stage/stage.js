@@ -1,18 +1,7 @@
-const { routeData, resourceLabels, getRequiredHours } = require('../../utils/data.js')
+const { routeData, getRequiredHours } = require('../../utils/data.js')
+const resources = require('../../utils/resources.js')
 const checkin = require('../../utils/checkin.js')
 const theme = require('../../utils/theme.js')
-
-// 可点击打卡的资源分类(8 类)
-const CLICKABLE_GROUPS = [
-  'main_picture_books',   // 主线绘本
-  'main_graded_readers',  // 主线分级
-  'main_animations',      // 主线动画
-  'sub_graded_readers',   // 辅线分级
-  'sub_animations',       // 辅线动画
-  'fun_extensions',       // 趣味拓展
-  'science_extensions',   // 科普拓展
-  'fusion_apps'           // 融合APP
-]
 
 // 从 phase 字符串中提取数字，如 'phase5' -> 5
 function parsePhaseNumber(text) {
@@ -48,8 +37,9 @@ Page({
     groupProgress: {},
     // 打卡弹窗
     showCheckin: false,
-    currentGroup: null,   // { key, label }
-    currentResource: '',  // 资源名
+    currentGroup: null,       // { key, label }
+    currentResource: '',      // 资源名（展示）
+    currentResourceId: '',    // 资源 id（读写 key）
     durationInput: '',    // 输入框(分钟数值文本)
     remarkInput: '',      // 备注输入
     currentReadCount: 0,  // 当前资源已读次数
@@ -101,12 +91,6 @@ Page({
       return
     }
 
-    const order = [
-      'main_picture_books', 'main_graded_readers', 'main_animations',
-      'sub_graded_readers', 'sub_animations',
-      'fun_extensions', 'science_extensions', 'fusion_apps'
-    ]
-
     // 计算当前阶段索引，判断状态
     const currentStage = checkin.getCurrentStage()
     let currentIndex = -1
@@ -118,19 +102,8 @@ Page({
         (index < currentIndex ? 'completed' : 'locked'))
     const stageLocked = stageStatus !== 'current'
 
-    // 锁定时所有分组不可点击打卡
-    const groups = []
-    order.forEach(k => {
-      const list = stage.resources[k]
-      if (list && list.length) {
-        groups.push({
-          key: k,
-          label: resourceLabels[k] || k,
-          items: list,
-          clickable: CLICKABLE_GROUPS.indexOf(k) >= 0
-        })
-      }
-    })
+    // 官方 + 自定义资源合并渲染（8 类均可打卡）
+    const groups = resources.getStageGroups(stage.stage_id)
 
     wx.setNavigationBarTitle({ title: stage.stage_name })
     this.setData({ stage, stageIndex: index, stageLocked, stageStatus, resourceGroups: groups })
@@ -370,15 +343,17 @@ Page({
       if (!g.clickable) return
       let groupToday = 0
       let groupReadCount = 0
-      g.items.forEach(name => {
-        const key = `${g.key}|${name}`
-        const min = minutes[key] || 0
+      g.items.forEach(res => {
+        // 时长 key 用资源名（记录里的名称快照），已读次数 key 用资源 id
+        const minKey = `${g.key}|${res.name}`
+        const readKey = `${g.key}|${res.id}`
+        const min = minutes[minKey] || 0
         if (min > 0) {
-          totals[key] = min
+          totals[minKey] = min
           groupToday += min
         }
         // 统计该组已读总数
-        groupReadCount += readCounts[key] || 0
+        groupReadCount += readCounts[readKey] || 0
       })
       groupProgress[g.key] = {
         todayMin: groupToday,
@@ -397,7 +372,7 @@ Page({
 
   // 点击资源标签
   onResourceTap(e) {
-    const { groupKey, groupLabel, resource } = e.currentTarget.dataset
+    const { groupKey, groupLabel, resourceId, resourceName } = e.currentTarget.dataset
     if (this.data.stageStatus === 'locked') {
       wx.showToast({ title: '当前阶段未解锁，不可打卡', icon: 'none' })
       return
@@ -406,15 +381,14 @@ Page({
       wx.showToast({ title: '本阶段已完成，仅可查看', icon: 'none' })
       return
     }
-    const clickable = CLICKABLE_GROUPS.indexOf(groupKey) >= 0
-    if (!clickable) return
     const stage = this.data.stage
-    const defaultRemark = checkin.getDefaultRemark(stage.stage_id, groupKey, resource)
-    const readCount = checkin.getReadCount(stage.stage_id, groupKey, resource)
+    const defaultRemark = checkin.getDefaultRemark(stage.stage_id, groupKey, resourceId)
+    const readCount = checkin.getReadCount(stage.stage_id, groupKey, resourceId)
     this.setData({
       showCheckin: true,
       currentGroup: { key: groupKey, label: groupLabel },
-      currentResource: resource,
+      currentResource: resourceName,
+      currentResourceId: resourceId,
       durationInput: '20',
       remarkInput: defaultRemark,
       currentReadCount: readCount
@@ -431,7 +405,7 @@ Page({
 
   // 读完：二次确认后已读次数+1
   onReadFinish() {
-    const { currentGroup, currentResource, stage } = this.data
+    const { currentGroup, currentResource, currentResourceId, stage } = this.data
     if (!currentGroup || !currentResource) return
     wx.showModal({
       title: '确认已读完',
@@ -441,8 +415,8 @@ Page({
       confirmColor: '#ff7a45',
       success: (res) => {
         if (!res.confirm) return
-        const count = checkin.incrementReadCount(stage.stage_id, currentGroup.key, currentResource)
-        
+        const count = checkin.incrementReadCount(stage.stage_id, currentGroup.key, currentResourceId)
+
         // 更新分组进度中的已读数
         const groupProgress = { ...this.data.groupProgress }
         const prev = groupProgress[currentGroup.key] || { todayMin: 0, readCount: 0 }
@@ -450,10 +424,10 @@ Page({
           todayMin: prev.todayMin,
           readCount: prev.readCount + 1
         }
-        
+
         this.setData({
           currentReadCount: count,
-          [`readCounts.${currentGroup.key}|${currentResource}`]: count,
+          [`readCounts.${currentGroup.key}|${currentResourceId}`]: count,
           groupProgress
         })
         wx.showToast({ title: `已读完(${count}次)`, icon: 'success' })
@@ -483,7 +457,7 @@ Page({
   },
 
   submitCheckin() {
-    const { currentGroup, currentResource, durationInput, remarkInput, stage } = this.data
+    const { currentGroup, currentResource, currentResourceId, durationInput, remarkInput, stage } = this.data
     if (!currentGroup || !currentResource) return
 
     const raw = String(durationInput || '').trim()
@@ -513,6 +487,7 @@ Page({
       stageName: stage.stage_name,
       groupKey: currentGroup.key,
       groupLabel: currentGroup.label,
+      resourceId: currentResourceId,
       resourceName: currentResource,
       durationMinutes: minutes,
       remark: remarkText
@@ -525,7 +500,7 @@ Page({
     }
 
     // 保存备注为默认值
-    checkin.saveDefaultRemark(stage.stage_id, currentGroup.key, currentResource, remarkText)
+    checkin.saveDefaultRemark(stage.stage_id, currentGroup.key, currentResourceId, remarkText)
 
     const resKey = `${currentGroup.key}|${currentResource}`
     // 基于本地值累加，避免再触发一次全量读取

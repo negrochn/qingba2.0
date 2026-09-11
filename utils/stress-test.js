@@ -24,8 +24,10 @@ function getStageResources(stage) {
     const groupLabel = resourceLabels[groupKey] || groupKey
     const items = res[groupKey]
     if (Array.isArray(items)) {
-      for (const name of items) {
-        resources.push({ groupKey, groupLabel, resourceName: name })
+      for (const it of items) {
+        if (it && it.id) {
+          resources.push({ groupKey, groupLabel, resourceId: it.id, resourceName: it.name })
+        }
       }
     }
   }
@@ -134,6 +136,7 @@ function generateStressData(onProgress) {
           stageName: stage.stage_name,
           groupKey: res.groupKey,
           groupLabel: res.groupLabel,
+          resourceId: res.resourceId,
           resourceName: res.resourceName,
           durationMinutes: splits[j],
           remark: '',
@@ -150,7 +153,7 @@ function generateStressData(onProgress) {
         const readCount = 1 + Math.floor(Math.random() * 2) // 1-2
         for (let r = 0; r < readCount; r++) {
           const res = resources[Math.floor(Math.random() * resources.length)]
-          const key = `${stage.stage_id}|${res.groupKey}|${res.resourceName}`
+          const key = `${stage.stage_id}|${res.groupKey}|${res.resourceId}`
           readCounts[key] = (readCounts[key] || 0) + 1
         }
       }

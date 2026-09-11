@@ -207,6 +207,15 @@
   color: var(--text);
   line-height: 1.4;
 }
+/* 自定义资源标记（官方资源不显示） */
+.r-tag {
+  margin-left: 12rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 8rpx;
+  background: var(--card2);
+  color: var(--text3);
+  font-size: calc(24rpx * var(--fs, 1));
+}
 .r-sub {
   margin-top: 6rpx;
   font-size: calc(28rpx * var(--fs, 1));

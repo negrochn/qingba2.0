@@ -1,0 +1,93 @@
+<view class="container {{fontClass}} {{darkClass}}">
+
+  <block wx:if="{{!isEmpty}}">
+    <block wx:for="{{sections}}" wx:key="stageId" wx:for-item="sec">
+      <view class="weui-cells__title">{{sec.stageName}}</view>
+      <view class="res-wrap">
+        <view class="res-list" wx:for="{{sec.groups}}" wx:key="uid" wx:for-item="grp">
+          <!-- 分组头（与阶段详情页同款：彩色圆点 + 名称 + 数量 + 折叠箭头） -->
+          <view
+            class="rg-head rg-head-active"
+            data-uid="{{grp.uid}}"
+            bindtap="onToggleGroup"
+          >
+            <view class="rg-head-left">
+              <view class="rg-dot rg-dot-{{grp.key}}"></view>
+              <view class="rg-label rg-label-{{grp.key}}">{{grp.label}}</view>
+              <view class="rg-count">{{grp.items.length}} 项</view>
+            </view>
+            <view class="rg-head-right">
+              <view class="rg-arrow {{expandedGroups[grp.uid] ? 'rg-arrow-open' : ''}}">›</view>
+            </view>
+          </view>
+
+          <view class="rg-body" wx:if="{{expandedGroups[grp.uid]}}">
+            <view
+              class="weui-cell weui-cell_access"
+              wx:for="{{grp.items}}"
+              wx:for-item="it"
+              wx:key="id"
+              data-id="{{it.id}}"
+              bindtap="openEdit"
+            >
+              <view class="weui-cell__bd">{{it.name}}</view>
+              <view class="weui-cell__ft">
+                <text class="iconfont icon-right"></text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+  </block>
+
+  <view class="mr-empty" wx:else>
+    <view class="mr-empty-text">还没有自定义资源</view>
+    <view class="mr-empty-tip">把自己买的书 / 动画加进来，归入对应分组即可和官方资源一起打卡、统计时长与阶段进度</view>
+  </view>
+
+  <view class="mr-add-area">
+    <button class="weui-btn weui-btn_primary" bindtap="openAdd">+ 添加资源</button>
+  </view>
+
+</view>
+
+<!-- 添加 / 编辑 半屏弹窗（沿用 stage 页 action-sheet + form-card 令牌） -->
+<view class="sheet-mask {{fontClass}} {{darkClass}} {{showSheet ? 'sheet-mask-show' : ''}}" bindtap="closeSheet" catchtouchmove="noop">
+  <view class="action-sheet" catchtap="noop" catchtouchmove="noop">
+    <view class="sheet-handle"></view>
+
+    <view class="sheet-head">
+      <view class="sheet-head-title">{{sheetTitle}}</view>
+      <view class="sheet-close" catchtap="closeSheet">×</view>
+    </view>
+
+    <view class="form-card">
+      <view class="form-row">
+        <view class="form-label">资源名称</view>
+        <input
+          class="form-field"
+          placeholder="如：家里买的XX绘本"
+          value="{{nameInput}}"
+          bindinput="onNameInput"
+          maxlength="{{maxNameLen}}"
+        />
+      </view>
+      <view class="weui-divider"></view>
+      <view class="form-row" bindtap="goPicker">
+        <view class="form-label">归属</view>
+        <view class="form-right">
+          <text class="form-value-text">{{locationText}}</text>
+          <text class="iconfont icon-right"></text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 编辑态：删除按钮占据取消的位置 -->
+    <view class="weui-btn-area_inline">
+      <button wx:if="{{isEdit}}" class="weui-btn weui-btn_warn" bindtap="onDelete">删除</button>
+      <button wx:else class="weui-btn weui-btn_default" bindtap="closeSheet">取消</button>
+      <button class="weui-btn weui-btn_primary" bindtap="submitSheet">{{isEdit ? '保存' : '添加'}}</button>
+    </view>
+  </view>
+</view>

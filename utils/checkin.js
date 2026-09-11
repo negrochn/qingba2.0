@@ -1,6 +1,10 @@
 // 打卡存储工具
 // 存储结构: qingba_checkins = Record<dayStr(YYYY-MM-DD), Checkin[]>
-// Checkin: { id, stageId, stageName, groupKey, groupLabel, resourceName, durationMinutes, timestamp }
+// Checkin: { id, stageId, stageName, groupKey, groupLabel, resourceId, resourceName, durationMinutes, timestamp }
+// 说明：resourceId 为资源唯一 id（官方 o_ 前缀 / 自定义 u_ 前缀）；
+//      老记录可能缺少 resourceId，此时按「阶段+分组+名称」回退匹配
+
+const { routeData } = require('./data.js')
 
 const STORAGE_KEY = 'qingba_checkins'
 const CHUNK_PREFIX = 'qingba_checkins_' // 按月分片: qingba_checkins_2021-06
@@ -261,7 +265,7 @@ function saveAll(data) {
 }
 
 // 新增打卡记录
-// opts: { stageId, stageName, groupKey, groupLabel, resourceName, durationMinutes, remark }
+// opts: { stageId, stageName, groupKey, groupLabel, resourceId, resourceName, durationMinutes, remark }
 // @returns {Object|null} 成功返回记录，保存失败返回 null
 function addCheckin(opts) {
   const day = todayStr()
@@ -272,6 +276,7 @@ function addCheckin(opts) {
     stageName: opts.stageName || '',
     groupKey: opts.groupKey || '',
     groupLabel: opts.groupLabel || '',
+    resourceId: opts.resourceId || '',
     resourceName: opts.resourceName || '',
     durationMinutes: Number(opts.durationMinutes) || 0,
     remark: opts.remark || '',
@@ -306,7 +311,8 @@ function addCheckin(opts) {
   return saveAll(all) ? record : null
 }
 
-// 默认备注存储: { "stageId|groupKey|resourceName": remark }
+// 默认备注存储: { "stageId|groupKey|resourceId": remark }
+// （迁移前遗留的 name key 由 migrateResourceKeysToId() / migrateResourceRecords() 处理）
 function _getDefaultRemarks() {
   try {
     return wx.getStorageSync(DEFAULT_REMARK_KEY) || {}
@@ -321,20 +327,20 @@ function _saveDefaultRemarks(data) {
   } catch (e) {}
 }
 
-function _remarkKey(stageId, groupKey, resourceName) {
-  return `${stageId}|${groupKey}|${resourceName}`
+function _remarkKey(stageId, groupKey, resourceId) {
+  return `${stageId}|${groupKey}|${resourceId}`
 }
 
 // 获取某资源的默认备注
-function getDefaultRemark(stageId, groupKey, resourceName) {
+function getDefaultRemark(stageId, groupKey, resourceId) {
   const all = _getDefaultRemarks()
-  return all[_remarkKey(stageId, groupKey, resourceName)] || ''
+  return all[_remarkKey(stageId, groupKey, resourceId)] || ''
 }
 
 // 保存某资源的默认备注
-function saveDefaultRemark(stageId, groupKey, resourceName, remark) {
+function saveDefaultRemark(stageId, groupKey, resourceId, remark) {
   const all = _getDefaultRemarks()
-  const key = _remarkKey(stageId, groupKey, resourceName)
+  const key = _remarkKey(stageId, groupKey, resourceId)
   const text = String(remark || '').trim()
   if (text) {
     all[key] = text
@@ -381,7 +387,10 @@ function todayTotalByResource(stageId, groupKey, resourceName) {
 
 // 批量汇总某天某阶段下各资源的累计时长与已读次数
 // 只需一次 getAll，避免在页面循环里对每个资源重复全量读取
-// @returns {Object} { minutes: { "groupKey|resourceName": min }, readCounts: { "groupKey|resourceName": count } }
+// 注意两套 key 口径不同（历史原因，勿混用）：
+//   minutes    —— 来自打卡记录，按 "groupKey|resourceName" 聚合
+//   readCounts —— 来自已读次数存储，按 "groupKey|resourceId" 聚合
+// @returns {Object} { minutes: { "groupKey|resourceName": min }, readCounts: { "groupKey|resourceId": count } }
 function getDayTotalsByStage(stageId, day) {
   const minutes = {}
   const readCounts = {}
@@ -507,7 +516,7 @@ function clearCheckinsByStage(stageId) {
       }
     }
 
-    // 同步清除该阶段的已读次数（key 格式: stageId|groupKey|resourceName）
+    // 同步清除该阶段的已读次数（key 格式: stageId|groupKey|resourceId）
     const counts = _getReadCounts()
     const prefix = `${stageId}|`
     let changed = false
@@ -584,7 +593,8 @@ function fmtHoursDecimal(totalMin) {
 }
 
 // ===== 读完次数 =====
-// 存储结构: { "stageId|groupKey|resourceName": count }
+// 存储结构: { "stageId|groupKey|resourceId": count }
+// （迁移前遗留的 name key 由 migrateResourceKeysToId() 一次性改写）
 
 function _getReadCounts() {
   try {
@@ -600,59 +610,285 @@ function _saveReadCounts(data) {
   } catch (e) {}
 }
 
-function _readCountKey(stageId, groupKey, resourceName) {
-  return `${stageId}|${groupKey}|${resourceName}`
+function _readCountKey(stageId, groupKey, resourceId) {
+  return `${stageId}|${groupKey}|${resourceId}`
 }
 
 // 获取某资源的已读次数
-function getReadCount(stageId, groupKey, resourceName) {
+function getReadCount(stageId, groupKey, resourceId) {
   const all = _getReadCounts()
-  return all[_readCountKey(stageId, groupKey, resourceName)] || 0
+  return all[_readCountKey(stageId, groupKey, resourceId)] || 0
 }
 
 // 某资源已读次数 +1
-function incrementReadCount(stageId, groupKey, resourceName) {
+function incrementReadCount(stageId, groupKey, resourceId) {
   const all = _getReadCounts()
-  const key = _readCountKey(stageId, groupKey, resourceName)
+  const key = _readCountKey(stageId, groupKey, resourceId)
   all[key] = (all[key] || 0) + 1
   _saveReadCounts(all)
   return all[key]
 }
 
-// 获取某阶段所有资源的已读次数 { "groupKey|resourceName": count }
+// 获取某阶段所有资源的已读次数
+// 采用「剥掉 {stageId}| 前缀」的写法（key 为 "stageId|groupKey|resourceId"）
+// @returns {Object} { "groupKey|resourceId": count }
 function getReadCountByStage(stageId) {
   const all = _getReadCounts()
   const result = {}
+  const prefix = `${stageId}|`
   for (const key in all) {
-    const parts = key.split('|')
-    if (parts[0] === stageId) {
-      result[`${parts[1]}|${parts[2]}`] = all[key]
+    if (String(key).indexOf(prefix) === 0) {
+      result[String(key).substring(prefix.length)] = all[key]
     }
   }
   return result
 }
 
 // 某阶段已读完排行：按资源聚合读完次数，降序，仅含 count>0
-// @returns {Array} [{ groupKey, groupLabel, resourceName, count }]
+// 名称解析优先级：记录里的名称快照（资源已删除也能显示）→ 资源视图 → id
+// @returns {Array} [{ groupKey, groupLabel, resourceId, resourceName, count }]
 function getReadRankingByStage(stageId) {
   const all = getAll()
   const labelMap = {}
+  const snapshotNames = {} // { "groupKey|resourceId": resourceName }
   for (const day in all) {
     for (const r of all[day]) {
-      if (r.stageId === stageId && r.groupKey) labelMap[r.groupKey] = r.groupLabel
+      if (!r || r.stageId !== stageId || !r.groupKey) continue
+      labelMap[r.groupKey] = r.groupLabel
+      if (r.resourceId) snapshotNames[`${r.groupKey}|${r.resourceId}`] = r.resourceName
     }
   }
+
+  // 延迟 require，避免 resources.js ↔ customResources.js ↔ checkin.js 循环依赖
+  let view = null
+  try { view = require('./resources.js') } catch (e) { view = null }
+
   const counts = getReadCountByStage(stageId)
   const list = []
   for (const key in counts) {
     if (!counts[key]) continue
     const idx = String(key).indexOf('|')
     const groupKey = key.substring(0, idx)
-    const resourceName = key.substring(idx + 1)
-    list.push({ groupKey, groupLabel: labelMap[groupKey] || '', resourceName, count: counts[key] })
+    const resourceId = key.substring(idx + 1)
+    let resourceName = snapshotNames[key] || ''
+    if (!resourceName && view) {
+      resourceName = view.getResourceName(stageId, groupKey, resourceId, '')
+    }
+    list.push({
+      groupKey,
+      groupLabel: labelMap[groupKey] || '',
+      resourceId,
+      resourceName: resourceName || resourceId,
+      count: counts[key]
+    })
   }
   list.sort((a, b) => b.count - a.count)
   return list
+}
+
+// ===== 资源 id 化迁移 =====
+// 老数据 key 为 "stageId|groupKey|资源名"，迁移为 "stageId|groupKey|资源id"
+// 找不到对应官方资源的 key 原样保留（不丢数据）
+
+let _idsMigrated = false
+let _officialIdMap = null
+
+// 官方资源索引：{ [stageId]: { [groupKey]: { [name]: id } } }
+function _getOfficialIdMap() {
+  if (_officialIdMap) return _officialIdMap
+  const map = {}
+  const stages = (routeData && routeData.stages) || []
+  stages.forEach(st => {
+    const stageMap = {}
+    const res = st.resources || {}
+    for (const groupKey in res) {
+      const items = res[groupKey]
+      if (!Array.isArray(items)) continue
+      const byName = {}
+      items.forEach(it => {
+        if (it && it.id && it.name) byName[it.name] = it.id
+      })
+      stageMap[groupKey] = byName
+    }
+    map[st.stage_id] = stageMap
+  })
+  _officialIdMap = map
+  return map
+}
+
+function _lookupOfficialId(stageId, groupKey, name) {
+  const stageMap = _getOfficialIdMap()[stageId]
+  if (!stageMap) return ''
+  const byName = stageMap[groupKey]
+  if (!byName) return ''
+  return byName[name] || ''
+}
+
+// 拆解 "stageId|groupKey|资源名 或 资源id"
+function _parseResourceKey(key) {
+  const s = String(key)
+  const i1 = s.indexOf('|')
+  if (i1 < 0) return null
+  const i2 = s.indexOf('|', i1 + 1)
+  if (i2 < 0) return null
+  return {
+    stageId: s.substring(0, i1),
+    groupKey: s.substring(i1 + 1, i2),
+    rest: s.substring(i2 + 1)
+  }
+}
+
+// 一次性迁移：已读次数 + 默认备注 的 name key → id key
+// 幂等（内部 _idsMigrated 标记），重复调用无副作用
+// @param {boolean} force 忽略本会话已迁移标记（导入旧备份后需要重新迁移时传 true）
+// @returns {boolean} 是否有数据被改写
+function migrateResourceKeysToId(force) {
+  if (_idsMigrated && !force) return false
+  _idsMigrated = true
+
+  let changed = false
+  try {
+    // 1) 已读次数
+    const counts = _getReadCounts()
+    let countsChanged = false
+    for (const key in counts) {
+      const parsed = _parseResourceKey(key)
+      if (!parsed) continue
+      const id = _lookupOfficialId(parsed.stageId, parsed.groupKey, parsed.rest)
+      if (!id || id === parsed.rest) continue
+      const newKey = `${parsed.stageId}|${parsed.groupKey}|${id}`
+      counts[newKey] = (counts[newKey] || 0) + (counts[key] || 0)
+      delete counts[key]
+      countsChanged = true
+    }
+    if (countsChanged) {
+      _saveReadCounts(counts)
+      changed = true
+    }
+
+    // 2) 默认备注
+    const remarks = _getDefaultRemarks()
+    let remarksChanged = false
+    for (const key in remarks) {
+      const parsed = _parseResourceKey(key)
+      if (!parsed) continue
+      const id = _lookupOfficialId(parsed.stageId, parsed.groupKey, parsed.rest)
+      if (!id || id === parsed.rest) continue
+      const newKey = `${parsed.stageId}|${parsed.groupKey}|${id}`
+      if (!remarks[newKey]) remarks[newKey] = remarks[key]
+      delete remarks[key]
+      remarksChanged = true
+    }
+    if (remarksChanged) {
+      _saveDefaultRemarks(remarks)
+      changed = true
+    }
+  } catch (e) {
+    console.error('migrateResourceKeysToId failed:', e)
+    return false
+  }
+  return changed
+}
+
+// 改归属 / 改名：打卡记录 + 已读次数 + 默认备注 三处一起迁
+// opts: {
+//   resourceId, resourceName,          // 原资源 id / 名称
+//   fromStageId, fromGroupKey,
+//   toStageId, toGroupKey,
+//   toStageName, toGroupLabel,
+//   toResourceName                     // 可选：改名时的新名称（缺省沿用 resourceName）
+// }
+// @returns {{ ok: boolean }}
+function migrateResourceRecords(opts) {
+  const o = opts || {}
+  const resourceId = o.resourceId || ''
+  const resourceName = o.resourceName || ''
+  const toResourceName = o.toResourceName || resourceName
+  if (!resourceId && !resourceName) return { ok: false }
+
+  // 目标 key（id 优先）
+  const targetKey = resourceId
+    ? `${o.toStageId}|${o.toGroupKey}|${resourceId}`
+    : `${o.toStageId}|${o.toGroupKey}|${toResourceName}`
+  // 兼容迁移前遗留的 name key
+  const oldKeys = []
+  if (resourceId) oldKeys.push(`${o.fromStageId}|${o.fromGroupKey}|${resourceId}`)
+  if (resourceName) oldKeys.push(`${o.fromStageId}|${o.fromGroupKey}|${resourceName}`)
+
+  try {
+    // 1) 打卡记录：id 优先 + 名称回退，命中后改写归属并补上 resourceId（自愈）
+    const all = getAll()
+    let recordsChanged = false
+    for (const day in all) {
+      const list = all[day]
+      if (!Array.isArray(list)) continue
+      for (const r of list) {
+        if (!r) continue
+        const same = r.resourceId
+          ? (!!resourceId && r.resourceId === resourceId)
+          : (r.stageId === o.fromStageId && r.groupKey === o.fromGroupKey && r.resourceName === resourceName)
+        if (!same) continue
+        r.stageId = o.toStageId
+        r.stageName = o.toStageName
+        r.groupKey = o.toGroupKey
+        r.groupLabel = o.toGroupLabel
+        r.resourceName = toResourceName
+        if (resourceId) r.resourceId = resourceId
+        recordsChanged = true
+      }
+    }
+    if (recordsChanged && !saveAll(all)) return { ok: false }
+
+    // 2) 已读次数
+    const counts = _getReadCounts()
+    let countsChanged = false
+    oldKeys.forEach(k => {
+      if (k === targetKey || counts[k] === undefined) return
+      counts[targetKey] = (counts[targetKey] || 0) + (counts[k] || 0)
+      delete counts[k]
+      countsChanged = true
+    })
+    if (countsChanged) _saveReadCounts(counts)
+
+    // 3) 默认备注
+    const remarks = _getDefaultRemarks()
+    let remarksChanged = false
+    oldKeys.forEach(k => {
+      if (k === targetKey || remarks[k] === undefined) return
+      if (!remarks[targetKey]) remarks[targetKey] = remarks[k]
+      delete remarks[k]
+      remarksChanged = true
+    })
+    if (remarksChanged) _saveDefaultRemarks(remarks)
+
+    return { ok: true }
+  } catch (e) {
+    console.error('migrateResourceRecords failed:', e)
+    return { ok: false }
+  }
+}
+
+// 某资源的打卡汇总（记录里的名称是快照，资源删除后统计仍可用）
+// 匹配规则：记录有 resourceId 时按 id，否则按「阶段+分组+名称」回退
+// @returns {{ count: number, minutes: number }} count=打卡条数
+function getResourceCheckinSummary(resourceId, resourceName, stageId, groupKey) {
+  const all = getAll()
+  let count = 0
+  let minutes = 0
+  for (const day in all) {
+    const list = all[day]
+    if (!Array.isArray(list)) continue
+    for (const r of list) {
+      if (!r) continue
+      const same = r.resourceId
+        ? (!!resourceId && r.resourceId === resourceId)
+        : (r.stageId === stageId && r.groupKey === groupKey && r.resourceName === resourceName)
+      if (!same) continue
+      count++
+      minutes += Number(r.durationMinutes) || 0
+    }
+  }
+  return { count, minutes }
 }
 
 // 当前阶段相关（无存储时返回 null，表示用户尚未设置）
@@ -761,6 +997,9 @@ module.exports = {
   incrementReadCount,
   getReadCountByStage,
   getReadRankingByStage,
+  migrateResourceKeysToId,
+  migrateResourceRecords,
+  getResourceCheckinSummary,
   getCurrentStage,
   setCurrentStage,
   clearCurrentStage,

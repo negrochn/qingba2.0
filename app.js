@@ -1,9 +1,16 @@
 const theme = require('./utils/theme.js')
+const checkin = require('./utils/checkin.js')
 
 App({
   onLaunch() {
     this.globalData.fontLevel = theme.getFontLevel()
     this.globalData.darkMode = theme.getDarkMode()
+    // 官方资源 id 化：把老的「资源名」key 一次性迁移为「资源 id」key（幂等，重复调用无副作用）
+    try {
+      checkin.migrateResourceKeysToId()
+    } catch (e) {
+      console.error('资源 key 迁移失败', e)
+    }
     this.initUpdateManager()
   },
 

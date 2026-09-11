@@ -1,0 +1,38 @@
+<view class="container {{fontClass}} {{darkClass}}">
+
+  <view class="weui-cells__title">选择阶段</view>
+  <view class="weui-cells weui-cells_radio">
+    <view
+      class="weui-cell"
+      wx:for="{{stages}}"
+      wx:key="id"
+      wx:for-item="s"
+      data-id="{{s.id}}"
+      bindtap="pickStage"
+    >
+      <view class="weui-cell__bd">{{s.name}}</view>
+      <view class="weui-cell__ft">
+        <text class="rp-full" wx:if="{{s.full && selectedStageId !== s.id}}">已满</text>
+      </view>
+      <text class="weui-icon-checked iconfont icon-check" hidden="{{selectedStageId !== s.id}}"></text>
+    </view>
+  </view>
+
+  <block wx:if="{{groups.length > 0}}">
+    <view class="weui-cells__title">选择分组</view>
+    <view class="weui-cells weui-cells_radio">
+      <view
+        class="weui-cell"
+        wx:for="{{groups}}"
+        wx:key="key"
+        wx:for-item="g"
+        data-key="{{g.key}}"
+        bindtap="pickGroup"
+      >
+        <view class="weui-cell__bd">{{g.label}}</view>
+        <text class="weui-icon-checked iconfont icon-check" hidden="{{selectedGroupKey !== g.key}}"></text>
+      </view>
+    </view>
+  </block>
+
+</view>

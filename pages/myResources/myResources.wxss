@@ -1,0 +1,253 @@
+/* 「我的资源」页
+   分组沿用阶段详情页原语（.res-wrap / .res-list / .rg-*），弹窗沿用 action-sheet + form-card 令牌 */
+page {
+  background: var(--bg);
+
+  /* ====== 分组彩色圆点 / 名称色（与阶段详情页保持一致，扁平纯色无外发光） ====== */
+  --dot-mpb: #e74c3c;   /* 主线绘本 */
+  --dot-mgr: #e67e22;   /* 主线分级 */
+  --dot-man: #f1c40f;   /* 主线动画 */
+  --dot-sgr: #2ecc71;   /* 辅线分级 */
+  --dot-san: #1abc9c;   /* 辅线动画 */
+  --dot-fex: #3498db;   /* 趣味拓展 */
+  --dot-sex: #9b59b6;   /* 科普拓展 */
+  --dot-fap: #8e44ad;   /* 融合APP */
+  --dot-def: #888888;   /* 默认 */
+}
+
+/* 深色：分类色提亮（仅一处覆盖，免去逐条 .dm-dark） */
+.dm-dark {
+  --dot-mpb: #ff6b6b;
+  --dot-mgr: #f5b041;
+  --dot-man: #f7dc6f;
+  --dot-sgr: #58d68d;
+  --dot-san: #48c9b0;
+  --dot-fex: #5dade2;
+  --dot-sex: #bb8fce;
+  --dot-fap: #af7ac5;
+  --dot-def: #b2b2b2;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dm-auto {
+    --dot-mpb: #ff6b6b;
+    --dot-mgr: #f5b041;
+    --dot-man: #f7dc6f;
+    --dot-sgr: #58d68d;
+    --dot-san: #48c9b0;
+    --dot-fex: #5dade2;
+    --dot-sex: #bb8fce;
+    --dot-fap: #af7ac5;
+    --dot-def: #b2b2b2;
+  }
+}
+
+/* ====== 资源分组（与阶段详情页同原语） ====== */
+.res-wrap {
+  background: var(--card);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 每个分组块底部通栏分割线，分隔相邻分组（展开/折叠都生效） */
+.res-list { border-bottom: 1rpx solid var(--divider); }
+.res-list:last-child { border-bottom: none; }
+
+/* 分组头（左：彩色圆点 + 标签 + 数量；右：折叠箭头） */
+.rg-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 110rpx;
+  padding: 24rpx 32rpx;
+}
+.rg-head-left { display: flex; align-items: center; flex: 1; min-width: 0; }
+.rg-head-right { display: flex; align-items: center; flex-shrink: 0; margin-left: 16rpx; }
+.rg-head-active:active {
+  background: var(--cell-active);
+  border-radius: 12rpx;
+}
+
+.rg-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  margin-right: 12rpx;
+  flex-shrink: 0;
+  background: var(--dot-def);
+}
+.rg-dot-main_picture_books { background: var(--dot-mpb); }
+.rg-dot-main_graded_readers { background: var(--dot-mgr); }
+.rg-dot-main_animations { background: var(--dot-man); }
+.rg-dot-sub_graded_readers { background: var(--dot-sgr); }
+.rg-dot-sub_animations { background: var(--dot-san); }
+.rg-dot-fun_extensions { background: var(--dot-fex); }
+.rg-dot-science_extensions { background: var(--dot-sex); }
+.rg-dot-fusion_apps { background: var(--dot-fap); }
+
+.rg-label {
+  flex: 1;
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text);
+}
+.rg-label-main_picture_books { color: var(--dot-mpb); }
+.rg-label-main_graded_readers { color: var(--dot-mgr); }
+.rg-label-main_animations { color: var(--dot-man); }
+.rg-label-sub_graded_readers { color: var(--dot-sgr); }
+.rg-label-sub_animations { color: var(--dot-san); }
+.rg-label-fun_extensions { color: var(--dot-fex); }
+.rg-label-science_extensions { color: var(--dot-sex); }
+.rg-label-fusion_apps { color: var(--dot-fap); }
+.rg-label-default { color: var(--text3); }
+
+.rg-count {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
+}
+
+/* 展开 / 折叠箭头 */
+.rg-arrow {
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text3);
+  font-weight: 300;
+  transition: transform 0.2s;
+}
+.rg-arrow-open { transform: rotate(90deg); }
+
+/* 展开内容区（扁平，顶部细分隔线） */
+.rg-body {
+  background: var(--card);
+  border-top: 1rpx solid var(--divider);
+  overflow: hidden;
+}
+
+/* 空态 */
+.mr-empty {
+  padding: 120rpx 64rpx 40rpx;
+  text-align: center;
+}
+.mr-empty-text {
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text);
+}
+.mr-empty-tip {
+  margin-top: 16rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1.6;
+}
+
+.mr-add-area {
+  margin: 32rpx;
+}
+
+/* ====== 半屏弹窗（与 stage 页同令牌） ====== */
+.sheet-mask {
+  position: fixed;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 1000;
+  pointer-events: none;
+  transition: background 0.2s ease;
+  display: flex;
+  align-items: flex-end;
+}
+.sheet-mask-show { background: rgba(0, 0, 0, 0.5); pointer-events: auto; }
+.action-sheet {
+  width: 100%;
+  background: var(--card);
+  border-top-left-radius: 24rpx;
+  border-top-right-radius: 24rpx;
+  padding: 16rpx 32rpx calc(env(safe-area-inset-bottom) + 32rpx);
+  box-sizing: border-box;
+  transform: translateY(100%);
+  transition: transform 0.25s ease;
+}
+.sheet-mask-show .action-sheet { transform: translateY(0); }
+
+.sheet-handle {
+  width: 72rpx;
+  height: 8rpx;
+  background: var(--divider);
+  border-radius: 4rpx;
+  margin: 8rpx auto 24rpx;
+}
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28rpx;
+}
+.sheet-head-title {
+  flex: 1;
+  min-width: 0;
+  font-size: calc(34rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 12rpx;
+}
+.sheet-close {
+  flex-shrink: 0;
+  width: 56rpx;
+  height: 56rpx;
+  line-height: 50rpx;
+  text-align: center;
+  font-size: 53rpx;
+  color: var(--text3);
+  border-radius: 50%;
+}
+.sheet-close:active { background: var(--cell-active); color: var(--text2); }
+
+.form-card {
+  background: var(--card);
+  border-radius: 16rpx;
+  padding: 0 32rpx;
+  margin-bottom: 20rpx;
+}
+.form-row {
+  display: flex;
+  align-items: center;
+  min-height: 88rpx;
+  padding: 16rpx 0;
+  box-sizing: border-box;
+}
+.form-row:active { background: var(--cell-active); }
+.form-label {
+  flex-shrink: 0;
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text);
+  width: 140rpx;
+}
+.form-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12rpx;
+}
+.form-field {
+  flex: 1;
+  text-align: right;
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text);
+  height: 64rpx;
+}
+.form-value-text {
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text2);
+  text-align: right;
+}
+.form-card .weui-divider { height: 1rpx; background: var(--divider); margin: 0; }
+.form-row .icon-right {
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1;
+  margin-left: 12rpx;
+  flex-shrink: 0;
+}
+
+.action-sheet .weui-btn { flex: 1; }
+.action-sheet .weui-btn-area_inline { margin-top: 16rpx; }

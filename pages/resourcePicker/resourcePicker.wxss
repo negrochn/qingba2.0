@@ -1,0 +1,9 @@
+/* 资源归属选择页 - 原语：picker-page 整页单选列表，组件原语见全局 app.wxss */
+page {
+  background: var(--bg);
+}
+
+.rp-full {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
+}

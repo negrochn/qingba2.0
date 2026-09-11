@@ -13,7 +13,9 @@
     "pages/fontPicker/fontPicker",
     "pages/darkMode/darkMode",
     "pages/importPicker/importPicker",
-    "pages/clearPicker/clearPicker"
+    "pages/clearPicker/clearPicker",
+    "pages/myResources/myResources",
+    "pages/resourcePicker/resourcePicker"
   ],
   "window": {
     "backgroundTextStyle": "@bgTextStyle",

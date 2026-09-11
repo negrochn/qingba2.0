@@ -30,21 +30,22 @@
       </view>
       <view class="rg-body" wx:if="{{expandedGroups[g.key]}}">
         <view
-          class="r-row {{g.clickable && !stageLocked ? 'r-row-click' : ''}} {{resTotals[g.key + '|' + g.items[ridx]] ? 'r-row-done' : ''}}"
+          class="r-row {{g.clickable && !stageLocked ? 'r-row-click' : ''}} {{resTotals[g.key + '|' + res.name] ? 'r-row-done' : ''}}"
           wx:for="{{g.items}}"
-          wx:for-item="rname"
+          wx:for-item="res"
           wx:for-index="ridx"
-          wx:key="*this"
+          wx:key="id"
           data-group-key="{{g.key}}"
           data-group-label="{{g.label}}"
-          data-resource="{{rname}}"
+          data-resource-id="{{res.id}}"
+          data-resource-name="{{res.name}}"
           bindtap="onResourceTap"
         >
-          <view class="r-no" wx:if="{{readCounts[g.key + '|' + rname] >= 1}}">{{readCounts[g.key + '|' + rname]}}</view>
-          <view class="r-no r-no-char" wx:else>{{rname[0]}}</view>
+          <view class="r-no" wx:if="{{readCounts[g.key + '|' + res.id] >= 1}}">{{readCounts[g.key + '|' + res.id]}}</view>
+          <view class="r-no r-no-char" wx:else>{{res.name[0]}}</view>
           <view class="r-body">
-            <view class="r-name">{{rname}}</view>
-            <view class="r-sub" wx:if="{{resTotals[g.key + '|' + rname]}}">今日已打卡 {{resTotals[g.key + '|' + rname]}} 分钟 · 可继续追加</view>
+            <view class="r-name">{{res.name}}<text class="r-tag" wx:if="{{res.custom}}">自定义</text></view>
+            <view class="r-sub" wx:if="{{resTotals[g.key + '|' + res.name]}}">今日已打卡 {{resTotals[g.key + '|' + res.name]}} 分钟 · 可继续追加</view>
             <view class="r-sub r-sub-hint" wx:elif="{{g.clickable && !stageLocked}}">点击输入学习时长并打卡</view>
             <view class="r-sub r-sub-locked" wx:elif="{{g.clickable && stageLocked}}">
               <text wx:if="{{stageStatus === 'completed'}}">本阶段已完成，仅可查看</text>
@@ -53,7 +54,7 @@
             <view class="r-sub r-sub-note" wx:else>仅供参考，不参与打卡</view>
           </view>
           <view class="r-right">
-            <view class="r-badge" wx:if="{{resTotals[g.key + '|' + rname]}}">{{resTotals[g.key + '|' + rname]}}m</view>
+            <view class="r-badge" wx:if="{{resTotals[g.key + '|' + res.name]}}">{{resTotals[g.key + '|' + res.name]}}m</view>
             <view class="r-arrow" wx:if="{{g.clickable && !stageLocked}}">›</view>
             <view class="r-arrow" wx:else>·</view>
           </view>

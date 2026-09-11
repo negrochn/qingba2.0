@@ -59,13 +59,37 @@ const routeData = {
       "entry_requirement": "零基础",
       "promotion_standard": "时间满足且小小优趣稳定新版phase5",
       "resources": {
-        "main_picture_books": ["古力小超人", "古力与朋友们", "巴塔木口语书", "QPlay奇问妙想国"],
-        "main_graded_readers": ["培生启明星L1", "培生词汇妙趣屋L1-2", "Super hammy A-B", "Buddy Reader A-B"],
-        "main_animations": ["Wow English（S1-3）", "Muzzy（1-6集）"],
-        "sub_graded_readers": ["大猫L1（虚构）", "RAZ AA-A（虚构）"],
-        "sub_animations": ["Wow学练机（喜欢Wow选）", "动物国王大冒险", "清华幼儿英语启蒙动画"],
-        "fun_extensions": ["小书虫L1"],
-        "fusion_apps": ["小小优趣成长计划Phase1-4"]
+        "main_picture_books": [
+          { "id": "o_r1_mpb_01", "name": "古力小超人" },
+          { "id": "o_r1_mpb_02", "name": "古力与朋友们" },
+          { "id": "o_r1_mpb_03", "name": "巴塔木口语书" },
+          { "id": "o_r1_mpb_04", "name": "QPlay奇问妙想国" }
+        ],
+        "main_graded_readers": [
+          { "id": "o_r1_mgr_01", "name": "培生启明星L1" },
+          { "id": "o_r1_mgr_02", "name": "培生词汇妙趣屋L1-2" },
+          { "id": "o_r1_mgr_03", "name": "Super hammy A-B" },
+          { "id": "o_r1_mgr_04", "name": "Buddy Reader A-B" }
+        ],
+        "main_animations": [
+          { "id": "o_r1_ma_01", "name": "Wow English（S1-3）" },
+          { "id": "o_r1_ma_02", "name": "Muzzy（1-6集）" }
+        ],
+        "sub_graded_readers": [
+          { "id": "o_r1_sgr_01", "name": "大猫L1（虚构）" },
+          { "id": "o_r1_sgr_02", "name": "RAZ AA-A（虚构）" }
+        ],
+        "sub_animations": [
+          { "id": "o_r1_sa_01", "name": "Wow学练机（喜欢Wow选）" },
+          { "id": "o_r1_sa_02", "name": "动物国王大冒险" },
+          { "id": "o_r1_sa_03", "name": "清华幼儿英语启蒙动画" }
+        ],
+        "fun_extensions": [
+          { "id": "o_r1_fe_01", "name": "小书虫L1" }
+        ],
+        "fusion_apps": [
+          { "id": "o_r1_fa_01", "name": "小小优趣成长计划Phase1-4" }
+        ]
       },
       "key_points": [
         { "text": "动画为零基础无门槛，若有小小优趣SVIP建议从phase1开始", "highlighted": false },
@@ -84,13 +108,36 @@ const routeData = {
       "entry_requirement": "phase5",
       "promotion_standard": "时间满足且小小优趣稳定新版phase8",
       "resources": {
-        "main_picture_books": ["WPlay词汇妙趣国"],
-        "main_graded_readers": ["牛津树L1-2", "培生启明星L2", "培生词汇妙趣屋L3", "Super hammy C-D", "Buddy Reader C-D"],
-        "main_animations": ["Wow English（S4-5）", "Muzzy（7-12集）"],
-        "sub_graded_readers": ["大猫L2（虚构）", "RAZ B（虚构）"],
-        "sub_animations": ["Wow学练机（喜欢Wow选）", "动物国王大冒险", "趣趣知知鸟", "Muzzy橙盒（喜欢Muzzy动画选）"],
-        "fun_extensions": ["小书虫L2"],
-        "fusion_apps": ["小小优趣成长计划Phase5-7"]
+        "main_picture_books": [
+          { "id": "o_r2_mpb_01", "name": "WPlay词汇妙趣国" }
+        ],
+        "main_graded_readers": [
+          { "id": "o_r2_mgr_01", "name": "牛津树L1-2" },
+          { "id": "o_r2_mgr_02", "name": "培生启明星L2" },
+          { "id": "o_r2_mgr_03", "name": "培生词汇妙趣屋L3" },
+          { "id": "o_r2_mgr_04", "name": "Super hammy C-D" },
+          { "id": "o_r2_mgr_05", "name": "Buddy Reader C-D" }
+        ],
+        "main_animations": [
+          { "id": "o_r2_ma_01", "name": "Wow English（S4-5）" },
+          { "id": "o_r2_ma_02", "name": "Muzzy（7-12集）" }
+        ],
+        "sub_graded_readers": [
+          { "id": "o_r2_sgr_01", "name": "大猫L2（虚构）" },
+          { "id": "o_r2_sgr_02", "name": "RAZ B（虚构）" }
+        ],
+        "sub_animations": [
+          { "id": "o_r2_sa_01", "name": "Wow学练机（喜欢Wow选）" },
+          { "id": "o_r2_sa_02", "name": "动物国王大冒险" },
+          { "id": "o_r2_sa_03", "name": "趣趣知知鸟" },
+          { "id": "o_r2_sa_04", "name": "Muzzy橙盒（喜欢Muzzy动画选）" }
+        ],
+        "fun_extensions": [
+          { "id": "o_r2_fe_01", "name": "小书虫L2" }
+        ],
+        "fusion_apps": [
+          { "id": "o_r2_fa_01", "name": "小小优趣成长计划Phase5-7" }
+        ]
       },
       "key_points": [
         { "text": "动画接续上一阶段，继续推进", "highlighted": false },
@@ -107,13 +154,40 @@ const routeData = {
       "entry_requirement": "phase8",
       "promotion_standard": "时间满足且小小优趣稳定新版phase12",
       "resources": {
-        "main_picture_books": ["饼干狗", "小猪小象（简单）"],
-        "main_graded_readers": ["牛津树L3", "培生启明星L3", "Super hammy E-F", "Buddy Reader E-F", "大猫L3（虚构）"],
-        "main_animations": ["Little Fox L1（绿森林）", "The Blobs", "SSS动画儿歌（小小优趣版L1-3）"],
-        "sub_graded_readers": ["RAZ C-D（虚构）", "口语剧场（Part1）"],
-        "sub_animations": ["蓝色小考拉", "小鼠波波", "小羊提米"],
-        "fun_extensions": ["小书虫L3", "培生儿童L3", "培生400句上", "Best Buddies（学乐橡子系列）"],
-        "fusion_apps": ["小小优趣成长计划Phase8-9"]
+        "main_picture_books": [
+          { "id": "o_r3_mpb_01", "name": "饼干狗" },
+          { "id": "o_r3_mpb_02", "name": "小猪小象（简单）" }
+        ],
+        "main_graded_readers": [
+          { "id": "o_r3_mgr_01", "name": "牛津树L3" },
+          { "id": "o_r3_mgr_02", "name": "培生启明星L3" },
+          { "id": "o_r3_mgr_03", "name": "Super hammy E-F" },
+          { "id": "o_r3_mgr_04", "name": "Buddy Reader E-F" },
+          { "id": "o_r3_mgr_05", "name": "大猫L3（虚构）" }
+        ],
+        "main_animations": [
+          { "id": "o_r3_ma_01", "name": "Little Fox L1（绿森林）" },
+          { "id": "o_r3_ma_02", "name": "The Blobs" },
+          { "id": "o_r3_ma_03", "name": "SSS动画儿歌（小小优趣版L1-3）" }
+        ],
+        "sub_graded_readers": [
+          { "id": "o_r3_sgr_01", "name": "RAZ C-D（虚构）" },
+          { "id": "o_r3_sgr_02", "name": "口语剧场（Part1）" }
+        ],
+        "sub_animations": [
+          { "id": "o_r3_sa_01", "name": "蓝色小考拉" },
+          { "id": "o_r3_sa_02", "name": "小鼠波波" },
+          { "id": "o_r3_sa_03", "name": "小羊提米" }
+        ],
+        "fun_extensions": [
+          { "id": "o_r3_fe_01", "name": "小书虫L3" },
+          { "id": "o_r3_fe_02", "name": "培生儿童L3" },
+          { "id": "o_r3_fe_03", "name": "培生400句上" },
+          { "id": "o_r3_fe_04", "name": "Best Buddies（学乐橡子系列）" }
+        ],
+        "fusion_apps": [
+          { "id": "o_r3_fa_01", "name": "小小优趣成长计划Phase8-9" }
+        ]
       },
       "key_points": [
         { "text": "小鼠波波、蓝色小考拉调至辅线", "highlighted": false },
@@ -130,13 +204,39 @@ const routeData = {
       "entry_requirement": "phase12",
       "promotion_standard": "时间满足且小小优趣稳定新版phase14",
       "resources": {
-        "main_picture_books": ["小猪小象（难的部分）", "波西与皮普", "佩奇高频词绘本（L1-3）", "小猪和狐狸（4册点读）"],
-        "main_graded_readers": ["牛津树L4", "培生启明星L4", "大猫L4（虚构）"],
-        "main_animations": ["Little Fox L1选2-3部（Bat、Dino、Tire）"],
-        "sub_graded_readers": ["快乐瓢虫L1", "RAZ E-F（虚构）", "I can read预备级（挑选）", "口语剧场（Part2）"],
-        "sub_animations": ["道奇（难度不低，尽量优先Little Fox）"],
-        "fun_extensions": ["小书虫L4（虚构）", "培生儿童L4", "培生400句下", "银盒号阅读全解码L1-3", "学乐橡子点读系列（你好，小刺猬、你好，小螃蟹、独角兽与雪人）"],
-        "fusion_apps": ["小小优趣成长计划Phase10-11（非测试级别）"]
+        "main_picture_books": [
+          { "id": "o_r4_mpb_01", "name": "小猪小象（难的部分）" },
+          { "id": "o_r4_mpb_02", "name": "波西与皮普" },
+          { "id": "o_r4_mpb_03", "name": "佩奇高频词绘本（L1-3）" },
+          { "id": "o_r4_mpb_04", "name": "小猪和狐狸（4册点读）" }
+        ],
+        "main_graded_readers": [
+          { "id": "o_r4_mgr_01", "name": "牛津树L4" },
+          { "id": "o_r4_mgr_02", "name": "培生启明星L4" },
+          { "id": "o_r4_mgr_03", "name": "大猫L4（虚构）" }
+        ],
+        "main_animations": [
+          { "id": "o_r4_ma_01", "name": "Little Fox L1选2-3部（Bat、Dino、Tire）" }
+        ],
+        "sub_graded_readers": [
+          { "id": "o_r4_sgr_01", "name": "快乐瓢虫L1" },
+          { "id": "o_r4_sgr_02", "name": "RAZ E-F（虚构）" },
+          { "id": "o_r4_sgr_03", "name": "I can read预备级（挑选）" },
+          { "id": "o_r4_sgr_04", "name": "口语剧场（Part2）" }
+        ],
+        "sub_animations": [
+          { "id": "o_r4_sa_01", "name": "道奇（难度不低，尽量优先Little Fox）" }
+        ],
+        "fun_extensions": [
+          { "id": "o_r4_fe_01", "name": "小书虫L4（虚构）" },
+          { "id": "o_r4_fe_02", "name": "培生儿童L4" },
+          { "id": "o_r4_fe_03", "name": "培生400句下" },
+          { "id": "o_r4_fe_04", "name": "银盒号阅读全解码L1-3" },
+          { "id": "o_r4_fe_05", "name": "学乐橡子点读系列（你好，小刺猬、你好，小螃蟹、独角兽与雪人）" }
+        ],
+        "fusion_apps": [
+          { "id": "o_r4_fa_01", "name": "小小优趣成长计划Phase10-11（非测试级别）" }
+        ]
       },
       "key_points": [
         { "text": "道奇尽量优先Little Fox", "highlighted": false }
@@ -151,13 +251,38 @@ const routeData = {
       "entry_requirement": "phase14",
       "promotion_standard": "时间满足且小小优趣稳定新版phase16",
       "resources": {
-        "main_picture_books": ["皮特猫（My First）", "小毛人（My First）", "佩奇高频词绘本（L4-5）"],
-        "main_graded_readers": ["牛津树L5", "培生启明星L5", "大猫L5（虚构）"],
-        "main_animations": ["Little Fox L2任选2部（Bird、彼得兔、马克笔）"],
-        "sub_graded_readers": ["快乐瓢虫L2", "RAZ G-H（虚构）", "I can read基础级（挑选）"],
-        "sub_animations": ["小猪佩奇S1-2（建议phase15再加）"],
-        "fun_extensions": ["小书虫L5", "培生儿童L5", "银盒号阅读全解码L4-5", "丽声冒险岛L1-3（背面L3-5）", "淘气兔子（点读版）", "脏脏书（科普）"],
-        "fusion_apps": ["小小优趣成长计划Phase12（非测试级别）"]
+        "main_picture_books": [
+          { "id": "o_r5_mpb_01", "name": "皮特猫（My First）" },
+          { "id": "o_r5_mpb_02", "name": "小毛人（My First）" },
+          { "id": "o_r5_mpb_03", "name": "佩奇高频词绘本（L4-5）" }
+        ],
+        "main_graded_readers": [
+          { "id": "o_r5_mgr_01", "name": "牛津树L5" },
+          { "id": "o_r5_mgr_02", "name": "培生启明星L5" },
+          { "id": "o_r5_mgr_03", "name": "大猫L5（虚构）" }
+        ],
+        "main_animations": [
+          { "id": "o_r5_ma_01", "name": "Little Fox L2任选2部（Bird、彼得兔、马克笔）" }
+        ],
+        "sub_graded_readers": [
+          { "id": "o_r5_sgr_01", "name": "快乐瓢虫L2" },
+          { "id": "o_r5_sgr_02", "name": "RAZ G-H（虚构）" },
+          { "id": "o_r5_sgr_03", "name": "I can read基础级（挑选）" }
+        ],
+        "sub_animations": [
+          { "id": "o_r5_sa_01", "name": "小猪佩奇S1-2（建议phase15再加）" }
+        ],
+        "fun_extensions": [
+          { "id": "o_r5_fe_01", "name": "小书虫L5" },
+          { "id": "o_r5_fe_02", "name": "培生儿童L5" },
+          { "id": "o_r5_fe_03", "name": "银盒号阅读全解码L4-5" },
+          { "id": "o_r5_fe_04", "name": "丽声冒险岛L1-3（背面L3-5）" },
+          { "id": "o_r5_fe_05", "name": "淘气兔子（点读版）" },
+          { "id": "o_r5_fe_06", "name": "脏脏书（科普）" }
+        ],
+        "fusion_apps": [
+          { "id": "o_r5_fa_01", "name": "小小优趣成长计划Phase12（非测试级别）" }
+        ]
       },
       "key_points": []
     },
@@ -170,14 +295,41 @@ const routeData = {
       "entry_requirement": "phase16",
       "promotion_standard": "佩奇可初步裸听且常规1-6累计投入不低于400H（最好测试稳定phase18）",
       "resources": {
-        "main_picture_books": ["汪培珽一段Syd Hoff系列", "佩奇（红黄蓝）盒"],
-        "main_graded_readers": ["牛津树L6", "培生启明星L6", "大猫L6（虚构）"],
-        "main_animations": ["小猪佩奇S1-3（可接着常规5往后）"],
-        "sub_graded_readers": ["快乐瓢虫L3", "RAZ I-J（虚构）", "I can read基础"],
-        "sub_animations": ["Little Fox L3经典故事"],
-        "fun_extensions": ["小书虫L6（虚构）", "培生儿童L6", "银河号阅读全解码L6", "丽声冒险岛L4（背面L6）"],
-        "science_extensions": ["水先生", "Baby why（生物化学）", "Baby all（物理、艺术）", "心智麦田轻科普绘本（11本）"],
-        "fusion_apps": ["小小优趣成长计划Phase13（非测试级别）"]
+        "main_picture_books": [
+          { "id": "o_r6_mpb_01", "name": "汪培珽一段Syd Hoff系列" },
+          { "id": "o_r6_mpb_02", "name": "佩奇（红黄蓝）盒" }
+        ],
+        "main_graded_readers": [
+          { "id": "o_r6_mgr_01", "name": "牛津树L6" },
+          { "id": "o_r6_mgr_02", "name": "培生启明星L6" },
+          { "id": "o_r6_mgr_03", "name": "大猫L6（虚构）" }
+        ],
+        "main_animations": [
+          { "id": "o_r6_ma_01", "name": "小猪佩奇S1-3（可接着常规5往后）" }
+        ],
+        "sub_graded_readers": [
+          { "id": "o_r6_sgr_01", "name": "快乐瓢虫L3" },
+          { "id": "o_r6_sgr_02", "name": "RAZ I-J（虚构）" },
+          { "id": "o_r6_sgr_03", "name": "I can read基础" }
+        ],
+        "sub_animations": [
+          { "id": "o_r6_sa_01", "name": "Little Fox L3经典故事" }
+        ],
+        "fun_extensions": [
+          { "id": "o_r6_fe_01", "name": "小书虫L6（虚构）" },
+          { "id": "o_r6_fe_02", "name": "培生儿童L6" },
+          { "id": "o_r6_fe_03", "name": "银河号阅读全解码L6" },
+          { "id": "o_r6_fe_04", "name": "丽声冒险岛L4（背面L6）" }
+        ],
+        "science_extensions": [
+          { "id": "o_r6_se_01", "name": "水先生" },
+          { "id": "o_r6_se_02", "name": "Baby why（生物化学）" },
+          { "id": "o_r6_se_03", "name": "Baby all（物理、艺术）" },
+          { "id": "o_r6_se_04", "name": "心智麦田轻科普绘本（11本）" }
+        ],
+        "fusion_apps": [
+          { "id": "o_r6_fa_01", "name": "小小优趣成长计划Phase13（非测试级别）" }
+        ]
       },
       "key_points": []
     },
@@ -190,14 +342,46 @@ const routeData = {
       "entry_requirement": "佩奇可初步裸听且常规1-6累计不低于400H",
       "promotion_standard": "佩奇可裸听且从常规1累计总投入不低于480H（小小优趣可不测，因为有科普词汇）",
       "resources": {
-        "main_picture_books": ["大红狗", "胖龙蓝蓝", "青蛙蟾蜍", "Frog and Friends", "女巫温妮（绘本版）", "心智麦田（庆爸精选35本）"],
-        "main_graded_readers": ["牛津树L7", "培生启明星L7-8", "快乐瓢虫L4"],
-        "main_animations": ["小猪佩奇S4-5（裸听）"],
-        "sub_graded_readers": ["大猫L7-9（虚构）", "RAZ K-M（虚构）"],
-        "sub_animations": ["Little Fox L3（魔法师和猫、柳林风声）", "卡由", "本霍丽", "天才宝贝熊", "64动物街", "呜米123"],
-        "fun_extensions": ["小书虫L7-10（虚构）", "银河号阅读全解码L7-9", "丽声冒险岛L5-7", "布鲁伊绘本"],
-        "science_extensions": ["神奇校车红蓝盒（20册）"],
-        "fusion_apps": ["本级别不推荐"]
+        "main_picture_books": [
+          { "id": "o_pb_mpb_01", "name": "大红狗" },
+          { "id": "o_pb_mpb_02", "name": "胖龙蓝蓝" },
+          { "id": "o_pb_mpb_03", "name": "青蛙蟾蜍" },
+          { "id": "o_pb_mpb_04", "name": "Frog and Friends" },
+          { "id": "o_pb_mpb_05", "name": "女巫温妮（绘本版）" },
+          { "id": "o_pb_mpb_06", "name": "心智麦田（庆爸精选35本）" }
+        ],
+        "main_graded_readers": [
+          { "id": "o_pb_mgr_01", "name": "牛津树L7" },
+          { "id": "o_pb_mgr_02", "name": "培生启明星L7-8" },
+          { "id": "o_pb_mgr_03", "name": "快乐瓢虫L4" }
+        ],
+        "main_animations": [
+          { "id": "o_pb_ma_01", "name": "小猪佩奇S4-5（裸听）" }
+        ],
+        "sub_graded_readers": [
+          { "id": "o_pb_sgr_01", "name": "大猫L7-9（虚构）" },
+          { "id": "o_pb_sgr_02", "name": "RAZ K-M（虚构）" }
+        ],
+        "sub_animations": [
+          { "id": "o_pb_sa_01", "name": "Little Fox L3（魔法师和猫、柳林风声）" },
+          { "id": "o_pb_sa_02", "name": "卡由" },
+          { "id": "o_pb_sa_03", "name": "本霍丽" },
+          { "id": "o_pb_sa_04", "name": "天才宝贝熊" },
+          { "id": "o_pb_sa_05", "name": "64动物街" },
+          { "id": "o_pb_sa_06", "name": "呜米123" }
+        ],
+        "fun_extensions": [
+          { "id": "o_pb_fe_01", "name": "小书虫L7-10（虚构）" },
+          { "id": "o_pb_fe_02", "name": "银河号阅读全解码L7-9" },
+          { "id": "o_pb_fe_03", "name": "丽声冒险岛L5-7" },
+          { "id": "o_pb_fe_04", "name": "布鲁伊绘本" }
+        ],
+        "science_extensions": [
+          { "id": "o_pb_se_01", "name": "神奇校车红蓝盒（20册）" }
+        ],
+        "fusion_apps": [
+          { "id": "o_pb_fa_01", "name": "本级别不推荐" }
+        ]
       },
       "key_points": []
     }

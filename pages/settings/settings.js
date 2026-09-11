@@ -1,5 +1,6 @@
 // 设置页
 const checkin = require('../../utils/checkin.js');
+const customResources = require('../../utils/customResources.js');
 const { routeData } = require('../../utils/data.js');
 const { generateStressData } = require('../../utils/stress-test.js');
 const docx = require('../../utils/docx.js');
@@ -40,6 +41,7 @@ Page({
     currentStage: null,
     currentStageDisplay: '',
     youquEnabled: true,
+    myResourceCount: 0,
     _importMode: 'overwrite',
     // 字体大小
     fontClass: 'fs-normal',
@@ -66,6 +68,7 @@ Page({
     this.loadStats();
     this.loadCurrentStage();
     this.loadYouquPlan();
+    this.loadMyResources();
   },
 
   onShow() {
@@ -77,6 +80,21 @@ Page({
     this.loadStats();
     this.loadCurrentStage();
     this.loadYouquPlan();
+    this.loadMyResources();
+  },
+
+  // 读取自定义资源数量（「我的资源」入口右侧展示）
+  loadMyResources() {
+    try {
+      this.setData({ myResourceCount: customResources.countAll() });
+    } catch (e) {
+      console.error('读取自定义资源失败', e);
+    }
+  },
+
+  // 跳转「我的资源」管理页
+  goMyResources() {
+    wx.navigateTo({ url: '/pages/myResources/myResources' });
   },
 
   // ===== 字体大小 =====
@@ -197,6 +215,12 @@ Page({
       const readCounts = wx.getStorageSync(checkin.READ_COUNT_KEY);
       if (readCounts) {
         data.read_count_data = readCounts;
+      }
+
+      // 自定义资源
+      const customResourcesData = customResources.getAll();
+      if (customResourcesData && Object.keys(customResourcesData).length > 0) {
+        data.custom_resources = customResourcesData;
       }
 
       // 当前阶段
@@ -503,6 +527,18 @@ Page({
         }
       }
 
+      // 自定义资源：合并模式按「阶段 + 分组 + 名称」去重，覆盖模式直接替换
+      if (data.custom_resources) {
+        if (mode === 'merge') {
+          customResources.mergeAll(data.custom_resources);
+        } else {
+          customResources.replaceAll(data.custom_resources);
+        }
+      }
+
+      // 导入的旧备份 key 仍是资源名，需再迁移一次（force 忽略本会话已迁移标记）
+      checkin.migrateResourceKeysToId(true);
+
       // 恢复当前阶段
       if (data.current_stage) {
         wx.setStorageSync(checkin.CURRENT_STAGE_KEY, data.current_stage);
@@ -534,6 +570,7 @@ Page({
 
       wx.hideLoading();
       this.loadStats();
+      this.loadMyResources();
 
       wx.showToast({
         title: '导入成功',
@@ -558,9 +595,13 @@ Page({
   startClear(opt) {
     if (!opt) return;
 
+    const content = (!opt.key || opt.key === 'all')
+      ? '将清空全部打卡记录、已读次数与自定义资源，此操作不可恢复，是否继续？'
+      : `将清空「${opt.name}」的所有打卡记录与该阶段的自定义资源，此操作不可恢复，是否继续？`;
+
     wx.showModal({
       title: '确认清空',
-      content: `将清空「${opt.name}」的所有打卡记录，此操作不可恢复，是否继续？`,
+      content,
       confirmText: '清空',
       cancelText: '取消',
       confirmColor: '#e74c3c',
@@ -585,10 +626,14 @@ Page({
           // 清空后回到初始未设置态：移除当前阶段与已完成名单（与首启引导一致）
           wx.removeStorageSync(checkin.CURRENT_STAGE_KEY);
           checkin.setCompletedStages([]);
+          // 连带清除全部自定义资源
+          customResources.clearAll();
         } else {
-          // 按阶段清除：仅删除该阶段的记录与已读次数
+          // 按阶段清除：仅删除该阶段的记录、已读次数与自定义资源
+          const hasCustom = customResources.countByStage(scope) > 0;
           const removed = checkin.clearCheckinsByStage(scope);
-          if (!removed) {
+          customResources.clearByStage(scope);
+          if (!removed && !hasCustom) {
             wx.hideLoading();
             wx.showToast({ title: '该范围暂无数据', icon: 'none' });
             return;
@@ -598,6 +643,7 @@ Page({
         wx.hideLoading();
         this.loadStats();
         this.loadCurrentStage();
+        this.loadMyResources();
 
         wx.showToast({
           title: '已清空',
