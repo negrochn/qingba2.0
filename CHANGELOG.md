@@ -68,6 +68,17 @@
 - **tabBar 配色再调整与图标更新（theme.json）**：未选中文字 `#191919` → `#7A7E83`（微信标准未选中灰）、背景 `#f5f5f5` → `#F7F7F7`、上边框 `white` → `black`；同步更新 6 张 tabBar 图标（home / route / mine 的普通态与选中态）
 - **`app.json` 移除 `lazyCodeLoading: "requiredComponents"`**：页面数量少、体积可控，按需注入收益有限，去掉以避免偶发的组件注入时序问题
 - **阶段详情（stage）样式死代码清理与深色变量化**：`stage.wxss` 由 766 行精简到 495 行——删除已无 wxml 引用的 `.lock-*` / `.pm-picker` / `.res-hl-*` / `.rg-collapsed-*` / `.rg-tag` / `.r-read-*` 等规则，移除 `.dm-dark` / `.dm-auto` 下 20+ 条硬编码深色覆盖（改由 `--brand-softer` 等变量自动适配），多行规则压缩为单行。已按选择器集合逐项比对，确认无在用样式丢失（`rg-head-active` 仅含 `cursor:pointer`，小程序内无效，移除无影响）
+
+### 新增
+
+- **「数据统计」模块（stats / statsDetail）**：新增统计总览与阶段统计详情页，入口在「我的」页；设计对齐 WeUI 扁平 + iconfont 体系，已沉淀为 skill 原语 18「阶段统计详情页」
+
+### 变更
+
+- **新增「阶段统计详情」页（statsDetail）**：单个阶段的**累计**统计视图（长期常规阶段周/月/年切片意义有限，移除分段与周期切换，仅保留「累计」）——顶部累计时长以「X 小时 Y 分钟」大数字扁平展示（无卡片）；副行显示阶段跨度「首次打卡日 至 最后打卡日，阶段名称 历时 N 天」；汇总三项（打卡次数 / 打卡天数 / 读完次数）采用简单 flex 两列布局（前两项一行、第三项换行），每项右侧 `icon-right` chevron；按月的「打卡时长分布」柱状图（峰值月加深 `var(--brand)` + chip 高亮「X 月打卡最久 · 时长」）；「打卡最久」素材排行 TOP5（最高单日打卡项标「单日打卡最久」）
+- **统计总览页（stats）重构为 WeUI 列表**：原图表 / 明细重构为阶段分组列表（`.weui-cell_access` + 右侧 `icon-right`），点击任一阶段 `navigateTo` 进入对应「阶段统计详情」页
+- **iconfont 新增 `icon-calendar` 字形**（`\e74a`，用于统计详情「打卡时长分布」卡头图标），同步更新 `app.wxss` 内联 ttf / woff 字体；`app.json` 注册 `statsDetail` 页面
+- **路线页（route）节点态修正**：`.route-node.done` 注释修正为「品牌绿描边 + 绿图标」；新增 `.route-node.locked` 未解锁态去描边（仅靠灰底 + 锁图标表达），与已完成 / 当前三态区分更清晰
 - **关于页（about）改用 WeUI 文章原语**：原私有类（`.para` / `.sub-title` / `.stage-block` / `.warn-block` / `.method-block` / `.hl` / `.disclaimer` / `.bullet` / `.banner-*` / `.chapter-*`）改为 `.weui-article` + `.weui-article__h2` / `__p` 与 `.about-*`（`.about-stage` / `.about-method` / `.about-note` / `.about-desc` / `.about-li` / `.about-strong` / `.about-sub`）命名，同步移除 `.dm-dark` / `.dm-auto` 下 7 条深色硬编码覆盖
 - **路线页（route）容器回归 WeUI 默认外观**：移除 `.current-panel`（原 `background: transparent` + `.weui-cells::before/::after { display:none }`）——透明底会覆盖 `.weui-cells` 自身的 `background-color: var(--card)`，使顶部「当前阶段」组实际透出页面灰底而非白色卡片；隐藏通栏线又让它与下方「学习路线」组（白底 + 上下通栏线）外观不一致。现容器恢复 `.weui-cells` 默认，同页两组一致
 - **路线页时间线连接线跨行连续**：`.route-node-line` 原先只在 cell 内容盒内延伸，cell 上下各 32rpx 内边距 + 下一行 `.route-node-wrap` 的 4rpx `padding-top` 会形成约 68rpx 断口，整条时间线呈「分段虚线」。新增 `.route-node-line::after` 向下补齐 68rpx，并加 `z-index:1`，避免延伸段落入下一行 cell 时被该行背景（如绿底当前行）盖掉线尾

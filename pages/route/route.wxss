@@ -37,7 +37,8 @@
 
 .route-node.current { border: 0; background: transparent; }   /* 当前节点去描边/底色，仅靠 cell 绿底 + 箭头表达 */
 .route-node.current .iconfont { color: var(--text3); }   /* 当前节点图标用正常箭头色，而非品牌绿 */
-.route-node.done    { border-color: var(--brand); color: var(--brand); }   /* 未解锁沿用基类灰描边 + 灰图标 */
+.route-node.done    { border-color: var(--brand); color: var(--brand); }   /* 已完成：品牌绿描边 + 绿图标 */
+.route-node.locked  { border: 0; }   /* 未解锁：去描边，仅靠灰底 + 锁图标表达 */
 
 /* 连接线：无节点时贯穿整行高度（末行无线） */
 .route-node-line {

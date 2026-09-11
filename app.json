@@ -8,6 +8,7 @@
     "pages/about/about",
     "pages/settings/settings",
     "pages/stats/stats",
+    "pages/statsDetail/statsDetail",
     "pages/stagePicker/stagePicker",
     "pages/fontPicker/fontPicker",
     "pages/darkMode/darkMode",

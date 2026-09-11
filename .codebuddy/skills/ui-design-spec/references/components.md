@@ -378,6 +378,51 @@ WeUI 提供 `weui-icon-*`（mask + `background-color: currentColor` 方案，色
 
 ---
 
+## 原语 18：阶段统计详情页（项目 `statsDetail`）
+
+单个阶段的「累计」统计视图，长期常规阶段不做周/月/年切片。由扁平大数字 + 简单 flex 汇总 + 图表卡构成，**延续原语 17 的扁平纯色、无阴影/无渐变**。
+
+```html
+<!-- 核心数据：无卡片，累计时长按 小时/分钟 分段、数字更大 -->
+<view class="head-card">
+  <view class="head-main">
+    <block wx:for="{{headSegs}}" wx:key="unit">
+      <text class="head-num">{{item.num}}</text>
+      <text class="head-unit">{{item.unit}}</text>
+    </block>
+  </view>
+  <view class="head-sub">{{dateRangeText}}，{{stageName}} 历时 {{stageDays}} 天</view>
+</view>
+
+<!-- 汇总三项：简单 flex 两列（前两项一行、第三项换行），右侧 icon-right -->
+<view class="summary">
+  <view class="summary-item" wx:for="{{summary}}" wx:key="index">
+    <text class="summary-prefix">{{item.prefix}}</text>
+    <text class="summary-value">{{item.value}}</text>
+    <text class="summary-unit">{{item.unit}}</text>
+    <text class="iconfont icon-right summary-arrow"></text>
+  </view>
+</view>
+```
+
+```css
+.head-card { margin: 8rpx 32rpx 0; }                  /* 无卡片，仅留外边距 */
+.head-num  { font-size: calc(64rpx * var(--fs, 1)); font-weight: 700; color: var(--text); }
+.head-unit { font-size: calc(28rpx * var(--fs, 1)); color: var(--text2); margin: 0 8rpx; }
+.head-sub  { font-size: calc(26rpx * var(--fs, 1)); color: var(--text2); }
+.summary   { display: flex; flex-wrap: wrap; margin: 24rpx 32rpx 0; }
+.summary-item { width: 50%; box-sizing: border-box; display: flex; align-items: baseline; padding: 0; }
+.summary-value { font-size: calc(40rpx * var(--fs, 1)); font-weight: 700; color: var(--text); margin: 0 8rpx; }
+.summary-arrow { margin-left: 8rpx; font-size: calc(28rpx * var(--fs, 1)); color: var(--text3); }
+```
+
+- **无卡片 hero**：核心数据不套 `.card`，直接贴页面底（与原语 17 的卡片式 Hero 区分——详情页强调信息密度，总览/列表页才用圆角卡）。
+- **累计时长分段**：「X 小时 Y 分钟」用 `splitCumulative()` 拆成 `[{num, unit}]`，数字 `64rpx` 粗体远大于单位 `28rpx`，**不要**用 `h/m` 缩写（与首页 Hero 的 `h` 单位区分场景）。
+- **阶段跨度**：副行用「首次打卡日 → 最后打卡日」+「阶段名称 历时 N 天」，跨度从打卡记录派生（阶段数据无 `start_date`/`end_date`）。
+- **汇总 chevron**：三项简单 flex 两列（`width:50%` + `flex-wrap`），每项 `prefix + 大数字 + unit + icon-right`；箭头用 iconfont `icon-right`（`\e6a3`）紧贴 unit（`margin-left:8rpx`），**不用裸字符 `›`**；前两行各两项、第三项换行到下一行左侧。
+
+---
+
 ## 设计原则速记
 1. 颜色、字号、间距一律引用 token（`--weui-*` 或项目 `--*`），禁止硬编码同质值。
 2. 深色模式只切变量，不写独立样式。

@@ -1,0 +1,87 @@
+<view class="container {{fontClass}} {{darkClass}}">
+
+  <block wx:if="{{stage}}">
+
+    <!-- 核心数据 headline（无卡片） -->
+    <view class="head-card">
+      <block wx:if="{{!isEmpty}}">
+        <view class="head-main">
+          <block wx:for="{{headSegs}}" wx:key="unit">
+            <text class="head-num">{{item.num}}</text>
+            <text class="head-unit">{{item.unit}}</text>
+          </block>
+        </view>
+        <view class="head-sub">
+          <text>{{dateRangeText}}，{{stageName}}历时{{stageDays}}天</text>
+        </view>
+      </block>
+      <view class="head-empty" wx:else>
+        <text>{{emptyText}}</text>
+      </view>
+    </view>
+
+    <!-- 汇总指标（3 项，简单 flex：前两项一行，第三项换行） -->
+    <view class="summary">
+      <view class="summary-item" wx:for="{{summary}}" wx:key="index">
+        <text class="summary-prefix">{{item.prefix}}</text>
+        <text class="summary-value">{{item.value}}</text>
+        <text class="summary-unit">{{item.unit}}</text>
+        <text class="iconfont icon-right summary-arrow"></text>
+      </view>
+    </view>
+
+    <!-- ④ 打卡时长分布 -->
+    <view class="card">
+      <view class="card-head">
+        <text class="card-title">打卡时长分布</text>
+        <text class="iconfont icon-calendar card-cal"></text>
+      </view>
+      <view class="chart">
+        <view class="chart-bars">
+          <view class="bar" wx:for="{{chart}}" wx:key="k">
+            <view class="bar-track">
+              <view
+                class="bar-fill {{item.percent === 100 ? 'is-peak' : ''}}"
+                style="height: {{item.percent}}%"
+              ></view>
+            </view>
+            <text class="bar-label">{{item.label}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="card-foot" wx:if="{{highlightText}}">
+        <text class="chip">{{highlightText}}</text>
+      </view>
+      <view class="card-foot" wx:elif="{{!isEmpty}}">
+        <text class="chip chip-muted">暂无打卡</text>
+      </view>
+    </view>
+
+    <!-- ⑥ 打卡最久素材排行 -->
+    <view class="card" wx:if="{{ranking.length}}">
+      <view class="card-head">
+        <text class="card-title">打卡最久</text>
+      </view>
+      <view class="rank-list">
+        <view class="rank-item" wx:for="{{ranking}}" wx:key="name">
+          <view class="rank-cover">{{item.char}}</view>
+          <view class="rank-info">
+            <view class="rank-name">{{item.name}}</view>
+            <view class="rank-duration">{{item.durationText}}</view>
+          </view>
+          <text class="rank-tag" wx:if="{{item.isTop}}">单日打卡最久</text>
+        </view>
+      </view>
+      <view class="rank-more">查看全部 · TOP 10</view>
+    </view>
+
+    <!-- 排行空态 -->
+    <view class="card rank-empty" wx:else>
+      <text>暂无打卡记录</text>
+    </view>
+
+  </block>
+
+  <view class="weui-cell_empty" wx:else>未找到对应阶段</view>
+
+</view>

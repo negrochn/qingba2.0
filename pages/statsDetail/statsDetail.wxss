@@ -1,0 +1,205 @@
+/* 阶段统计详情 */
+page { background: var(--bg); }
+
+.card {
+  margin: 16rpx 32rpx 24rpx;
+  padding: 32rpx;
+  background: var(--card);
+  border-radius: 16rpx;
+}
+
+/* 核心数据 headline（无卡片，最简洁） */
+.head-card {
+  margin: 8rpx 32rpx 0;
+}
+.head-main {
+  display: flex;
+  align-items: baseline;
+}
+.head-num {
+  font-size: calc(64rpx * var(--fs, 1));
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.1;
+}
+.head-unit {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
+  margin-left: 8rpx;
+  margin-right: 8rpx;
+}
+.head-sub {
+  display: flex;
+  align-items: center;
+  margin-top: 12rpx;
+  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text2);
+}
+.head-empty {
+  font-size: calc(30rpx * var(--fs, 1));
+  color: var(--text3);
+  padding: 12rpx 0;
+}
+
+/* ④ 打卡时长分布 */
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+.card-title {
+  font-size: calc(30rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text);
+}
+.card-cal {
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text3);
+}
+.chart-bars {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  height: 220rpx;
+}
+.bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+}
+.bar-track {
+  width: 60%;
+  max-width: 56rpx;
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  background: transparent;
+}
+.bar-fill {
+  width: 100%;
+  background: var(--card2);
+  border-radius: 20rpx;
+  min-height: 4rpx;
+  transition: height .2s;
+}
+.bar-fill.is-peak {
+  background: var(--brand);
+}
+.bar-label {
+  font-size: calc(22rpx * var(--fs, 1));
+  color: var(--text3);
+  margin-top: 12rpx;
+}
+.card-foot {
+  margin-top: 20rpx;
+}
+.chip {
+  display: inline-block;
+  padding: 8rpx 20rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--brand);
+  background: rgba(7, 193, 96, .10);
+  border-radius: 999rpx;
+}
+.chip-muted {
+  color: var(--text3);
+  background: var(--card2);
+}
+
+/* ⑤ 汇总指标（简单 flex：前两项一行，第三项换行） */
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 24rpx 32rpx 0;
+}
+.summary-item {
+  width: 50%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: baseline;
+  padding: 0;
+}
+.summary-prefix {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
+}
+.summary-value {
+  font-size: calc(40rpx * var(--fs, 1));
+  font-weight: 500;
+  color: var(--text);
+  margin: 0 8rpx;
+}
+.summary-unit {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
+}
+.summary-arrow {
+  margin-left: 8rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
+}
+
+/* ⑥ 打卡最久排行 */
+.rank-list { margin-top: 8rpx; }
+.rank-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+}
+.rank-item:not(:last-child) {
+  border-bottom: 1px solid var(--divider);
+}
+.rank-cover {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 14rpx;
+  background: var(--card2);
+  color: var(--text2);
+  font-size: calc(34rpx * var(--fs, 1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.rank-info {
+  flex: 1;
+  margin-left: 20rpx;
+  min-width: 0;
+}
+.rank-name {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rank-duration {
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+  margin-top: 6rpx;
+}
+.rank-tag {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  padding: 6rpx 16rpx;
+  font-size: calc(22rpx * var(--fs, 1));
+  color: var(--brand);
+  background: rgba(7, 193, 96, .10);
+  border-radius: 999rpx;
+}
+.rank-more {
+  margin-top: 24rpx;
+  text-align: center;
+  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text2);
+}
+.rank-empty {
+  text-align: center;
+  color: var(--text3);
+  font-size: calc(28rpx * var(--fs, 1));
+  padding: 48rpx 24rpx;
+}
