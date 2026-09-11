@@ -56,11 +56,11 @@
         <view class="about-method__name">方式一：亲子共读</view>
         <view class="weui-article__p">· 参考方式：<text class="about-strong">孩子专注的看图和听，家长读英文（也可用点读笔点英文）</text></view>
         <view class="about-sub">注意事项</view>
-        <view class="weui-article__p"><text class="about-strong">1.</text>不能让孩子跟读，不要给孩子指读，不能让孩子复述，也不要问孩子问题。</view>
-        <view class="weui-article__p"><text class="about-strong">2.</text>如果孩子已经认字，<text class="about-strong">一定要把文字遮住</text>，不然孩子看字时，是无法同时理解声音的。</view>
-        <view class="weui-article__p"><text class="about-strong">3.</text>亲子共读时，尽量选放松场景，并时刻关注孩子的状态，<text class="about-strong">「无压+高兴趣+高专注度」对内化至关重要！</text></view>
-        <view class="weui-article__p"><text class="about-strong">4.</text>若家长非常担心孩子不懂或纯英文共读时，孩子专注度不够，可考虑用<text class="about-strong">汪培珽亲子共读法</text>（搜：亲子共读法），然后逐步撤掉。但每阶段时间投入需按<text class="about-strong">80H</text>来算。</view>
-        <view class="weui-article__p"><text class="about-strong">5.</text>不同于常规路线1.0版，2.0版<text class="about-strong">不再要求某一个素材一定重复3遍</text>，而是只要孩子喜欢，就可多重复，不设上限，若孩子重复腻了，则可横向级别其他素材。</view>
+        <view class="weui-article__p">1.不能让孩子跟读，不要给孩子指读，不能让孩子复述，也不要问孩子问题。</view>
+        <view class="weui-article__p">2.如果孩子已经认字，<text class="about-strong">一定要把文字遮住</text>，不然孩子看字时，是无法同时理解声音的。</view>
+        <view class="weui-article__p">3.亲子共读时，尽量选放松场景，并时刻关注孩子的状态，<text class="about-strong">「无压+高兴趣+高专注度」对内化至关重要！</text></view>
+        <view class="weui-article__p">4.若家长非常担心孩子不懂或纯英文共读时，孩子专注度不够，可考虑用<text class="about-strong">汪培珽亲子共读法</text>（搜：亲子共读法），然后逐步撤掉。但每阶段时间投入需按<text class="about-strong">80H</text>来算。</view>
+        <view class="weui-article__p">5.不同于常规路线1.0版，2.0版<text class="about-strong">不再要求某一个素材一定重复3遍</text>，而是只要孩子喜欢，就可多重复，不设上限，若孩子重复腻了，则可横向级别其他素材。</view>
       </view>
 
       <view class="about-method">

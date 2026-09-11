@@ -138,9 +138,9 @@
 }
 .home-stat-arrow {
   position: absolute;
-  top: 24rpx;
+  top: 44rpx;
   right: 24rpx;
-  font-size: calc(28rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1));
   color: var(--text3);
   line-height: 1;
 }
