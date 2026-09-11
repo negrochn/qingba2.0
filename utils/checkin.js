@@ -345,12 +345,14 @@ function saveDefaultRemark(stageId, groupKey, resourceName, remark) {
 }
 
 // ===== 小小优趣成长计划开关（feature flag） =====
-// 默认关闭；后续「常规阶段解锁下一阶段」逻辑据此判断
+// 默认开启；用户可在设置页显式关闭，关闭后按存储的布尔值判断
 function isYouquPlanEnabled() {
   try {
-    return wx.getStorageSync(YOUQU_PLAN_KEY) === true
+    const v = wx.getStorageSync(YOUQU_PLAN_KEY)
+    // 从未设置过（取到的是空串等非布尔值）时默认开启；显式设置过则返回其布尔值
+    return typeof v === 'boolean' ? v : true
   } catch (e) {
-    return false
+    return true
   }
 }
 

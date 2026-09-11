@@ -39,7 +39,7 @@ Page({
     currentStageIndex: -1,
     currentStage: null,
     currentStageDisplay: '',
-    youquEnabled: false,
+    youquEnabled: true,
     _importMode: 'overwrite',
     // 字体大小
     fontClass: 'fs-normal',
@@ -521,7 +521,7 @@ Page({
         }
       }
 
-      // 恢复小小优趣成长计划开关（缺省按 false，兼容旧备份）
+      // 恢复小小优趣成长计划开关（备份缺该字段时不修改，保持当前设置）
       if (typeof data.youqu_plan === 'boolean') {
         checkin.setYouquPlanEnabled(data.youqu_plan);
       }

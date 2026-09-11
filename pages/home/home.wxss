@@ -105,11 +105,8 @@
 }
 .home-bar-fill {
   width: 100%;
-  background: var(--card2);                  /* 非今日：主题自适应灰 */
+  background: rgba(7, 193, 96, .14);         /* 统一低透明品牌绿（今日/非今日一致） */
   border-radius: 28rpx;
-}
-.home-bar-fill.is-today {
-  background: #07C160;                       /* 今日：品牌绿高亮 */
 }
 .home-bar-label {
   font-size: calc(24rpx * var(--fs, 1));

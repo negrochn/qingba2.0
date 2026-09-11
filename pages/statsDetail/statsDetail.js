@@ -1,6 +1,6 @@
 // 阶段统计详情（累计视图）：核心时长 + 打卡时长分布 + 汇总 + 打卡最久排行
 const checkin = require('../../utils/checkin.js')
-const { routeData } = require('../../utils/data.js')
+const { routeData, resourceLabels } = require('../../utils/data.js')
 const theme = require('../../utils/theme.js')
 const echarts = require('../../utils/echarts')
 const WxCanvas = require('../../utils/wx-canvas')
@@ -76,7 +76,6 @@ function getPeriodLabel(dimension, cursor) {
 }
 
 const DIM_PREV_LABEL = { week: '上周', month: '上月', year: '上年' }
-const DIM_PERIOD_WORD = { week: '本周', month: '本月', year: '本年', all: '累计' }
 
 // 分钟 -> 头部数值/单位拆分（与全站 fmtMinutes 约定一致，用 m/h）
 function splitDuration(min) {
@@ -96,12 +95,23 @@ function splitCumulative(min) {
   return segs
 }
 
+// 分钟 -> 中文时长文案（如「20小时10分钟」/「2小时」/「45分钟」）
+function fmtMinutesCN(min) {
+  const m = Math.round(Number(min) || 0)
+  const h = Math.floor(m / 60)
+  const mm = m % 60
+  if (h > 0 && mm > 0) return `${h}小时${mm}分钟`
+  if (h > 0) return `${h}小时`
+  return `${mm}分钟`
+}
+
 // 核心聚合：返回视图模型所需全部字段（仅累计维度）
 function buildViewModel(stageId, dimension, cursor) {
   const all = checkin.getAll()
   const period = getPeriod(dimension, cursor)
 
   const dayMap = {}        // dayStr -> 分钟
+  const resTotal = {}      // 资源名（绘本）-> 累计分钟
   const groupTotal = {}    // groupKey -> 累计分钟
   const groupLabelMap = {} // groupKey -> groupLabel
   let totalMinutes = 0
@@ -120,6 +130,7 @@ function buildViewModel(stageId, dimension, cursor) {
       totalMinutes += m
       uniqueDays.add(dayStr)
       dayMap[dayStr] = (dayMap[dayStr] || 0) + m
+      resTotal[r.resourceName] = (resTotal[r.resourceName] || 0) + m
       // 分组聚合（打卡记录自带 groupKey / groupLabel）
       const gKey = r.groupKey || r.groupLabel || '未分组'
       groupTotal[gKey] = (groupTotal[gKey] || 0) + m
@@ -184,7 +195,7 @@ function buildViewModel(stageId, dimension, cursor) {
     else if (dimension === 'month') scope = `${cursor.getMonth() + 1}月${lbl}日`
     else if (dimension === 'year') scope = `${lbl}月`
     else scope = lbl
-    highlightText = `${scope}打卡最久 · ${checkin.fmtMinutes(maxVal)}`
+    highlightText = `${scope}打卡最久 · ${fmtMinutesCN(maxVal)}`
   }
   const peakText = maxVal > 0 ? `峰值 ${checkin.fmtMinutes(maxVal)}` : ''
 
@@ -236,7 +247,6 @@ function buildViewModel(stageId, dimension, cursor) {
   const headSegs = splitCumulative(totalMinutes)
   const daily = splitDuration(dailyAvg)
   const isEmpty = countTotal === 0
-  const periodWord = DIM_PERIOD_WORD[dimension]
 
   // 阶段实际跨度（基于首次打卡日 -> 最后打卡日）
   let firstDayStr = null, lastDayStr = null
@@ -250,17 +260,40 @@ function buildViewModel(stageId, dimension, cursor) {
     .map(key => ({ key, name: groupLabelMap[key] || key, value: groupTotal[key] }))
     .sort((a, b) => b.value - a.value)
 
+  // 时长排行榜：该阶段所有素材累计时长（降序），占比分母为时长最长的素材
+  const bookArr = Object.keys(resTotal)
+    .map(name => ({ name, value: resTotal[name] }))
+    .sort((a, b) => b.value - a.value)
+  const maxBook = bookArr.length ? bookArr[0].value : 0
+  const rankList = bookArr.map(r => ({
+    name: r.name,
+    char: (r.name || '').trim().charAt(0) || '📖',
+    percent: maxBook > 0 ? Math.round(r.value / maxBook * 100) : 0,
+    durationText: fmtMinutesCN(r.value)
+  }))
+
+  // 读完排行榜：该阶段各素材累计读完次数（降序），占比分母为读完次数最多的素材
+  const readRanking = checkin.getReadRankingByStage(stageId)
+  const maxRead = readRanking.length ? readRanking[0].count : 0
+  const readRankList = readRanking.map(r => ({
+    name: r.resourceName,
+    char: (r.resourceName || '').trim().charAt(0) || '📖',
+    percent: maxRead > 0 ? Math.round(r.count / maxRead * 100) : 0,
+    countText: `${r.count}次`
+  }))
+
   return {
     periodLabel: getPeriodLabel(dimension, cursor),
     chartLabels,
     chartVals,
     ringData,
+    rankList,
+    readRankList,
     headSegs,
     dailyValue: daily.value,
     dailyUnit: daily.unit,
     deltaText,
     isEmpty,
-    emptyText: `${periodWord}尚未打卡`,
     chart,
     peakText,
     highlightText,
@@ -284,14 +317,15 @@ Page({
     stageName: '',
     deltaText: '',
     isEmpty: false,
-    emptyText: '',
     chart: [],
     peakText: '',
     highlightText: '',
     summary: [],
     chartLabels: [],
     chartVals: [],
-    ringData: []
+    ringData: [],
+    rankList: [],
+    readRankList: []
   },
 
   onLoad(query) {
@@ -341,14 +375,15 @@ Page({
       stageName: stage.stage_name,
       deltaText: vm.deltaText,
       isEmpty: vm.isEmpty,
-      emptyText: vm.emptyText,
       chart: vm.chart,
       peakText: vm.peakText,
       highlightText: vm.highlightText,
       summary: vm.summary,
       chartLabels: vm.chartLabels,
       chartVals: vm.chartVals,
-      ringData: vm.ringData
+      ringData: vm.ringData,
+      rankList: vm.rankList,
+      readRankList: vm.readRankList
     })
     this._chartLabels = vm.chartLabels
     this._chartVals = vm.chartVals
@@ -398,7 +433,7 @@ Page({
       const canvas = new WxCanvas(ctx, domId, true, canvasNode)
       if (echarts.setPlatformAPI) {
         echarts.setPlatformAPI({ createCanvas: () => canvas })
-      } else {
+      } else if (echarts.setCanvasCreator) {
         echarts.setCanvasCreator(() => canvas)
       }
       if (typeof onInit === 'function') onInit(canvas, width, height, dpr)
@@ -409,7 +444,7 @@ Page({
     if (!this._barChart || !this._chartLabels) return
     const isDark = /dark/.test(this.data.darkClass || '')
     const lineColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.06)'
-    const barColor = isDark ? 'rgba(7,193,96,0.55)' : 'rgba(7,193,96,0.4)'
+    const barColor = 'rgba(7,193,96,.14)'
     const option = {
       grid: { left: 40, right: 14, top: 24, bottom: 28 },
       tooltip: {
@@ -444,67 +479,46 @@ Page({
     this._barChart.setOption(option)
   },
 
-  // 分组时长（横向柱状图）
+  // 分组时长对比（雷达图）
   _renderRing() {
-    if (!this._ringChart || !this._ringData || !this._ringData.length) return
+    if (!this._ringChart || !this._ringData) return
     const isDark = /dark/.test(this.data.darkClass || '')
-    const textColor = isDark ? 'rgba(255,255,255,0.85)' : '#1a1a1a'
     const subTextColor = isDark ? 'rgba(255,255,255,0.5)' : '#737373'
-    const barColor = isDark ? 'rgba(7,193,96,0.55)' : 'rgba(7,193,96,0.4)'
-    const total = this._ringData.reduce((s, x) => s + x.value, 0)
+    const splitColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.06)'
+    // 固定按 resourceLabels 顺序展示全部 8 个分组，无数据的轴也保留（值为 0）
+    const groupKeys = Object.keys(resourceLabels)
+    const valByKey = {}
+    this._ringData.forEach(d => { valByKey[d.key] = d.value })
+    const vals = groupKeys.map(k => valByKey[k] || 0)
+    const maxVal = Math.max.apply(null, vals) || 1
     const option = {
-      grid: { left: 72, right: 56, top: 8, bottom: 8 },
-      tooltip: {
-        show: true,
-        trigger: 'axis',
-        confine: true,
-        axisPointer: { type: 'shadow' },
-        backgroundColor: isDark ? '#2c2c2e' : '#ffffff',
-        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
-        borderWidth: 1,
-        padding: [8, 12],
-        textStyle: { color: textColor, fontSize: 12 },
-        formatter: params => {
-          const p = params && params[0]
-          if (!p) return ''
-          const pct = total > 0 ? Math.round(p.value / total * 100) : 0
-          return `${p.name}\n${checkin.fmtMinutes(p.value)} · ${pct}%`
-        }
-      },
-      xAxis: {
-        type: 'value',
-        axisLabel: { show: false },
-        axisLine: { show: false },
-        axisTick: { show: false },
-        splitLine: { show: false }
-      },
-      yAxis: {
-        type: 'category',
-        inverse: true,
-        data: this._ringData.map(d => d.name),
-        axisTick: { show: false },
-        axisLine: { show: false },
-        axisLabel: { color: subTextColor, fontSize: 11 }
+      radar: {
+        center: ['50%', '54%'],
+        radius: '62%',
+        indicator: groupKeys.map(k => ({ name: resourceLabels[k], max: maxVal })),
+        axisName: { color: subTextColor, fontSize: 12 },
+        splitLine: { lineStyle: { color: splitColor } },
+        axisLine: { lineStyle: { color: splitColor } },
+        splitArea: { show: false }
       },
       series: [{
-        type: 'bar',
-        data: this._ringData.map(d => d.value),
-        barMaxWidth: 18,
-        itemStyle: { color: barColor, borderRadius: [0, 9, 9, 0] },
-        label: {
-          show: true,
-          position: 'right',
-          color: subTextColor,
-          fontSize: 11,
-          formatter: p => checkin.fmtMinutes(p.value)
-        }
+        type: 'radar',
+        symbol: 'circle',
+        symbolSize: 4,
+        data: [{
+          value: vals,
+          name: '分组时长',
+          areaStyle: { color: 'rgba(7,193,96,.14)' },
+          lineStyle: { color: 'rgba(7,193,96,.14)', width: 2 },
+          itemStyle: { color: 'rgba(7,193,96,.14)' }
+        }]
       }]
     }
     this._ringChart.setOption(option)
   },
 
   _chartByTouch(e) {
-    return e.currentTarget.dataset.chart === 'ring' ? this._ringChart : this._barChart
+    return e.currentTarget.dataset.chart === 'bar' ? this._barChart : null
   },
 
   _wrapTouch(event) {

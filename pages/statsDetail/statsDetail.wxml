@@ -2,9 +2,17 @@
 
   <block wx:if="{{stage}}">
 
-    <!-- 核心数据 headline（无卡片） -->
-    <view class="head-card">
-      <block wx:if="{{!isEmpty}}">
+    <!-- 整页空态：该阶段还没有任何打卡记录 -->
+    <view class="empty-hint" wx:if="{{isEmpty}}">
+      <text class="iconfont icon-info empty-icon"></text>
+      <text class="empty-text">该阶段还没有打卡记录</text>
+      <text class="empty-sub">完成一次打卡后，这里会显示时长分布、分组对比与排行榜</text>
+    </view>
+
+    <block wx:else>
+
+      <!-- 核心数据 headline（无卡片） -->
+      <view class="head-card">
         <view class="head-main">
           <block wx:for="{{headSegs}}" wx:key="unit">
             <text class="head-num">{{item.num}}</text>
@@ -14,11 +22,7 @@
         <view class="head-sub">
           <text>{{dateRangeText}}，{{stageName}}历时{{stageDays}}天</text>
         </view>
-      </block>
-      <view class="head-empty" wx:else>
-        <text>{{emptyText}}</text>
       </view>
-    </view>
 
     <!-- 汇总指标（3 项，简单 flex：前两项一行，第三项换行） -->
     <view class="summary">
@@ -50,9 +54,6 @@
       <view class="card-foot" wx:if="{{highlightText}}">
         <text class="chip">{{highlightText}}</text>
       </view>
-      <view class="card-foot" wx:elif="{{!isEmpty}}">
-        <text class="chip chip-muted">暂无打卡</text>
-      </view>
     </view>
 
     <!-- 资源时长占比（环形图） -->
@@ -65,13 +66,43 @@
           type="2d"
           id="chart-ring"
           class="echart-box echart-box-ring"
-          data-chart="ring"
-          bindtouchstart="onChartTouchStart"
-          bindtouchmove="onChartTouchMove"
-          bindtouchend="onChartTouchEnd"
         ></canvas>
       </view>
     </view>
+
+    <!-- ⑦ 时长排行榜 -->
+    <view class="card">
+      <view class="card-head">
+        <text class="card-title">时长排行榜</text>
+      </view>
+      <view class="rank" wx:if="{{rankList.length}}">
+        <view class="rank-row" wx:for="{{rankList}}" wx:key="name">
+          <view class="rank-fill" style="width: {{item.percent}}%;"></view>
+          <view class="rank-cover">{{item.char}}</view>
+          <view class="rank-name">{{item.name}}</view>
+          <text class="rank-dur">{{item.durationText}}</text>
+        </view>
+      </view>
+      <view class="rank-empty" wx:else>暂无打卡记录</view>
+    </view>
+
+    <!-- ⑧ 读完排行榜 -->
+    <view class="card">
+      <view class="card-head">
+        <text class="card-title">读完排行榜</text>
+      </view>
+      <view class="rank" wx:if="{{readRankList.length}}">
+        <view class="rank-row" wx:for="{{readRankList}}" wx:key="name">
+          <view class="rank-fill" style="width: {{item.percent}}%;"></view>
+          <view class="rank-cover">{{item.char}}</view>
+          <view class="rank-name">{{item.name}}</view>
+          <text class="rank-dur">{{item.countText}}</text>
+        </view>
+      </view>
+      <view class="rank-empty" wx:else>暂无读完记录</view>
+    </view>
+
+    </block>
 
   </block>
 
