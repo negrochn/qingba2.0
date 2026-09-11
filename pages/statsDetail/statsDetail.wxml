@@ -30,24 +30,22 @@
       </view>
     </view>
 
-    <!-- ④ 打卡时长分布 -->
+    <!-- ④ 打卡时长分布（柱状图） -->
     <view class="card">
       <view class="card-head">
         <text class="card-title">打卡时长分布</text>
         <text class="iconfont icon-calendar card-cal"></text>
       </view>
       <view class="chart">
-        <view class="chart-bars">
-          <view class="bar" wx:for="{{chart}}" wx:key="k">
-            <view class="bar-track">
-              <view
-                class="bar-fill {{item.percent === 100 ? 'is-peak' : ''}}"
-                style="height: {{item.percent}}%"
-              ></view>
-            </view>
-            <text class="bar-label">{{item.label}}</text>
-          </view>
-        </view>
+        <canvas
+          type="2d"
+          id="chart-bar"
+          class="echart-box"
+          data-chart="bar"
+          bindtouchstart="onChartTouchStart"
+          bindtouchmove="onChartTouchMove"
+          bindtouchend="onChartTouchEnd"
+        ></canvas>
       </view>
       <view class="card-foot" wx:if="{{highlightText}}">
         <text class="chip">{{highlightText}}</text>
@@ -57,27 +55,22 @@
       </view>
     </view>
 
-    <!-- ⑥ 打卡最久素材排行 -->
-    <view class="card" wx:if="{{ranking.length}}">
+    <!-- 资源时长占比（环形图） -->
+    <view class="card">
       <view class="card-head">
-        <text class="card-title">打卡最久</text>
+        <text class="card-title">分组时长对比</text>
       </view>
-      <view class="rank-list">
-        <view class="rank-item" wx:for="{{ranking}}" wx:key="name">
-          <view class="rank-cover">{{item.char}}</view>
-          <view class="rank-info">
-            <view class="rank-name">{{item.name}}</view>
-            <view class="rank-duration">{{item.durationText}}</view>
-          </view>
-          <text class="rank-tag" wx:if="{{item.isTop}}">单日打卡最久</text>
-        </view>
+      <view class="chart">
+        <canvas
+          type="2d"
+          id="chart-ring"
+          class="echart-box echart-box-ring"
+          data-chart="ring"
+          bindtouchstart="onChartTouchStart"
+          bindtouchmove="onChartTouchMove"
+          bindtouchend="onChartTouchEnd"
+        ></canvas>
       </view>
-      <view class="rank-more">查看全部 · TOP 10</view>
-    </view>
-
-    <!-- 排行空态 -->
-    <view class="card rank-empty" wx:else>
-      <text>暂无打卡记录</text>
     </view>
 
   </block>

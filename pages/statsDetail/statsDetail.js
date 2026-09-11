@@ -2,6 +2,8 @@
 const checkin = require('../../utils/checkin.js')
 const { routeData } = require('../../utils/data.js')
 const theme = require('../../utils/theme.js')
+const echarts = require('../../utils/echarts')
+const WxCanvas = require('../../utils/wx-canvas')
 
 // ===== 日期工具 =====
 function pad(n) { return String(n).padStart(2, '0') }
@@ -99,9 +101,9 @@ function buildViewModel(stageId, dimension, cursor) {
   const all = checkin.getAll()
   const period = getPeriod(dimension, cursor)
 
-  const dayMap = {}      // dayStr -> 分钟
-  const resTotal = {}    // 资源名 -> 累计分钟
-  const resDay = {}      // 资源名 -> { dayStr: 分钟 }
+  const dayMap = {}        // dayStr -> 分钟
+  const groupTotal = {}    // groupKey -> 累计分钟
+  const groupLabelMap = {} // groupKey -> groupLabel
   let totalMinutes = 0
   let countTotal = 0
   const uniqueDays = new Set()
@@ -118,9 +120,10 @@ function buildViewModel(stageId, dimension, cursor) {
       totalMinutes += m
       uniqueDays.add(dayStr)
       dayMap[dayStr] = (dayMap[dayStr] || 0) + m
-      resTotal[r.resourceName] = (resTotal[r.resourceName] || 0) + m
-      if (!resDay[r.resourceName]) resDay[r.resourceName] = {}
-      resDay[r.resourceName][dayStr] = (resDay[r.resourceName][dayStr] || 0) + m
+      // 分组聚合（打卡记录自带 groupKey / groupLabel）
+      const gKey = r.groupKey || r.groupLabel || '未分组'
+      groupTotal[gKey] = (groupTotal[gKey] || 0) + m
+      if (!groupLabelMap[gKey]) groupLabelMap[gKey] = r.groupLabel || gKey
     }
   }
 
@@ -230,28 +233,6 @@ function buildViewModel(stageId, dimension, cursor) {
     { prefix: '读完', value: readCount, unit: '次' }
   ]
 
-  // 打卡最久素材排行 TOP5
-  const rankArr = Object.keys(resTotal)
-    .map(name => {
-      let maxDay = 0
-      const d = resDay[name] || {}
-      for (const k in d) if (d[k] > maxDay) maxDay = d[k]
-      return { name, total: resTotal[name], maxDay }
-    })
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 5)
-  let topMaxDayName = ''
-  if (rankArr.length) {
-    let mx = -1
-    rankArr.forEach(r => { if (r.maxDay > mx) { mx = r.maxDay; topMaxDayName = r.name } })
-  }
-  const ranking = rankArr.map(r => ({
-    char: (r.name || '').trim().charAt(0) || '📖',
-    name: r.name,
-    durationText: checkin.fmtMinutes(r.total),
-    isTop: r.name === topMaxDayName
-  }))
-
   const headSegs = splitCumulative(totalMinutes)
   const daily = splitDuration(dailyAvg)
   const isEmpty = countTotal === 0
@@ -264,8 +245,16 @@ function buildViewModel(stageId, dimension, cursor) {
     if (!lastDayStr || d > lastDayStr) lastDayStr = d
   }
 
+  // 环形图数据：各分组累计分钟占比（按 groupKey 聚合，展示 groupLabel）
+  const ringData = Object.keys(groupTotal)
+    .map(key => ({ key, name: groupLabelMap[key] || key, value: groupTotal[key] }))
+    .sort((a, b) => b.value - a.value)
+
   return {
     periodLabel: getPeriodLabel(dimension, cursor),
+    chartLabels,
+    chartVals,
+    ringData,
     headSegs,
     dailyValue: daily.value,
     dailyUnit: daily.unit,
@@ -276,7 +265,6 @@ function buildViewModel(stageId, dimension, cursor) {
     peakText,
     highlightText,
     summary,
-    ranking,
     firstDayStr,
     lastDayStr
   }
@@ -301,7 +289,9 @@ Page({
     peakText: '',
     highlightText: '',
     summary: [],
-    ranking: []
+    chartLabels: [],
+    chartVals: [],
+    ringData: []
   },
 
   onLoad(query) {
@@ -356,8 +346,206 @@ Page({
       peakText: vm.peakText,
       highlightText: vm.highlightText,
       summary: vm.summary,
-      ranking: vm.ranking
+      chartLabels: vm.chartLabels,
+      chartVals: vm.chartVals,
+      ringData: vm.ringData
+    })
+    this._chartLabels = vm.chartLabels
+    this._chartVals = vm.chartVals
+    this._ringData = vm.ringData
+    if (this._chartReady) {
+      this._renderBar()
+      this._renderRing()
+    }
+  },
+
+  onReady() {
+    // 关闭 progressive（小程序 drawImage 不支持 DOM 参数）
+    echarts.registerPreprocessor(opt => {
+      if (opt && opt.series) {
+        const arr = Array.isArray(opt.series) ? opt.series : [opt.series]
+        arr.forEach(s => { s.progressive = 0 })
+      }
+    })
+    this._initCharts()
+  },
+
+  _initCharts() {
+    this._createChart('chart-bar', (canvas, w, h, dpr) => {
+      const chart = echarts.init(canvas, null, { width: w, height: h, devicePixelRatio: dpr })
+      canvas.setChart(chart)
+      this._barChart = chart
+      this._renderBar()
+    })
+    this._createChart('chart-ring', (canvas, w, h, dpr) => {
+      const chart = echarts.init(canvas, null, { width: w, height: h, devicePixelRatio: dpr })
+      canvas.setChart(chart)
+      this._ringChart = chart
+      this._renderRing()
+    })
+    this._chartReady = true
+  },
+
+  _createChart(domId, onInit) {
+    const query = wx.createSelectorQuery()
+    query.select('#' + domId).fields({ node: true, size: true }).exec(res => {
+      if (!res || !res[0] || !res[0].node) return
+      const canvasNode = res[0].node
+      const width = res[0].width
+      const height = res[0].height
+      const dpr = wx.getSystemInfoSync().pixelRatio
+      const ctx = canvasNode.getContext('2d')
+      const canvas = new WxCanvas(ctx, domId, true, canvasNode)
+      if (echarts.setPlatformAPI) {
+        echarts.setPlatformAPI({ createCanvas: () => canvas })
+      } else {
+        echarts.setCanvasCreator(() => canvas)
+      }
+      if (typeof onInit === 'function') onInit(canvas, width, height, dpr)
     })
   },
+
+  _renderBar() {
+    if (!this._barChart || !this._chartLabels) return
+    const isDark = /dark/.test(this.data.darkClass || '')
+    const lineColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.06)'
+    const barColor = isDark ? 'rgba(7,193,96,0.55)' : 'rgba(7,193,96,0.4)'
+    const option = {
+      grid: { left: 40, right: 14, top: 24, bottom: 28 },
+      tooltip: {
+        show: true,
+        trigger: 'axis',
+        confine: true,
+        axisPointer: { type: 'shadow' },
+        formatter: params => {
+          const p = params && params[0]
+          return p ? `${p.axisValue}: ${checkin.fmtMinutes(p.value)}` : ''
+        }
+      },
+      xAxis: {
+        type: 'category',
+        data: this._chartLabels,
+        axisTick: { show: false },
+        axisLine: { lineStyle: { color: lineColor } },
+        axisLabel: { color: '#8e8e93', fontSize: 10 }
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: { color: '#8e8e93', fontSize: 10 },
+        splitLine: { lineStyle: { color: lineColor } }
+      },
+      series: [{
+        type: 'bar',
+        data: this._chartVals,
+        barMaxWidth: 24,
+        itemStyle: { color: barColor, borderRadius: [4, 4, 0, 0] }
+      }]
+    }
+    this._barChart.setOption(option)
+  },
+
+  // 分组时长（横向柱状图）
+  _renderRing() {
+    if (!this._ringChart || !this._ringData || !this._ringData.length) return
+    const isDark = /dark/.test(this.data.darkClass || '')
+    const textColor = isDark ? 'rgba(255,255,255,0.85)' : '#1a1a1a'
+    const subTextColor = isDark ? 'rgba(255,255,255,0.5)' : '#737373'
+    const barColor = isDark ? 'rgba(7,193,96,0.55)' : 'rgba(7,193,96,0.4)'
+    const total = this._ringData.reduce((s, x) => s + x.value, 0)
+    const option = {
+      grid: { left: 72, right: 56, top: 8, bottom: 8 },
+      tooltip: {
+        show: true,
+        trigger: 'axis',
+        confine: true,
+        axisPointer: { type: 'shadow' },
+        backgroundColor: isDark ? '#2c2c2e' : '#ffffff',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
+        borderWidth: 1,
+        padding: [8, 12],
+        textStyle: { color: textColor, fontSize: 12 },
+        formatter: params => {
+          const p = params && params[0]
+          if (!p) return ''
+          const pct = total > 0 ? Math.round(p.value / total * 100) : 0
+          return `${p.name}\n${checkin.fmtMinutes(p.value)} · ${pct}%`
+        }
+      },
+      xAxis: {
+        type: 'value',
+        axisLabel: { show: false },
+        axisLine: { show: false },
+        axisTick: { show: false },
+        splitLine: { show: false }
+      },
+      yAxis: {
+        type: 'category',
+        inverse: true,
+        data: this._ringData.map(d => d.name),
+        axisTick: { show: false },
+        axisLine: { show: false },
+        axisLabel: { color: subTextColor, fontSize: 11 }
+      },
+      series: [{
+        type: 'bar',
+        data: this._ringData.map(d => d.value),
+        barMaxWidth: 18,
+        itemStyle: { color: barColor, borderRadius: [0, 9, 9, 0] },
+        label: {
+          show: true,
+          position: 'right',
+          color: subTextColor,
+          fontSize: 11,
+          formatter: p => checkin.fmtMinutes(p.value)
+        }
+      }]
+    }
+    this._ringChart.setOption(option)
+  },
+
+  _chartByTouch(e) {
+    return e.currentTarget.dataset.chart === 'ring' ? this._ringChart : this._barChart
+  },
+
+  _wrapTouch(event) {
+    for (let i = 0; i < event.touches.length; ++i) {
+      const touch = event.touches[i]
+      touch.offsetX = touch.x
+      touch.offsetY = touch.y
+    }
+    return event
+  },
+
+  onChartTouchStart(e) {
+    const chart = this._chartByTouch(e)
+    if (chart && e.touches.length > 0) {
+      const touch = e.touches[0]
+      const handler = chart.getZr().handler
+      handler.dispatch('mousedown', { zrX: touch.x, zrY: touch.y, preventDefault: () => {}, stopImmediatePropagation: () => {}, stopPropagation: () => {} })
+      handler.dispatch('mousemove', { zrX: touch.x, zrY: touch.y, preventDefault: () => {}, stopImmediatePropagation: () => {}, stopPropagation: () => {} })
+      handler.processGesture(this._wrapTouch(e), 'start')
+    }
+  },
+
+  onChartTouchMove(e) {
+    const chart = this._chartByTouch(e)
+    if (chart && e.touches.length > 0) {
+      const touch = e.touches[0]
+      const handler = chart.getZr().handler
+      handler.dispatch('mousemove', { zrX: touch.x, zrY: touch.y, preventDefault: () => {}, stopImmediatePropagation: () => {}, stopPropagation: () => {} })
+      handler.processGesture(this._wrapTouch(e), 'change')
+    }
+  },
+
+  onChartTouchEnd(e) {
+    const chart = this._chartByTouch(e)
+    if (chart) {
+      const touch = e.changedTouches ? e.changedTouches[0] : {}
+      const handler = chart.getZr().handler
+      handler.dispatch('mouseup', { zrX: touch.x, zrY: touch.y, preventDefault: () => {}, stopImmediatePropagation: () => {}, stopPropagation: () => {} })
+      handler.dispatch('click', { zrX: touch.x, zrY: touch.y, preventDefault: () => {}, stopImmediatePropagation: () => {}, stopPropagation: () => {} })
+      handler.processGesture(this._wrapTouch(e), 'end')
+    }
+  }
 
 })

@@ -57,42 +57,12 @@ page { background: var(--bg); }
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text3);
 }
-.chart-bars {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  height: 220rpx;
-}
-.bar {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-  justify-content: flex-end;
-}
-.bar-track {
-  width: 60%;
-  max-width: 56rpx;
-  flex: 1;
-  display: flex;
-  align-items: flex-end;
-  background: transparent;
-}
-.bar-fill {
+.echart-box {
   width: 100%;
-  background: var(--card2);
-  border-radius: 20rpx;
-  min-height: 4rpx;
-  transition: height .2s;
+  height: 440rpx;
 }
-.bar-fill.is-peak {
-  background: var(--brand);
-}
-.bar-label {
-  font-size: calc(22rpx * var(--fs, 1));
-  color: var(--text3);
-  margin-top: 12rpx;
+.echart-box-ring {
+  height: 520rpx;
 }
 .card-foot {
   margin-top: 20rpx;
@@ -143,63 +113,4 @@ page { background: var(--bg); }
   color: var(--text3);
 }
 
-/* ⑥ 打卡最久排行 */
-.rank-list { margin-top: 8rpx; }
-.rank-item {
-  display: flex;
-  align-items: center;
-  padding: 20rpx 0;
-}
-.rank-item:not(:last-child) {
-  border-bottom: 1px solid var(--divider);
-}
-.rank-cover {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 14rpx;
-  background: var(--card2);
-  color: var(--text2);
-  font-size: calc(34rpx * var(--fs, 1));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.rank-info {
-  flex: 1;
-  margin-left: 20rpx;
-  min-width: 0;
-}
-.rank-name {
-  font-size: calc(28rpx * var(--fs, 1));
-  color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.rank-duration {
-  font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text3);
-  margin-top: 6rpx;
-}
-.rank-tag {
-  flex-shrink: 0;
-  margin-left: 16rpx;
-  padding: 6rpx 16rpx;
-  font-size: calc(22rpx * var(--fs, 1));
-  color: var(--brand);
-  background: rgba(7, 193, 96, .10);
-  border-radius: 999rpx;
-}
-.rank-more {
-  margin-top: 24rpx;
-  text-align: center;
-  font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text2);
-}
-.rank-empty {
-  text-align: center;
-  color: var(--text3);
-  font-size: calc(28rpx * var(--fs, 1));
-  padding: 48rpx 24rpx;
-}
+
