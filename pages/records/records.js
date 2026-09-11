@@ -55,7 +55,10 @@ Page({
   // 加载所选月份记录，按时间倒序
   _refresh() {
     const ym = this.data.curYm || this._toYm(new Date())
-    const [y, m] = ym.split('-').map(Number)
+    // 不用数组解构：增强编译会生成 @swc/runtime/_array_with_holes 依赖，部分工具版本解析不到会报错
+    const ymParts = ym.split('-').map(Number)
+    const y = ymParts[0]
+    const m = ymParts[1]
 
     const monthRecords = checkin.getByMonth(ym)
     monthRecords.sort((a, b) => b.timestamp - a.timestamp)
@@ -101,7 +104,10 @@ Page({
   // ===== 月份选择器（与首页一致） =====
   onToggleMonthPicker() {
     const ym = this.data.curYm
-    const [y, m] = ym.split('-').map(Number)
+    // 同上：避免数组解构
+    const ymParts = ym.split('-').map(Number)
+    const y = ymParts[0]
+    const m = ymParts[1]
     const idx = this.data.yearRange.indexOf(y)
     this.setData({
       monthPickerOpen: true,

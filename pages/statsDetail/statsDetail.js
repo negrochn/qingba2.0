@@ -11,7 +11,9 @@ function startOfDay(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDat
 function addDays(d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n) }
 function addMonths(d, n) { return new Date(d.getFullYear(), d.getMonth() + n, 1) }
 function toDayStr(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` }
-function parseDay(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d) }
+// 注意：此处不用数组解构（const [y,m,d] = ...）——
+// 增强编译会为解构生成 @swc/runtime/_array_with_holes 依赖，部分开发者工具版本解析不到该模块而报错
+function parseDay(s) { const p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]) }
 function toYm(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}` }
 function fmtDateCN(d) { return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日` }
 
