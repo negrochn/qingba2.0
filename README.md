@@ -153,6 +153,18 @@
 4. AppID 填写自己的测试号（或点击"使用测试号"）
 5. 编译运行
 
+### 关于 AppID（真实 appid 不入库）
+
+`project.config.json` 中的 `appid` 固定为 `touristappid`（游客态），仓库**不存放真实 AppID**。在开发者工具里填写自己的 AppID 后，工具会把它写回这个文件，为避免误提交、泄露真实 AppID，建议在本机对该文件加标记：
+
+```bash
+git update-index --skip-worktree project.config.json   # 加标记（撤销：--no-skip-worktree）
+```
+
+- 这是**本地**设置（存于 `.git/info/index`），不会随仓库分发 —— 换机器 / 重新 clone 后需再执行一次
+- 加标记后 `git add` 会**静默忽略**该文件的改动；若确实要改它受版本控制的内容（如 `packOptions.ignore`），先撤销标记，改完提交后再加回来
+- 个人编译设置存放于 `project.private.config.json`，该文件已在 `.gitignore` 中，不受影响
+
 ## 许可
 
 本项目仅供学习交流使用。
