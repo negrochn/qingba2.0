@@ -12,21 +12,19 @@ const stageOptions = routeData.stages.map(s => ({
   name: s.stage_name
 }));
 
-// 本地兜底版本号（正式版会自动读取线上版本号，开发/体验版为空时使用此值）
-const FALLBACK_VERSION = '2.0.0';
-
-// 获取显示版本号
-function getAppVersion() {
+// 获取「关于小程序」右侧显示文案：
+// 正式版读线上版本号；开发版 / 体验版读不到版本号，只显示环境（不做假版本号兜底）
+function getAppVersionText() {
   try {
     const info = wx.getAccountInfoSync();
     const version = info.miniProgram.version;
     const envVersion = info.miniProgram.envVersion; // develop | trial | release
-    if (version) return version;
-    if (envVersion === 'develop') return `${FALLBACK_VERSION}(开发版)`;
-    if (envVersion === 'trial') return `${FALLBACK_VERSION}(体验版)`;
-    return FALLBACK_VERSION;
+    if (version) return `版本${version}`;
+    if (envVersion === 'develop') return '开发版';
+    if (envVersion === 'trial') return '体验版';
+    return '未知版本';
   } catch (e) {
-    return FALLBACK_VERSION;
+    return '未知版本';
   }
 }
 
@@ -34,7 +32,7 @@ Page({
   data: {
     totalCount: 0,
     stageOptions,
-    appVersion: getAppVersion(),
+    appVersionText: getAppVersionText(),
     // 开发者工具（压力测试）仅在开发版显示
     showDevTools: false,
     currentStageIndex: -1,

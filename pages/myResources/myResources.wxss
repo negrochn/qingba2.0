@@ -121,6 +121,58 @@ page {
   overflow: hidden;
 }
 
+/* ====== 左滑删除（同打卡记录页原语） ====== */
+.swipe-wrap {
+  position: relative;
+  overflow: hidden;
+  background: var(--card);
+}
+
+/* 行间分隔线：与全局 .weui-cell 内线一致（left 32rpx，首行无） */
+.swipe-wrap::before {
+  content: ' ';
+  position: absolute;
+  left: 32rpx;
+  right: 0;
+  top: 0;
+  height: 1rpx;
+  background: var(--divider);
+  z-index: 2;
+}
+.swipe-wrap:first-child::before { display: none; }
+
+/* fg 内的 cell 不再画自己的顶线，避免与上面那条重复 */
+.rg-body .swipe-fg::before { display: none; }
+
+/* 左滑露出的删除层（扁平纯色，颜色走 --danger = WeUI RED） */
+.swipe-bg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 150rpx;
+  display: flex;
+  align-items: stretch;
+}
+.swipe-del {
+  width: 100%;
+  height: 100%;
+  background: var(--danger);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(34rpx * var(--fs, 1));
+  font-weight: 500;
+}
+
+/* 前景行（必须不透明，否则会透出底下的删除层） */
+.swipe-fg {
+  position: relative;
+  background: var(--card);
+  z-index: 1;
+}
+
 /* 空态 */
 .mr-empty {
   padding: 120rpx 64rpx 40rpx;

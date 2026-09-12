@@ -22,17 +22,30 @@
           </view>
 
           <view class="rg-body" wx:if="{{expandedGroups[grp.uid]}}">
+            <!-- 左滑删除：与打卡记录页同一套手势 -->
             <view
-              class="weui-cell weui-cell_access"
+              class="swipe-wrap"
               wx:for="{{grp.items}}"
               wx:for-item="it"
               wx:key="id"
-              data-id="{{it.id}}"
-              bindtap="openEdit"
+              data-path="{{it._path}}"
+              bindtouchstart="onTouchStart"
+              bindtouchmove="onTouchMove"
+              bindtouchend="onTouchEnd"
             >
-              <view class="weui-cell__bd">{{it.name}}</view>
-              <view class="weui-cell__ft">
-                <text class="iconfont icon-right"></text>
+              <view class="swipe-bg">
+                <view class="swipe-del" catchtap="onDeleteItem" data-id="{{it.id}}">删除</view>
+              </view>
+              <view
+                class="weui-cell weui-cell_access swipe-fg"
+                style="transform: translateX({{it._dx}}rpx); transition: {{it._anim ? 'transform 0.25s ease' : 'none'}};"
+                data-id="{{it.id}}"
+                bindtap="openEdit"
+              >
+                <view class="weui-cell__bd">{{it.name}}</view>
+                <view class="weui-cell__ft">
+                  <text class="iconfont icon-right"></text>
+                </view>
               </view>
             </view>
           </view>
@@ -83,10 +96,9 @@
       </view>
     </view>
 
-    <!-- 编辑态：删除按钮占据取消的位置 -->
+    <!-- 删除统一走列表左滑（同打卡记录页），弹窗只保留取消 / 保存 -->
     <view class="weui-btn-area_inline">
-      <button wx:if="{{isEdit}}" class="weui-btn weui-btn_warn" bindtap="onDelete">删除</button>
-      <button wx:else class="weui-btn weui-btn_default" bindtap="closeSheet">取消</button>
+      <button class="weui-btn weui-btn_default" bindtap="closeSheet">取消</button>
       <button class="weui-btn weui-btn_primary" bindtap="submitSheet">{{isEdit ? '保存' : '添加'}}</button>
     </view>
   </view>

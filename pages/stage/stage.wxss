@@ -20,12 +20,11 @@
   /* 品牌绿低透明底（扁平纯色，无渐变） */
   --brand-soft: rgba(7, 193, 96, 0.1);
   --brand-softer: rgba(7, 193, 96, 0.06);
-  /* 序号首字母方块底色 / 行尾箭头色（深浅各一档） */
+  /* 序号首字母方块底色（深浅各一档） */
   --no-char: #5a9af0;
-  --row-arrow: var(--text3);
 }
 
-/* 深色：分类色提亮 + 品牌绿底加深 + 箭头转品牌绿（仅一处覆盖，免去逐条 .dm-dark） */
+/* 深色：分类色提亮 + 品牌绿底加深（仅一处覆盖，免去逐条 .dm-dark） */
 .dm-dark {
   --dot-mpb: #ff6b6b;
   --dot-mgr: #f5b041;
@@ -39,7 +38,6 @@
   --brand-soft: rgba(7, 193, 96, 0.16);
   --brand-softer: rgba(7, 193, 96, 0.14);
   --no-char: #4a8fd9;
-  --row-arrow: var(--brand);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -56,7 +54,6 @@
     --brand-soft: rgba(7, 193, 96, 0.16);
     --brand-softer: rgba(7, 193, 96, 0.14);
     --no-char: #4a8fd9;
-    --row-arrow: var(--brand);
   }
 }
 
@@ -238,9 +235,9 @@
   margin-right: 8rpx;
 }
 
-/* 行尾箭头：跟随 --row-arrow（浅色占位灰 / 深色品牌绿） */
+/* 行尾箭头：深浅档统一走 --text3（FG-2），与 WeUI 列表箭头一致（不用品牌绿） */
 .r-arrow {
-  color: var(--row-arrow);
+  color: var(--text3);
   font-size: 49rpx;
   line-height: 1;
   font-weight: 300;

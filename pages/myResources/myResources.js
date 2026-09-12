@@ -5,6 +5,9 @@ const resources = require('../../utils/resources.js')
 const checkin = require('../../utils/checkin.js')
 const { routeData } = require('../../utils/data.js')
 
+// 左滑删除按钮宽度（rpx），与样式 .swipe-bg / .swipe-del 保持一致（同打卡记录页）
+const DELETE_W = 150
+
 Page({
   data: {
     fontClass: '',
@@ -16,6 +19,10 @@ Page({
     // 分组展开 / 折叠状态 { [uid]: boolean }，uid = stageId|groupKey（默认全部展开）
     expandedGroups: {},
     maxNameLen: customResources.MAX_NAME_LEN,
+    // 左滑删除状态（与打卡记录页同一套实现）
+    _curSwipePath: '',   // 当前正在拖动 / 展开的行路径
+    _touchStartX: 0,
+    _touchStartY: 0,
     // 半屏弹窗（添加 / 编辑）
     showSheet: false,
     sheetTitle: '添加资源',
@@ -50,11 +57,20 @@ Page({
       resources.getStageGroupKeys(stage.stage_id).forEach(key => {
         const list = Array.isArray(byGroup[key]) ? byGroup[key] : []
         if (!list.length) return
+        const groupsBefore = groups.length
+        const sectionsBefore = sections.length
         groups.push({
           uid: `${stage.stage_id}|${key}`,
           key,
           label: resources.getGroupLabel(key),
-          items: list.map(it => ({ id: it.id, name: it.name }))
+          items: list.map((it, ii) => ({
+            id: it.id,
+            name: it.name,
+            // 供左滑删除用 setData 精确定位到该行（每次 refresh 重建）
+            _path: `sections[${sectionsBefore}].groups[${groupsBefore}].items[${ii}]`,
+            _dx: 0,
+            _anim: true
+          }))
         })
         total += list.length
       })
@@ -119,6 +135,11 @@ Page({
   },
 
   openEdit(e) {
+    // 刚发生过左滑：本次 tap 不当作点击，避免滑完误开弹窗
+    if (this._moved) {
+      this._moved = false
+      return
+    }
     const id = e.currentTarget.dataset.id
     const found = customResources.findById(id)
     if (!found) {
@@ -185,25 +206,99 @@ Page({
     wx.showToast({ title: isEdit ? '已保存' : '已添加', icon: 'success' })
   },
 
-  // 删除资源（历史记录与统计保留）
-  onDelete() {
-    const { editId, nameInput } = this.data
-    if (!editId) return
+  // ===== 左滑删除（与打卡记录页同一套交互） =====
+  // 行路径形如 sections[0].groups[1].items[2]，用于 setData 定位
+  _findItem(path) {
+    const m = /^sections\[(\d+)\]\.groups\[(\d+)\]\.items\[(\d+)\]$/.exec(path || '')
+    if (!m) return null
+    const sec = this.data.sections[Number(m[1])]
+    const grp = sec && sec.groups[Number(m[2])]
+    const it = grp && grp.items[Number(m[3])]
+    return it || null
+  },
+
+  _snapDx(dx) {
+    return dx <= -DELETE_W / 2 ? -DELETE_W : 0
+  },
+
+  onTouchStart(e) {
+    const path = e.currentTarget.dataset.path
+    if (!path) return
+    const t = e.touches[0]
+    this._moved = false
+    this._lastDx = 0
+
+    // 关闭其他已展开的行，并让本行进入「拖动中」（关动画）
+    const patch = {
+      _curSwipePath: path,
+      _touchStartX: t.clientX,
+      _touchStartY: t.clientY
+    }
+    this.data.sections.forEach(sec => {
+      sec.groups.forEach(grp => {
+        grp.items.forEach(it => {
+          if (it._path !== path && it._dx) {
+            patch[it._path + '._dx'] = 0
+            patch[it._path + '._anim'] = true
+          }
+        })
+      })
+    })
+    patch[path + '._anim'] = false
+    this.setData(patch)
+  },
+
+  onTouchMove(e) {
+    const path = this.data._curSwipePath
+    if (!path) return
+    const t = e.touches[0]
+    // px → rpx（约 2 倍，与打卡记录页同口径）
+    let newDx = (t.clientX - this.data._touchStartX) * 2
+    if (newDx < -(DELETE_W + 20)) newDx = -(DELETE_W + 20)
+    if (newDx > 10) newDx = 10
+    if (Math.abs(newDx) > 10) this._moved = true
+
+    // 节流：位移变化小于 2rpx 时跳过，避免高频 setData 掉帧
+    if (this._swipePath === path && Math.abs(newDx - this._lastDx) < 2) return
+    this._swipePath = path
+    this._lastDx = newDx
+    this.setData({ [path + '._dx']: newDx })
+  },
+
+  onTouchEnd() {
+    const path = this.data._curSwipePath
+    if (!path) return
+    const cur = this._findItem(path)
+    const target = this._snapDx(cur ? (cur._dx || 0) : 0)
+    this.setData({
+      [path + '._dx']: target,
+      [path + '._anim']: true,
+      _curSwipePath: ''
+    })
+  },
+
+  // 左滑露出的删除按钮（二次确认；历史记录与统计保留）
+  onDeleteItem(e) {
+    const id = e.currentTarget.dataset.id
+    const found = customResources.findById(id)
+    if (!found) {
+      wx.showToast({ title: '资源不存在', icon: 'none' })
+      return
+    }
 
     wx.showModal({
       title: '删除资源',
-      content: `确认删除《${nameInput}》？已产生的打卡记录与统计会保留。`,
+      content: `确认删除《${found.resource.name}》？已产生的打卡记录与统计会保留。`,
       confirmText: '删除',
       cancelText: '取消',
       confirmColor: '#e74c3c',
       success: (r) => {
         if (!r.confirm) return
-        const res = customResources.remove(editId)
+        const res = customResources.remove(id)
         if (!res || !res.ok) {
           wx.showToast({ title: (res && res.error) || '删除失败', icon: 'none' })
           return
         }
-        this.setData({ showSheet: false })
         this.refresh()
         wx.showToast({ title: '已删除', icon: 'success' })
       }

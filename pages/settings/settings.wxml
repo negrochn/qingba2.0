@@ -38,7 +38,7 @@
         <view class="weui-cell__desc">把自己买的书 / 动画加进来一起打卡</view>
       </view>
       <view class="weui-cell__ft">
-        <text class="weui-cell__ft_value">{{myResourceCount}} 个</text>
+        <text class="weui-cell__ft_value">{{myResourceCount}} 项</text>
         <text class="iconfont icon-right"></text>
       </view>
     </view>
@@ -96,7 +96,7 @@
     <view class="weui-cell">
       <view class="weui-cell__bd">关于小程序</view>
       <view class="weui-cell__ft">
-        <text class="weui-cell__ft_value">版本{{appVersion}}</text>
+        <text class="weui-cell__ft_value">{{appVersionText}}</text>
       </view>
     </view>
     <view class="weui-cell">
