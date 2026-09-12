@@ -1,20 +1,155 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <view class="weui-cells">
-    <view
-      class="weui-cell weui-cell_access"
-      wx:for="{{stageList}}"
-      wx:key="stage_id"
-      data-id="{{item.stage_id}}"
-      bindtap="toStageDetail"
-    >
-      <view class="weui-cell__bd">
-        <view class="weui-cell__bd_text">{{item.stage_name}}</view>
-      </view>
-      <view class="weui-cell__ft">
-        <text class="iconfont icon-right"></text>
-      </view>
+  <!-- 顶部：阶段选择器（左对齐，参考打卡记录页的月份选择器） -->
+  <view class="section-head">
+    <view class="stage-picker" bindtap="onToggleStagePicker">
+      <text class="stage-picker-name">{{stageName || '选择阶段'}}</text>
+      <text class="stage-picker-arrow {{stagePickerOpen ? 'up' : ''}}">▾</text>
     </view>
   </view>
 
+  <block wx:if="{{stage}}">
+
+    <!-- 整页空态：该阶段还没有任何打卡记录 -->
+    <view class="empty-hint" wx:if="{{isEmpty}}">
+      <text class="iconfont icon-info empty-icon"></text>
+      <text class="empty-text">该阶段还没有打卡记录</text>
+      <text class="empty-sub">完成一次打卡后，这里会显示时长分布、分组对比与排行榜</text>
+    </view>
+
+    <block wx:else>
+
+      <!-- 核心数据 headline（无卡片） -->
+      <view class="head-card">
+        <view class="head-main">
+          <block wx:for="{{headSegs}}" wx:key="unit">
+            <text class="head-num">{{item.num}}</text>
+            <text class="head-unit">{{item.unit}}</text>
+          </block>
+        </view>
+        <view class="head-sub">
+          <text>{{dateRangeText}}，{{stageName}}历时{{stageDays}}天</text>
+        </view>
+      </view>
+
+      <!-- 汇总指标（3 项，简单 flex：前两项一行，第三项换行） -->
+      <view class="summary">
+        <view class="summary-item" wx:for="{{summary}}" wx:key="index">
+          <text class="summary-prefix">{{item.prefix}}</text>
+          <text class="summary-value">{{item.value}}</text>
+          <text class="summary-unit">{{item.unit}}</text>
+          <text class="iconfont icon-right summary-arrow"></text>
+        </view>
+      </view>
+
+      <!-- 打卡时长分布（柱状图） -->
+      <view class="card">
+        <view class="card-head">
+          <text class="card-title">打卡时长分布</text>
+          <text class="iconfont icon-calendar card-cal"></text>
+        </view>
+        <view class="chart">
+          <!-- canvas 是原生组件，层级高于普通视图，弹层打开时用 wx:if 移除 -->
+          <canvas
+            wx:if="{{!stagePickerOpen}}"
+            type="2d"
+            id="chart-bar"
+            class="echart-box"
+            data-chart="bar"
+            bindtouchstart="onChartTouchStart"
+            bindtouchmove="onChartTouchMove"
+            bindtouchend="onChartTouchEnd"
+          ></canvas>
+          <!-- 骨架：等高顶上，柱高取真实占比、网格与柱位按 ECharts 的 grid 换算 -->
+          <view class="chart-skel" wx:else>
+            <view class="skel-grid">
+              <view class="skel-line" wx:for="{{[0, 1, 2, 3, 4]}}" wx:key="*this" style="top: {{index * 25}}%"></view>
+            </view>
+            <view class="skel-plot">
+              <view class="skel-col" wx:for="{{chart}}" wx:key="k" style="height: {{item.percent}}%"></view>
+            </view>
+          </view>
+        </view>
+        <view class="card-foot" wx:if="{{highlightText}}">
+          <text class="chip">{{highlightText}}</text>
+        </view>
+      </view>
+
+      <!-- 分组时长对比（雷达图） -->
+      <view class="card">
+        <view class="card-head">
+          <text class="card-title">分组时长对比</text>
+        </view>
+        <view class="chart">
+          <canvas
+            wx:if="{{!stagePickerOpen}}"
+            type="2d"
+            id="chart-ring"
+            class="echart-box echart-box-ring"
+          ></canvas>
+          <!-- 骨架：5 圈网格 + 数据面，顶点由 buildRadarClips 按真实值与画布尺寸算出 -->
+          <view class="chart-skel chart-skel-ring" wx:else>
+            <view class="skel-ring" wx:for="{{ringGrids}}" wx:key="k">
+              <view class="skel-ring-out" style="clip-path: {{item.outer}}"></view>
+              <view class="skel-ring-in" style="clip-path: {{item.inner}}"></view>
+            </view>
+            <view class="skel-ring-area" wx:if="{{ringDataClip}}" style="clip-path: {{ringDataClip}}"></view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 时长排行榜 -->
+      <view class="card">
+        <view class="card-head">
+          <text class="card-title">时长排行榜</text>
+        </view>
+        <view class="rank" wx:if="{{rankList.length}}">
+          <view class="rank-row" wx:for="{{rankList}}" wx:key="name">
+            <view class="rank-fill" style="width: {{item.percent}}%;"></view>
+            <view class="rank-cover">{{item.char}}</view>
+            <view class="rank-name">{{item.name}}</view>
+            <text class="rank-dur">{{item.durationText}}</text>
+          </view>
+        </view>
+        <view class="rank-empty" wx:else>暂无打卡记录</view>
+      </view>
+
+      <!-- 读完排行榜 -->
+      <view class="card">
+        <view class="card-head">
+          <text class="card-title">读完排行榜</text>
+        </view>
+        <view class="rank" wx:if="{{readRankList.length}}">
+          <view class="rank-row" wx:for="{{readRankList}}" wx:key="name">
+            <view class="rank-fill" style="width: {{item.percent}}%;"></view>
+            <view class="rank-cover">{{item.char}}</view>
+            <view class="rank-name">{{item.name}}</view>
+            <text class="rank-dur">{{item.countText}}</text>
+          </view>
+        </view>
+        <view class="rank-empty" wx:else>暂无读完记录</view>
+      </view>
+
+    </block>
+
+  </block>
+
+  <view class="weui-cell_empty" wx:else>暂无可统计的阶段</view>
+
+</view>
+
+<!-- 阶段选择弹层（与打卡记录页月份选择器同原语） -->
+<view class="mp-mask {{stagePickerOpen ? 'show' : ''}}" bindtap="onCloseStagePicker" wx:if="{{stagePickerOpen}}">
+  <view class="mp-sheet" catchtap="">
+    <view class="mp-title mb-16">选择阶段</view>
+    <picker-view indicator-style="height: 80rpx;" class="mp-pv" value="{{pickerValue}}" bindchange="onPickerChange">
+      <picker-view-column>
+        <view wx:for="{{stageOptions}}" wx:key="stage_id" class="mp-item">{{item.stage_name}}</view>
+      </picker-view-column>
+    </picker-view>
+    <view class="mp-actions">
+      <button class="mp-btn mp-cancel" bindtap="onCloseStagePicker">取消</button>
+      <button class="mp-btn mp-ok" bindtap="onConfirmStagePicker">确定</button>
+    </view>
+  </view>
 </view>

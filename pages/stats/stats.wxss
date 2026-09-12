@@ -1,2 +1,381 @@
-/* 数据统计：各阶段列表（WeUI 分组列表，复用全局 .weui-* 原语） */
+/* 数据统计：顶部阶段选择器 + 累计维度统计（原「阶段统计详情」已合并到本页） */
+
 page { background: var(--bg); }
+
+/* ===== 顶部阶段选择器（左对齐，与打卡记录页月份选择器同款） ===== */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 16rpx 32rpx;
+}
+
+.stage-picker {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx 16rpx;
+  background: var(--cell-active);
+  border-radius: 8rpx;
+}
+
+.stage-picker-name {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
+  font-weight: 500;
+}
+
+.stage-picker-arrow {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
+  transition: transform 0.2s;
+}
+
+.stage-picker-arrow.up {
+  transform: rotate(180deg);
+}
+
+/* ===== 内容区 ===== */
+.card {
+  margin: 16rpx 32rpx 24rpx;
+  padding: 32rpx;
+  background: var(--card);
+  border-radius: 20rpx;
+}
+
+/* 核心数据 headline（无卡片，最简洁） */
+.head-card {
+  padding: 16rpx 32rpx 0;
+}
+.head-main {
+  display: flex;
+  align-items: baseline;
+}
+.head-num {
+  font-size: calc(64rpx * var(--fs, 1));
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.1;
+}
+.head-unit {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
+  margin-left: 8rpx;
+  margin-right: 8rpx;
+}
+.head-sub {
+  display: flex;
+  align-items: center;
+  margin-top: 12rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
+}
+
+/* 打卡时长分布 */
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+.card-title {
+  font-size: calc(30rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text);
+}
+.card-cal {
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text3);
+}
+.echart-box {
+  width: 100%;
+  height: 440rpx;
+}
+.echart-box-ring {
+  height: 520rpx;
+}
+/* ===== 弹层打开时的图表骨架 =====
+   canvas 是原生组件、弹层（普通视图）盖不住它，只能 wx:if 摘掉；
+   这里用等高骨架顶上，把遮罩下的「空洞」还原成图表轮廓（与真图同色同位置）。
+   --grid / --bar 对应 _renderBar、_renderRing 里的硬编码色值，深浅色各一套 */
+.chart-skel {
+  position: relative;
+  width: 100%;
+  height: 440rpx;
+  --grid: rgba(0, 0, 0, .06);
+  --bar: rgba(7, 193, 96, .14);
+}
+.dm-dark .chart-skel {
+  --grid: rgba(255, 255, 255, .10);
+}
+.chart-skel-ring {
+  height: 520rpx;
+}
+/* 柱状图骨架：网格与柱位对齐 ECharts 的 grid（left 40 / right 14 / top 24 / bottom 28 px） */
+.skel-grid,
+.skel-plot {
+  position: absolute;
+  left: 80rpx;
+  right: 28rpx;
+  top: 48rpx;
+  bottom: 56rpx;
+}
+.skel-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--grid);
+}
+.skel-plot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+}
+.skel-col {
+  flex: 1 1 0;
+  max-width: 48rpx;                 /* 对应 barMaxWidth: 24px */
+  background: var(--bar);
+  border-radius: 8rpx 8rpx 0 0;     /* 对应 borderRadius: [4, 4, 0, 0] */
+}
+/* 雷达图骨架：圆形网格由 5 组「外填网格色 + 内填卡片色」的 clip-path 挖出线条 */
+.skel-ring,
+.skel-ring-area {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+.skel-ring-out {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--grid);
+}
+.skel-ring-in {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--card);
+}
+.skel-ring-area {
+  background: var(--bar);
+}
+.card-foot {
+  margin-top: 20rpx;
+  width: 100%;
+}
+.chip {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8rpx 20rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text);
+  background: rgba(7, 193, 96, .10);
+  border-radius: 12rpx;
+}
+/* 汇总指标（简单 flex：前两项一行，第三项换行） */
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 16rpx 32rpx 0;
+}
+.summary-item {
+  width: 50%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: baseline;
+  padding: 0;
+}
+.summary-prefix {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
+}
+.summary-value {
+  font-size: calc(40rpx * var(--fs, 1));
+  font-weight: 500;
+  color: var(--text);
+  margin: 0 8rpx;
+}
+.summary-unit {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
+}
+.summary-arrow {
+  margin-left: 8rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
+}
+
+/* 时长排行榜（淡绿占比背景） */
+.rank { margin-top: 4rpx; }
+.rank-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 84rpx;
+  padding: 0 20rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+  margin-bottom: 12rpx;
+}
+.rank-row:last-child { margin-bottom: 0; }
+.rank-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(7, 193, 96, .14);
+  z-index: 0;
+}
+.rank-cover {
+  position: relative;
+  z-index: 1;
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 12rpx;
+  background: var(--card2);
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(30rpx * var(--fs, 1));
+  flex-shrink: 0;
+}
+.rank-name {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  margin-left: 20rpx;
+  min-width: 0;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rank-dur {
+  position: relative;
+  z-index: 1;
+  margin-left: 16rpx;
+  flex-shrink: 0;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
+}
+.rank-empty {
+  text-align: center;
+  color: var(--text3);
+  font-size: calc(28rpx * var(--fs, 1));
+  padding: 32rpx 0;
+}
+
+/* 整页空态：该阶段无任何打卡 */
+.empty-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 180rpx 64rpx 0;
+}
+.empty-icon {
+  font-size: calc(96rpx * var(--fs, 1));
+  color: var(--text3);
+}
+.empty-text {
+  margin-top: 28rpx;
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text2);
+}
+.empty-sub {
+  margin-top: 12rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1.5;
+}
+
+/* ===== 阶段选择弹层（与打卡记录页月份选择器同原语） ===== */
+.mp-mask {
+  position: fixed;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(0,0,0,0);
+  z-index: 2000;
+  pointer-events: none;
+  transition: background 0.2s;
+  display: flex;
+  align-items: flex-end;
+}
+
+.mp-mask.show {
+  background: rgba(0,0,0,0.45);
+  pointer-events: auto;
+}
+
+.mp-sheet {
+  width: 100%;
+  background: var(--card);
+  border-top-left-radius: 24rpx;
+  border-top-right-radius: 24rpx;
+  padding: 24rpx 32rpx calc(env(safe-area-inset-bottom) + 32rpx);
+  box-sizing: border-box;
+}
+
+.mp-title {
+  text-align: center;
+  font-size: calc(30rpx * var(--fs, 1));
+  color: var(--text);
+  font-weight: 600;
+}
+
+.mp-pv {
+  width: 100%;
+  height: 400rpx;
+}
+
+.mp-item {
+  line-height: 80rpx;
+  text-align: center;
+  font-size: calc(30rpx * var(--fs, 1));
+  color: var(--text);
+}
+
+.mp-actions {
+  display: flex;
+  justify-content: center;
+  gap: 20rpx;
+  margin-top: 16rpx;
+}
+
+.mp-btn {
+  width: 45%;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  border: none;
+  padding: 0;
+  line-height: 1;
+}
+
+.mp-btn::after {
+  border: none;
+}
+
+.mp-cancel {
+  background: var(--cell-active);
+  color: var(--text2);
+}
+
+.mp-ok {
+  background: var(--brand);
+  color: #fff;
+  font-weight: 600;
+}
