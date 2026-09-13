@@ -137,8 +137,9 @@
 | 页面左右边距 | 16 | 32 | 约定 |
 | cell 内边距（上下 + 左右，`@weuiCellGapV/H`） | 16 | 32 | `weui-cell.less` |
 | cell 内缩进（`@weuiCellInnerGapH`） | 16 | 32 | `weui-cell.less` |
-| 分组标题 `cells__title` margin-top（`@weuiCellsMarginTop`） | 8 | 16 | `weui-cell.less` |
-| 分组下说明 `cells__tips` margin-top | 8 | 16 | 约定 |
+| 分组块 `.weui-cells` margin-top（`@weuiCellsMarginTop`） | 8 | 16 | `weui-cell_global.less` |
+| 分组标题 `cells__title` margin-top（字面值，未用变量） | 16 | 32 | `weui-cell_global.less` |
+| 分组下说明 `cells__tips` margin-top（字面值，未用变量） | 8 | 16 | `weui-cell_global.less` |
 | 按钮区 `btn-area` 外边距 | 上48 / 左右16 / 下8 | 上96 / 左右32 / 下16 | 约定 |
 | 并排按钮间距（`@weuiBtnDefaultGap`） | 16 | 32 | `weui-button.less` |
 | 单元格间分隔线左缩进 | 16 | 32 | 约定 |
