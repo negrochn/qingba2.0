@@ -5,7 +5,7 @@
       {{stage.stage_name + '：积累' + stage.vocabulary_target + '（' + stage.time_investment + ' | ' + stage.target_phase + '）'}}
     </view>
     <view class="res-wrap">
-    <view class="res-list" wx:for="{{resourceGroups}}" wx:for-item="g" wx:for-index="gidx" wx:key="key">
+    <view class="res-list" wx:for="{{resourceGroups}}" wx:for-item="g" wx:key="key">
       <view class="rg-head {{expandedGroups[g.key] ? '' : 'rg-head-folded'}} {{g.clickable && !stageLocked ? 'rg-head-active' : ''}}" data-group-key="{{g.key}}" bindtap="onToggleGroup">
         <view class="rg-head-left">
           <view class="rg-dot rg-dot-{{g.key}}"></view>
@@ -15,8 +15,6 @@
         <view class="rg-head-right">
           <view class="rg-progress" wx:if="{{g.clickable && !stageLocked && groupProgress[g.key].todayMin > 0}}">
             <text class="rg-progress-val">{{groupProgress[g.key].todayMin}}m</text>
-            <text class="rg-progress-sep">·</text>
-            <text class="rg-progress-read">已读 {{groupProgress[g.key].readCount}}</text>
           </view>
           <view class="rg-progress rg-progress-empty" wx:elif="{{g.clickable && !stageLocked}}">
             <text>待学习</text>
@@ -29,34 +27,66 @@
         </view>
       </view>
       <view class="rg-body" wx:if="{{expandedGroups[g.key]}}">
+        <!-- 资源行：左滑露出「读完 +1 / 撤销 −1」操作区（手势原语同打卡记录页） -->
         <view
-          class="r-row {{g.clickable && !stageLocked ? 'r-row-click' : ''}} {{resTotals[g.key + '|' + res.name] ? 'r-row-done' : ''}}"
+          class="swipe-wrap"
           wx:for="{{g.items}}"
           wx:for-item="res"
-          wx:for-index="ridx"
           wx:key="id"
-          data-group-key="{{g.key}}"
-          data-group-label="{{g.label}}"
-          data-resource-id="{{res.id}}"
-          data-resource-name="{{res.name}}"
-          bindtap="onResourceTap"
+          data-path="{{res._path}}"
+          data-swipeable="{{g.clickable && !stageLocked}}"
+          bindtouchstart="onSwipeStart"
+          bindtouchmove="onSwipeMove"
+          bindtouchend="onSwipeEnd"
         >
-          <view class="r-no" wx:if="{{readCounts[g.key + '|' + res.id] >= 1}}">{{readCounts[g.key + '|' + res.id]}}</view>
-          <view class="r-no r-no-char" wx:else>{{res.name[0]}}</view>
-          <view class="r-body">
-            <view class="r-name">{{res.name}}<text class="r-tag" wx:if="{{res.custom}}">自定义</text></view>
-            <view class="r-sub" wx:if="{{resTotals[g.key + '|' + res.name]}}">今日已打卡 {{resTotals[g.key + '|' + res.name]}} 分钟 · 可继续追加</view>
-            <view class="r-sub r-sub-hint" wx:elif="{{g.clickable && !stageLocked}}">点击输入学习时长并打卡</view>
-            <view class="r-sub r-sub-locked" wx:elif="{{g.clickable && stageLocked}}">
-              <text wx:if="{{stageStatus === 'completed'}}">本阶段已完成，仅可查看</text>
-              <text wx:else>当前阶段未解锁，仅可查看</text>
+          <!-- 滑到一半露出的操作区（未解锁 / 不参与打卡的行不渲染） -->
+          <view class="swipe-bg" wx:if="{{g.clickable && !stageLocked}}">
+            <view
+              class="swipe-act swipe-act-read"
+              catchtap="onFinishRead"
+              data-group-key="{{g.key}}"
+              data-resource-id="{{res.id}}"
+            >
+              <text class="swipe-act-main">读完</text>
+              <text class="swipe-act-sub">+1</text>
             </view>
-            <view class="r-sub r-sub-note" wx:else>仅供参考，不参与打卡</view>
+            <view
+              class="swipe-act swipe-act-undo {{readCounts[g.key + '|' + res.id] >= 1 ? '' : 'swipe-act-off'}}"
+              catchtap="onUndoFinishRead"
+              data-group-key="{{g.key}}"
+              data-resource-id="{{res.id}}"
+            >
+              <text class="swipe-act-main">撤销</text>
+              <text class="swipe-act-sub">−1</text>
+            </view>
           </view>
-          <view class="r-right">
-            <view class="r-badge" wx:if="{{resTotals[g.key + '|' + res.name]}}">{{resTotals[g.key + '|' + res.name]}}m</view>
-            <view class="r-arrow" wx:if="{{g.clickable && !stageLocked}}">›</view>
-            <view class="r-arrow" wx:else>·</view>
+
+          <view
+            class="r-row swipe-fg {{g.clickable && !stageLocked ? 'r-row-click' : ''}} {{resTotals[g.key + '|' + res.name] ? 'r-row-done' : ''}}"
+            style="transform: translateX({{res._dx}}rpx); transition: {{res._anim ? 'transform 0.25s ease' : 'none'}};"
+            data-group-key="{{g.key}}"
+            data-group-label="{{g.label}}"
+            data-resource-id="{{res.id}}"
+            data-resource-name="{{res.name}}"
+            bindtap="onResourceTap"
+          >
+            <view class="r-no" wx:if="{{readCounts[g.key + '|' + res.id] >= 1}}">{{readCounts[g.key + '|' + res.id]}}</view>
+            <view class="r-no r-no-char" wx:else>{{res.name[0]}}</view>
+            <view class="r-body">
+              <view class="r-name">{{res.name}}<text class="r-tag" wx:if="{{res.custom}}">自定义</text></view>
+              <view class="r-sub" wx:if="{{resTotals[g.key + '|' + res.name]}}">今日已打卡 {{resTotals[g.key + '|' + res.name]}} 分钟 · 可继续追加</view>
+              <view class="r-sub r-sub-hint" wx:elif="{{g.clickable && !stageLocked}}">点击打卡 · 左滑标记读完</view>
+              <view class="r-sub r-sub-locked" wx:elif="{{g.clickable && stageLocked}}">
+                <text wx:if="{{stageStatus === 'completed'}}">本阶段已完成，仅可查看</text>
+                <text wx:else>当前阶段未解锁，仅可查看</text>
+              </view>
+              <view class="r-sub r-sub-note" wx:else>仅供参考，不参与打卡</view>
+            </view>
+            <view class="r-right">
+              <view class="r-badge" wx:if="{{resTotals[g.key + '|' + res.name]}}">{{resTotals[g.key + '|' + res.name]}}m</view>
+              <view class="r-arrow" wx:if="{{g.clickable && !stageLocked}}">›</view>
+              <view class="r-arrow" wx:else>·</view>
+            </view>
           </view>
         </view>
       </view>
@@ -172,7 +202,7 @@
       </view>
     </view>
 
-    <!-- 表单卡片 2：备注 + 已读完 -->
+    <!-- 表单卡片 2：备注 -->
     <view class="form-card">
       <view class="form-row">
         <view class="form-label">备注</view>
@@ -183,14 +213,6 @@
           bindinput="onRemarkInput"
           maxlength="50"
         />
-      </view>
-      <view class="weui-divider"></view>
-      <view class="form-row" bindtap="onReadFinish">
-        <view class="form-label">已读完</view>
-        <view class="form-right">
-          <text class="form-read-count">{{currentReadCount}} 次</text>
-          <text class="iconfont icon-right"></text>
-        </view>
       </view>
     </view>
 

@@ -406,15 +406,12 @@ function todayTotalByResource(stageId, groupKey, resourceName) {
     .reduce((s, c) => s + c.durationMinutes, 0)
 }
 
-// 批量汇总某天某阶段下各资源的累计时长与已读次数
+// 批量汇总某天某阶段下各资源的累计时长
 // 只需一次 getAll，避免在页面循环里对每个资源重复全量读取
-// 注意两套 key 口径不同（历史原因，勿混用）：
-//   minutes    —— 来自打卡记录，按 "groupKey|resourceName" 聚合
-//   readCounts —— 来自已读次数存储，按 "groupKey|resourceId" 聚合
-// @returns {Object} { minutes: { "groupKey|resourceName": min }, readCounts: { "groupKey|resourceId": count } }
+// key 口径：来自打卡记录，按 "groupKey|resourceName" 聚合（resourceName 为记录里的名称快照）
+// @returns {Object} { minutes: { "groupKey|resourceName": min } }
 function getDayTotalsByStage(stageId, day) {
   const minutes = {}
-  const readCounts = {}
   try {
     const list = getByDay(day || todayStr())
     for (const c of list) {
@@ -422,18 +419,10 @@ function getDayTotalsByStage(stageId, day) {
       const k = `${c.groupKey}|${c.resourceName}`
       minutes[k] = (minutes[k] || 0) + (Number(c.durationMinutes) || 0)
     }
-
-    const counts = _getReadCounts()
-    const prefix = `${stageId}|`
-    for (const key in counts) {
-      if (String(key).indexOf(prefix) === 0) {
-        readCounts[String(key).substring(prefix.length)] = counts[key]
-      }
-    }
   } catch (e) {
     console.error('getDayTotalsByStage failed:', e)
   }
-  return { minutes, readCounts }
+  return { minutes }
 }
 
 // 获取某月所有打卡记录
@@ -648,6 +637,22 @@ function incrementReadCount(stageId, groupKey, resourceId) {
   all[key] = (all[key] || 0) + 1
   _saveReadCounts(all)
   return all[key]
+}
+
+// 某资源已读次数 -1（撤销一次「读完」）
+// 减到 0 时直接删除该 key，避免残留 0 值影响排行 / 汇总
+// @returns {number} 撤销后的次数（不小于 0）
+function decrementReadCount(stageId, groupKey, resourceId) {
+  const all = _getReadCounts()
+  const key = _readCountKey(stageId, groupKey, resourceId)
+  const next = (Number(all[key]) || 0) - 1
+  if (next > 0) {
+    all[key] = next
+  } else {
+    delete all[key]
+  }
+  _saveReadCounts(all)
+  return next > 0 ? next : 0
 }
 
 // 获取某阶段所有资源的已读次数
@@ -1018,6 +1023,7 @@ module.exports = {
   saveDefaultRemark,
   getReadCount,
   incrementReadCount,
+  decrementReadCount,
   getReadCountByStage,
   getReadRankingByStage,
   migrateResourceKeysToId,

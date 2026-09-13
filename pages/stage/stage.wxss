@@ -22,6 +22,8 @@
   --brand-softer: rgba(7, 193, 96, 0.06);
   /* 序号首字母方块底色（深浅各一档） */
   --no-char: #5a9af0;
+  /* 左滑操作区「撤销」底色（中性灰；非破坏性操作，故不用 --danger） */
+  --swipe-undo: #8a8f96;
 }
 
 /* 深色：分类色提亮 + 品牌绿底加深（仅一处覆盖，免去逐条 .dm-dark） */
@@ -38,6 +40,7 @@
   --brand-soft: rgba(7, 193, 96, 0.16);
   --brand-softer: rgba(7, 193, 96, 0.14);
   --no-char: #4a8fd9;
+  --swipe-undo: #5f656d;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -54,6 +57,7 @@
     --brand-soft: rgba(7, 193, 96, 0.16);
     --brand-softer: rgba(7, 193, 96, 0.14);
     --no-char: #4a8fd9;
+    --swipe-undo: #5f656d;
   }
 }
 
@@ -144,8 +148,6 @@
 .rg-progress-empty,
 .rg-progress-locked { color: var(--text3); background: var(--cell-active); }
 .rg-progress-val { color: var(--brand); }
-.rg-progress-sep { margin: 0 6rpx; color: var(--text3); }
-.rg-progress-read { color: var(--text2); }
 
 /* 展开/折叠箭头 */
 .rg-arrow {
@@ -163,21 +165,75 @@
   overflow: hidden;
 }
 
-/* 资源行（序号/首字母 + 名称/副文 + 徽标/箭头） */
+/* 资源行（序号/首字母 + 名称/副文 + 徽标/箭头）
+   本身是左滑容器 .swipe-wrap 的前景层（.swipe-fg），需自带不透明底色盖住操作区。
+   本行底色有硬约束：不得用 background 简写赋「半透明」值 —— 简写会连带重置
+   background-color，半透明值会顶掉 .r-row 的不透明底色，下层操作区即穿透可见 */
 .r-row {
   display: flex;
   align-items: center;
   padding: 24rpx 32rpx;
-  border-bottom: 1rpx solid var(--divider);
   min-height: 144rpx;
   box-sizing: border-box;
+  background: var(--card);
 }
-.r-row:last-child { border-bottom: none; }
+/* 按下态：--cell-active 是不透明色，简写赋值安全 */
 .r-row-click:active { background: var(--cell-active); }
 
-/* 已打卡行：品牌绿浅底（纯色，无渐变） */
-.r-row-done { background: var(--brand-softer); }
-.r-row-done:active { background: var(--brand-soft); }
+/* 已打卡行：品牌绿浅底（纯色，无渐变）
+   但 --brand-softer / --brand-soft 都是半透明令牌（6% / 10% alpha），
+   直接用 background 简写会把不透明的行底色一并重置成透明 → 改用 background-image 叠加染色 */
+.r-row-done { background-image: linear-gradient(var(--brand-softer), var(--brand-softer)); }
+.r-row-done:active { background-image: linear-gradient(var(--brand-soft), var(--brand-soft)); }
+
+/* ====== 资源行左滑操作区（复用手势原语，同打卡记录页 / 我的资源） ====== */
+.swipe-wrap {
+  position: relative;
+  overflow: hidden;
+  /* 分割线挂容器不挂行：行左移时不会跟着位移 */
+  border-bottom: 1rpx solid var(--divider);
+}
+.swipe-wrap:last-child { border-bottom: none; }
+
+/* 左滑露出的操作区：读完（主）/ 撤销（次），宽度与 stage.js 的 SWIPE_W 保持一致 */
+.swipe-bg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 300rpx;
+  display: flex;
+  align-items: stretch;
+}
+.swipe-act {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+.swipe-act-main {
+  font-size: calc(32rpx * var(--fs, 1));
+  font-weight: 500;
+  line-height: 1.2;
+}
+.swipe-act-sub {
+  margin-top: 4rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  line-height: 1.2;
+  opacity: 0.75;
+}
+.swipe-act-read { background: var(--brand); }
+.swipe-act-undo { background: var(--swipe-undo); }
+/* 已读 0 次时撤销不可用：置灰但保留占位，保证操作区宽度恒定（吸附位置不跳） */
+.swipe-act-off { opacity: 0.45; }
+
+/* 前景层：随 _dx 位移；不透明底色由 .r-row 提供 */
+.swipe-fg {
+  position: relative;
+  z-index: 1;
+}
 
 /* 序号方块：品牌绿浅底 */
 .r-no {
@@ -369,15 +425,6 @@
 .seg-item:first-child { margin-left: 0; }
 .seg-item:active { background: var(--cell-active); }
 .seg-active { border-color: var(--brand); color: var(--brand); background: var(--card); }
-
-/* 已读完行 chevron */
-.form-row .icon-right {
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text3);
-  line-height: 1;
-  margin-left: 12rpx;
-  flex-shrink: 0;
-}
 
 /* 弹窗内按钮：两按钮等宽 + 与表单留白 */
 .action-sheet .weui-btn { flex: 1; }

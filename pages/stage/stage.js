@@ -15,6 +15,9 @@ function isRegularStage(stageId) {
   return /^regular_\d+$/.test(stageId) || stageId === 'pre_bridge'
 }
 
+// 资源行左滑露出的操作区宽度（rpx）：读完 / 撤销 各 150rpx，与 .swipe-bg 样式保持一致
+const SWIPE_W = 300
+
 Page({
   data: {
     stage: null,
@@ -33,7 +36,7 @@ Page({
       science_extensions: true,
       fusion_apps: true
     },
-    // 分组进度摘要 { groupKey: { todayMin, readCount } }
+    // 分组进度摘要 { groupKey: { todayMin } }
     groupProgress: {},
     // 打卡弹窗
     showCheckin: false,
@@ -42,7 +45,6 @@ Page({
     currentResourceId: '',    // 资源 id（读写 key）
     durationInput: '',    // 输入框(分钟数值文本)
     remarkInput: '',      // 备注输入
-    currentReadCount: 0,  // 当前资源已读次数
     // 资源今日累计打卡(展示徽标用) { "groupKey|资源名": 分钟 }
     resTotals: {},
     readCounts: {},
@@ -105,6 +107,15 @@ Page({
     // 官方 + 自定义资源合并渲染（8 类均可打卡）
     const groups = resources.getStageGroups(stage.stage_id)
 
+    // 为左滑准备字段：_path 用于 setData 精确定位，_dx 为位移（rpx），_anim 控制回弹动画
+    groups.forEach((g, gi) => {
+      g.items.forEach((res, ri) => {
+        res._path = `resourceGroups[${gi}].items[${ri}]`
+        res._dx = 0
+        res._anim = false
+      })
+    })
+
     wx.setNavigationBarTitle({ title: stage.stage_name })
     this.setData({ stage, stageIndex: index, stageLocked, stageStatus, resourceGroups: groups })
     this._refreshResTotals()
@@ -130,6 +141,8 @@ Page({
           (idx < currentIndex ? 'completed' : 'locked'))
       const stageLocked = stageStatus !== 'current'
       this.setData({ stageLocked, stageStatus })
+      // 从其他页返回时收起展开中的左滑操作区
+      this._closeSwipe()
       this._refreshResTotals()
       this._refreshReadCounts()
       this._refreshPromoteInfo()
@@ -336,29 +349,22 @@ Page({
     const totals = {}
     const groupProgress = {}
 
-    // 一次读取当天该阶段全部资源的时长与已读次数，避免在循环内重复全量读取
-    const { minutes, readCounts } = checkin.getDayTotalsByStage(stage.stage_id, checkin.todayStr())
+    // 一次读取当天该阶段全部资源的时长，避免在循环内重复全量读取
+    const { minutes } = checkin.getDayTotalsByStage(stage.stage_id, checkin.todayStr())
 
     this.data.resourceGroups.forEach(g => {
       if (!g.clickable) return
       let groupToday = 0
-      let groupReadCount = 0
       g.items.forEach(res => {
-        // 时长 key 用资源名（记录里的名称快照），已读次数 key 用资源 id
+        // 时长 key 用资源名（记录里的名称快照）
         const minKey = `${g.key}|${res.name}`
-        const readKey = `${g.key}|${res.id}`
         const min = minutes[minKey] || 0
         if (min > 0) {
           totals[minKey] = min
           groupToday += min
         }
-        // 统计该组已读总数
-        groupReadCount += readCounts[readKey] || 0
       })
-      groupProgress[g.key] = {
-        todayMin: groupToday,
-        readCount: groupReadCount
-      }
+      groupProgress[g.key] = { todayMin: groupToday }
     })
     this.setData({ resTotals: totals, groupProgress })
   },
@@ -372,6 +378,11 @@ Page({
 
   // 点击资源标签
   onResourceTap(e) {
+    // 刚发生过左滑：本次 tap 不当作点击，避免滑完误开打卡弹窗
+    if (this._moved) {
+      this._moved = false
+      return
+    }
     const { groupKey, groupLabel, resourceId, resourceName } = e.currentTarget.dataset
     if (this.data.stageStatus === 'locked') {
       wx.showToast({ title: '当前阶段未解锁，不可打卡', icon: 'none' })
@@ -383,15 +394,15 @@ Page({
     }
     const stage = this.data.stage
     const defaultRemark = checkin.getDefaultRemark(stage.stage_id, groupKey, resourceId)
-    const readCount = checkin.getReadCount(stage.stage_id, groupKey, resourceId)
+    // 收起左滑操作区，避免弹窗关闭后行仍停在展开态
+    this._closeSwipe()
     this.setData({
       showCheckin: true,
       currentGroup: { key: groupKey, label: groupLabel },
       currentResource: resourceName,
       currentResourceId: resourceId,
       durationInput: '20',
-      remarkInput: defaultRemark,
-      currentReadCount: readCount
+      remarkInput: defaultRemark
     })
   },
 
@@ -401,38 +412,136 @@ Page({
     const expandedGroups = { ...this.data.expandedGroups }
     expandedGroups[groupKey] = !expandedGroups[groupKey]
     this.setData({ expandedGroups })
+    // 折叠会让行卸载，先收起展开中的左滑操作区，避免重新展开时行仍停在滑开态
+    this._closeSwipe()
   },
 
-  // 读完：二次确认后已读次数+1
-  onReadFinish() {
-    const { currentGroup, currentResource, currentResourceId, stage } = this.data
-    if (!currentGroup || !currentResource) return
-    wx.showModal({
-      title: '确认已读完',
-      content: `《${currentResource}》标记为已读完？`,
-      confirmText: '确认',
-      cancelText: '取消',
-      confirmColor: '#ff7a45',
-      success: (res) => {
-        if (!res.confirm) return
-        const count = checkin.incrementReadCount(stage.stage_id, currentGroup.key, currentResourceId)
+  // ===== 资源行左滑：露出「读完 +1 / 撤销 −1」操作区 =====
+  // 行路径形如 resourceGroups[0].items[2]，用于 setData 精确定位（手势原语同打卡记录页 / 我的资源）
+  _findRow(path) {
+    const m = /^resourceGroups\[(\d+)\]\.items\[(\d+)\]$/.exec(path || '')
+    if (!m) return null
+    const g = this.data.resourceGroups[Number(m[1])]
+    const it = g && g.items[Number(m[2])]
+    return it || null
+  },
 
-        // 更新分组进度中的已读数
-        const groupProgress = { ...this.data.groupProgress }
-        const prev = groupProgress[currentGroup.key] || { todayMin: 0, readCount: 0 }
-        groupProgress[currentGroup.key] = {
-          todayMin: prev.todayMin,
-          readCount: prev.readCount + 1
+  // 吸附：滑过一半即展开，否则回弹
+  _snapDx(dx) {
+    return dx <= -SWIPE_W / 2 ? -SWIPE_W : 0
+  },
+
+  // 收起全部已展开的操作区（打开打卡弹窗 / 从其他页返回时调用）
+  _closeSwipe() {
+    const patch = {}
+    this.data.resourceGroups.forEach(g => {
+      g.items.forEach(res => {
+        if (res._dx) {
+          patch[res._path + '._dx'] = 0
+          patch[res._path + '._anim'] = true
         }
-
-        this.setData({
-          currentReadCount: count,
-          [`readCounts.${currentGroup.key}|${currentResourceId}`]: count,
-          groupProgress
-        })
-        wx.showToast({ title: `已读完(${count}次)`, icon: 'success' })
-      }
+      })
     })
+    if (Object.keys(patch).length) this.setData(patch)
+  },
+
+  onSwipeStart(e) {
+    const { path, swipeable } = e.currentTarget.dataset
+    // 未解锁 / 不参与打卡的行不响应滑动
+    if (!path || !swipeable) return
+    const t = e.touches[0]
+    this._moved = false
+    this._lastDx = 0
+
+    // 关闭其他已展开的行，并让本行进入「拖动中」（关动画）
+    const patch = {
+      _curSwipePath: path,
+      _touchStartX: t.clientX
+    }
+    this.data.resourceGroups.forEach(g => {
+      g.items.forEach(res => {
+        if (res._path !== path && res._dx) {
+          patch[res._path + '._dx'] = 0
+          patch[res._path + '._anim'] = true
+        }
+      })
+    })
+    patch[path + '._anim'] = false
+    this.setData(patch)
+  },
+
+  onSwipeMove(e) {
+    const path = this.data._curSwipePath
+    if (!path) return
+    const t = e.touches[0]
+    // px → rpx（约 2 倍，与打卡记录页同口径）
+    let newDx = (t.clientX - this.data._touchStartX) * 2
+    if (newDx < -(SWIPE_W + 20)) newDx = -(SWIPE_W + 20)
+    if (newDx > 10) newDx = 10
+    // 有实际位移才算滑动（用于抑制滑动结束后的误点击）
+    if (Math.abs(newDx) > 10) this._moved = true
+
+    // 节流：位移变化小于 2rpx 时跳过，避免高频 setData 掉帧
+    if (this._swipePath === path && Math.abs(newDx - this._lastDx) < 2) return
+    this._swipePath = path
+    this._lastDx = newDx
+    this.setData({ [path + '._dx']: newDx })
+  },
+
+  onSwipeEnd() {
+    const path = this.data._curSwipePath
+    if (!path) return
+    const cur = this._findRow(path)
+    const target = this._snapDx(cur ? (cur._dx || 0) : 0)
+    this.setData({
+      [path + '._dx']: target,
+      [path + '._anim']: true,
+      _curSwipePath: ''
+    })
+  },
+
+  // 左滑操作区：读完 +1
+  // 滑动本身已提供误触保护，故不再二次确认；记完即收起操作区
+  // （一册记一次、同一册要隔一整轮才会再记，不存在连着点同一行，收起不打断任何流程）
+  onFinishRead(e) {
+    const { groupKey, resourceId } = e.currentTarget.dataset
+    const stage = this.data.stage
+    if (!stage || !groupKey || !resourceId) return
+    // 已开始有意点击按钮，解除滑动手势的点击抑制，否则紧接着点行体会被白吞一次
+    this._moved = false
+    const count = checkin.incrementReadCount(stage.stage_id, groupKey, resourceId)
+    this._applyReadCount(groupKey, resourceId, count)
+    this._closeSwipe()
+    this._tapFeedback()
+  },
+
+  // 左滑操作区：撤销上一次「读完」
+  onUndoFinishRead(e) {
+    const { groupKey, resourceId } = e.currentTarget.dataset
+    const stage = this.data.stage
+    if (!stage || !groupKey || !resourceId) return
+    this._moved = false
+    const cur = this.data.readCounts[`${groupKey}|${resourceId}`] || 0
+    if (cur <= 0) {
+      wx.showToast({ title: '还没有读完记录', icon: 'none' })
+      return
+    }
+    const count = checkin.decrementReadCount(stage.stage_id, groupKey, resourceId)
+    this._applyReadCount(groupKey, resourceId, count)
+    this._closeSwipe()
+    this._tapFeedback()
+  },
+
+  // 轻震动确认「记上了」（不支持的基础库 / 机型静默忽略）
+  _tapFeedback() {
+    try {
+      wx.vibrateShort({ type: 'light', fail: () => {} })
+    } catch (err) {}
+  },
+
+  // 同步已读次数到行内徽标（左侧方块）
+  _applyReadCount(groupKey, resourceId, count) {
+    this.setData({ [`readCounts.${groupKey}|${resourceId}`]: count })
   },
 
   closeCheckin() {
@@ -506,13 +615,10 @@ Page({
     // 基于本地值累加，避免再触发一次全量读取
     const newTotal = (Number(this.data.resTotals[resKey]) || 0) + minutes
     
-    // 更新分组进度
+    // 更新分组今日时长
     const groupProgress = { ...this.data.groupProgress }
-    const prev = groupProgress[currentGroup.key] || { todayMin: 0, readCount: 0 }
-    groupProgress[currentGroup.key] = {
-      todayMin: prev.todayMin + minutes,
-      readCount: prev.readCount
-    }
+    const prev = groupProgress[currentGroup.key] || { todayMin: 0 }
+    groupProgress[currentGroup.key] = { todayMin: prev.todayMin + minutes }
     
     this.setData({
       showCheckin: false,
