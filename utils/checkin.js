@@ -61,6 +61,23 @@ function todayStr(d = new Date()) {
   return `${y}-${m}-${day}`
 }
 
+// 校验并归一化 day 字符串（YYYY-MM-DD），非法返回 ''
+function normalizeDay(day) {
+  const s = String(day || '')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return ''
+  const parts = s.split('-').map(Number)
+  const d = new Date(parts[0], parts[1] - 1, parts[2])
+  const ok = d.getFullYear() === parts[0] && d.getMonth() === parts[1] - 1 && d.getDate() === parts[2]
+  return ok ? s : ''
+}
+
+// 由日期字符串构造时间戳（该日 12:00），供补录记录排序与展示使用
+// 显式用年月日构造，避免 iOS 对 "YYYY-MM-DD" 字符串解析不一致
+function dayToTimestamp(day) {
+  const parts = String(day).split('-').map(Number)
+  return new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0).getTime()
+}
+
 function genId() {
   return 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8)
 }
@@ -265,25 +282,29 @@ function saveAll(data) {
 }
 
 // 新增打卡记录
-// opts: { stageId, stageName, groupKey, groupLabel, resourceId, resourceName, durationMinutes, remark }
+// opts: { day?, stageId, stageName, groupKey, groupLabel, resourceId, resourceName, durationMinutes, remark, backfilled? }
+// day 缺省为今天；传入历史日期（YYYY-MM-DD）即为补录：timestamp 定在该日 12:00 并打 backfilled 标记
 // @returns {Object|null} 成功返回记录，保存失败返回 null
 function addCheckin(opts) {
-  const day = todayStr()
+  const o = opts || {}
+  const day = normalizeDay(o.day) || todayStr()
+  const backfilled = !!o.backfilled || day !== todayStr()
   const record = {
     id: genId(),
     day,
-    stageId: opts.stageId || '',
-    stageName: opts.stageName || '',
-    groupKey: opts.groupKey || '',
-    groupLabel: opts.groupLabel || '',
-    resourceId: opts.resourceId || '',
-    resourceName: opts.resourceName || '',
-    durationMinutes: Number(opts.durationMinutes) || 0,
-    remark: opts.remark || '',
-    timestamp: Date.now()
+    stageId: o.stageId || '',
+    stageName: o.stageName || '',
+    groupKey: o.groupKey || '',
+    groupLabel: o.groupLabel || '',
+    resourceId: o.resourceId || '',
+    resourceName: o.resourceName || '',
+    durationMinutes: Number(o.durationMinutes) || 0,
+    remark: o.remark || '',
+    timestamp: backfilled ? dayToTimestamp(day) : Date.now()
   }
+  if (backfilled) record.backfilled = true
 
-  // 快路径：分片模式下只读写当天所在月份的分片，避免全量 I/O
+  // 快路径：分片模式下只读写该日所在月份的分片，避免全量 I/O
   if (_isChunkMode()) {
     try {
       const key = _chunkKey(_dayToMonth(day))
@@ -979,6 +1000,8 @@ module.exports = {
   READ_COUNT_KEY,
   CURRENT_STAGE_KEY,
   todayStr,
+  normalizeDay,
+  dayToTimestamp,
   addCheckin,
   deleteCheckin,
   clearAllCheckins,

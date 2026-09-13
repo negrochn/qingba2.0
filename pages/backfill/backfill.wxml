@@ -1,0 +1,121 @@
+<view class="container {{fontClass}} {{darkClass}}">
+  <!-- 日期 -->
+  <view class="weui-cells__title">补录日期</view>
+  <view class="weui-cells">
+    <picker mode="date" value="{{dateStr}}" end="{{todayStr}}" bindchange="onDateChange">
+      <view class="weui-cell weui-cell_access">
+        <view class="weui-cell__bd">
+          <text class="weui-cell__bd_text">日期</text>
+        </view>
+        <view class="weui-cell__ft">
+          <text class="weui-cell__ft_value">{{dateText}}</text>
+          <text class="iconfont icon-right"></text>
+        </view>
+      </view>
+    </picker>
+  </view>
+  <view class="weui-cells__tips">补录数据会计入阶段时长与统计，可在「打卡记录」中查看。</view>
+
+  <!-- 阶段 -->
+  <view class="weui-cells__title">选择阶段</view>
+  <view class="weui-cells weui-cells_radio">
+    <view
+      class="weui-cell"
+      wx:for="{{stages}}"
+      wx:key="id"
+      wx:for-item="s"
+      data-id="{{s.id}}"
+      bindtap="pickStage"
+    >
+      <view class="weui-cell__bd">{{s.name}}</view>
+      <text class="weui-icon-checked iconfont icon-check" hidden="{{selectedStageId !== s.id}}"></text>
+    </view>
+  </view>
+
+  <!-- 分组 -->
+  <block wx:if="{{groups.length > 0}}">
+    <view class="weui-cells__title">选择分组</view>
+    <view class="weui-cells weui-cells_radio">
+      <view
+        class="weui-cell"
+        wx:for="{{groups}}"
+        wx:key="key"
+        wx:for-item="g"
+        data-key="{{g.key}}"
+        bindtap="pickGroup"
+      >
+        <view class="weui-cell__bd">{{g.label}}</view>
+        <text class="weui-icon-checked iconfont icon-check" hidden="{{selectedGroupKey !== g.key}}"></text>
+      </view>
+    </view>
+  </block>
+
+  <!-- 资源 -->
+  <block wx:if="{{items.length > 0}}">
+    <view class="weui-cells__title">选择资源</view>
+    <view class="weui-cells weui-cells_radio">
+      <view
+        class="weui-cell"
+        wx:for="{{items}}"
+        wx:key="id"
+        wx:for-item="r"
+        data-id="{{r.id}}"
+        bindtap="pickResource"
+      >
+        <view class="weui-cell__bd">
+          {{r.name}}<text class="bf-custom" wx:if="{{r.custom}}">自定义</text>
+        </view>
+        <text class="weui-icon-checked iconfont icon-check" hidden="{{selectedResourceId !== r.id}}"></text>
+      </view>
+    </view>
+  </block>
+
+  <!-- 时长 -->
+  <view class="weui-cells__title">学习时长</view>
+  <view class="form-card">
+    <view class="form-row">
+      <view class="form-label">时长</view>
+      <view class="form-right">
+        <input
+          class="form-field"
+          type="number"
+          placeholder="请输入"
+          value="{{durationInput}}"
+          bindinput="onDurationInput"
+        />
+        <text class="form-unit">分钟</text>
+      </view>
+    </view>
+    <view class="weui-divider"></view>
+    <view class="form-row">
+      <view class="seg-control seg-control-grid">
+        <view class="seg-item {{durationInput==='10' ? 'seg-active' : ''}}" data-val="10" bindtap="quickDuration">10</view>
+        <view class="seg-item {{durationInput==='15' ? 'seg-active' : ''}}" data-val="15" bindtap="quickDuration">15</view>
+        <view class="seg-item {{durationInput==='20' ? 'seg-active' : ''}}" data-val="20" bindtap="quickDuration">20</view>
+        <view class="seg-item {{durationInput==='25' ? 'seg-active' : ''}}" data-val="25" bindtap="quickDuration">25</view>
+        <view class="seg-item {{durationInput==='30' ? 'seg-active' : ''}}" data-val="30" bindtap="quickDuration">30</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 备注 -->
+  <view class="weui-cells__title">备注</view>
+  <view class="form-card">
+    <view class="form-row">
+      <input
+        class="form-field form-field-full"
+        placeholder="选填，如：第1-2册"
+        value="{{remarkInput}}"
+        bindinput="onRemarkInput"
+        maxlength="50"
+      />
+    </view>
+  </view>
+
+  <view class="weui-btn-area">
+    <button
+      class="weui-btn weui-btn_block {{canSubmit ? 'weui-btn_primary' : 'weui-btn_disabled'}}"
+      bindtap="submit"
+    >确认补录</button>
+  </view>
+</view>

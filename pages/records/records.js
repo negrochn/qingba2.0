@@ -70,6 +70,7 @@ Page({
       resourceName: r.resourceName,
       firstChar: (r.resourceName || '').trim().charAt(0) || '📖',
       remark: r.remark || '',
+      backfilled: !!r.backfilled,
       durationText: checkin.fmtMinutes(r.durationMinutes),
       dateText: this._fmtDate(r.timestamp),
       _dx: 0,
@@ -99,6 +100,23 @@ Page({
     const hh = String(d.getHours()).padStart(2, '0')
     const mm = String(d.getMinutes()).padStart(2, '0')
     return `${m}/${day} ${hh}:${mm}`
+  },
+
+  // ===== 补录 =====
+  // 跳转补录页（日期 + 阶段/分组/资源三级级联）
+  goBackfill() {
+    wx.navigateTo({ url: '/pages/backfill/backfill' })
+  },
+
+  // 补录页返回回调：切到补录月份并刷新，让新记录立即可见
+  // （yearText / monthDisplay / pickerValue 由 _refresh 依据 curYm 回填）
+  applyBackfill(opt) {
+    const day = opt && opt.day ? String(opt.day) : ''
+    const m = /^(\d{4})-(\d{2})$/.exec(day)
+    if (m && this.data.yearRange.indexOf(Number(m[1])) >= 0) {
+      this.setData({ curYm: `${m[1]}-${m[2]}` })
+    }
+    this._refresh()
   },
 
   // ===== 月份选择器（与首页一致） =====

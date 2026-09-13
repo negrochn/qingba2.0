@@ -11,8 +11,30 @@ page {
 .section-head {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   padding: 0 32rpx 16rpx;
+}
+
+/* 补录入口（右上角，次级按钮：弱化配色，避免抢眼） */
+.overview-add {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 8rpx 20rpx;
+  background: var(--cell-active);
+  color: var(--text2);
+  border-radius: 8rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+}
+
+.overview-add:active {
+  opacity: 0.6;
+}
+
+.overview-add-icon {
+  font-size: calc(30rpx * var(--fs, 1));
+  line-height: 1;
+  color: var(--text3);
 }
 
 /* 月份选择器（头部右侧，与首页一致） */
@@ -203,6 +225,15 @@ page {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+/* 补录标记（中性灰，弱于分类彩色标签） */
+.record-backfill {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
+  background: var(--cell-active);
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
 }
 
 .record-duration {
