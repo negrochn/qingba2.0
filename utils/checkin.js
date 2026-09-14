@@ -13,7 +13,6 @@ const READ_COUNT_KEY = 'qingba_read_counts'
 const CURRENT_STAGE_KEY = 'qingba_current_stage'
 const YOUQU_PLAN_KEY = 'qingba_youqu_plan'
 const STAGE_DONE_KEY = 'qingba_stage_done'   // 已完成阶段 id 列表
-const HAS_ONBOARDED_KEY = 'qingba_has_onboarded' // 是否已完成首次启动引导
 
 // 单条 storage 上限（字节），留余量
 const MAX_ITEM_BYTES = 900 * 1024 // 约 900KB，微信上限 1MB
@@ -493,9 +492,8 @@ function clearAllCheckins() {
       }
     })
 
-    // 清空完成阶段名单与首启标记（回到初始状态）
+    // 清空完成阶段名单（回到初始状态）
     toRemove.push(STAGE_DONE_KEY)
-    toRemove.push(HAS_ONBOARDED_KEY)
 
     // 批量删除
     toRemove.forEach(k => {
@@ -972,25 +970,7 @@ function markStageDone(stageId) {
   }
 }
 
-// ===== 首次启动引导 =====
-function hasOnboarded() {
-  try {
-    return !!wx.getStorageSync(HAS_ONBOARDED_KEY)
-  } catch (e) {
-    return false
-  }
-}
-
-function setOnboarded() {
-  try {
-    wx.setStorageSync(HAS_ONBOARDED_KEY, true)
-    return true
-  } catch (e) {
-    return false
-  }
-}
-
-// 批量覆盖已完成阶段名单（供首次启动一次性标记）
+// 批量覆盖已完成阶段名单（供选择阶段时标记前序阶段）
 function setCompletedStages(list) {
   try {
     wx.setStorageSync(STAGE_DONE_KEY, Array.isArray(list) ? list : [])
@@ -1036,8 +1016,6 @@ module.exports = {
   isStageDone,
   markStageDone,
   setCompletedStages,
-  hasOnboarded,
-  setOnboarded,
   saveAll,
   isYouquPlanEnabled,
   setYouquPlanEnabled,

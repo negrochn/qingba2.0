@@ -39,7 +39,7 @@ Page({
     })
   },
 
-  // 加载当前阶段，预计算每阶段状态（done / current / locked）
+  // 加载当前阶段，预计算每阶段状态（unset / done / current / locked）
   loadCurrentStage(cb) {
     const current = checkin.getCurrentStage();
     let currentIndex = -1
@@ -49,7 +49,9 @@ Page({
     const doneIds = checkin.getCompletedStages()
     const stages = routeData.stages.map((s, i) => {
       let state
-      if (doneIds.indexOf(s.stage_id) >= 0 || (currentIndex >= 0 && i < currentIndex)) {
+      if (currentIndex < 0) {
+        state = 'unset'                    // 尚未选择起点：全部为待选，不置灰也不上锁
+      } else if (doneIds.indexOf(s.stage_id) >= 0 || i < currentIndex) {
         state = 'done'
       } else if (i === currentIndex) {
         state = 'current'
@@ -101,6 +103,11 @@ Page({
         wx.showToast({ title: '跳转失败', icon: 'none' })
       }
     })
+  },
+
+  // 未设置当前阶段：顶部引导跳选择页（选完 navigateBack 回路线页，onShow 自动刷新）
+  goStagePicker() {
+    wx.navigateTo({ url: '/pages/stagePicker/stagePicker' })
   },
 
   // 滚动到指定阶段（页面级滚动，元素距顶部留 120px）

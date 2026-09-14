@@ -4,7 +4,7 @@
   <view class="home-header">
     <view class="home-greet">
       <view class="home-date">{{dateText}}</view>
-      <view class="home-greet-sub">{{greetText}}</view>
+      <view class="home-greet-sub">{{greetText}}<text wx:if="{{dayNumber > 0}}" class="home-greet-day">Day {{dayNumber}}</text></view>
     </view>
     <view class="home-stage">
       <view class="home-stage-name">{{stageName || '未设置阶段'}}</view>
@@ -12,6 +12,19 @@
     </view>
   </view>
 
+  <!-- 欢迎卡：未设置当前阶段时显示，替代全 0 的统计模块（WeUI msg 范式：无图标、单主操作） -->
+  <view class="home-welcome" wx:if="{{!hasStage}}">
+    <view class="home-welcome__text-area">
+      <view class="home-welcome__title">欢迎使用庆爸2.0</view>
+      <view class="home-welcome__desc">记录每天的英语听力投入，陪孩子从{{firstStageName}}一路走到{{lastStageName}}</view>
+    </view>
+    <view class="home-welcome__opr-area">
+      <button class="weui-btn weui-btn_primary weui-btn_block" bindtap="goStagePicker">选择当前阶段</button>
+    </view>
+    <view class="home-welcome__tips">所有阶段均已开放，时间投入到位即可进入下一阶段</view>
+  </view>
+
+  <block wx:else>
   <!-- ② Hero 卡：本周时长 + 周一~周日柱状图 -->
   <view class="home-hero">
     <view class="home-hero-head">
@@ -51,9 +64,10 @@
     </view>
     <view class="home-stat">
       <text class="home-stat-arrow iconfont icon-right"></text>
-      <view class="home-stat-num">{{checkinDays}}</view>
-      <view class="home-stat-label">打卡天数</view>
+      <view class="home-stat-num">{{streakDays}}<text class="home-stat-unit">天</text></view>
+      <view class="home-stat-label">连续打卡</view>
     </view>
   </view>
+  </block>
 
 </view>

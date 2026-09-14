@@ -35,7 +35,11 @@ Page({
     todayHours: '0',
     totalHours: '0',
     stagePercent: 0,
-    checkinDays: 0
+    dayNumber: 0,
+    streakDays: 0,
+    hasStage: false,
+    firstStageName: routeData.stages[0].stage_name,
+    lastStageName: routeData.stages[routeData.stages.length - 1].stage_name
   },
 
   onLoad() {
@@ -75,6 +79,7 @@ Page({
     let todayMinutes = 0
     let todayCount = 0
     let totalMinutes = 0
+    let firstDayStr = ''
     const daysSet = new Set()
 
     for (const day in all) {
@@ -84,6 +89,7 @@ Page({
         const min = Number(r.durationMinutes) || 0
         totalMinutes += min                            // 阶段时长（当前阶段）
         daysSet.add(day)
+        if (!firstDayStr || day < firstDayStr) firstDayStr = day   // 阶段首次打卡日（YYYY-MM-DD 字典序即时间序）
         if (day === todayStr) {
           todayMinutes += min
           todayCount += 1                          // 今日打卡次数（当前阶段口径）
@@ -132,9 +138,18 @@ Page({
       else break
     }
 
-    // 欢迎语：时段问候 + 连续打卡天数
-    let greetText = greetByHour(h)
-    greetText += streakDays > 0 ? `, ${streakDays}-day streak` : ', start today'
+    // Day N：当前阶段首次打卡日 -> 今天（含首尾，首次当天为 Day 1；跨阶段自动重新计数）
+    let dayNumber = 0
+    if (firstDayStr) {
+      const diffDays = Math.round(
+        (checkin.dayToTimestamp(todayStr) - checkin.dayToTimestamp(firstDayStr)) / 86400000
+      )
+      dayNumber = Math.max(1, diffDays + 1)
+    }
+
+    // 欢迎语：时段问候 + Day N（当前阶段尚无记录时不显示）
+    const greet = greetByHour(h)
+    const greetText = dayNumber > 0 ? `${greet}, ` : `${greet}, start today`
 
     // 阶段进度（与 route / stage 详情页完全同口径）
     let stagePercent = 0
@@ -162,7 +177,14 @@ Page({
       todayCount,
       totalHours: fmtHours(totalMinutes),   // 当前阶段累计，非全阶段
       stagePercent,
-      checkinDays: daysSet.size
+      dayNumber,
+      streakDays,
+      hasStage: !!cur
     })
+  },
+
+  // 欢迎卡主操作：去选择当前阶段（stagePicker 选完 navigateBack 回首页）
+  goStagePicker() {
+    wx.navigateTo({ url: '/pages/stagePicker/stagePicker' })
   }
 })

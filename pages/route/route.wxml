@@ -1,9 +1,9 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- 当前阶段：分组标题 + cell，右侧为当前阶段进度 -->
-  <block wx:if="{{currentCard}}">
-    <view class="weui-cells__title">当前阶段</view>
-    <view class="weui-cells">
+  <!-- 当前阶段：分组标题 + cell，右侧为当前阶段进度；未设置时改为引导去选择 -->
+  <view class="weui-cells__title">当前阶段</view>
+  <view class="weui-cells">
+    <block wx:if="{{currentCard}}">
       <view
         class="weui-cell weui-cell_access current-cell"
         data-index="{{currentStageIndex}}"
@@ -18,8 +18,26 @@
           <text class="iconfont icon-right"></text>
         </view>
       </view>
-    </view>
-  </block>
+    </block>
+
+    <!-- 未设置当前阶段：引导去选择，作为路线的起点 -->
+    <block wx:else>
+      <view
+        class="weui-cell weui-cell_access"
+        bindtap="goStagePicker"
+        hover-class="current-cell-hover"
+      >
+        <view class="weui-cell__bd">
+          <view class="weui-cell__bd_text route-unset">未设置</view>
+          <view class="route-meta">选择一个阶段作为起点</view>
+        </view>
+        <view class="weui-cell__ft">
+          <text class="route-cta">去选择</text>
+          <text class="iconfont icon-right"></text>
+        </view>
+      </view>
+    </block>
+  </view>
 
   <!-- 路线时间线 -->
   <view class="weui-cells__title">学习路线</view>
@@ -52,8 +70,8 @@
         <view class="route-node-wrap">
           <view class="route-node {{item._state}}">
             <text wx:if="{{item._state === 'current'}}" class="iconfont icon-right"></text>
+            <text wx:elif="{{item._state === 'done'}}" class="iconfont icon-check"></text>
             <text wx:elif="{{item._state === 'locked'}}" class="iconfont icon-lock"></text>
-            <text wx:else class="iconfont icon-check"></text>
           </view>
           <view class="route-node-line" wx:if="{{index < stageCount - 1}}"></view>
         </view>

@@ -6,6 +6,15 @@
 .current-cell:active { background: rgba(7, 193, 96, 0.18); }
 .current-cell-hover  { background: rgba(7, 193, 96, 0.18); }
 
+/* ①-a 未设置当前阶段的引导行：占位主文弱化，右侧行动文字用品牌绿 */
+.route-unset {
+  color: var(--text2);                 /* 占位而非真值，用次级色 */
+}
+.route-cta {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--brand);                 /* 行动点用品牌绿，与「去选择」语义一致 */
+}
+
 /* ② 时间线列表：右侧节点（weui-cell__ft）+ 竖向连接线 */
 .route-cell {
   align-items: stretch;                    /* 节点列撑满行高，供连接线延伸 */
@@ -39,6 +48,7 @@
 .route-node.current .iconfont { color: var(--text3); }   /* 当前节点图标用正常箭头色，而非品牌绿 */
 .route-node.done    { border-color: var(--brand); color: var(--brand); }   /* 已完成：品牌绿描边 + 绿图标 */
 .route-node.locked  { border: 0; }   /* 未解锁：去描边，仅靠灰底 + 锁图标表达 */
+/* unset（未设置当前阶段）：不额外设规则，沿用中性描边空圈，表达"待选择"而非"未解锁" */
 
 /* 连接线：无节点时贯穿整行高度（末行无线） */
 .route-node-line {

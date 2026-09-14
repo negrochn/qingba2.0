@@ -32,7 +32,7 @@ Page({
   pick(e) {
     const id = e.currentTarget.dataset.id;
 
-    // 未设置：清除当前阶段与已完成名单（与首启引导一致）
+    // 未设置：清除当前阶段与已完成名单（回到未选择起点的初始状态）
     if (id === NONE_ID) {
       checkin.clearCurrentStage();
       checkin.setCompletedStages([]);
@@ -53,7 +53,7 @@ Page({
       timeInvestment: stage.time_investment
     };
 
-    // 保存：当前阶段 + 前序阶段标记完成（与首页引导一致）
+    // 保存：当前阶段 + 前序阶段标记完成
     checkin.setCurrentStage(stageData);
     const done = this.data.stages.slice(0, index).map(s => s.id);
     checkin.setCompletedStages(done);
