@@ -86,8 +86,10 @@ page {
   left: 148rpx;
   right: 28rpx;
   bottom: 0;
-  height: 1rpx;
+  height: 1px;
   background: var(--divider);
+  transform: scaleY(0.5);
+  transform-origin: bottom;
 }
 
 .swipe-bg {
@@ -330,8 +332,9 @@ page {
 
 .mp-pv-indicator {
   background: transparent !important;
-  border-top: 1rpx solid var(--divider);
-  border-bottom: 1rpx solid var(--divider);
+  /* 选中框自身不能用 transform（会把整个 80rpx 高的选中区压扁），故直接用 1px */
+  border-top: 1px solid var(--divider);
+  border-bottom: 1px solid var(--divider);
 }
 
 .mp-actions {

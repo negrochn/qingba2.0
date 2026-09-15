@@ -66,7 +66,9 @@ WeUI 的列表单位，承载一组 cell。默认无圆角、无阴影，靠上�
 - **警告红** `.weui-cell_warn`：文字/图标 `RED`。
 - 按下态：`.weui-cell_active:active::after` 覆盖 `rgba(0,0,0,.1)` 蒙层；项目用 `--cell-active` 底色。
 
-**项目原语**：`.cell` 基类 + 修饰符 `.cell--single`（单行，min-height 110rpx≈55pt）/ `.cell--desc`（含描述，146rpx≈73pt）/ `.cell-radio` / `.cell-check`（iconfont 对勾，品牌绿）/ `.cell-label` / `.cell-info` / `.cell-desc` / `.cell-value` / `.cell-arrow` / `.cell-icon` / `.cell-empty` / `.cell-divider`（兄弟节点分隔线，`margin-left:32rpx`）。每个 `.cell` 必须挂 `cell--single` 或 `cell--desc` 之一。
+**项目原语**：`.cell` 基类 + 修饰符 `.cell--single`（单行，min-height 110rpx≈55pt）/ `.cell--desc`（含描述，146rpx≈73pt）/ `.cell-radio` / `.cell-check`（iconfont 对勾，品牌绿）/ `.cell-label` / `.cell-info` / `.cell-desc` / `.cell-value` / `.cell-arrow` / `.cell-icon` / `.cell-empty`。每个 `.cell` 必须挂 `cell--single` 或 `cell--desc` 之一。
+
+**分隔线由伪元素自动提供，wxml 不插节点**：`.weui-cell::before` 画 cell 之间的缩进线（`left:32rpx`，`first-child` 不显示），`.weui-cells::before/::after` 画分组上下通栏线。两者均为 `height:1px` + `background:var(--divider)` + `transform: scaleY(0.5)` + `transform-origin: top|bottom`（**细线必须这样写**：`1rpx` 在真机会被像素网格吸附舍成 0 而整条消失，详见 SKILL.md「分隔线」条）。早期文档提到的 `.cell-divider` 兄弟节点方案**已从代码移除**，勿再引用。
 
 ---
 
@@ -176,7 +178,7 @@ WeUI 开关用小程序原生组件，勾选态跟随 `color` 品牌绿：
 ```
 对勾/选中标记统一用 **品牌绿 `#07c160`**。
 
-**项目原语**：`stagePicker` / `fontPicker` / `importPicker` / `clearPicker` 用 `.cell-radio` + `.cell-check`（iconfont `icon-check`，品牌绿）呈现单选勾选，分隔线用 `.cell-divider` 兄弟节点。
+**项目原语**：`stagePicker` / `fontPicker` / `importPicker` / `clearPicker` 用 `.cell-radio` + `.cell-check`（iconfont `icon-check`，品牌绿）呈现单选勾选；分隔线由 `.weui-cell::before` 伪元素自动提供，wxml 无需插节点。
 
 ---
 
@@ -308,7 +310,8 @@ WeUI 提供 `weui-icon-*`（mask + `background-color: currentColor` 方案，色
 .route-node .iconfont { font-size: calc(34rpx * var(--fs,1)) !important; }
 .current-cell { background: rgba(7,193,96,.10); }        /* 仅「当前」那一行 */
 
-.route-node-line { flex: 1; width: 1rpx; background: var(--divider); }   /* 末行不渲染 */
+.route-node-line { flex: 1; width: 1px; background: var(--divider);
+                   transform: scaleX(0.5); transform-origin: center; }   /* 竖线用 scaleX；末行不渲染 */
 ```
 
 - **节点三态（描边圆 + iconfont 图标，禁止渐变 / 外发光）**：当前 `border:0` + `background:transparent` + `.icon-right`（`var(--text3)` 正常箭头色，读作「点击进入」）；已完成 `border-color:var(--brand)` + `.icon-check`（`var(--brand)`）；未解锁沿用基类（灰描边 + 灰图标，无需单独写 `.locked`）
@@ -470,9 +473,10 @@ WeUI 提供 `weui-icon-*`（mask + `background-color: currentColor` 方案，色
 
 /* 内置蒙层是固定白色渐变、不吃 CSS 变量，深色下会在卡片上留灰白块 → 必须覆盖掉 */
 .mp-pv-mask      { background-image: none !important; background-color: transparent !important; }
-/* 选中框只能用透明背景 + 主题色细线：indicator 覆盖在内容层之上，实色底会整行盖住文字 */
+/* 选中框只能用透明背景 + 主题色细线：indicator 覆盖在内容层之上，实色底会整行盖住文字。
+   它是 80rpx 高的框，加 transform 会把选中区压扁，故上下线直接给 1px（不走 scaleY 方案） */
 .mp-pv-indicator { background: transparent !important;
-                   border-top: 1rpx solid var(--divider); border-bottom: 1rpx solid var(--divider); }
+                   border-top: 1px solid var(--divider); border-bottom: 1px solid var(--divider); }
 ```
 
 - **弹层根节点必须带 `{{fontClass}} {{darkClass}}`（头号易漏点）**：`dm-*` 只挂在页面根 `.container` 上，`page` 上只有浅色基础变量。弹层若写在 `.container` 之外又不自带主题类，内部所有 `var(--*)` 都会回落到浅色值——「手动深色 + 系统浅色」时表现为白卡片、浅灰「取消」按钮、深色文字。项目另有 4 处弹层（`.sheet-mask` / `.pm-mask` / `.hs-mask`）已按此写法，新增浮层必须照办。

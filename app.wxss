@@ -131,17 +131,24 @@ view, text {
   position: relative;
   overflow: hidden;
 }
+/* 细线统一方案（TDesign hairline 同款）：
+   布局尺寸用整数 1px，再用 transform 缩到 0.5px。
+   原因：1rpx 在小数逻辑像素上参与布局，会被浏览器按像素网格吸附、在真机上整条消失；
+   而 1px 是整数，布局阶段稳定落格，transform 缩放属于合成阶段、只会让线变淡不会让它消失。
+   横线用 scaleY(0.5)、竖线用 scaleX(0.5)；transform-origin 必须锚定线所在的那条边（top/bottom/left），
+   否则默认原点 center 会让线向两侧各缩一半、位置漂移。 */
 .weui-cells::before,
 .weui-cells::after {
   content: " ";
   position: absolute;
   left: 0; right: 0;
-  height: 1rpx;
-  border-top: 1rpx solid var(--divider);
+  height: 1px;
+  background: var(--divider);
+  transform: scaleY(0.5);
   pointer-events: none;
 }
-.weui-cells::before { top: -1rpx; }
-.weui-cells::after { bottom: -1rpx; }
+.weui-cells::before { top: 0; transform-origin: top; }
+.weui-cells::after { bottom: 0; transform-origin: bottom; }
 
 /* 分组标题 / 说明（纯灰文字，无彩色竖条；margin-top/margin-bottom 已合入 padding，左右统一 32rpx） */
 .weui-cells__title {
@@ -159,10 +166,12 @@ view, text {
 }
 .weui-cells__tips a { color: var(--brand); }
 
-/* 通用分隔线（非 cell 上下文，如表单卡片内行分隔；细线 1px） */
+/* 通用分隔线（非 cell 上下文，如表单卡片内行分隔） */
 .weui-divider {
-  height: 1rpx;
+  height: 1px;
   background: var(--divider);
+  transform: scaleY(0.5);
+  transform-origin: top;
   margin: 0;
 }
 
@@ -184,8 +193,10 @@ view, text {
   content: " ";
   position: absolute;
   left: 32rpx; right: 0; top: 0;
-  height: 1rpx;
-  border-top: 1rpx solid var(--divider);
+  height: 1px;
+  background: var(--divider);
+  transform: scaleY(0.5);
+  transform-origin: top;
 }
 .weui-cell:first-child::before { display: none; }
 .weui-cell:active { background-color: var(--cell-active); }
@@ -390,8 +401,10 @@ view, text {
   content: " ";
   position: absolute;
   left: 0; right: 0; top: 0;
-  height: 1rpx;
-  border-top: 1rpx solid var(--divider);   /* DIALOG-LINE-COLOR */
+  height: 1px;
+  background: var(--divider);             /* DIALOG-LINE-COLOR */
+  transform: scaleY(0.5);
+  transform-origin: top;
 }
 .weui-dialog__btn {
   flex: 1;
@@ -406,8 +419,10 @@ view, text {
   content: " ";
   position: absolute;
   left: 0; top: 0; bottom: 0;
-  width: 1rpx;
-  border-left: 1rpx solid var(--divider);
+  width: 1px;
+  background: var(--divider);
+  transform: scaleX(0.5);
+  transform-origin: left;
 }
 .weui-dialog__btn:first-child::before { display: none; }
 .weui-dialog__btn:active { background: var(--cell-active); }

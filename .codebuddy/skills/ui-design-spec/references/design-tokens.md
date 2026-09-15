@@ -5,6 +5,7 @@
 > `[data-weui-theme='dark']` 或系统 `prefers-color-scheme: dark` 切换深色档；care 模式由
 > `[data-weui-mode='care']` 切换（详见 §8）。**深色档同名 token 取值不同**，务必引用变量名而非硬编码数值。
 > 小程序端换算：**1px = 2rpx**（设计稿基准 375px = 750rpx）。
+> ⚠️ **例外——细线不走这个换算**：分隔线 / 1px 级细边框一律写**整数 `1px`** + `transform: scaleY/X(0.5)`，**不要写 `1rpx`**（`1rpx` ≈ 0.5px 是小数尺寸，真机上会被像素网格吸附舍成 0、整条线消失）。原因与写法详见 §5「分隔线」。
 > 源码定位：颜色主表 `src/style/base/theme/vars/{light,dark,care-light,care-dark}.less`；组件尺寸 `src/style/base/variable/*.less`；组件样式 `src/style/widget/*`。
 
 ---
@@ -171,8 +172,13 @@
 ## 5. 分隔线（divider）
 
 - 颜色：`--weui-FG-3`（浅）/ `--weui-FG-3`（深）；弹窗内线用 `--weui-DIALOG-LINE-COLOR`。
-- 实现：本项目用 **真实 `1rpx` 实线**（rpx 在微信渲染已含高分屏亚像素，无需 `scaleY(.5)`；`.5` 缩放会在 cells 通栏线因 `top/bottom` 偏移导致位置偏差，已移除）。cell 内分隔线 `left: 16px(32rpx)` 缩进，**首行 `cell:first-child::before` 不显示**；cells 外框上下通栏（定位 `top/bottom: -1rpx` 避开与首行 cell 线重叠）。
-- 本项目 `app.wxss` 用兄弟节点 `.cell-divider`（`height:1rpx; background:var(--divider); margin-left:32rpx;`）实现同等效果（见 components.md「原语」）。
+- **实现（必须照此）**：细线一律 **`1px` + `transform: scaleY(0.5)`**（竖线用 `scaleX(0.5)`），横线配 `transform-origin: top|bottom`、竖线配 `left|center`。
+  - **为什么不能用 `1rpx`**：`1rpx` 在小屏约合 0.5 个逻辑像素，属小数尺寸；真机 WebView 在像素网格吸附阶段会把它舍成 0，**整条线消失**（`--divider` 这种低对比度色更是雪上加霜）。`1px` 是整数逻辑像素，任何 DPR 下都是整数个物理像素（2x=2、3x=3），布局阶段稳定落格。
+  - **为什么不能只写 `scaleY(0.5)` 而漏掉 `transform-origin`**：默认原点是 `center`，线会向上下各缩一半 → 位置漂移半个像素。锚定 `top` / `bottom` 后位置纹丝不动。**本项目当年记录「`scaleY(.5)` 会因偏移导致位置偏差，已弃用」就是漏了这条**——问题不在 `scaleY`，在原点。
+  - **为什么容器自身的 `border` 不能加 transform**：`scaleY` 作用于元素本身，会连同容器内容一起压扁。这类场景改由伪元素（`::after` 画底边 / `::before` 画顶边）单独画线，这也正是 TDesign `hairline-bottom` 的做法。
+  - **特例**：`picker-view` 的选中框（`.mp-pv-indicator`）是 80rpx 高的框，缩放会把选中区压扁，其上下线直接给 `1px`。
+- cell 内分隔线 `left: 16px(32rpx)` 缩进，**首行 `cell:first-child::before` 不显示**；cells 外框上下通栏（`top/bottom: 0`）。
+- 早期文档提到的兄弟节点 `.cell-divider`（`height:1rpx; background:var(--divider); margin-left:32rpx;`）方案**已从代码中移除**，且正是上述「真机看不见」的写法，勿再引用。
 
 ---
 

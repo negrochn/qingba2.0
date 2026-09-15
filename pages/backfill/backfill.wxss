@@ -60,7 +60,7 @@ page {
   color: var(--text3);
   margin-left: 8rpx;
 }
-.form-card .weui-divider { height: 1rpx; background: var(--divider); margin: 0; }
+.form-card .weui-divider { height: 1px; background: var(--divider); margin: 0; }
 
 /* 快捷时长分段控件（等宽 variant） */
 .seg-control { display: flex; align-items: center; flex: 1; }
@@ -72,7 +72,7 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1rpx solid var(--divider);
+  border: 2rpx solid var(--divider);
   border-radius: 8rpx;
   background: var(--card);
   font-size: calc(34rpx * var(--fs, 1));

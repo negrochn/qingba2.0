@@ -33,9 +33,9 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - **字号**：导航/主文/按钮 17px(34rpx) 行高 1.41176471；分组标题/tips/次级 14px(28rpx)；描述 12px(24rpx)。
 - **间距**：页面边距 16px(32rpx)，cell 内边距 16px(32rpx)，分组标题 padding-top 16px(32rpx)（其 margin-top 已合入 padding，见下「项目实现备注」），按钮区上 48px(96rpx)。
 - **圆角**：按钮 8px(16rpx)、mini 6px(12rpx)、弹窗 12px(24rpx)、iOS 分组卡片 20rpx(10pt)；cells 默认无圆角无阴影。
-- **分隔线**：本项目用真实 `1rpx`（`scaleY(.5)` 在 cells 通栏线会因偏移导致位置偏差，已弃用）；cell 内线 `left:16px(32rpx)` 缩进、首行无；或本项目 `.cell-divider` 兄弟节点。分组块（如 `.res-list`）用容器 `border-bottom` 通栏分隔相邻分组（展开/折叠均生效），末组去线。
+- **分隔线（细线统一方案，TDesign hairline 同款）**：**一律 `1px` + `transform: scaleY(0.5)`（竖线用 `scaleX(0.5)`），并用 `transform-origin` 锚定线所在的那条边**（横线 `top` / `bottom`、竖线 `left` / `center`）。原因：`1rpx` 约合 0.5 个逻辑像素，是小数尺寸，真机 WebView 会在像素网格吸附阶段把它舍成 0、**整条线消失**（开发者工具不触发该舍入，所以只丢真机）；`1px` 是整数逻辑像素、任何 DPR 下都渲染为整数个物理像素，布局阶段稳定落格，而 `transform` 缩放属合成阶段、只会让线变淡、不会让它消失。**漏写 `transform-origin` 会因默认原点 `center` 让线向两侧各缩一半而位置漂移**——这正是本项目当年误判「`scaleY` 不可用」的真正原因（不是 `scaleY` 的问题，是没锚定原点）。**线挂在容器自身 `border` 上时不能直接加 transform**（`scaleY` 会连同容器内容一起压扁），须改由伪元素承担画线（`::after` 画底边 / `::before` 画顶边），分组块（如 `.res-list`）即此写法、末组 `:last-child` 去线。cell 内线 `left:32rpx` 缩进、首行无。`picker-view` 的选中框（`.mp-pv-indicator`）是 80rpx 高的框、不能缩放，其上下线直接给 `1px`。
 - **按钮**：`.weui-btn` 默认高 48px(96rpx)、圆角 8px；变体 `primary`(BRAND 绿)/`default`(灰底)/`warn`(RED)/`disabled`；尺寸 `medium`(40px)/`mini`(32px)、`block`/`inline`。项目 `.btn` 族高 88rpx（44pt iOS），新按钮沿用。
-- **单元格**：`.weui-cell` 内边距 16px(32rpx)、主文 17px(34rpx)；`__bd` flex:1、`__ft` 右对齐 FG-1；`__desc` 12px(24rpx) FG-2。变体 `access`(箭头)/`link`(蓝)/`warn`(红)。项目 `.cell` 家族：`cell--single`(110rpx)/`cell--desc`(146rpx)/`cell-radio`/`cell-check`(iconfont 品牌绿对勾)/`cell-divider`。
+- **单元格**：`.weui-cell` 内边距 16px(32rpx)、主文 17px(34rpx)；`__bd` flex:1、`__ft` 右对齐 FG-1；`__desc` 12px(24rpx) FG-2。变体 `access`(箭头)/`link`(蓝)/`warn`(红)。项目 `.cell` 家族：`cell--single`(110rpx)/`cell--desc`(146rpx)/`cell-radio`/`cell-check`(iconfont 品牌绿对勾)。
 - **开关**：原生 `<switch color="#07c160">`；项目自绘 `.switch`（开 `#07c160`/关 `#e9e9e9`）。
 - **单选/多选**：选中标记统一品牌绿 `#07c160`（圆底绿勾 / 对勾）。
 - **弹窗**：蒙层 OVERLAY；dialog 卡片 `#fff` 圆角 12px，主操作 BRAND；actionsheet 底部上滑、取消独立灰带；toast 反白居中。
@@ -50,7 +50,7 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 ## 项目实现备注（与 qingba 代码对齐）
 - **字号缩放已落地**：实际页面用 `calc(34rpx * var(--fs,1))` 派生，`--fs` 由根节点 `fs-*` class 切换。
 - **自定义胶囊开关 `.switch`**：独立设置页（如深色模式「跟随系统」）用自绘 iOS 胶囊开关，开启 `#07c160`/关闭 `#e9e9e9`、深浅一致；内联设置行仍用原生 `<switch>`。
-- **单元格间分隔线（项目实现）**：qingba **不用** `border-bottom`，而是在相邻 cell 间插入兄弟节点 `<view class="cell-divider">`（`height:1rpx; background:var(--divider); margin-left:32rpx;`）；wxml 用 `wx:if="{{i>0}}"` 在 `wx:for` 循环项之间自动插入。`.cell-divider` 与 `.cell` 同级，都放在 `.group-card` 内。
+- **单元格间分隔线（项目实现）**：qingba **不用** `border-bottom`，也**没有** `.cell-divider` 兄弟节点（那是早期方案，代码中早已不存在，旧文档里的相关描述已作废、勿再引用）。现行做法是纯 CSS、wxml 里不插任何节点：`.weui-cell::before` 画 cell 之间的缩进线（`left:32rpx`、`first-child` 不显示），`.weui-cells::before/::after` 画分组上下通栏线——两者都是 `height:1px` + `background:var(--divider)` + `transform: scaleY(0.5)` + `transform-origin: top|bottom`。
 - **`.cell` 行高由 modifier 提供（项目实现）**：qingba 的 `.cell` 基类**不设** `min-height`；行高由 `cell--single`(min-height 110rpx≈55pt) / `cell--desc`(146rpx≈73pt) 提供，每个 `.cell` 必须挂其一，否则无高度。
 - **间距工具类 `.mb-16`**：`app.wxss` 提供 `.mb-16 { margin-bottom:16rpx }`，按需扩展 `mb-8`/`mb-24`，用于卡片/分组间统一留白。
 - **列表分组间距（项目实现）**：`.weui-cells` 容器**不设 `margin-top`**（避免与上层卡片/分组间距叠加，分组留白改用 `.mb-16` 工具类或父容器 padding 控制）。`.weui-cells__title`（分组标题）的 `margin-top`/`margin-bottom` **均已合入 `padding`**（当前 `padding: 32rpx 32rpx 6rpx`：上 32rpx = WeUI 标题 margin-top 16px，下 6rpx = WeUI margin-bottom 3px），不再使用任何 margin——目的是让深色模式下卡片背景连续铺满、避免标题上下露出页面底色。新代码如需分组标题与内容之间留白，统一用 `padding` 而非 `margin`。
@@ -60,7 +60,7 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - **`.group-title` 项目取值（与规范差异）**：全局 `.group-title`（`app.wxss`）`padding: 32rpx 32px 16rpx 32rpx`，**右内边距是 `32px`（像素）而非 `32rpx`**（疑似笔误）；新代码建议统一为 `32rpx`。
 - **扁平纯色，禁止渐变 / 外发光（项目约定）**：所有色块 / 标签 / 按钮一律用扁平纯色（`var(--brand)`、固定 HEX 或低透明叠加），**禁止 `linear-gradient` 与 `box-shadow` 外发光**；深色档同理用纯色低透明（如 `rgba(7,193,96,.14)`）替代渐变。
 - **`.weui-tag` 不带 margin（项目约定）**：标签间距由父级 flex `gap` 控制，避免与 `tag-group-*` 等内联背景 / 多标签混排时多出右侧空白；新增标签复用全局 `.weui-tag`，不在页面内重复定义。
-- **分组容器 `border-bottom` 通栏分隔线（项目约定）**：相邻分组用分组块容器（如 `.res-list`）的 `border-bottom: 1rpx solid var(--divider)` 分隔（展开/折叠均生效），末组 `:last-child` 去线；区别于 cell 内 `left:32rpx` 缩进的行间线。
+- **分组块的通栏分隔线（项目约定）**：相邻分组用分组块容器（如 `.res-list`）的通栏线分隔（展开/折叠均生效），末组 `:last-child` 去线；区别于 cell 内 `left:32rpx` 缩进的行间线。**画法必须走细线统一方案**：容器自身的 `border-bottom` 加不了 `transform`（`scaleY` 会把整组内容压扁），故改由 `.res-list::after` 伪元素画底边——`height:1px` + `background:var(--divider)` + `transform: scaleY(0.5)` + `transform-origin: bottom`。
 - **「当前项」高亮用 cell 级底色，禁止容器级染色（项目约定）**：列表中某项需要底色区分时（如路线页 `.current-cell`），底色加在**单个 cell** 上，**不要**加在 `.weui-cells` / 分组容器上——容器染色会连带同组其他状态的行一起变色，导致「当前 / 已完成 / 未解锁」失去区分度。深色覆盖同样挂在 cell 级选择器上。
 - **`.weui-cells` 容器保持 WeUI 默认外观（项目约定）**：不要在页面里给 `.weui-cells` 设 `background: transparent`，也不要用 `::before/::after { display:none }` 隐藏通栏线。前者会盖掉 `.weui-cells` 自身的 `background-color: var(--card)`，使该分组透出页面底色；后者让它变成无边界裸块，与同页其他分组（白底 + 上下通栏线）外观不一致。分组需要视觉区分时，改 cell（见上一条），不改容器。
 - **iconfont 维护方式（项目实现）**：`app.wxss` 以 `@font-face` 内联 base64（ttf + woff 双格式，woff 的 MIME 用 `application/font-woff` 以兼容开发者工具内置旧 Chromium），全局注册字族 `iconfont`，随 WXSS 注入每个页面 webview 而跨页生效。新增图标需更新 `assets/fonts` 源文件，用 `scripts/gen_iconfont_base64.ps1` 重新生成 base64，再替换 `app.wxss` 的 data URI 并补 `.icon-*:before` 映射。
@@ -79,6 +79,7 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - （已补充）微信官方《小程序设计指南》原则层 → `design-guidelines.md`；量化令牌 → `design-tokens.md` §7。
 - （已补充）care 模式（适老/关怀模式）配色档 → `design-tokens.md` §8（来源 `theme/vars/care-*.less`）。
 - （已核对）`design-tokens.md` 全部颜色/字号/间距/圆角/组件尺寸已对照 `D:\github\weui\src` 源码订正（含深色 `BG-COLOR-ACTIVE` 改为 `overlay(...)`、dialog 标题字重 500、正文 FG-1 等）。
+- （已定案）**细线统一方案**：全站分隔线 / 细边框统一为 `1px` + `transform: scaleY/X(0.5)` + `transform-origin`（WeUI 与 TDesign 官方同款，见 `components.md` 原语 1/2 的官方范式）。两个历史坑已写入「分隔线」条与 `design-tokens.md` §5：① `1rpx` 是小数尺寸，真机被吸附舍成 0 → 线整条消失（只在真机复现）；② `scaleY` 漏写 `transform-origin` 会因默认原点 `center` 漂移——旧文档「`scaleY` 已弃用」的结论即源于此，已订正。**遗留**：`.seg-item` 仍用 `2rpx`（四边边框，要细线化需 TDesign 的 surround 伪元素方案）、`.mp-pv-indicator` 直用 `1px`（80rpx 高选中框不能缩放）。
 - 完整 Dialog / ActionSheet / Toast / Half-screen Dialog 的内联 wxml 模板（目前给了 token 与结构范式，精确内边距以 WeUI 源码为准）。
 - （已补充）滚轮选择器 `picker-view` 半屏弹层 → `components.md` 原语 19（含蒙层 / 选中框的深色覆盖写法）。
 - 滑块（字号实时预览）、Gallery、Grid、Steps、Progress、Loading 等组件规范。

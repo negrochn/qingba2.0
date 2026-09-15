@@ -49,9 +49,20 @@ page {
   overflow: hidden;
 }
 
-/* 每个分组块底部通栏分割线，分隔相邻分组（展开/折叠都生效） */
-.res-list { border-bottom: 1rpx solid var(--divider); }
-.res-list:last-child { border-bottom: none; }
+/* 每个分组块底部通栏分割线，分隔相邻分组（展开/折叠都生效）
+   容器自身不能用 transform（会连带缩放整组内容），故由伪元素单独画线 */
+.res-list { position: relative; }
+.res-list::after {
+  content: ' ';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: var(--divider);
+  transform: scaleY(0.5);
+  transform-origin: bottom;
+  pointer-events: none;
+}
+.res-list:last-child::after { display: none; }
 
 /* 分组头（左：彩色圆点 + 标签 + 数量；右：折叠箭头） */
 .rg-head {
@@ -116,9 +127,19 @@ page {
 
 /* 展开内容区（扁平，顶部细分隔线） */
 .rg-body {
+  position: relative;
   background: var(--card);
-  border-top: 1rpx solid var(--divider);
   overflow: hidden;
+}
+.rg-body::before {
+  content: ' ';
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 1px;
+  background: var(--divider);
+  transform: scaleY(0.5);
+  transform-origin: top;
+  pointer-events: none;
 }
 
 /* ====== 左滑删除（同打卡记录页原语） ====== */
@@ -135,8 +156,10 @@ page {
   left: 32rpx;
   right: 0;
   top: 0;
-  height: 1rpx;
+  height: 1px;
   background: var(--divider);
+  transform: scaleY(0.5);
+  transform-origin: top;
   z-index: 2;
 }
 .swipe-wrap:first-child::before { display: none; }
@@ -292,7 +315,7 @@ page {
   color: var(--text2);
   text-align: right;
 }
-.form-card .weui-divider { height: 1rpx; background: var(--divider); margin: 0; }
+.form-card .weui-divider { height: 1px; background: var(--divider); margin: 0; }
 .form-row .icon-right {
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text3);

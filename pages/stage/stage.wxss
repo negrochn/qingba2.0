@@ -77,9 +77,20 @@
   overflow: hidden;
 }
 
-/* 每个分组块底部通栏分割线，分隔相邻分组（展开/折叠都生效） */
-.res-list { border-bottom: 1rpx solid var(--divider); }
-.res-list:last-child { border-bottom: none; }
+/* 每个分组块底部通栏分割线，分隔相邻分组（展开/折叠都生效）
+   容器自身不能用 transform（会连带缩放整组内容），故由伪元素单独画线 */
+.res-list { position: relative; }
+.res-list::after {
+  content: ' ';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: var(--divider);
+  transform: scaleY(0.5);
+  transform-origin: bottom;
+  pointer-events: none;
+}
+.res-list:last-child::after { display: none; }
 
 /* 分组头（左：彩色圆点+标签+数量；右：进度摘要+箭头） */
 .rg-head {
@@ -160,9 +171,19 @@
 
 /* 展开内容区（扁平，顶部细分隔线） */
 .rg-body {
+  position: relative;
   background: var(--card);
-  border-top: 1rpx solid var(--divider);
   overflow: hidden;
+}
+.rg-body::before {
+  content: ' ';
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 1px;
+  background: var(--divider);
+  transform: scaleY(0.5);
+  transform-origin: top;
+  pointer-events: none;
 }
 
 /* 资源行（序号/首字母 + 名称/副文 + 徽标/箭头）
@@ -191,9 +212,19 @@
   position: relative;
   overflow: hidden;
   /* 分割线挂容器不挂行：行左移时不会跟着位移 */
-  border-bottom: 1rpx solid var(--divider);
 }
-.swipe-wrap:last-child { border-bottom: none; }
+.swipe-wrap::after {
+  content: ' ';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: var(--divider);
+  transform: scaleY(0.5);
+  transform-origin: bottom;
+  pointer-events: none;
+  z-index: 2;                      /* 盖住左滑内容，位置与原来 border-bottom 一致 */
+}
+.swipe-wrap:last-child::after { display: none; }
 
 /* 左滑露出的操作区：读完（主）/ 撤销（次），宽度与 stage.js 的 SWIPE_W 保持一致 */
 .swipe-bg {
@@ -403,7 +434,7 @@
   color: var(--text3);
   margin-left: 8rpx;
 }
-.form-card .weui-divider { height: 1rpx; background: var(--divider); margin: 0; }
+.form-card .weui-divider { height: 1px; background: var(--divider); margin: 0; }
 
 /* 快捷时长分段控件（等宽 variant：.seg-control-grid） */
 .seg-control { display: flex; align-items: center; flex: 1; }
@@ -415,7 +446,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1rpx solid var(--divider);
+  border: 2rpx solid var(--divider);
   border-radius: 8rpx;
   background: var(--card);
   font-size: calc(34rpx * var(--fs, 1));
@@ -503,13 +534,23 @@
   margin-bottom: 20rpx;
 }
 .pm-form-item {
+  position: relative;
   display: flex;
   align-items: center;
   min-height: 96rpx;
   padding: 16rpx 0;
-  border-bottom: 1rpx solid var(--divider);
 }
-.pm-form-item:last-child { border-bottom: none; }
+.pm-form-item::after {
+  content: ' ';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: var(--divider);
+  transform: scaleY(0.5);
+  transform-origin: bottom;
+  pointer-events: none;
+}
+.pm-form-item:last-child::after { display: none; }
 .pm-form-label {
   flex-shrink: 0;
   font-size: calc(34rpx * var(--fs, 1));
