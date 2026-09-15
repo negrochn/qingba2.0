@@ -14,10 +14,6 @@ const LEVELS = [
   { key: 'xlarge', label: '特大', desc: '最大字号', scale: 1.3 }
 ]
 
-function getLevels() {
-  return LEVELS
-}
-
 function indexOf(key) {
   for (let i = 0; i < LEVELS.length; i++) {
     if (LEVELS[i].key === key) return i
@@ -62,10 +58,6 @@ const DARK_MODE_LABELS = {
   dark: '已开启'
 }
 
-function indexOfDark(key) {
-  return VALID_DARK_KEYS.indexOf(key)
-}
-
 function getDarkMode() {
   let key = ''
   try {
@@ -80,11 +72,6 @@ function setDarkMode(key) {
     wx.setStorageSync(DARK_MODE_KEY, key)
   } catch (e) {}
   return true
-}
-
-function getDarkModeIndex() {
-  const i = indexOfDark(getDarkMode())
-  return i >= 0 ? i : 0
 }
 
 // 根节点的深色 class：dm-auto | dm-light | dm-dark
@@ -103,6 +90,17 @@ function isDarkMode(systemDark) {
   return mode === 'dark' || (mode === 'auto' && !!systemDark)
 }
 
+// 当前是否实际处于深色（自行读取系统主题）
+// 供 canvas / JS 侧需要真实深色判断的场景使用（CSS 侧仍走 dm-* 类）
+function isDarkNow() {
+  let systemDark = false
+  try {
+    const info = wx.getAppBaseInfo ? wx.getAppBaseInfo() : wx.getSystemInfoSync()
+    systemDark = !!(info && info.theme === 'dark')
+  } catch (e) {}
+  return isDarkMode(systemDark)
+}
+
 function defaultIndex() {
   return indexOf(DEFAULT_LEVEL)
 }
@@ -118,7 +116,8 @@ function getFontClass() {
   return 'fs-' + getFontLevel()
 }
 
-// 当前档位描述文本，如 "标准 · 默认字号"
+// 当前档位名称（如「标准」），供设置页 cell 右侧展示
+// 注：LEVELS 里的 desc（如「默认字号」）目前未在任何界面展示
 function getFontLevelText() {
   const level = LEVELS[indexOf(getFontLevel())] || LEVELS[defaultIndex()]
   return level.label
@@ -128,7 +127,6 @@ module.exports = {
   FONT_LEVEL_KEY,
   LEVELS,
   DEFAULT_LEVEL,
-  getLevels,
   getFontLevel,
   setFontLevel,
   getFontLevelIndex,
@@ -143,9 +141,8 @@ module.exports = {
   DARK_MODE_LABELS,
   getDarkMode,
   setDarkMode,
-  getDarkModeIndex,
   getDarkClass,
   getDarkModeText,
   isDarkMode,
-  indexOfDark
+  isDarkNow
 }

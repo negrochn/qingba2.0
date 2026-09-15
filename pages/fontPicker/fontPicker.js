@@ -35,7 +35,6 @@ Page({
     const app = getApp();
     if (app && app.applyFontLevel) app.applyFontLevel(this);
 
-    const level = theme.LEVELS[theme.indexOf(key)];
     this.setData({ selectedKey: key });
     setTimeout(() => wx.navigateBack(), 300);
   }

@@ -61,12 +61,8 @@ Page({
     const app = getApp();
     if (app && app.applyFontLevel) app.applyFontLevel(this);
 
-    this.loadFontLevel();
-    this.loadDarkMode();
-    this.loadStats();
-    this.loadCurrentStage();
-    this.loadYouquPlan();
-    this.loadMyResources();
+    // 各数据项统一由 onShow 加载：onLoad 后紧接着就会触发 onShow，
+    // 两处都调会让 loadStats（内部 getAll 全量读存储）这类重活白做一遍
   },
 
   onShow() {

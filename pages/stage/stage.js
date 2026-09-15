@@ -52,7 +52,6 @@ Page({
     canPromote: false,
     promoteEnabled: false,
     requiredHours: 0,
-    requiredType: 'stage',
     investedHoursText: '0',
     timeMet: false,
     progressPercent: 0,
@@ -67,16 +66,16 @@ Page({
     isDark: false
   },
 
-  // 同步"实际是否深色"（结合 dm-dark 手动 / dm-auto 跟随系统），供 wxml 进度条底色判断
-  _syncDark(app) {
-    const systemDark = app && app._systemDark
-    this.setData({ isDark: theme.isDarkMode(systemDark) })
+  // 同步"实际是否深色"（手动 dm-dark 或跟随系统），供 JS 侧深色判断
+  // 旧实现读 app._systemDark，而该字段全项目从未赋值 —— dm-auto + 系统深色时会判成浅色
+  _syncDark() {
+    this.setData({ isDark: theme.isDarkNow() })
   },
 
   onLoad(options) {
     const app = getApp()
     if (app && app.applyFontLevel) app.applyFontLevel(this)
-    this._syncDark(app)
+    this._syncDark()
 
     const index = Number(options.index)
     // 索引非法时提示并返回，避免停在空白页无法退出
@@ -126,7 +125,7 @@ Page({
   onShow() {
     const app = getApp()
     if (app && app.applyFontLevel) app.applyFontLevel(this)
-    this._syncDark(app)
+    this._syncDark()
 
     if (this.data.stage) {
       // 重新计算状态（当前阶段可能在设置页改变）
@@ -177,13 +176,11 @@ Page({
     // 按钮文案：最后阶段(准桥梁)为“完成阶段”，其余阶段为“晋级下一阶段”
     const promoteLabel = isLastStage ? '完成阶段' : '晋级下一阶段'
 
+    // isLastStage / alreadyDone 只参与上面的文案与准入判断，无需下发到视图
     this.setData({
       canPromote: isRegular && isCurrent && !alreadyDone,
       promoteEnabled: isRegular && isCurrent && timeMet && !alreadyDone,
-      isLastStage,
-      alreadyDone,
       requiredHours: required.hours,
-      requiredType: required.type,
       investedHoursText: `${(+hours).toFixed(1)}`.replace(/\.0$/, ''),
       timeMet,
       progressPercent,
@@ -566,6 +563,8 @@ Page({
   },
 
   submitCheckin() {
+    // 防重复提交：双击时两次事件会在 setData 渲染前先后进入本方法，写入两条记录
+    if (this._submitting) return
     const { currentGroup, currentResource, currentResourceId, durationInput, remarkInput, stage } = this.data
     if (!currentGroup || !currentResource) return
 
@@ -589,6 +588,7 @@ Page({
       return
     }
 
+    this._submitting = true
     const remarkText = String(remarkInput || '').trim()
 
     const record = checkin.addCheckin({
@@ -604,6 +604,7 @@ Page({
 
     // 保存失败（如本地存储已满）时不提示成功
     if (!record) {
+      this._submitting = false
       wx.showToast({ title: '保存失败,请检查存储空间', icon: 'none' })
       return
     }
@@ -620,11 +621,16 @@ Page({
     const prev = groupProgress[currentGroup.key] || { todayMin: 0 }
     groupProgress[currentGroup.key] = { todayMin: prev.todayMin + minutes }
     
+    // 整体下发 resTotals：资源名可能含 . [ ]（如「RAZ D.2」），
+    // 用 `resTotals.${resKey}` 这种 dataPath 会被解析成多级路径，导致该行徽标不刷新
+    const resTotals = { ...this.data.resTotals, [resKey]: newTotal }
+
     this.setData({
       showCheckin: false,
-      [`resTotals.${resKey}`]: newTotal,
+      resTotals,
       groupProgress
     })
+    this._submitting = false
 
     // 打卡成功后刷新阶段进度（按钮填色 / 已投入时长 / 可完成态）
     this._refreshPromoteInfo()

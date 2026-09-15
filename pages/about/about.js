@@ -1,6 +1,7 @@
 Page({
   data: {
-    fontClass: ''
+    fontClass: '',
+    darkClass: ''
   },
 
   onLoad() {

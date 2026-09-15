@@ -25,6 +25,7 @@ function fmtHours(minutes) {
 Page({
   data: {
     fontClass: '',
+    darkClass: '',
     dateText: '',
     greetText: '',
     stageName: '',

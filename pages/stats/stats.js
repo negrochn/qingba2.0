@@ -369,7 +369,7 @@ function buildRadarClips(w, h, vals) {
 function estimateRingBox() {
   let ww = 375
   try {
-    const info = wx.getSystemInfoSync()
+    const info = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()
     if (info && info.windowWidth) ww = info.windowWidth
   } catch (e) {}
   const rpx = ww / 750
@@ -439,6 +439,12 @@ Page({
     this._ensureCharts()
   },
 
+  // 离开页面销毁 echarts / canvas 实例：canvas 节点随页面销毁，但实例引用不会自动释放，
+  // 反复进出会持续累积（此前整个项目没有任何页面做卸载清理）
+  onUnload() {
+    this._disposeCharts()
+  },
+
   // ===== 阶段选择器（与打卡记录页月份选择器同原语） =====
   onToggleStagePicker() {
     const idx = this.data.stageOptions.findIndex(s => s.stage_id === this.data.curStageId)
@@ -458,6 +464,9 @@ Page({
       this._ensureCharts()
     })
   },
+
+  // 阻止阶段选择弹层内容区的点击冒泡（catchtap）
+  noop() {},
 
   onPickerChange(e) {
     const val = e.detail.value
@@ -578,7 +587,7 @@ Page({
       const canvasNode = res[0].node
       const width = res[0].width
       const height = res[0].height
-      const dpr = wx.getSystemInfoSync().pixelRatio
+      const dpr = (wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()).pixelRatio
       const ctx = canvasNode.getContext('2d')
       const canvas = new WxCanvas(ctx, domId, true, canvasNode)
       if (echarts.setPlatformAPI) {
@@ -592,7 +601,7 @@ Page({
 
   _renderBar() {
     if (!this._barChart || !this._chartLabels) return
-    const isDark = /dark/.test(this.data.darkClass || '')
+    const isDark = theme.isDarkNow()   // canvas 走不了 CSS 媒体查询，需含「跟随系统」的真实深色
     const lineColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.06)'
     const barColor = 'rgba(7,193,96,.14)'
     const option = {
@@ -653,7 +662,7 @@ Page({
     const vals = this._ringValues()
     this._updateRingSkeleton(vals)
     if (!this._ringChart) return
-    const isDark = /dark/.test(this.data.darkClass || '')
+    const isDark = theme.isDarkNow()   // canvas 走不了 CSS 媒体查询，需含「跟随系统」的真实深色
     const subTextColor = isDark ? 'rgba(255,255,255,0.5)' : '#737373'
     const splitColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.06)'
     const groupKeys = Object.keys(resourceLabels)

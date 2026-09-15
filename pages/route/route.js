@@ -8,7 +8,8 @@ Page({
     currentStageId: '',
     currentStageIndex: -1,
     currentCard: null,
-    fontClass: ''
+    fontClass: '',
+    darkClass: ''
   },
 
   onLoad() {

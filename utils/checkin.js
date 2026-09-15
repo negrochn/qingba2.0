@@ -8,6 +8,9 @@ const { routeData } = require('./data.js')
 
 const STORAGE_KEY = 'qingba_checkins'
 const CHUNK_PREFIX = 'qingba_checkins_' // 按月分片: qingba_checkins_2021-06
+// 分片写入的临时 key 前缀：先把全部分片写到临时 key，全部成功后再逐个改名为正式 key，
+// 保证任何一步失败都不会破坏已存在的分片（见 saveAll）
+const TMP_CHUNK_PREFIX = CHUNK_PREFIX + 'tmp_'
 const DEFAULT_REMARK_KEY = 'qingba_default_remarks'
 const READ_COUNT_KEY = 'qingba_read_counts'
 const CURRENT_STAGE_KEY = 'qingba_current_stage'
@@ -89,6 +92,11 @@ function _chunkKey(ym) {
   return CHUNK_PREFIX + ym
 }
 
+// 临时分片 key（写入中间态）
+function _tmpChunkKey(ym) {
+  return TMP_CHUNK_PREFIX + ym
+}
+
 // 清理所有分片 key（月度分片 + 极端单日分片），用于存储模式切换/重写时清理旧数据
 // 否则 getAll 合并时旧分片会覆盖主 key，导致已删除/已修改的记录"复活"
 function _removeChunkKeys() {
@@ -113,9 +121,18 @@ function _estimateBytes(obj) {
     let bytes = 0
     for (let i = 0; i < str.length; i++) {
       const code = str.charCodeAt(i)
-      if (code < 0x80) bytes += 1
-      else if (code < 0x800) bytes += 2
-      else bytes += 3
+      if (code < 0x80) {
+        bytes += 1
+      } else if (code < 0x800) {
+        bytes += 2
+      } else if (code >= 0xD800 && code <= 0xDBFF) {
+        // 高位代理：与其后的低位代理合成 1 个码点，UTF-8 占 4 字节（emoji 等）
+        // 备注里允许 emoji，漏算会让分片限额判断偏乐观
+        bytes += 4
+        i++   // 跳过低位代理
+      } else {
+        bytes += 3
+      }
     }
     return bytes
   } catch(e) {
@@ -141,7 +158,11 @@ function _listChunkKeys() {
   try {
     const info = wx.getStorageInfoSync()
     if (info && Array.isArray(info.keys)) {
-      return info.keys.filter(k => String(k).startsWith(CHUNK_PREFIX))
+      // 排除临时分片：它是写入中间态，若参与合并会读到"半成品"数据
+      return info.keys.filter(k => {
+        const s = String(k)
+        return s.startsWith(CHUNK_PREFIX) && !s.startsWith(TMP_CHUNK_PREFIX)
+      })
     }
   } catch (e) {
     console.error('getStorageInfoSync failed:', e)
@@ -196,7 +217,8 @@ function getAll() {
 }
 
 // 保存全部数据
-// 分片模式采用"先写新分片，全部成功后再删旧的"，任何一步失败都回滚，保证旧数据不丢
+// 分片模式采用「两阶段写」：先把所有分片写到临时 key，全部成功后再逐个改名为正式 key。
+// 任何一步失败都只涉及临时 key，已存在的分片内容始终保持完整（不会被"回滚"删掉）
 // @returns {boolean} 是否保存成功
 function saveAll(data) {
   try {
@@ -229,43 +251,57 @@ function saveAll(data) {
     }
 
     const oldKeys = _listChunkKeys()
-    const newKeys = []
-    let ok = true
+    const pending = []   // [{ tmp, key, data }] 待改名的分片，data 暂存内存避免二次读取
+    const written = []   // 本次已写入的临时 key，失败时按此回滚
 
-    // 1) 先写入所有新分片（此时旧数据仍在，失败也不丢）
+    // 1) 先全部写入临时 key —— 旧分片全程未被触碰，失败也不会丢数据
     for (const ym in months) {
       const chunkData = months[ym]
       const chunkBytes = _estimateBytes(chunkData)
       const chunkItems = _estimateItemCount(chunkData)
       try {
         if (chunkBytes <= MAX_ITEM_BYTES && chunkItems < 500) {
-          const key = _chunkKey(ym)
-          wx.setStorageSync(key, chunkData)
-          newKeys.push(key)
+          const tmp = _tmpChunkKey(ym)
+          wx.setStorageSync(tmp, chunkData)
+          written.push(tmp)
+          pending.push({ tmp, key: _chunkKey(ym), data: chunkData })
         } else {
           // 极端情况：某月数据量极大，按天逐条存
           for (const day in chunkData) {
-            const key = _chunkKey(ym + '_' + day.substring(8))
-            wx.setStorageSync(key, { [day]: chunkData[day] })
-            newKeys.push(key)
+            const suffix = ym + '_' + day.substring(8)
+            const tmp = _tmpChunkKey(suffix)
+            const piece = { [day]: chunkData[day] }
+            wx.setStorageSync(tmp, piece)
+            written.push(tmp)
+            pending.push({ tmp, key: _chunkKey(suffix), data: piece })
           }
         }
       } catch (e) {
-        ok = false
+        // 回滚：只删本次写入的临时 key（旧分片原样保留）
+        written.forEach(k => {
+          try { wx.removeStorageSync(k) } catch (e2) {}
+        })
         _onSaveFail()
-        break
+        return false
       }
     }
 
-    if (!ok) {
-      // 回滚：只删除本次新写入的分片，旧数据原样保留
-      newKeys.forEach(k => {
-        try { wx.removeStorageSync(k) } catch (e) {}
-      })
-      return false
+    // 2) 临时分片全部就绪，逐个「改名」为正式 key（此阶段才会覆盖旧分片）
+    const newKeys = []
+    for (const p of pending) {
+      try {
+        wx.setStorageSync(p.key, p.data)
+        try { wx.removeStorageSync(p.tmp) } catch (e) {}
+        newKeys.push(p.key)
+      } catch (e) {
+        // 改名中途失败：已改名的分片是完整新数据、未改名的仍是完整旧数据，
+        // 剩余新数据留在临时 key（不删，下次保存覆盖），主 key 也还没删 —— 不会丢数据
+        _onSaveFail()
+        return false
+      }
     }
 
-    // 2) 全部写成功后，再清理主 key 与不再使用的旧分片
+    // 3) 全部改名成功后，再清理主 key 与不再使用的旧分片
     try { wx.removeStorageSync(STORAGE_KEY) } catch(e) {}
     oldKeys.forEach(k => {
       if (newKeys.indexOf(k) < 0) {
@@ -397,14 +433,6 @@ function getByDay(day) {
   return all[d] || []
 }
 
-// 汇总某阶段内某资源今日累计时长(分钟)
-function todayTotalByResource(stageId, groupKey, resourceName) {
-  const list = getByDay(todayStr())
-  return list
-    .filter(c => c.stageId === stageId && c.groupKey === groupKey && c.resourceName === resourceName)
-    .reduce((s, c) => s + c.durationMinutes, 0)
-}
-
 // 批量汇总某天某阶段下各资源的累计时长
 // 只需一次 getAll，避免在页面循环里对每个资源重复全量读取
 // key 口径：来自打卡记录，按 "groupKey|resourceName" 聚合（resourceName 为记录里的名称快照）
@@ -430,9 +458,11 @@ function getByMonth(ym) {
   const all = getAll()
   const list = []
   for (const day in all) {
-    if (day.startsWith(ym)) {
-      list.push(...all[day])
-    }
+    if (!day.startsWith(ym)) continue
+    // 脏数据（该日不是数组）跳过，避免展开非可迭代值抛错
+    const dayList = all[day]
+    if (!Array.isArray(dayList)) continue
+    list.push(...dayList)
   }
   return list
 }
@@ -441,7 +471,9 @@ function getByMonth(ym) {
 function totalCountAll() {
   const all = getAll()
   let n = 0
-  for (const day in all) n += all[day].length
+  for (const day in all) {
+    if (Array.isArray(all[day])) n += all[day].length
+  }
   return n
 }
 
@@ -506,7 +538,7 @@ function clearAllCheckins() {
   }
 }
 
-// 清除某阶段的全部打卡记录（同时清除该阶段的已读次数）
+// 清除某阶段的全部打卡记录（同时清除该阶段的已读次数与默认备注）
 // 保留其它阶段数据，返回被删除的记录条数
 function clearCheckinsByStage(stageId) {
   try {
@@ -536,6 +568,18 @@ function clearCheckinsByStage(stageId) {
     }
     if (changed) _saveReadCounts(counts)
 
+    // 同步清除该阶段的默认备注（key 格式: stageId|groupKey|resourceId）
+    // 否则重新添加同名资源时，清空前保存过的备注会"复活"
+    const remarks = _getDefaultRemarks()
+    let remarkChanged = false
+    for (const k in remarks) {
+      if (String(k).indexOf(prefix) === 0) {
+        delete remarks[k]
+        remarkChanged = true
+      }
+    }
+    if (remarkChanged) _saveDefaultRemarks(remarks)
+
     // 同步从已完成名单移除该阶段
     const done = getCompletedStages()
     const di = done.indexOf(stageId)
@@ -556,8 +600,9 @@ function getStageMinutes(stageId) {
   const all = getAll()
   let minutes = 0
   for (const day in all) {
+    if (!Array.isArray(all[day])) continue
     for (const r of all[day]) {
-      if (r.stageId === stageId) {
+      if (r && r.stageId === stageId) {
         minutes += Number(r.durationMinutes) || 0
       }
     }
@@ -573,8 +618,9 @@ function getAccumulatedMinutes(stageId) {
   const targetMatch = String(stageId || '').match(/^regular_(\d+)$/)
   const targetNum = targetMatch ? +targetMatch[1] : 6
   for (const day in all) {
+    if (!Array.isArray(all[day])) continue
     for (const r of all[day]) {
-      const m = String(r.stageId || '').match(/^regular_(\d+)$/)
+      const m = String(r && r.stageId || '').match(/^regular_(\d+)$/)
       if (m && +m[1] <= targetNum) {
         minutes += Number(r.durationMinutes) || 0
       }
@@ -602,13 +648,6 @@ function fmtMinutesCN(totalMin) {
   if (h > 0 && mm > 0) return `${h}小时${mm}分钟`
   if (h > 0) return `${h}小时`
   return `${mm}分钟`
-}
-
-// 纯小时格式（保留1位小数），用于分组时长分布等宽屏场景
-function fmtHoursDecimal(totalMin) {
-  const m = Number(totalMin) || 0
-  if (m <= 0) return '0h'
-  return `${(m / 60).toFixed(1)}h`
 }
 
 // ===== 读完次数 =====
@@ -779,7 +818,6 @@ function _parseResourceKey(key) {
 // @returns {boolean} 是否有数据被改写
 function migrateResourceKeysToId(force) {
   if (_idsMigrated && !force) return false
-  _idsMigrated = true
 
   let changed = false
   try {
@@ -822,6 +860,8 @@ function migrateResourceKeysToId(force) {
     console.error('migrateResourceKeysToId failed:', e)
     return false
   }
+  // 迁移真正跑完才置位幂等标记：中途异常时本次不置位，下次调用仍会重试
+  _idsMigrated = true
   return changed
 }
 
@@ -905,6 +945,8 @@ function migrateResourceRecords(opts) {
 
 // 某资源的打卡汇总（记录里的名称是快照，资源删除后统计仍可用）
 // 匹配规则：记录有 resourceId 时按 id，否则按「阶段+分组+名称」回退
+// 【当前无调用方】保留作为「资源 id 口径」的参考实现：时长类聚合目前仍按名称匹配
+// （stats 排行榜、stage 页徽标），后续统一口径时可直接改用它
 // @returns {{ count: number, minutes: number }} count=打卡条数
 function getResourceCheckinSummary(resourceId, resourceName, stageId, groupKey) {
   const all = getAll()
@@ -1006,11 +1048,9 @@ module.exports = {
   getByMonth,
   totalCountAll,
   totalReadCountByStage,
-  todayTotalByResource,
   getDayTotalsByStage,
   fmtMinutes,
   fmtMinutesCN,
-  fmtHoursDecimal,
   getDefaultRemark,
   saveDefaultRemark,
   getReadCount,

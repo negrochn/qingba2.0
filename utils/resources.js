@@ -22,10 +22,6 @@ function getStageById(stageId) {
   return (routeData.stages || []).find(s => s.stage_id === stageId) || null
 }
 
-function getStageIndex(stageId) {
-  return (routeData.stages || []).findIndex(s => s.stage_id === stageId)
-}
-
 // 该阶段官方数据里实际存在的分组（按 GROUP_ORDER 顺序）
 function getStageGroupKeys(stageId) {
   const stage = getStageById(stageId)
@@ -90,43 +86,13 @@ function getResourceName(stageId, groupKey, resourceId, fallback) {
   return fallback === undefined ? '' : fallback
 }
 
-// 老数据兼容：按名称反查 id（找不到返回 ''）
-function findIdByName(stageId, groupKey, name) {
-  const map = getStageResources(stageId)
-  const list = map[groupKey]
-  if (!Array.isArray(list)) return ''
-  const hit = list.find(it => it.name === name)
-  return hit ? hit.id : ''
-}
-
-// 扁平列表（带分组信息）
-function getAllResources(stageId) {
-  const map = getStageResources(stageId)
-  const out = []
-  getStageGroupKeys(stageId).forEach(groupKey => {
-    (map[groupKey] || []).forEach(it => {
-      out.push({
-        id: it.id,
-        name: it.name,
-        custom: !!it.custom,
-        groupKey,
-        groupLabel: getGroupLabel(groupKey)
-      })
-    })
-  })
-  return out
-}
-
 module.exports = {
   GROUP_ORDER,
   getStageById,
-  getStageIndex,
   getStageGroupKeys,
   getGroupLabel,
   getStageResources,
   getStageGroups,
   getResource,
-  getResourceName,
-  findIdByName,
-  getAllResources
+  getResourceName
 }

@@ -149,6 +149,9 @@ Page({
 
   // ===== 提交 =====
   submit() {
+    // 防重复提交：成功后要等 600ms 才 navigateBack，期间连点会写入多条重复记录
+    if (this._submitting) return
+
     const d = this.data
     if (!d.dateStr) {
       wx.showToast({ title: '请选择日期', icon: 'none' })
@@ -181,6 +184,7 @@ Page({
       remark: String(d.remarkInput || '').trim()
     })
     if (!record) {
+      this._submitting = false
       wx.showToast({ title: '保存失败，请检查存储空间', icon: 'none' })
       return
     }

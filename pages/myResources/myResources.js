@@ -185,16 +185,20 @@ Page({
 
   // 提交新增 / 保存编辑
   submitSheet() {
+    // 防重复提交：连点会重复调用 add（第二次命中同名校验，用户看到无谓报错）
+    if (this._submitting) return
     const { isEdit, editId, nameInput, pickStageId, pickGroupKey } = this.data
     if (!pickStageId || !pickGroupKey) {
       wx.showToast({ title: '请选择归属', icon: 'none' })
       return
     }
 
+    this._submitting = true
     const payload = { stageId: pickStageId, groupKey: pickGroupKey, name: nameInput }
     const res = isEdit
       ? customResources.update(editId, payload)
       : customResources.add(payload)
+    this._submitting = false
 
     if (!res || !res.ok) {
       wx.showToast({ title: (res && res.error) || '操作失败', icon: 'none' })

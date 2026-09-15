@@ -440,11 +440,19 @@ function parseTargetHours(text) {
 }
 
 // 解析阶段晋级所需时长（小时）
-// 优先从 promotion_standard 中提取；涉及“累计”时返回累计小时
+//
+// 【口径】所有阶段一律按「当前阶段自身的投入时长」评估晋级，不采用「从常规1累计投入」的口径。
+//   常规6（time_investment 60H）与准桥梁（80-100H）的 promotion_standard 里虽然写有
+//   「常规1-6累计投入不低于400H」「从常规1累计总投入不低于480H」，但这里显式把这两个阶段
+//   排除在累计匹配之外，改按各自 time_investment 判定 —— 这是产品既定口径，勿改成累计。
+//
+// 【保留的累计分支】下面两段正则为将来新增阶段留口：若某阶段的 promotion_standard 明确写了
+//   「…累计投入…不低于 XH」，会返回 type='accumulated'，调用方（route / stage / home）随即
+//   改用 getAccumulatedMinutes() 统计跨阶段累计时长。当前全部阶段都不会命中这两段。
 function getRequiredHours(stage) {
   const standard = stage.promotion_standard || ''
 
-  // 常规6 / 准桥梁：进度按“当前阶段自身时长”评估，不按跨阶段累计投入
+  // 常规6 / 准桥梁：进度按“当前阶段自身时长”评估，不按跨阶段累计投入（见上方口径说明）
   if (stage.stage_id !== 'regular_6' && stage.stage_id !== 'pre_bridge') {
     // 累计投入时间，如“常规1-6累计投入时间不低于400H”
     const accumulated = standard.match(/累计.*?投入.*?不低于\s*(\d+)\s*[Hh]/)

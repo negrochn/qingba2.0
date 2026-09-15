@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 > 自 `v3.3.0` 以来的全部改动：首页「今日时长」「今日打卡」两张指标卡可点开**今日明细弹窗**（底部半屏，两卡共用同一面板、分别按时长与次数聚合）；统计页时长 / 读完排行榜的占比分母由「该榜最大值」改为**统计维度的累计值**，中文时长文案提取为 `checkin.fmtMinutesCN` 全站共用。
+> 另做了一轮全项目代码审查，修复**分片存储回滚丢数据**、补录与打卡**重复提交**等一批数据安全与稳定性问题，并清理零调用的死代码。
 
 ### 新增
 
@@ -22,6 +23,33 @@
   - 各行宽度相加正好 100%，可直接判断「头部集中还是均摊」
   - 与柱状图 / 环形图天然同口径——占位数据 `resTotal` 与 `totalMinutes` 本就在同一循环累加、同一 `period` 过滤，将来恢复周 / 月 / 年切片时无需额外同步
 - **中文时长文案提取为公共函数（`checkin.fmtMinutesCN`）**：原为 `stats.js` 内部函数，现上移到 `utils/checkin.js` 并导出，统计页与首页共用一套「X小时Y分钟」文案，避免两处各写一份而分叉；首页今日时长弹窗的绘本时长随之由 `1h20m` 改为 `1小时20分钟`，与时长排行榜完全一致
+
+### 修复
+
+全项目代码审查（utils 层 + 16 个页面逐文件核对）发现的缺陷，按严重度修复：
+
+- **分片存储的失败回滚会真正丢数据（`checkin.saveAll`）**：原实现注释称"先写新分片、全部成功后再删旧的，任何一步失败都回滚，保证旧数据不丢"，但新分片用的是**与旧分片同名的 key**（`qingba_checkins_YYYY-MM`），写入即就地覆盖，回滚时又把这些 key 逐个删除——一旦中途某个分片抛异常（最现实的是存储配额写满），那几个月的旧数据会彻底消失。现改为**两阶段写**：
+  - 先把全部月份写成 `qingba_checkins_tmp_*` 临时分片（旧分片全程不被触碰），全部成功后再逐个「改名」为正式 key
+  - `_listChunkKeys()` 排除临时前缀，避免 `getAll()` 合并到写入中间态；`_removeChunkKeys()` 仍会把残留的临时分片一并清掉
+  - 任何阶段失败都只影响临时 key，已有分片内容始终完整
+- **补录连点会写入多条重复记录（`backfill`）**：`submit()` 成功后要等 600ms 才 `navigateBack`，该窗口内再次点击会重复执行 `checkin.addCheckin()`。现加提交锁（校验全部通过后上锁，保存失败时释放）
+- **打卡弹窗双击写入两条记录（`stage.submitCheckin`）**：两次点击事件会在 `setData` 渲染前先后进入处理器，现加提交锁，成功与失败两条路径都正确释放
+- **统计页 echarts / canvas 实例从不销毁（`stats`）**：`_ensureCharts()` 持有 canvas 与图表实例，此前只在开弹层 / 切空态时 `_disposeCharts()`，离开页面从不释放（项目此前没有任何页面使用 `onUnload`）。现新增 `onUnload` 销毁，反复进出不再累积
+- **"跟随系统"深色下图表配色不跟随（`stats`）**：canvas 走不了 CSS 媒体查询，图表颜色原先用 `/dark/.test(darkClass)` 判断，`dm-auto` 时恒为 false，系统深色下仍是浅色网格。`theme.js` 新增 `isDarkNow()`（自行读取系统主题，兼容 `getAppBaseInfo` 不可用的旧基础库），统计页两处图表配色改用它
+- **`app._systemDark` 是从未赋值的幽灵字段（`stage._syncDark`）**：全项目只有这一处读它、没有任何地方赋值，导致 `dm-auto` + 系统深色时 `isDark` 恒为 false。改用 `theme.isDarkNow()`
+- **按阶段清空不清默认备注（`checkin.clearCheckinsByStage`）**：旧实现清了记录、已读次数与已完成标记，却漏了 `qingba_default_remarks` 中该阶段的 key，重新添加同名资源时旧备注会"复活"。现同步清除
+- **`migrateResourceKeysToId` 幂等标记过早置位（`checkin`）**：原在函数入口就置 `_idsMigrated = true`，若中途异常，本会话内不再重试，迁移永久半途而废。改为真正跑完才置位，异常时保持可重试
+- **脏数据会让多个统计函数抛异常（`checkin`）**：`getByMonth` / `totalCountAll` / `getStageMinutes` / `getAccumulatedMinutes` 直接 `all[day].length` 或展开 `...all[day]`，且都不在 try 内（前三个完全没有兜底），一旦某天的值不是数组（异常导入 / 旧数据），`route` / `stage` / `records` / `settings` 的 `onShow` 会直接白屏。现统一加 `Array.isArray` 校验
+- **`_estimateBytes` 回退分支漏算 4 字节字符（`checkin`）**：无 `TextEncoder` 时把代理对（emoji）按 3 字节计，低估体积会让分片上限判断偏乐观；补高位代理判断按 4 字节计
+- **打卡后资源行徽标可能不刷新（`stage`）**：`setData({ ['resTotals.' + groupKey + '|' + 资源名]: n })` 用资源名拼 dataPath，名称含 `.` `[` `]`（如「RAZ D.2」）时会被解析成多级路径。改为整体下发 `resTotals` 对象
+- **清空 / 加载类健壮性与一致性**：`records.onTouchStart` 先克隆再改（原先就地改写 `this.data` 里的对象）并补越界保护；`records` / `stats` 的 `catchtap=""` 改为 `catchtap="noop"` 并补上 `noop()`；`stage` 移除 `isLastStage` / `alreadyDone` / `requiredType` 三处从未在 wxml 使用的无效 `setData`；`settings` 去掉 `onLoad` 与 `onShow` 重复执行的一批 loader（含 `getAll` 全量读）；`myResources.submitSheet` 加防抖；`about` / `home` / `route` / `records` 补上 `data` 里的 `darkClass` 声明；`stats` 两处 `wx.getSystemInfoSync()` 改为 `wx.getWindowInfo()`（消除弃用告警）
+
+### 清理
+
+- 删除零调用导出：`checkin.todayTotalByResource`、`checkin.fmtHoursDecimal`、`resources.getStageIndex` / `findIdByName` / `getAllResources`、`theme.getLevels` / `getDarkModeIndex` / `indexOfDark`
+- 删除 `utils/groupColors.js`：首页今日弹窗改用排行榜样式后失去最后一个引用（分组色目前只存在于 `app.wxss` 与 `pages/records/records.wxss`）
+- 保留 `checkin.getResourceCheckinSummary` 并加注释：它是全站唯一「资源 id 优先」的汇总实现，当前无调用方，留作后续统一时长聚合口径时的参考实现
+- `fontPicker.pick` 的无用局部变量、`theme.getFontLevelText` 过时的注释（注释写"标准 · 默认字号"但实现只返回档位名）
 
 ## [3.3.0] - 2026-09-14
 

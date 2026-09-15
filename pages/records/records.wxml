@@ -66,7 +66,7 @@
 
 <!-- 简易月份选择器弹层 -->
 <view class="mp-mask {{monthPickerOpen ? 'show' : ''}}" bindtap="onCloseMonthPicker" wx:if="{{monthPickerOpen}}">
-  <view class="mp-sheet" catchtap="">
+  <view class="mp-sheet" catchtap="noop">
     <view class="mp-title mb-16">选择月份</view>
     <picker-view indicator-style="height: 80rpx;" class="mp-pv" value="{{pickerValue}}" bindchange="onPickerChange">
       <picker-view-column>

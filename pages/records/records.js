@@ -21,7 +21,8 @@ Page({
     _touchStartX: 0,
     _touchStartY: 0,
     _curSwipeIdx: -1,
-    fontClass: ''
+    fontClass: '',
+    darkClass: ''
   },
 
   onLoad() {
@@ -51,6 +52,9 @@ Page({
 
     this._refresh()
   },
+
+  // 阻止月份选择弹层内容区的点击冒泡（catchtap）
+  noop() {},
 
   // 加载所选月份记录，按时间倒序
   _refresh() {
@@ -178,8 +182,8 @@ Page({
       _touchStartY: t.clientY,
       _curSwipeIdx: idx
     })
-    // 关闭其他已打开的
-    const records = this.data.records
+    // 关闭其他已打开的（先克隆：直接改 this.data 里的对象会绕过 setData 的引用管理）
+    const records = this.data.records.map(r => ({ ...r }))
     let changed = false
     for (let i = 0; i < records.length; i++) {
       if (i !== idx && records[i]._dx !== 0) {
@@ -192,8 +196,10 @@ Page({
       this.setData({ records })
     }
     // 开始拖动：关闭动画
-    records[idx]._anim = false
-    this.setData({ [`records[${idx}]`]: records[idx] })
+    const cur = records[idx]
+    if (!cur) return
+    cur._anim = false
+    this.setData({ [`records[${idx}]`]: cur })
   },
 
   onTouchMove(e) {
