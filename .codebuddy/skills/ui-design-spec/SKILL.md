@@ -43,6 +43,8 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - **图标**：本项目用内联 iconfont（`@font-face` base64 注册于 `app.wxss`，跨页面生效）`.iconfont` + `.icon-*:before`；可用字形：`icon-check` 对勾（走 `var(--brand)`）/ `icon-right` 右箭头 / `icon-lock` `icon-unlock` / `icon-info` / `icon-squarecheck` / `icon-rank` / `icon-settings` / `icon-calendar` 日历 / `icon-location` / `icon-home` `icon-homefill` / `icon-my` `icon-myfill` / `icon-circle` `icon-circlefill`。箭头 `icon-right` 统一取 `var(--text3)`（FG-2）作为「正常箭头色」。
 - **数据看板卡片（原语 17）**：统计 / 概览类「非列表」页用白底圆角卡片（`--card` + 20rpx 圆角，**无阴影**）；主数据用大号数字（40/44/56/72rpx），单位与说明走 28rpx `--text2`；图表「今日」用 `var(--brand)`、「非今日」用 `var(--card2)`（主题自适应灰，勿硬编码 `rgba(0,0,0,.05)`）；角标箭头用 `.iconfont .icon-right`（`--text3`），勿用裸字符 `↗`；指标网格左右内距 32rpx 对齐页面边距。
 - **阶段统计详情页（原语 18）**：单个阶段的「累计」视图，核心数据**不套卡片**（扁平大数字贴页面底），累计时长用「X 小时 Y 分钟」分段（`splitCumulative()`，数字 64rpx 远大于单位 28rpx，勿用 `h/m` 缩写）；副行显示阶段跨度「首次打卡日 → 最后打卡日，阶段名称 历时 N 天」（跨度从打卡记录派生）；汇总三项用简单 flex 两列（`width:50%` + `flex-wrap`，前两项一行、第三项换行），每项 `prefix + 大数字 + unit + icon-right`，箭头紧贴 unit（`margin-left:8rpx`）勿用裸字符 `›`。详见 `components.md` 原语 18。
+- **滚轮选择器弹层（原语 19）**：选择月份 / 阶段等互斥选项用「可点胶囊 + ▾ → 半屏 `.mp-mask`/`.mp-sheet` + `<picker-view>` + 取消/确定」；浅色 `#e5e5e5` / 深色 `rgba(255,255,255,.1)` 上下细线标识选中项。三个必写项：弹层根节点带 `{{fontClass}} {{darkClass}}`、`mask-class="mp-pv-mask"`（去内置白蒙层）、`indicator-class="mp-pv-indicator"`（透明背景 + `var(--divider)` 细线，**切勿填实色底——会盖住选中行文字**）。详见 `components.md` 原语 19。
+- **左滑操作（原语 20）**：列表行左滑露出「编辑 / 删除」——非破坏操作在左、破坏性在右；JS 的 `SWIPE_W` 与 wxss 的 `.swipe-bg { width }` 必须双处同步（头号易错点）；位移过半（`-SWIPE_W/2`）才吸附展开、拖动限位 `-(SWIPE_W+20)`、位移变化 <2rpx 跳过 `setData`；按钮固定彩色（编辑 `#c7c7cc` / 删除 `#ff4d4f`），深色模式不另做适配。详见 `components.md` 原语 20。
 - **设计原则 / 交互规范**：四大原则（友好 / 清晰 / 便捷 / 统一）、导航（小程序菜单右上固定且深浅两套、Tab 2–5 建议≤4）、反馈（局部加载优先、同页 ≤1 加载动画、成功 toast 1.5s）、层级（模态阻断 / 弹出不打断）——详见 `references/design-guidelines.md`；量化令牌（22/17/15/14/12pt、热区 7–9mm、设计稿 375/390、弹窗 1.5s 等）见 `design-tokens.md` §7。
 
 ## 项目实现备注（与 qingba 代码对齐）
@@ -53,6 +55,8 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - **间距工具类 `.mb-16`**：`app.wxss` 提供 `.mb-16 { margin-bottom:16rpx }`，按需扩展 `mb-8`/`mb-24`，用于卡片/分组间统一留白。
 - **列表分组间距（项目实现）**：`.weui-cells` 容器**不设 `margin-top`**（避免与上层卡片/分组间距叠加，分组留白改用 `.mb-16` 工具类或父容器 padding 控制）。`.weui-cells__title`（分组标题）的 `margin-top`/`margin-bottom` **均已合入 `padding`**（当前 `padding: 32rpx 32rpx 6rpx`：上 32rpx = WeUI 标题 margin-top 16px，下 6rpx = WeUI margin-bottom 3px），不再使用任何 margin——目的是让深色模式下卡片背景连续铺满、避免标题上下露出页面底色。新代码如需分组标题与内容之间留白，统一用 `padding` 而非 `margin`。
 - **项目 CSS 变量**：`--bg/--card/--card2/--text/--text2/--text3/--divider/--brand/--danger/--cell-active` 对应 WeUI 的 BG-0/BG-2/BG-3/FG-0/FG-1/FG-2/FG-3/BRAND/RED/BG-COLOR-ACTIVE（见 `design-tokens.md` 末节映射表）；早期 `--text4` 已并入 `--text3` 移除，勿再引用。
+- **浮层弹层必须自带主题 class（项目约定，易漏）**：`dm-light/dm-dark/dm-auto` 只挂在页面根节点 `.container` 上，`page` 上仅有浅色基础变量（`@media (prefers-color-scheme: dark)` 只覆盖 `background-color`，未覆盖变量）。因此任何 `position:fixed` 的蒙层/弹层若写在 `.container` 之外，其内部所有 `var(--*)` 都会回落到浅色基础值——表现为「手动深色 + 系统浅色」时弹层整体发白。所有弹层根节点统一写作 `class="xxx-mask {{fontClass}} {{darkClass}} <显示态class>"`（现有：`.mp-mask` / `.sheet-mask` / `.pm-mask` / `.hs-mask`）。新增浮层必须照此办理。
+- **原生 `picker-view` 蒙层与选中框（项目约定）**：组件内置的上下蒙层是固定白色渐变，深色下会在卡片上留下灰白块，且不吃 CSS 变量。写法固定为 `<picker-view indicator-style="height:80rpx" indicator-class="mp-pv-indicator" mask-class="mp-pv-mask">`；`.mp-pv-mask` 用 `background-image:none!important; background-color:transparent!important` 去掉内置蒙层；`.mp-pv-indicator` **只能保持透明背景 + `var(--divider)` 上下细线**，切勿设 `background:var(--card2)` 之类不透明底色——indicator 覆盖在内容层之上，实色底会把选中行整行文字盖住（已踩坑，表现为深色下选中项「消失」），选中态靠上下两条主题色细线标识。
 - **`.group-title` 项目取值（与规范差异）**：全局 `.group-title`（`app.wxss`）`padding: 32rpx 32px 16rpx 32rpx`，**右内边距是 `32px`（像素）而非 `32rpx`**（疑似笔误）；新代码建议统一为 `32rpx`。
 - **扁平纯色，禁止渐变 / 外发光（项目约定）**：所有色块 / 标签 / 按钮一律用扁平纯色（`var(--brand)`、固定 HEX 或低透明叠加），**禁止 `linear-gradient` 与 `box-shadow` 外发光**；深色档同理用纯色低透明（如 `rgba(7,193,96,.14)`）替代渐变。
 - **`.weui-tag` 不带 margin（项目约定）**：标签间距由父级 flex `gap` 控制，避免与 `tag-group-*` 等内联背景 / 多标签混排时多出右侧空白；新增标签复用全局 `.weui-tag`，不在页面内重复定义。
@@ -76,9 +80,6 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - （已补充）care 模式（适老/关怀模式）配色档 → `design-tokens.md` §8（来源 `theme/vars/care-*.less`）。
 - （已核对）`design-tokens.md` 全部颜色/字号/间距/圆角/组件尺寸已对照 `D:\github\weui\src` 源码订正（含深色 `BG-COLOR-ACTIVE` 改为 `overlay(...)`、dialog 标题字重 500、正文 FG-1 等）。
 - 完整 Dialog / ActionSheet / Toast / Half-screen Dialog 的内联 wxml 模板（目前给了 token 与结构范式，精确内边距以 WeUI 源码为准）。
-- 滑块（字号实时预览）、滚轮选择器、Gallery、Grid、Steps、Progress、Loading 等组件规范。
-- 图标规范（功能图标尺寸 / 风格 / 与 iconfont 字号的协调）。
-- 完整 Dialog / ActionSheet / Toast / Half-screen Dialog 的内联 wxml 模板（本 skill 只给了 token 与结构范式，精确内边距以 WeUI 源码为准）。
-- 滑块（字号实时预览）、滚轮选择器、Gallery、Grid、Steps、Progress、Loading 等组件规范。
-- care 模式（适老/关怀模式）配色档（WeUI `--weui-mode='care'`）。
+- （已补充）滚轮选择器 `picker-view` 半屏弹层 → `components.md` 原语 19（含蒙层 / 选中框的深色覆盖写法）。
+- 滑块（字号实时预览）、Gallery、Grid、Steps、Progress、Loading 等组件规范。
 - 图标规范（功能图标尺寸 / 风格 / 与 iconfont 字号的协调）。

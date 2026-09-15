@@ -1,6 +1,6 @@
 <view class="container {{fontClass}} {{darkClass}}">
   <!-- 日期 -->
-  <view class="weui-cells__title">补录日期</view>
+  <view class="weui-cells__title">{{isEdit ? '打卡日期' : '补录日期'}}</view>
   <view class="weui-cells">
     <picker mode="date" value="{{dateStr}}" end="{{todayStr}}" bindchange="onDateChange">
       <view class="weui-cell weui-cell_access">
@@ -14,7 +14,7 @@
       </view>
     </picker>
   </view>
-  <view class="weui-cells__tips">补录数据会计入阶段时长与统计，可在「打卡记录」中查看。</view>
+  <view class="weui-cells__tips">{{isEdit ? '修改后会计入阶段时长与统计，可在「打卡记录」中查看。' : '补录数据会计入阶段时长与统计，可在「打卡记录」中查看。'}}</view>
 
   <!-- 阶段 -->
   <view class="weui-cells__title">选择阶段</view>
@@ -116,6 +116,6 @@
     <button
       class="weui-btn weui-btn_block {{canSubmit ? 'weui-btn_primary' : 'weui-btn_disabled'}}"
       bindtap="submit"
-    >确认补录</button>
+    >{{isEdit ? '保存修改' : '确认补录'}}</button>
   </view>
 </view>

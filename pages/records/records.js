@@ -1,7 +1,7 @@
 const checkin = require('../../utils/checkin.js')
 
-// 删除按钮宽度（rpx），与样式保持一致
-const DELETE_W = 150
+// 左滑操作区宽度（rpx）：编辑 + 删除 各 150，与 records.wxss 的 .swipe-bg 保持一致
+const SWIPE_W = 300
 
 Page({
   data: {
@@ -170,7 +170,7 @@ Page({
 
   // ===== 滑动删除（同首页） =====
   _snapDx(dx) {
-    if (dx <= -DELETE_W / 2) return -DELETE_W
+    if (dx <= -SWIPE_W / 2) return -SWIPE_W
     return 0
   },
 
@@ -209,7 +209,7 @@ Page({
     const dxPx = t.clientX - this.data._touchStartX
     // px → rpx (约 2 倍，简单换算)
     let newDx = dxPx * 2
-    if (newDx < -(DELETE_W + 20)) newDx = -(DELETE_W + 20)
+    if (newDx < -(SWIPE_W + 20)) newDx = -(SWIPE_W + 20)
     if (newDx > 10) newDx = 10
 
     // 节流：同一次滑动内位移变化小于 2rpx 时跳过，避免高频 setData 掉帧
@@ -230,6 +230,13 @@ Page({
       [`records[${idx}]._anim`]: true,
       _curSwipeIdx: -1
     })
+  },
+
+  // 编辑记录：跳补录页的编辑态（复用同一套表单，见 backfill.js onLoad 的 options.id 分支）
+  editRecord(e) {
+    const { id } = e.currentTarget.dataset
+    if (!id) return
+    wx.navigateTo({ url: `/pages/backfill/backfill?id=${id}` })
   },
 
   // 删除记录

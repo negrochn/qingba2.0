@@ -95,15 +95,15 @@ page {
   top: 0;
   bottom: 0;
   right: 0;
-  width: 150rpx;
+  width: 300rpx;                /* 编辑 + 删除 各 150rpx，与 records.js 的 SWIPE_W 保持一致 */
   display: flex;
   align-items: stretch;
 }
 
+.swipe-edit,
 .swipe-del {
-  width: 100%;
+  flex: 1;
   height: 100%;
-  background: #ff4d4f;
   color: #fff;
   display: flex;
   align-items: center;
@@ -111,6 +111,9 @@ page {
   font-size: calc(34rpx * var(--fs, 1));
   font-weight: 500;
 }
+
+.swipe-edit { background: #c7c7cc; }   /* 中性灰：非破坏操作 */
+.swipe-del  { background: #ff4d4f; }   /* 危险操作 */
 
 .swipe-fg {
   position: relative;
@@ -314,6 +317,21 @@ page {
   text-align: center;
   font-size: calc(30rpx * var(--fs, 1));
   color: var(--text);
+}
+
+/* picker-view 的内置蒙层是固定白色渐变，不跟随主题，深色下会在卡片上留下灰白块，
+   用 mask-class 直接去掉。
+   注意：indicator 覆盖在内容层之上，只能保持透明背景——填不透明底色会把选中行整行文字盖住；
+   选中态改用主题色的上下细线标识。 */
+.mp-pv-mask {
+  background-image: none !important;
+  background-color: transparent !important;
+}
+
+.mp-pv-indicator {
+  background: transparent !important;
+  border-top: 1rpx solid var(--divider);
+  border-bottom: 1rpx solid var(--divider);
 }
 
 .mp-actions {

@@ -505,6 +505,93 @@ function deleteCheckin(id) {
   return false
 }
 
+// 按 id 取单条打卡记录（找不到返回 null）
+// day 字段以存储位置兜底：极老的数据可能没有记录内 day
+function getCheckinById(id) {
+  if (!id) return null
+  const all = getAll()
+  for (const day in all) {
+    const list = all[day]
+    if (!Array.isArray(list)) continue
+    const hit = list.find(c => c && c.id === id)
+    if (hit) return { ...hit, day: hit.day || day }
+  }
+  return null
+}
+
+// 更新一条打卡记录（编辑）
+// opts: { day, stageId, stageName, groupKey, groupLabel, resourceId, resourceName, durationMinutes, remark }
+// 语义约定：
+// - 日期未变：保留原 timestamp（只改时长/备注时不应改动展示时间）
+// - 日期改变：改到今天用 Date.now()，改到历史日期用该日 12:00（与 addCheckin 的补录口径一致）
+// - backfilled 按新日期重算（== 今天则清掉该标记）
+// - 跨日 / 跨月移动由 saveAll 按月重组分片自然处理，无需特殊分支
+// 注意：不会迁移 qingba_read_counts（读完次数是用户主动标记的独立计数，
+//       与打卡记录并非 1:1，无法从记录可靠反推，故编辑不改动它）
+// @returns {{ ok: boolean, moved: boolean, day: string, record: Object|null }}
+function updateCheckin(id, opts) {
+  const o = opts || {}
+  if (!id) return { ok: false, moved: false, day: '', record: null }
+  try {
+    const all = getAll()
+
+    // 1) 定位：按存储位置找，不能只信记录内的 day 字段
+    let oldDay = ''
+    let oldIdx = -1
+    let cur = null
+    for (const day in all) {
+      const list = all[day]
+      if (!Array.isArray(list)) continue
+      const i = list.findIndex(c => c && c.id === id)
+      if (i >= 0) {
+        oldDay = day
+        oldIdx = i
+        cur = list[i]
+        break
+      }
+    }
+    if (!cur) return { ok: false, moved: false, day: '', record: null }
+
+    const newDay = normalizeDay(o.day) || normalizeDay(cur.day) || oldDay
+    const backfilled = newDay !== todayStr()
+
+    const next = {
+      ...cur,
+      day: newDay,
+      stageId: o.stageId || '',
+      stageName: o.stageName || '',
+      groupKey: o.groupKey || '',
+      groupLabel: o.groupLabel || '',
+      resourceId: o.resourceId || '',
+      resourceName: o.resourceName || '',
+      durationMinutes: Number(o.durationMinutes) || 0,
+      remark: o.remark || ''
+    }
+    if (backfilled) {
+      next.backfilled = true
+    } else {
+      delete next.backfilled
+    }
+    if (newDay !== oldDay) {
+      next.timestamp = backfilled ? dayToTimestamp(newDay) : Date.now()
+    }
+
+    // 2) 从原 day 摘除，写入新 day
+    const oldList = all[oldDay]
+    oldList.splice(oldIdx, 1)
+    if (oldList.length === 0) delete all[oldDay]
+    const newList = Array.isArray(all[newDay]) ? all[newDay] : []
+    newList.push(next)
+    all[newDay] = newList
+
+    if (!saveAll(all)) return { ok: false, moved: false, day: oldDay, record: null }
+    return { ok: true, moved: newDay !== oldDay, day: newDay, record: next }
+  } catch (e) {
+    console.error('updateCheckin failed:', e)
+    return { ok: false, moved: false, day: '', record: null }
+  }
+}
+
 // 清除所有打卡数据（包括分片）
 function clearAllCheckins() {
   try {
@@ -1041,6 +1128,8 @@ module.exports = {
   normalizeDay,
   dayToTimestamp,
   addCheckin,
+  getCheckinById,
+  updateCheckin,
   deleteCheckin,
   clearAllCheckins,
   clearCheckinsByStage,

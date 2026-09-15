@@ -425,6 +425,129 @@ WeUI 提供 `weui-icon-*`（mask + `background-color: currentColor` 方案，色
 
 ---
 
+## 原语 19：滚轮选择器弹层（`picker-view` 半屏，项目 `.mp-mask` / `.mp-sheet`）
+
+用于「在多个互斥选项里选一个」的轻量场景（选择月份 / 选择阶段），比跳一级列表页更符合「就地切换、不打断」的分层原则。项目现状：`pages/records`（月份）、`pages/stats`（阶段）两处同款。
+
+```html
+<!-- 触发入口：可点胶囊 + ▾（▾ 在展开时翻转） -->
+<view class="overview-picker" bindtap="onToggleMonthPicker">
+  <text class="overview-month">{{monthDisplay}}</text>
+  <text class="overview-arrow {{monthPickerOpen ? 'up' : ''}}">▾</text>
+</view>
+
+<!-- 弹层：必须带 fontClass + darkClass（见下「关键约定」第 1 条） -->
+<view class="mp-mask {{fontClass}} {{darkClass}} {{monthPickerOpen ? 'show' : ''}}" bindtap="onClose" wx:if="{{monthPickerOpen}}">
+  <view class="mp-sheet" catchtap="noop">
+    <view class="mp-title mb-16">选择月份</view>
+    <picker-view indicator-style="height: 80rpx;" indicator-class="mp-pv-indicator" mask-class="mp-pv-mask"
+                 class="mp-pv" value="{{pickerValue}}" bindchange="onPickerChange">
+      <picker-view-column>
+        <view wx:for="{{yearRange}}" wx:key="*this" class="mp-item">{{item}}年</view>
+      </picker-view-column>
+    </picker-view>
+    <view class="mp-actions">
+      <button class="mp-btn mp-cancel" bindtap="onClose">取消</button>
+      <button class="mp-btn mp-ok" bindtap="onConfirm">确定</button>
+    </view>
+  </view>
+</view>
+```
+
+```css
+.mp-mask  { position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 1000;
+            display: flex; align-items: flex-end;
+            background: rgba(0,0,0,0); pointer-events: none; transition: background .2s; }
+.mp-mask.show { background: rgba(0,0,0,.45); pointer-events: auto; }
+.mp-sheet { width: 100%; background: var(--card); border-radius: 24rpx 24rpx 0 0;
+            padding: 24rpx 32rpx calc(env(safe-area-inset-bottom) + 32rpx); }
+.mp-title { text-align: center; font-size: calc(30rpx * var(--fs, 1)); font-weight: 600; color: var(--text); }
+.mp-pv    { width: 100%; height: 400rpx; }
+.mp-item  { line-height: 80rpx; text-align: center;          /* 与 indicator-style height 严格一致 */
+            font-size: calc(30rpx * var(--fs, 1)); color: var(--text); }
+.mp-cancel { background: var(--cell-active); color: var(--text2); }
+.mp-ok     { background: var(--brand); color: #fff; font-weight: 600; }
+
+/* 内置蒙层是固定白色渐变、不吃 CSS 变量，深色下会在卡片上留灰白块 → 必须覆盖掉 */
+.mp-pv-mask      { background-image: none !important; background-color: transparent !important; }
+/* 选中框只能用透明背景 + 主题色细线：indicator 覆盖在内容层之上，实色底会整行盖住文字 */
+.mp-pv-indicator { background: transparent !important;
+                   border-top: 1rpx solid var(--divider); border-bottom: 1rpx solid var(--divider); }
+```
+
+- **弹层根节点必须带 `{{fontClass}} {{darkClass}}`（头号易漏点）**：`dm-*` 只挂在页面根 `.container` 上，`page` 上只有浅色基础变量。弹层若写在 `.container` 之外又不自带主题类，内部所有 `var(--*)` 都会回落到浅色值——「手动深色 + 系统浅色」时表现为白卡片、浅灰「取消」按钮、深色文字。项目另有 4 处弹层（`.sheet-mask` / `.pm-mask` / `.hs-mask`）已按此写法，新增浮层必须照办。
+- **`mask-class` 与 `indicator-class` 必写**：`picker-view` 的蒙层与选中框是组件内置样式，不读 CSS 变量、也不跟随 `dm-*`。蒙层一律去掉；选中框**只能保持透明背景 + `var(--divider)` 上下细线**（项目表现为浅色 `#e5e5e5` / 深色 `rgba(255,255,255,.1)`），与微信原生 picker 观感一致。
+- **切勿给 indicator 填实色底**：indicator 是覆盖在内容层之上的元素，`background: var(--card2)` 这类不透明底色会把**选中行整行文字盖住**（表现为选中项「消失」）。若确实想要选中行底色，唯一可行方向是给 `.mp-item` 提 `position: relative; z-index`，但依赖组件内部层级，需真机验证。
+- **`indicator-style` 的 height 与 `.mp-item` 的 `line-height` 必须相等**（项目取 `80rpx`），否则选中项与细线错位。
+- **滚动项由页面自己渲染**，故 `.mp-item` 直接吃项目 token 与 `--fs`，字号档位切换时选择器文字同步缩放。
+- **交互细节**：遮罩 `bindtap` 关闭、面板 `catchtap="noop"` 防穿透；两按钮等宽（`width:45%` + `gap:20rpx`），取消在前用 `--cell-active`、确定在后用 `--brand`。
+
+---
+
+## 原语 20：左滑操作（swipe action，项目 `.swipe-wrap` / `.swipe-bg` / `.swipe-fg`）
+
+列表行左滑露出操作按钮（编辑 / 删除）。项目现状：`pages/records` 打卡记录列表。
+
+```html
+<view class="swipe-wrap"
+      data-idx="{{idx}}"
+      bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd">
+  <view class="swipe-bg">
+    <!-- 非破坏操作在左 -->
+    <view class="swipe-edit" catchtap="editRecord" data-id="{{r.id}}">编辑</view>
+    <!-- 破坏性操作在右，远离手指起始位置 -->
+    <view class="swipe-del" catchtap="deleteRecord" data-id="{{r.id}}">删除</view>
+  </view>
+  <view class="swipe-fg" style="transform: translateX({{r._dx}}rpx);
+       transition: {{r._anim ? 'transform 0.25s ease' : 'none'}};">…行内容…</view>
+</view>
+```
+
+```css
+.swipe-wrap { position: relative; overflow: hidden; }
+.swipe-bg   { position: absolute; top: 0; bottom: 0; right: 0;
+              width: 300rpx;                 /* = 按钮数 × 单宽，与 JS 的 SWIPE_W 必须一致 */
+              display: flex; align-items: stretch; }
+.swipe-edit, .swipe-del {
+  flex: 1; height: 100%; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: calc(34rpx * var(--fs, 1)); font-weight: 500;
+}
+.swipe-edit { background: #c7c7cc; }   /* 中性灰：非破坏操作 */
+.swipe-del  { background: #ff4d4f; }   /* 危险红：删除 */
+.swipe-fg   { position: relative; background: var(--card); z-index: 1; }
+```
+
+```js
+// 操作区总宽（rpx）= 按钮数 × 单宽，必须与 .swipe-bg 的 width 一致
+const SWIPE_W = 300
+
+_snapDx(dx) { return dx <= -SWIPE_W / 2 ? -SWIPE_W : 0 }   // 过半吸附展开，否则回弹
+
+onTouchMove(e) {
+  const idx = this.data._curSwipeIdx
+  if (idx < 0) return
+  let newDx = (e.touches[0].clientX - this.data._touchStartX) * 2   // px → rpx 约 2 倍
+  if (newDx < -(SWIPE_W + 20)) newDx = -(SWIPE_W + 20)              // 过拖限位
+  if (newDx > 10) newDx = 10
+  // 节流：同一次滑动内位移变化 < 2rpx 时跳过，避免高频 setData 掉帧
+  if (this._swipeIdx === idx && Math.abs(newDx - this._lastDx) < 2) return
+  this._swipeIdx = idx; this._lastDx = newDx
+  this.setData({ [`records[${idx}]._dx`]: newDx })
+}
+```
+
+- **宽度常量双处同步（头号易错点）**：JS 的 `SWIPE_W` 与 wxss 的 `.swipe-bg { width }` 必须一致，否则吸附位置和视觉露出宽度对不上（出现半截按钮或留白）。加按钮 / 改宽度时两处一起改。
+- **按钮排序**：非破坏（编辑）在左、破坏性（删除）在右——手指从左滑入时先碰到的是安全操作。
+- **配色**：编辑用中性灰 `#c7c7cc`，删除用危险红 `#ff4d4f`；两者都是固定彩色，**深色模式不做适配**（彩色块在深浅底上观感一致）。
+- **手势与回弹**：拖动时 `_anim = false`（跟手），松手时 `_anim = true` + 吸附到 `0` 或 `-SWIPE_W`；位移过半（`-SWIPE_W/2`）才吸附展开。
+- **同时只允许一行展开**：`onTouchStart` 里把其它行的 `_dx` 归 0（需先克隆数组，直接改 `this.data` 里的对象会绕过 setData 的引用管理）。
+- **操作按钮用 `catchtap`**：避免冒泡触发行本身的点击。
+- **操作后复位**：跳转类操作（编辑）返回后由 `onShow` 重建列表自然复位；就地操作（删除）由数据刷新重建。
+- **行间分隔线**：`overflow: hidden` 的容器内用 `.swipe-wrap:not(:last-child) .record-row::after` 画缩进线，避免用 `border-bottom` 被滑动内容带着走。
+
+---
+
 ## 设计原则速记
 1. 颜色、字号、间距一律引用 token（`--weui-*` 或项目 `--*`），禁止硬编码同质值。
 2. 深色模式只切变量，不写独立样式。

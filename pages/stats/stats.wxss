@@ -345,6 +345,21 @@ page { background: var(--bg); }
   color: var(--text);
 }
 
+/* picker-view 的内置蒙层是固定白色渐变，不跟随主题，深色下会在卡片上留下灰白块，
+   用 mask-class 直接去掉。
+   注意：indicator 覆盖在内容层之上，只能保持透明背景——填不透明底色会把选中行整行文字盖住；
+   选中态改用主题色的上下细线标识。 */
+.mp-pv-mask {
+  background-image: none !important;
+  background-color: transparent !important;
+}
+
+.mp-pv-indicator {
+  background: transparent !important;
+  border-top: 1rpx solid var(--divider);
+  border-bottom: 1rpx solid var(--divider);
+}
+
 .mp-actions {
   display: flex;
   justify-content: center;

@@ -6,6 +6,8 @@
 
 > 自 `v3.3.0` 以来的全部改动：首页「今日时长」「今日打卡」两张指标卡可点开**今日明细弹窗**（底部半屏，两卡共用同一面板、分别按时长与次数聚合）；统计页时长 / 读完排行榜的占比分母由「该榜最大值」改为**统计维度的累计值**，中文时长文案提取为 `checkin.fmtMinutesCN` 全站共用。
 > 另做了一轮全项目代码审查，修复**分片存储回滚丢数据**、补录与打卡**重复提交**等一批数据安全与稳定性问题，并清理零调用的死代码。
+> 另修复**深色模式下月份 / 阶段选择器弹层**的样式异常：弹层主题变量作用域丢失导致发白，以及原生 `picker-view` 的内置蒙层与选中框不跟随主题。
+> 另新增**打卡记录编辑**：记录列表左滑由「单个删除」扩为「编辑 + 删除」，编辑复用补录页表单（可改日期 / 阶段 / 分组 / 资源 / 时长 / 备注）。
 
 ### 新增
 
@@ -16,6 +18,13 @@
   - **行样式对齐统计页排行榜**：整行底衬进度 + 56rpx 首字方块 + 名称 + 右侧数值，底色与排版参数同源，两处视觉一致
   - **交互沿用阶段页打卡弹窗的原语**：遮罩点击关闭、内容区 `catchtouchmove` 防穿透、`0.25s` 上滑；列表为 `scroll-view`（`max-height 56vh`），**滚动区不挂 `touchmove`**（否则列表滚不动）；含空态「今天还没有打卡记录」
   - 弹窗处于打开态时 `onShow` 会重建，避免切回页面看到旧内容
+- **打卡记录支持编辑（`records` / `backfill` / `checkin`）**：记录列表左滑由「单个删除」扩为「编辑 + 删除」两个操作，编辑复用补录页表单（`?id=xxx` 进入编辑态），日期 / 阶段 / 分组 / 资源 / 时长 / 备注六项全可改。
+  - **`checkin.updateCheckin(id, patch)` + `getCheckinById(id)`**：原地更新而非「删了重录」，**保留记录 id**。语义约定：日期未变则保留原 `timestamp`（只改时长/备注不该改动展示时间）；日期改变则改到今天用 `Date.now()`、改到历史用该日 12:00；`backfilled` 按新日期重算（等于今天则清除该标记）
+  - **跨日 / 跨月无需特殊处理**：改日期只是「从旧 day 摘除、写入新 day」，`saveAll()` 按 `_dayToMonth(day)` 重组分片，记录自动落到正确的月份分片
+  - **明确不迁移读完次数**：`qingba_read_counts` 是用户主动标记的独立计数，与打卡记录并非 1:1，无法从记录可靠反推。把某条记录的资源改成另一个资源时，原资源的读完次数保持不变——**这是有意为之，勿当作 bug 修**（已写进 `updateCheckin` 注释）
+  - **左滑操作区 150rpx → 300rpx**（编辑 / 删除各 150）：JS 常量改名为 `SWIPE_W`，与 `.swipe-bg { width }` 双处同步
+  - **编辑态回填兼容两类历史数据**：资源已被删除 / 改名（记录里存的是当时的名称快照）、老记录本就没有 `resourceId`——两者都把名称快照补进资源列表并选中；`canSubmit` 的资源判定放宽为「id 或名称有其一」
+  - 顺带修复：`backfill.submit()` 的提交锁**从未置位**（只有 `if (this._submitting) return` 与失败时的复位，缺 `this._submitting = true`，而 `stage.js` / `myResources.js` 的同类锁都有），600ms 跳转窗口内连点仍会写入重复记录
 
 ### 变更
 
@@ -43,6 +52,11 @@
 - **`_estimateBytes` 回退分支漏算 4 字节字符（`checkin`）**：无 `TextEncoder` 时把代理对（emoji）按 3 字节计，低估体积会让分片上限判断偏乐观；补高位代理判断按 4 字节计
 - **打卡后资源行徽标可能不刷新（`stage`）**：`setData({ ['resTotals.' + groupKey + '|' + 资源名]: n })` 用资源名拼 dataPath，名称含 `.` `[` `]`（如「RAZ D.2」）时会被解析成多级路径。改为整体下发 `resTotals` 对象
 - **清空 / 加载类健壮性与一致性**：`records.onTouchStart` 先克隆再改（原先就地改写 `this.data` 里的对象）并补越界保护；`records` / `stats` 的 `catchtap=""` 改为 `catchtap="noop"` 并补上 `noop()`；`stage` 移除 `isLastStage` / `alreadyDone` / `requiredType` 三处从未在 wxml 使用的无效 `setData`；`settings` 去掉 `onLoad` 与 `onShow` 重复执行的一批 loader（含 `getAll` 全量读）；`myResources.submitSheet` 加防抖；`about` / `home` / `route` / `records` 补上 `data` 里的 `darkClass` 声明；`stats` 两处 `wx.getSystemInfoSync()` 改为 `wx.getWindowInfo()`（消除弃用告警）
+- **深色模式下月份 / 阶段选择器弹层样式异常（`records` / `stats`）**：两处 `picker-view` 弹层各有一个独立缺陷，叠加后表现为「弹层发白 + 蒙层灰块 + 选中项消失」：
+  - **弹层主题变量作用域丢失（根因）**：弹层 DOM 写在 `.container` 之外，而 `dm-light` / `dm-dark` / `dm-auto` 只挂在 `.container` 上、`page` 上仅有浅色基础变量（`@media (prefers-color-scheme: dark)` 只覆盖 `background-color`，不覆盖变量）。因此「手动深色 + 系统浅色」时弹层整体回落到浅色——白卡片、`--cell-active` 浅灰「取消」按钮、`#1a1a1a` 文字。现给弹层补 `{{fontClass}} {{darkClass}}`，与 `stage` / `home` / `myResources` 既有的 4 个弹层写法对齐（此前恰好只有这两个选择器漏了）
+  - **原生 `picker-view` 蒙层不吃 CSS 变量**：内置的上下蒙层是固定白色渐变，深色下在卡片上留下灰白块。现以 `mask-class="mp-pv-mask"` 覆盖为透明
+  - **选中框改用主题色细线**：`indicator-class="mp-pv-indicator"` 设透明背景 + `var(--divider)` 上下细线。indicator 是覆盖在内容层之上的元素，实色底会整行盖住选中项文字——首版误以 `--card2` 做底色导致选中项「消失」，已修正
+  - 附带修正：弹层现在能正确继承 `--fs`，切换字号档位时选择器文字同步缩放
 
 ### 清理
 

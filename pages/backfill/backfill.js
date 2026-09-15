@@ -22,15 +22,31 @@ Page({
     selectedResourceName: '',
     durationInput: '20',
     remarkInput: '',
-    canSubmit: false
+    canSubmit: false,
+    // 编辑态：records 页左滑「编辑」带 ?id=xxx 进入，复用本页表单
+    isEdit: false,
+    editId: ''
   },
 
-  onLoad() {
+  onLoad(options) {
     const app = getApp()
     if (app && app.applyFontLevel) app.applyFontLevel(this)
 
     const today = checkin.todayStr()
     const stages = (routeData.stages || []).map(s => ({ id: s.stage_id, name: s.stage_name }))
+
+    this.setData({ todayStr: today, stages })
+
+    // 编辑态：?id=xxx
+    const editId = (options && options.id) || ''
+    const editing = editId ? checkin.getCheckinById(editId) : null
+    if (editing) {
+      this.setData({ isEdit: true, editId })
+      wx.setNavigationBarTitle({ title: '编辑记录' })
+      this._fillForm(editing)
+      return
+    }
+    // 记录已不存在（被删除 / 数据异常）时静默回落为补录态，避免白屏
 
     // 默认阶段：当前阶段优先，否则第一个
     const cur = checkin.getCurrentStage()
@@ -39,12 +55,46 @@ Page({
       : (stages[0] ? stages[0].id : '')
 
     this.setData({
-      todayStr: today,
       dateStr: today,
-      dateText: _fmtDateText(today, today),
-      stages
+      dateText: _fmtDateText(today, today)
     })
     this._selectStage(stageId)
+  },
+
+  // 编辑态：把记录回填进表单（含阶段 → 分组 → 资源三级级联的展开与选中）
+  _fillForm(rec) {
+    const day = rec.day || this.data.todayStr
+    const stageId = rec.stageId || ''
+    const groupKey = rec.groupKey || ''
+    const resourceId = rec.resourceId || ''
+
+    // 必须先选阶段：_selectStage 会重载分组列表并清空下级
+    this._selectStage(stageId)
+
+    if (groupKey) {
+      const items = _loadItems(stageId, groupKey)
+      // 资源可能已被删除 / 改名（记录里存的是当时的名称快照），
+      // 或老记录本就没有 resourceId：把快照补进列表，保证选中态可见、可保存
+      const hit = !!resourceId && items.some(it => it.id === resourceId)
+      if (!hit) {
+        items.unshift({ id: resourceId, name: rec.resourceName || '未知资源', custom: true })
+      }
+      this.setData({
+        selectedGroupKey: groupKey,
+        selectedGroupLabel: resources.getGroupLabel(groupKey),
+        items,
+        selectedResourceId: resourceId,
+        selectedResourceName: rec.resourceName || ''
+      })
+    }
+
+    this.setData({
+      dateStr: day,
+      dateText: _fmtDateText(day, this.data.todayStr),
+      durationInput: rec.durationMinutes ? String(rec.durationMinutes) : '',
+      remarkInput: rec.remark || ''
+    })
+    this._refreshSubmit()
   },
 
   onShow() {
@@ -142,14 +192,16 @@ Page({
 
   _refreshSubmit() {
     const dur = this._validateDuration()
+    // 资源判定：id 优先；老记录可能只有名称快照（无 resourceId），此时按名称放行
+    const hasResource = !!this.data.selectedResourceId || !!this.data.selectedResourceName
     this.setData({
-      canSubmit: !!this.data.dateStr && !!this.data.selectedResourceId && dur.ok
+      canSubmit: !!this.data.dateStr && hasResource && dur.ok
     })
   },
 
-  // ===== 提交 =====
+  // ===== 提交（新增补录 / 保存编辑 共用） =====
   submit() {
-    // 防重复提交：成功后要等 600ms 才 navigateBack，期间连点会写入多条重复记录
+    // 防重复提交：成功后要等 600ms 才 navigateBack，期间连点会重复写入
     if (this._submitting) return
 
     const d = this.data
@@ -158,10 +210,10 @@ Page({
       return
     }
     if (d.dateStr > d.todayStr) {
-      wx.showToast({ title: '不能补录未来日期', icon: 'none' })
+      wx.showToast({ title: d.isEdit ? '不能改为未来日期' : '不能补录未来日期', icon: 'none' })
       return
     }
-    if (!d.selectedResourceId) {
+    if (!d.selectedResourceId && !d.selectedResourceName) {
       wx.showToast({ title: '请选择资源', icon: 'none' })
       return
     }
@@ -171,9 +223,11 @@ Page({
       return
     }
 
-    const record = checkin.addCheckin({
+    // 校验全部通过后才上锁（失败路径负责释放）
+    this._submitting = true
+
+    const payload = {
       day: d.dateStr,
-      backfilled: true,
       stageId: d.selectedStageId,
       stageName: d.selectedStageName,
       groupKey: d.selectedGroupKey,
@@ -182,7 +236,23 @@ Page({
       resourceName: d.selectedResourceName,
       durationMinutes: dur.minutes,
       remark: String(d.remarkInput || '').trim()
-    })
+    }
+
+    // 编辑：原地更新记录（保留 id；跨日 / 跨月由 updateCheckin 处理）
+    if (d.isEdit) {
+      const res = checkin.updateCheckin(d.editId, payload)
+      if (!res || !res.ok) {
+        this._submitting = false
+        wx.showToast({ title: '保存失败，请检查存储空间', icon: 'none' })
+        return
+      }
+      wx.showToast({ title: '已保存', icon: 'success' })
+      this._backToList(res.day)
+      return
+    }
+
+    // 新增补录
+    const record = checkin.addCheckin({ ...payload, backfilled: true })
     if (!record) {
       this._submitting = false
       wx.showToast({ title: '保存失败，请检查存储空间', icon: 'none' })
@@ -190,15 +260,18 @@ Page({
     }
 
     wx.showToast({ title: `已补录 ${checkin.fmtMinutes(dur.minutes)}`, icon: 'success' })
+    this._backToList(d.dateStr)
+  },
 
-    // 返回记录页并切到补录月份（回调 applyBackfill）
+  // 返回记录页并让它切到目标月份（回调 records.applyBackfill），新增 / 改后的记录立即可见
+  _backToList(day) {
     const pages = getCurrentPages()
     const prev = pages.length >= 2 ? pages[pages.length - 2] : null
     setTimeout(() => {
       wx.navigateBack({
         success: () => {
           if (prev && typeof prev.applyBackfill === 'function') {
-            prev.applyBackfill({ day: d.dateStr })
+            prev.applyBackfill({ day })
           }
         }
       })
