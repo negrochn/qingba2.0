@@ -47,12 +47,12 @@
 
   <!-- ③ 2×2 关键指标（阶段时长、今日打卡、打卡天数均为当前阶段口径） -->
   <view class="home-grid">
-    <view class="home-stat">
+    <view class="home-stat" data-mode="minutes" bindtap="openTodaySheet">
       <text class="home-stat-arrow iconfont icon-right"></text>
       <view class="home-stat-num">{{todayHours}}<text class="home-stat-unit">h</text></view>
       <view class="home-stat-label">今日时长</view>
     </view>
-    <view class="home-stat">
+    <view class="home-stat" data-mode="count" bindtap="openTodaySheet">
       <text class="home-stat-arrow iconfont icon-right"></text>
       <view class="home-stat-num">{{todayCount}}<text class="home-stat-unit">次</text></view>
       <view class="home-stat-label">今日打卡</view>
@@ -70,4 +70,32 @@
   </view>
   </block>
 
+</view>
+
+<!-- 今日明细弹窗：今日时长 / 今日打卡 共用一套面板，随入口切换度量 -->
+<view class="hs-mask {{fontClass}} {{darkClass}} {{sheetVisible ? 'hs-mask-show' : ''}}" bindtap="closeSheet" catchtouchmove="noop">
+  <view class="hs-sheet" catchtap="noop" catchtouchmove="noop">
+    <view class="hs-handle"></view>
+
+    <view class="hs-head">
+      <view class="hs-title">{{sheetTitle}}</view>
+      <view class="hs-close" catchtap="closeSheet">×</view>
+    </view>
+
+    <view class="hs-summary" wx:if="{{sheetItems.length > 0}}">
+      <text class="hs-summary-main">{{sheetSummaryMain}}</text>
+      <text class="hs-summary-sub">{{sheetSummarySub}}</text>
+    </view>
+
+    <scroll-view class="hs-list" scroll-y wx:if="{{sheetItems.length > 0}}">
+      <view class="hs-rank-row" wx:for="{{sheetItems}}" wx:key="key">
+        <view class="hs-rank-fill" style="width: {{item.percent}}%;"></view>
+        <view class="hs-rank-cover">{{item.char}}</view>
+        <view class="hs-rank-name">{{item.name}}</view>
+        <text class="hs-rank-dur">{{item.valueText}}</text>
+      </view>
+    </scroll-view>
+
+    <view class="hs-empty" wx:else>今天还没有打卡记录</view>
+  </view>
 </view>

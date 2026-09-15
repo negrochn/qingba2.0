@@ -98,16 +98,6 @@ function splitCumulative(min) {
   return segs
 }
 
-// 分钟 -> 中文时长文案（如「20小时10分钟」/「2小时」/「45分钟」）
-function fmtMinutesCN(min) {
-  const m = Math.round(Number(min) || 0)
-  const h = Math.floor(m / 60)
-  const mm = m % 60
-  if (h > 0 && mm > 0) return `${h}小时${mm}分钟`
-  if (h > 0) return `${h}小时`
-  return `${mm}分钟`
-}
-
 // 核心聚合：返回视图模型所需全部字段（仅累计维度）
 function buildViewModel(stageId, dimension, cursor) {
   const all = checkin.getAll()
@@ -198,7 +188,7 @@ function buildViewModel(stageId, dimension, cursor) {
     else if (dimension === 'month') scope = `${cursor.getMonth() + 1}月${lbl}日`
     else if (dimension === 'year') scope = `${lbl}月`
     else scope = lbl
-    highlightText = `${scope}打卡最久 · ${fmtMinutesCN(maxVal)}`
+    highlightText = `${scope}打卡最久 · ${checkin.fmtMinutesCN(maxVal)}`
   }
   const peakText = maxVal > 0 ? `峰值 ${checkin.fmtMinutes(maxVal)}` : ''
 
@@ -263,25 +253,25 @@ function buildViewModel(stageId, dimension, cursor) {
     .map(key => ({ key, name: groupLabelMap[key] || key, value: groupTotal[key] }))
     .sort((a, b) => b.value - a.value)
 
-  // 时长排行榜：该阶段所有素材累计时长（降序），占比分母为时长最长的素材
+  // 时长排行榜：该阶段所有素材累计时长（降序）
+  // 占比分母为统计维度内的累计总时长（与 totalMinutes 同循环同过滤，天然同口径），各行相加为 100%
   const bookArr = Object.keys(resTotal)
     .map(name => ({ name, value: resTotal[name] }))
     .sort((a, b) => b.value - a.value)
-  const maxBook = bookArr.length ? bookArr[0].value : 0
   const rankList = bookArr.map(r => ({
     name: r.name,
     char: (r.name || '').trim().charAt(0) || '📖',
-    percent: maxBook > 0 ? Math.round(r.value / maxBook * 100) : 0,
-    durationText: fmtMinutesCN(r.value)
+    percent: totalMinutes > 0 ? Math.round(r.value / totalMinutes * 100) : 0,
+    durationText: checkin.fmtMinutesCN(r.value)
   }))
 
-  // 读完排行榜：该阶段各素材累计读完次数（降序），占比分母为读完次数最多的素材
+  // 读完排行榜：该阶段各素材累计读完次数（降序）
+  // 占比分母同为该阶段累计读完次数（与时长排行榜同口径），各行相加为 100%
   const readRanking = checkin.getReadRankingByStage(stageId)
-  const maxRead = readRanking.length ? readRanking[0].count : 0
   const readRankList = readRanking.map(r => ({
     name: r.resourceName,
     char: (r.resourceName || '').trim().charAt(0) || '📖',
-    percent: maxRead > 0 ? Math.round(r.count / maxRead * 100) : 0,
+    percent: readCount > 0 ? Math.round(r.count / readCount * 100) : 0,
     countText: `${r.count}次`
   }))
 

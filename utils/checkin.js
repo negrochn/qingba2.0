@@ -593,6 +593,17 @@ function fmtMinutes(totalMin) {
   return rm ? `${h}h${rm}m` : `${h}h`
 }
 
+// 分钟 -> 中文时长文案（如「20小时10分钟」/「2小时」/「45分钟」）
+// 用于统计页排行榜等需要完整中文口径的场景
+function fmtMinutesCN(totalMin) {
+  const m = Math.round(Number(totalMin) || 0)
+  const h = Math.floor(m / 60)
+  const mm = m % 60
+  if (h > 0 && mm > 0) return `${h}小时${mm}分钟`
+  if (h > 0) return `${h}小时`
+  return `${mm}分钟`
+}
+
 // 纯小时格式（保留1位小数），用于分组时长分布等宽屏场景
 function fmtHoursDecimal(totalMin) {
   const m = Number(totalMin) || 0
@@ -998,6 +1009,7 @@ module.exports = {
   todayTotalByResource,
   getDayTotalsByStage,
   fmtMinutes,
+  fmtMinutesCN,
   fmtHoursDecimal,
   getDefaultRemark,
   saveDefaultRemark,

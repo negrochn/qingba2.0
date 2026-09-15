@@ -38,6 +38,13 @@ Page({
     dayNumber: 0,
     streakDays: 0,
     hasStage: false,
+    // 今日明细弹窗（今日时长 / 今日打卡 共用一套面板，随入口切换度量）
+    sheetVisible: false,
+    sheetMode: 'minutes',
+    sheetTitle: '',
+    sheetSummaryMain: '',
+    sheetSummarySub: '',
+    sheetItems: [],
     firstStageName: routeData.stages[0].stage_name,
     lastStageName: routeData.stages[routeData.stages.length - 1].stage_name
   },
@@ -51,6 +58,8 @@ Page({
     const app = getApp()
     if (app && app.applyFontLevel) app.applyFontLevel(this)
     this._refresh()
+    // 弹窗处于打开态时同步重建，避免展示上一次的内容
+    if (this.data.sheetVisible) this._buildSheet(this.data.sheetMode)
   },
 
   // 主刷新：全部以「当前阶段」为口径聚合
@@ -186,5 +195,78 @@ Page({
   // 欢迎卡主操作：去选择当前阶段（stagePicker 选完 navigateBack 回首页）
   goStagePicker() {
     wx.navigateTo({ url: '/pages/stagePicker/stagePicker' })
+  },
+
+  // 点「今日时长」/「今日打卡」打开今日明细弹窗（mode: minutes | count）
+  openTodaySheet(e) {
+    const mode = e.currentTarget.dataset.mode === 'count' ? 'count' : 'minutes'
+    this._buildSheet(mode)
+    this.setData({ sheetVisible: true })
+  },
+
+  closeSheet() {
+    this.setData({ sheetVisible: false })
+  },
+
+  // 阻止弹层内容区点击 / 触摸冒泡（列表滚动区不挂，否则滚不动）
+  noop() {},
+
+  // 构建今日明细：口径与卡片完全一致（仅当前阶段、仅今天）
+  // mode='minutes' 按时长降序；mode='count' 按次数降序
+  // 行样式与占比口径对齐统计页「时长排行榜 / 读完排行榜」：榜首为 100%
+  _buildSheet(mode) {
+    const now = new Date()
+    const todayStr = checkin.todayStr(now)
+    const cur = checkin.getCurrentStage()
+    const stageId = cur ? cur.id : ''
+    const list = (checkin.getAll()[todayStr] || []).filter(r => r && r.stageId === stageId)
+
+    const map = {}
+    const order = []
+    let totalMinutes = 0
+    let totalCount = 0
+
+    for (const r of list) {
+      const groupKey = r.groupKey || ''
+      // 聚合口径：资源 id 优先（与已读次数 key 一致），老记录回退「分组 + 名称」
+      const key = r.resourceId ? `${groupKey}|${r.resourceId}` : `${groupKey}|${r.resourceName}`
+      let it = map[key]
+      if (!it) {
+        it = { key, name: r.resourceName || '未命名资源', minutes: 0, count: 0 }
+        map[key] = it
+        order.push(it)
+      }
+      const min = Number(r.durationMinutes) || 0
+      it.minutes += min
+      it.count += 1
+      totalMinutes += min
+      totalCount += 1
+    }
+
+    const byCount = mode === 'count'
+    order.sort((a, b) => byCount
+      ? (b.count - a.count || b.minutes - a.minutes)
+      : (b.minutes - a.minutes || b.count - a.count))
+
+    // 占比分母为该统计范围的累计值（今日总时长 / 今日总次数），各行相加为 100%
+    const base = byCount ? totalCount : totalMinutes
+    const items = order.map(it => {
+      const val = byCount ? it.count : it.minutes
+      return {
+        key: it.key,
+        name: it.name,
+        char: (it.name || '').trim().charAt(0) || '·',
+        percent: base > 0 ? Math.round(val / base * 100) : 0,
+        valueText: byCount ? `${it.count}次` : checkin.fmtMinutesCN(it.minutes)
+      }
+    })
+
+    this.setData({
+      sheetMode: mode,
+      sheetTitle: byCount ? '今日打卡' : '今日时长',
+      sheetSummaryMain: byCount ? `${totalCount} 次` : `${fmtHours(totalMinutes)}h`,
+      sheetSummarySub: `${items.length} 本`,
+      sheetItems: items
+    })
   }
 })
