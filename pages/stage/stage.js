@@ -2,6 +2,7 @@ const { routeData, getRequiredHours } = require('../../utils/data.js')
 const resources = require('../../utils/resources.js')
 const checkin = require('../../utils/checkin.js')
 const theme = require('../../utils/theme.js')
+const share = require('../../utils/share.js')
 
 // 从 phase 字符串中提取数字，如 'phase5' -> 5
 function parsePhaseNumber(text) {
@@ -70,6 +71,14 @@ Page({
   // 旧实现读 app._systemDark，而该字段全项目从未赋值 —— dm-auto + 系统深色时会判成浅色
   _syncDark() {
     this.setData({ isDark: theme.isDarkNow() })
+  },
+
+  // 分享给好友：标题带上当前阶段名（未取到阶段时回落默认文案）
+  onShareAppMessage() {
+    const stage = this.data.stage
+    return share.appMessage('stage', stage ? {
+      title: `${stage.stage_name} · 陪孩子练英语听力`
+    } : null)
   },
 
   onLoad(options) {

@@ -1,5 +1,6 @@
 // 我的页卡
 const theme = require('../../utils/theme.js');
+const share = require('../../utils/share.js');
 
 Page({
   data: {
@@ -35,5 +36,10 @@ Page({
   },
   goSettings() {
     wx.navigateTo({ url: '/pages/settings/settings' });
+  },
+
+  // 分享给好友
+  onShareAppMessage() {
+    return share.appMessage('mine');
   }
 });

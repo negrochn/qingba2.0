@@ -1,18 +1,6 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
   <!-- 当前阶段选择（整页单选列表，选中品牌绿对勾） -->
-  <view class="weui-cells weui-cells_radio">
-    <!-- 仅在已设置阶段时提供「未设置」：新用户首次选择时该选项无意义 -->
-    <view class="weui-cell" wx:if="{{selectedId}}" bindtap="pick" data-id="__none__">
-      <view class="weui-cell__bd">未设置</view>
-      <text class="weui-icon-checked iconfont icon-check" hidden="{{selectedId !== ''}}"></text>
-    </view>
-    <block wx:for="{{stages}}" wx:key="id" wx:for-item="s" wx:for-index="i">
-      <view class="weui-cell" bindtap="pick" data-id="{{s.id}}">
-        <view class="weui-cell__bd">{{s.name}}</view>
-        <text class="weui-icon-checked iconfont icon-check" hidden="{{selectedId !== s.id}}"></text>
-      </view>
-    </block>
-  </view>
+  <c-radio-list items="{{items}}" value="{{selectedId}}" bindchange="onPick" />
 
 </view>

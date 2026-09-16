@@ -1,13 +1,6 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
   <!-- 字体大小选择（整页单选列表，选中品牌绿对勾） -->
-  <view class="weui-cells weui-cells_radio">
-    <block wx:for="{{levels}}" wx:key="key" wx:for-item="l" wx:for-index="i">
-      <view class="weui-cell" bindtap="pick" data-key="{{l.key}}">
-        <view class="weui-cell__bd">{{l.label}}</view>
-        <text class="weui-icon-checked iconfont icon-check" hidden="{{selectedKey !== l.key}}"></text>
-      </view>
-    </block>
-  </view>
+  <c-radio-list items="{{levels}}" value="{{selectedKey}}" bindchange="onPick" />
 
 </view>

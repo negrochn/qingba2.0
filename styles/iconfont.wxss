@@ -1,0 +1,35 @@
+/* ============================================================
+   iconfont 字形定义（Project id 5231154）
+
+   本文件只定义 .iconfont / .icon-* 类，由 app.wxss 与自定义组件共同 @import。
+   @font-face 字族注册**刻意保留在 app.wxss**（webview 级全局生效），不放本文件 ——
+   否则 base64 data URI 会被多份复制，包体积成倍膨胀。
+
+   维护说明：后续在 iconfont.cn 增删图标后，重新下载并把 iconfont.ttf / iconfont.woff
+   覆盖到 assets/fonts/ 目录，运行 scripts/gen_iconfont_base64.ps1 输出新的 base64 data URI，
+   同步替换 app.wxss 顶部 @font-face src 中的 data URI 段，并按 iconfont.css 更新下方
+   .icon-* 类的 content 编码。
+   ============================================================ */
+.iconfont {
+  font-family: "iconfont" !important;
+  font-size: 32rpx;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.icon-check:before { content: "\e645"; }
+.icon-right:before { content: "\e6a3"; }
+.icon-homefill:before { content: "\e6bb"; }
+.icon-lock:before { content: "\e6c0"; }
+.icon-unlock:before { content: "\e6c2"; }
+.icon-myfill:before { content: "\e78c"; }
+.icon-circlefill:before { content: "\e7b0"; }
+.icon-info:before { content: "\e6e5"; }
+.icon-squarecheck:before { content: "\e6d6"; }
+.icon-rank:before { content: "\e722"; }
+.icon-settings:before { content: "\e68a"; }
+.icon-location:before { content: "\e651"; }
+.icon-circle:before { content: "\e7b1"; }
+.icon-home:before { content: "\e6b8"; }
+.icon-my:before { content: "\e78b"; }
+.icon-calendar:before { content: "\e74a"; }

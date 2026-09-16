@@ -115,6 +115,8 @@ WeUI 的列表单位，承载一组 cell。默认无圆角、无阴影，靠上�
 
 **项目原语**：`.btn`（高 88rpx、圆角 8rpx）、`.btn-primary`（实心 `var(--brand)`）、`.btn-secondary`（灰底 `cell-active`）、`.btn-danger`（RED）、`.btn-disabled`、`.btn-block`、`.btn-row`（内容区居中并排）、`.btn-bar`（整页底部 + `safe-area-inset-bottom`）。布局约定「主右 / 次左」。
 
+- **原生能力按钮（`open-type`）直接套 `.weui-btn`，无需额外样式**：分享 / 授权等能力按钮只需把原生 `<button>` 挂上 `.weui-btn` 系列类，例如「关于」页文章末尾的 `<button class="weui-btn weui-btn_block weui-btn_primary" open-type="share">分享给好友</button>`——`.weui-btn::after { border: none }` 已清掉原生边框，视觉与普通按钮完全一致。注意 `open-type` 在**朋友圈单页模式**下被禁用，需按场景值 `1154` 隐藏该按钮（见 `design-guidelines.md` §六）。
+
 ---
 
 ## 原语 5：表单 Form（label / input / textarea）
@@ -262,6 +264,8 @@ WeUI 开关用小程序原生组件，勾选态跟随 `color` 品牌绿：
 ```
 
 > 项目实现：全局 `.weui-tag`（`app.wxss`）为 `padding:4rpx 16rpx; border-radius:8rpx; line-height:1.4`，**不带 margin**——标签间距由父级 flex `gap` 控制（如 records 页 `.record-tags { gap:8rpx }`）。禁止在页面内重复定义 `.weui-tag`，新增标签直接复用。
+>
+> **同一行并列多个标签时，尺寸在父级集中收紧一次**：字号 / 内边距 / 圆角统一写在父级选择器上（如 `.record-tags .weui-tag { padding:2rpx 10rpx; border-radius:6rpx; }`），**不要**再在每个标签类（`.tag-stage` / `.tag-group-*` / `.record-backfill` / `.record-remark`）里各写一份覆盖——曾因此出现「补录 / 备注大一号、分类标签块偏大」的行内不一致（现已回归基类 `24rpx` 与统一内边距）。
 
 ---
 
@@ -365,12 +369,12 @@ WeUI 提供 `weui-icon-*`（mask + `background-color: currentColor` 方案，色
   font-size: calc(72rpx * var(--fs, 1));     /* 大号数字：不受 34/28/24 档约束 */
   font-weight: 400; line-height: 1.1; color: var(--text);
 }
-.home-hero-unit, .home-stat-unit,
-.home-stat-label { font-size: calc(28rpx * var(--fs, 1)); color: var(--text2); }
+.home-hero-unit { font-size: calc(30rpx * var(--fs, 1)); color: var(--text2); }   /* Hero 单位 15pt */
+.home-stat-unit, .home-stat-label { font-size: calc(28rpx * var(--fs, 1)); color: var(--text2); }
 .home-bar-fill { background: var(--card2); }              /* 非今日：主题自适应灰 */
 .home-bar-fill.is-today { background: #07C160; }          /* 今日：品牌绿高亮 */
-.home-stat-arrow { position: absolute; top: 24rpx; right: 24rpx;
-  font-size: calc(28rpx * var(--fs, 1)); color: var(--text3); line-height: 1; }
+.home-stat-arrow { position: absolute; top: 44rpx; right: 24rpx;
+  font-size: calc(34rpx * var(--fs, 1)); color: var(--text3); line-height: 1; }
 ```
 
 - **无阴影 / 无渐变**：卡片靠 `--card`（白）与页面 `--bg`（灰）的对比分层，**不要**用 `box-shadow`；柱体 / 进度等填充一律纯色。
@@ -411,18 +415,20 @@ WeUI 提供 `weui-icon-*`（mask + `background-color: currentColor` 方案，色
 ```
 
 ```css
-.head-card { margin: 8rpx 32rpx 0; }                  /* 无卡片，仅留外边距 */
-.head-num  { font-size: calc(64rpx * var(--fs, 1)); font-weight: 700; color: var(--text); }
-.head-unit { font-size: calc(28rpx * var(--fs, 1)); color: var(--text2); margin: 0 8rpx; }
-.head-sub  { font-size: calc(26rpx * var(--fs, 1)); color: var(--text2); }
-.summary   { display: flex; flex-wrap: wrap; margin: 24rpx 32rpx 0; }
+.head-card { padding: 16rpx 32rpx 0; }                /* 无卡片，仅留内距 */
+.head-num  { font-size: calc(64rpx * var(--fs, 1)); font-weight: 500; color: var(--text); }
+.head-unit { font-size: calc(28rpx * var(--fs, 1)); color: var(--text2); margin-left: 8rpx; }
+.head-sub  { display: flex; align-items: center; margin-top: 12rpx;
+             font-size: calc(28rpx * var(--fs, 1)); color: var(--text2); }
+.summary   { display: flex; flex-wrap: wrap; margin: 16rpx 32rpx 0; }
 .summary-item { width: 50%; box-sizing: border-box; display: flex; align-items: baseline; padding: 0; }
-.summary-value { font-size: calc(40rpx * var(--fs, 1)); font-weight: 700; color: var(--text); margin: 0 8rpx; }
+.summary-prefix, .summary-unit { font-size: calc(28rpx * var(--fs, 1)); color: var(--text2); }
+.summary-value { font-size: calc(40rpx * var(--fs, 1)); font-weight: 500; color: var(--text); margin: 0 8rpx; }
 .summary-arrow { margin-left: 8rpx; font-size: calc(28rpx * var(--fs, 1)); color: var(--text3); }
 ```
 
 - **无卡片 hero**：核心数据不套 `.card`，直接贴页面底（与原语 17 的卡片式 Hero 区分——详情页强调信息密度，总览/列表页才用圆角卡）。
-- **累计时长分段**：「X 小时 Y 分钟」用 `splitCumulative()` 拆成 `[{num, unit}]`，数字 `64rpx` 粗体远大于单位 `28rpx`，**不要**用 `h/m` 缩写（与首页 Hero 的 `h` 单位区分场景）。
+- **累计时长分段**：「X 小时 Y 分钟」用 `splitCumulative()` 拆成 `[{num, unit}]`，数字 `64rpx` 中等字重（`font-weight:500`）远大于单位 `28rpx`，**不要**用 `h/m` 缩写（与首页 Hero 的 `h` 单位区分场景）。
 - **阶段跨度**：副行用「首次打卡日 → 最后打卡日」+「阶段名称 历时 N 天」，跨度从打卡记录派生（阶段数据无 `start_date`/`end_date`）。
 - **汇总 chevron**：三项简单 flex 两列（`width:50%` + `flex-wrap`），每项 `prefix + 大数字 + unit + icon-right`；箭头用 iconfont `icon-right`（`\e6a3`）紧贴 unit（`margin-left:8rpx`），**不用裸字符 `›`**；前两行各两项、第三项换行到下一行左侧。
 
@@ -549,6 +555,69 @@ onTouchMove(e) {
 - **操作按钮用 `catchtap`**：避免冒泡触发行本身的点击。
 - **操作后复位**：跳转类操作（编辑）返回后由 `onShow` 重建列表自然复位；就地操作（删除）由数据刷新重建。
 - **行间分隔线**：`overflow: hidden` 的容器内用 `.swipe-wrap:not(:last-child) .record-row::after` 画缩进线，避免用 `border-bottom` 被滑动内容带着走。
+
+---
+
+## 原语 21：文章页排版（项目 `pages/about`，WeUI `.weui-article`）
+
+用于说明 / 关于 / 协议这类「文章型」页面：整页一篇文章，靠**字号、字重与间距**建立层级，**无卡片框、无彩色块、无底色**。项目现状：`pages/about`（关于庆爸2.0）。
+
+```html
+<view class="container {{fontClass}} {{darkClass}}">
+  <view class="weui-article">
+    <view class="weui-article__h1">3-4岁 · 常规路径</view>        <!-- 文章主标题（首屏锚点） -->
+    <view class="weui-article__note">说明：本小程序仅作…</view>    <!-- 注脚 / 免责 -->
+
+    <view class="weui-article__h2">路线介绍</view>                 <!-- 章节 -->
+    <view class="weui-article__section">
+      <view class="weui-article__p">正文…<text class="weui-article__strong">行内强调</text></view>
+      <view class="about-list">                                   <!-- 无序列表：真符号 + 悬挂缩进 -->
+        <view class="about-li">把握住孩子的听力水平</view>
+      </view>
+
+      <view class="weui-article__h3">方式一：亲子共读</view>        <!-- 小节 -->
+      <view class="weui-article__h4">注意事项</view>
+      <view class="about-ol">                                     <!-- 有序列表：CSS counter 自动编号 -->
+        <view class="about-oli">不能让孩子跟读…</view>
+      </view>
+    </view>
+  </view>
+</view>
+```
+
+```css
+/* 层级：h1 44rpx / h2·h3·h4 34rpx / p 34rpx / note 24rpx，正文取 FG-0 */
+.weui-article { padding: 48rpx 32rpx 40rpx; font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text); line-height: 1.65; }
+.weui-article__section { margin-bottom: 96rpx; }        /* WeUI 官方 48px，嵌套逐级收窄 */
+.weui-article__section .weui-article__section { margin-bottom: 64rpx; }
+.weui-article__section .weui-article__section .weui-article__section { margin-bottom: 48rpx; }
+.weui-article__h1 { font-size: calc(44rpx * var(--fs, 1)); font-weight: 600; margin: 0 0 16rpx; }
+.weui-article__h2, .weui-article__h3, .weui-article__h4 {
+  font-size: calc(34rpx * var(--fs, 1)); font-weight: 600; color: var(--text); }
+.weui-article__p    { font-size: calc(34rpx * var(--fs, 1)); line-height: 1.65; color: var(--text); }
+.weui-article__note { font-size: calc(24rpx * var(--fs, 1)); color: var(--text3); text-align: justify; }
+.weui-article__strong { color: var(--text); font-weight: 600; }          /* 唯一强调档：主色加粗 */
+
+/* 列表：借 Markdown 的结构语义，视觉仍是微信文章 */
+.about-list { margin: 0 0 16rpx; }
+.about-li { position: relative; padding-left: 32rpx; margin-bottom: 8rpx;
+  font-size: calc(34rpx * var(--fs, 1)); line-height: 1.65; color: var(--text); }
+.about-li::before { content: '•'; position: absolute; left: 4rpx; top: 0; color: var(--text3); }
+.about-ol { margin: 0 0 16rpx; counter-reset: about-ol; }
+.about-oli { position: relative; padding-left: 40rpx; margin-bottom: 8rpx;
+  font-size: calc(34rpx * var(--fs, 1)); line-height: 1.65; color: var(--text);
+  counter-increment: about-ol; }                                        /* 序号自动生成 */
+.about-oli::before { content: counter(about-ol) '.'; position: absolute; left: 0; top: 0; color: var(--text3); }
+```
+
+- **层级模型（借层级、不引组件）**：`h1` 文章标题 → `h2` 章节 → `h3`·`h4` 小节 → `p` 正文 → `note` 注脚 → `strong` 行内强调，数值按微信档位重定（22 / 17 / 14 / 12 pt → 44 / 34 / 28 / 24 rpx）。**文章正文占 17pt 档**（WeUI article 正文基准即 17px / FG-0）；`15pt` 的定位是「过渡次级字号」，不要拿它写文章正文
+- **`h2` 与 `h3`·`h4` 同为 34rpx**：层级靠**上下间距**（h2 上距 40rpx、h3 24rpx、h4 16rpx）与 `font-weight:600` 区分，**不做字号递降**——字号档只有 5 档，逐级递降会让小节标题掉到正文以下
+- **`__section` 分节必须给下边距**：WeUI 官方 48px(96rpx)，嵌套逐级 32px(64rpx) / 24px(48rpx)。项目把 `__h2` 写在 `__section` **之外**，故章节间距 = 上一层 `__section` 的 96rpx + 下一个 `__h2` 的 40rpx 上距
+- **列表借结构语义，不手写符号**：无序列表用 `::before` 出 `•` + `padding-left:32rpx` 悬挂缩进（**不要**「段落前面挂一个 `·` 字符」）；有序列表用 **CSS `counter`** 自动编号（增删条目不必手改 `1.`~`5.`）。列表项字号与正文同为 34rpx，仅靠符号 + 悬挂缩进区分
+- **强调只保留「主色加粗」一档**：行内 `__strong` 给 `--text` + `font-weight:600` 即可，**不引入彩色语义**（如 TDesign `mark` 硬编码黄底、`theme` 的蓝色 primary），与项目「扁平纯色、禁彩色字」一致；也不为单段引入带竖线的提示块
+- **样式定义在页面内、未提升为全局原语**：目前只有这一处文章页，类名沿用 WeUI 的 `.weui-article__*` 体系，页面特有结构（阶段参考块 / 方法分区 / 列表）留在 `about.wxss`——**等出现第二处文章页再抽取**
+- **结尾动作区（分享）**：文章末尾如需按钮，用独立容器 `.about-share { padding: 24rpx 32rpx 8rpx; }` + `.weui-btn_block`，附一行 `24rpx` `--text3` 居中说明；`open-type="share"` 在单页模式下禁用，需按 `scene === 1154` 隐藏（见 `design-guidelines.md` §六）
 
 ---
 

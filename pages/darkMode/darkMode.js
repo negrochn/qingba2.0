@@ -6,7 +6,11 @@ Page({
     fontClass: '',
     darkClass: '',
     followSystem: true,   // 跟随系统 toggle
-    manualMode: 'light'   // 手动选择：'light' | 'dark'（仅 followSystem=false 时生效）
+    manualMode: 'light',  // 手动选择：'light' | 'dark'（仅 followSystem=false 时生效）
+    manualItems: [
+      { key: 'light', label: '普通模式' },
+      { key: 'dark', label: '深色模式' }
+    ]
   },
 
   onLoad() {
@@ -45,8 +49,8 @@ Page({
   },
 
   // 手动选择普通模式 / 深色模式
-  pickManual(e) {
-    const mode = e.currentTarget.dataset.mode;
+  onPickManual(e) {
+    const mode = e.detail.key;
     if (mode !== 'light' && mode !== 'dark') return;
     theme.setDarkMode(mode);
 

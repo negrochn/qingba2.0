@@ -1,6 +1,6 @@
 ---
 name: ui-design-spec
-description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Tencent/weui v2.6.26）的设计令牌与组件原语沉淀。当需要实现微信风格的列表页、设置页、分组卡片、开关、导航栏、按钮、表单、弹窗、徽标等界面，或需要统一配色、字号、间距、圆角、深色模式适配时，使用本规范。This skill should be used when building WeChat-style (WeUI-based) grouped-list / settings / form UIs to keep colors, typography, spacing, radius, and component primitives consistent with WeUI's official design tokens. It also incorporates the official WeChat Mini Program Design Guidelines (developers.weixin.qq.com/miniprogram/design) for design principles, navigation, feedback, and hierarchy.
+description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Tencent/weui v2.6.26）的设计令牌与组件原语沉淀。当需要实现微信风格的列表页、设置页、分组卡片、开关、导航栏、按钮、表单、弹窗、徽标、文章 / 说明页，或需要统一配色、字号、间距、圆角、深色模式适配时，使用本规范。This skill should be used when building WeChat-style (WeUI-based) grouped-list / settings / form / article-page UIs to keep colors, typography, spacing, radius, and component primitives consistent with WeUI's official design tokens. It also incorporates the official WeChat Mini Program Design Guidelines (developers.weixin.qq.com/miniprogram/design) for design principles, navigation, feedback, and hierarchy.
 ---
 
 # 微信 UI 设计规范（基于 WeUI 官方）
@@ -15,6 +15,7 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - 引入新复用组件，需确认是否符合微信原生观感。
 - 需要判断某段样式是否「像微信」。
 - 实现统计 / 概览类看板页（大号数字 + 卡片 + 图表，见 `components.md` 原语 17）。
+- 实现「文章型」页面（关于 / 说明 / 协议：文章主标题 + 章节 + 正文列表，见 `components.md` 原语 21）。
 
 ## 设计原则
 1. 所有颜色、字号、间距以 `design-tokens.md` 的 token 为准；禁止硬编码同质值。
@@ -34,7 +35,7 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - **间距**：页面边距 16px(32rpx)，cell 内边距 16px(32rpx)，分组标题 padding-top 16px(32rpx)（其 margin-top 已合入 padding，见下「项目实现备注」），按钮区上 48px(96rpx)。
 - **圆角**：按钮 8px(16rpx)、mini 6px(12rpx)、弹窗 12px(24rpx)、iOS 分组卡片 20rpx(10pt)；cells 默认无圆角无阴影。
 - **分隔线（细线统一方案，TDesign hairline 同款）**：**一律 `1px` + `transform: scaleY(0.5)`（竖线用 `scaleX(0.5)`），并用 `transform-origin` 锚定线所在的那条边**（横线 `top` / `bottom`、竖线 `left` / `center`）。原因：`1rpx` 约合 0.5 个逻辑像素，是小数尺寸，真机 WebView 会在像素网格吸附阶段把它舍成 0、**整条线消失**（开发者工具不触发该舍入，所以只丢真机）；`1px` 是整数逻辑像素、任何 DPR 下都渲染为整数个物理像素，布局阶段稳定落格，而 `transform` 缩放属合成阶段、只会让线变淡、不会让它消失。**漏写 `transform-origin` 会因默认原点 `center` 让线向两侧各缩一半而位置漂移**——这正是本项目当年误判「`scaleY` 不可用」的真正原因（不是 `scaleY` 的问题，是没锚定原点）。**线挂在容器自身 `border` 上时不能直接加 transform**（`scaleY` 会连同容器内容一起压扁），须改由伪元素承担画线（`::after` 画底边 / `::before` 画顶边），分组块（如 `.res-list`）即此写法、末组 `:last-child` 去线。cell 内线 `left:32rpx` 缩进、首行无。`picker-view` 的选中框（`.mp-pv-indicator`）是 80rpx 高的框、不能缩放，其上下线直接给 `1px`。
-- **按钮**：`.weui-btn` 默认高 48px(96rpx)、圆角 8px；变体 `primary`(BRAND 绿)/`default`(灰底)/`warn`(RED)/`disabled`；尺寸 `medium`(40px)/`mini`(32px)、`block`/`inline`。项目 `.btn` 族高 88rpx（44pt iOS），新按钮沿用。
+- **按钮**：`.weui-btn` 默认高 48px(96rpx)、圆角 8px；变体 `primary`(BRAND 绿)/`default`(灰底)/`warn`(RED)/`disabled`；尺寸 `medium`(40px)/`mini`(32px)、`block`/`inline`。项目 `.btn` 族高 88rpx（44pt iOS），新按钮沿用。**原生能力按钮（如 `<button open-type="share">`）直接套 `.weui-btn` 系列类、无需额外样式**；`open-type` 在朋友圈单页模式下被禁用，需按场景值 `1154` 隐藏（见 `design-guidelines.md` §六）。
 - **单元格**：`.weui-cell` 内边距 16px(32rpx)、主文 17px(34rpx)；`__bd` flex:1、`__ft` 右对齐 FG-1；`__desc` 12px(24rpx) FG-2。变体 `access`(箭头)/`link`(蓝)/`warn`(红)。项目 `.cell` 家族：`cell--single`(110rpx)/`cell--desc`(146rpx)/`cell-radio`/`cell-check`(iconfont 品牌绿对勾)。
 - **开关**：原生 `<switch color="#07c160">`；项目自绘 `.switch`（开 `#07c160`/关 `#e9e9e9`）。
 - **单选/多选**：选中标记统一品牌绿 `#07c160`（圆底绿勾 / 对勾）。
@@ -45,6 +46,8 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - **阶段统计详情页（原语 18）**：单个阶段的「累计」视图，核心数据**不套卡片**（扁平大数字贴页面底），累计时长用「X 小时 Y 分钟」分段（`splitCumulative()`，数字 64rpx 远大于单位 28rpx，勿用 `h/m` 缩写）；副行显示阶段跨度「首次打卡日 → 最后打卡日，阶段名称 历时 N 天」（跨度从打卡记录派生）；汇总三项用简单 flex 两列（`width:50%` + `flex-wrap`，前两项一行、第三项换行），每项 `prefix + 大数字 + unit + icon-right`，箭头紧贴 unit（`margin-left:8rpx`）勿用裸字符 `›`。详见 `components.md` 原语 18。
 - **滚轮选择器弹层（原语 19）**：选择月份 / 阶段等互斥选项用「可点胶囊 + ▾ → 半屏 `.mp-mask`/`.mp-sheet` + `<picker-view>` + 取消/确定」；浅色 `#e5e5e5` / 深色 `rgba(255,255,255,.1)` 上下细线标识选中项。三个必写项：弹层根节点带 `{{fontClass}} {{darkClass}}`、`mask-class="mp-pv-mask"`（去内置白蒙层）、`indicator-class="mp-pv-indicator"`（透明背景 + `var(--divider)` 细线，**切勿填实色底——会盖住选中行文字**）。详见 `components.md` 原语 19。
 - **左滑操作（原语 20）**：列表行左滑露出「编辑 / 删除」——非破坏操作在左、破坏性在右；JS 的 `SWIPE_W` 与 wxss 的 `.swipe-bg { width }` 必须双处同步（头号易错点）；位移过半（`-SWIPE_W/2`）才吸附展开、拖动限位 `-(SWIPE_W+20)`、位移变化 <2rpx 跳过 `setData`；按钮固定彩色（编辑 `#c7c7cc` / 删除 `#ff4d4f`），深色模式不另做适配。详见 `components.md` 原语 20。
+- **文章页排版（原语 21）**：说明 / 关于 / 协议类「文章型」页用整页 `.weui-article`（无卡片框，padding `48rpx 32rpx`），层级 h1 `44rpx`(22pt) / h2·h3·h4 `34rpx`(17pt，靠间距与字重区分) / 正文 `34rpx` + `--text` + 行高 1.65 / 注脚 `24rpx` `--text3`；分节 `__section` `margin-bottom:96rpx`（嵌套 64 / 48rpx）。列表借 Markdown 语义：无序 `::before '•'` + 悬挂缩进 32rpx，有序用 CSS `counter` 自动编号；行内强调只保留「主色加粗」一档，不引彩色提示块。**目前仅 `about` 一页，样式留在页面内、未提升为全局原语**。详见 `components.md` 原语 21。
+- **标签 / 徽标**：`.weui-tag` 无 margin，间距由父级 flex `gap` 控制；同一行并列多个标签时，字号 / 内边距 / 圆角**在父级集中收紧一次**（如 `.record-tags .weui-tag`），勿在每个标签类里各写一份覆盖，否则会出现「个别标签大一号」的行内不一致。
 - **设计原则 / 交互规范**：四大原则（友好 / 清晰 / 便捷 / 统一）、导航（小程序菜单右上固定且深浅两套、Tab 2–5 建议≤4）、反馈（局部加载优先、同页 ≤1 加载动画、成功 toast 1.5s）、层级（模态阻断 / 弹出不打断）——详见 `references/design-guidelines.md`；量化令牌（22/17/15/14/12pt、热区 7–9mm、设计稿 375/390、弹窗 1.5s 等）见 `design-tokens.md` §7。
 
 ## 项目实现备注（与 qingba 代码对齐）
@@ -64,12 +67,13 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - **「当前项」高亮用 cell 级底色，禁止容器级染色（项目约定）**：列表中某项需要底色区分时（如路线页 `.current-cell`），底色加在**单个 cell** 上，**不要**加在 `.weui-cells` / 分组容器上——容器染色会连带同组其他状态的行一起变色，导致「当前 / 已完成 / 未解锁」失去区分度。深色覆盖同样挂在 cell 级选择器上。
 - **`.weui-cells` 容器保持 WeUI 默认外观（项目约定）**：不要在页面里给 `.weui-cells` 设 `background: transparent`，也不要用 `::before/::after { display:none }` 隐藏通栏线。前者会盖掉 `.weui-cells` 自身的 `background-color: var(--card)`，使该分组透出页面底色；后者让它变成无边界裸块，与同页其他分组（白底 + 上下通栏线）外观不一致。分组需要视觉区分时，改 cell（见上一条），不改容器。
 - **iconfont 维护方式（项目实现）**：`app.wxss` 以 `@font-face` 内联 base64（ttf + woff 双格式，woff 的 MIME 用 `application/font-woff` 以兼容开发者工具内置旧 Chromium），全局注册字族 `iconfont`，随 WXSS 注入每个页面 webview 而跨页生效。新增图标需更新 `assets/fonts` 源文件，用 `scripts/gen_iconfont_base64.ps1` 重新生成 base64，再替换 `app.wxss` 的 data URI 并补 `.icon-*:before` 映射。
+- **分享入口（项目实现）**：分享文案与落地页集中在 `utils/share.js`（`appMessage()` / `timeline()`），各页只声明场景 key——**转发落地页统一首页**（新用户点开即欢迎卡引导选起点），朋友圈只对纯内容页「关于」开放；页内分享按钮为 `<button class="weui-btn weui-btn_block weui-btn_primary" open-type="share">`，单页模式（`scene === 1154`）下隐藏。能力边界见 `design-guidelines.md` §六。
 
 ## Resources
 ### references/
 - `design-tokens.md` — 配色（浅/深）、字号、间距、圆角、分隔线、项目变量映射（单一事实来源）。
-- `components.md` — WeUI 组件原语（按钮 / cells·cell / 表单 / 开关 / 单选·多选 / 弹窗 / 导航栏 / 徽标 / 图标）及本项目已有原语对照。
-- `design-guidelines.md` — 微信官方设计指南的原则层：四大设计原则、视觉规范指针、导航 / Tab、加载与结果反馈、异常与层级、落地自检清单。
+- `components.md` — WeUI 组件原语（按钮 / cells·cell / 表单 / 开关 / 单选·多选 / 弹窗 / 导航栏 / 徽标 / 图标 / 时间线 / 看板 / 选择器弹层 / 左滑操作 / 文章页排版）及本项目已有原语对照。
+- `design-guidelines.md` — 微信官方设计指南的原则层：四大设计原则、视觉规范指针、导航 / Tab、加载与结果反馈、异常与层级、分享入口与单页模式能力边界（§六）、落地自检清单（§七）。
 
 ### scripts / assets
 （暂不需要）
@@ -82,5 +86,6 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - （已定案）**细线统一方案**：全站分隔线 / 细边框统一为 `1px` + `transform: scaleY/X(0.5)` + `transform-origin`（WeUI 与 TDesign 官方同款，见 `components.md` 原语 1/2 的官方范式）。两个历史坑已写入「分隔线」条与 `design-tokens.md` §5：① `1rpx` 是小数尺寸，真机被吸附舍成 0 → 线整条消失（只在真机复现）；② `scaleY` 漏写 `transform-origin` 会因默认原点 `center` 漂移——旧文档「`scaleY` 已弃用」的结论即源于此，已订正。**遗留**：`.seg-item` 仍用 `2rpx`（四边边框，要细线化需 TDesign 的 surround 伪元素方案）、`.mp-pv-indicator` 直用 `1px`（80rpx 高选中框不能缩放）。
 - 完整 Dialog / ActionSheet / Toast / Half-screen Dialog 的内联 wxml 模板（目前给了 token 与结构范式，精确内边距以 WeUI 源码为准）。
 - （已补充）滚轮选择器 `picker-view` 半屏弹层 → `components.md` 原语 19（含蒙层 / 选中框的深色覆盖写法）。
+- （已补充）文章页排版（`.weui-article` 层级 / 列表语义）→ `components.md` 原语 21；分享入口与单页模式能力边界 → `design-guidelines.md` §六；22pt 文章标题档 → `design-tokens.md` §9。
 - 滑块（字号实时预览）、Gallery、Grid、Steps、Progress、Loading 等组件规范。
 - 图标规范（功能图标尺寸 / 风格 / 与 iconfont 字号的协调）。

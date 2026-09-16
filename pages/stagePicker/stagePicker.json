@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "当前阶段",
-  "usingComponents": {}
+  "usingComponents": {
+    "c-radio-list": "/components/radio-list/radio-list"
+  }
 }

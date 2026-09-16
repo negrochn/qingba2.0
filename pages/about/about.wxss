@@ -1,82 +1,132 @@
 /* ====== 关于庆爸2.0 - 纯文章写法（WeUI article） ======
-   整页 .weui-article：h1 大标题 + h2 章节 + p 段落 + section，无卡片框/列表框
+   整页 .weui-article：h1 文章标题 + h2 章节 + h3/h4 小节 + p 段落，无卡片框 / 列表框
    去除所有彩色背景块与渐变；重点用主色加粗（WeUI 标准强调）
    配色走全局 --* 令牌，深色模式自动跟随，无需 .dm-dark 重复规则
 
-   字号对齐微信官方字体档位（设计指南 5.1）：22 / 17 / 15 / 14 / 12 pt
-   小程序 750rpx 对应 375pt 基准 → 44 / 34 / 30 / 28 / 24 rpx；var(--fs) 跟随全局字体缩放 */
+   字号对齐 WeUI article 规范（正文 17px / FG-0）与微信官方档位：22 / 17 / 14 / 12 pt
+   小程序 750rpx 对应 375pt 基准 → 44 / 34 / 28 / 24 rpx；var(--fs) 跟随全局字体缩放
+   （15pt 档留给 cell 描述等次级内容，本文正文不占用）
 
-/* ===== WeUI 文章原语（官方 article 体系） ===== */
+   层级模型参考 TDesign Typography（h1 文章标题 → h2 章节 → h3/h4 小节），
+   数值按微信档位重定（TDesign 为固定 px 的 6 级，微信用 rpx 的 5 档以支持字号缩放）。
+   本页排版层级留在页面内、未提升为全局原语——目前只有这一处文章页，等出现第二处再抽取。 */
+
+/* ===== 文章排版层级 ===== */
 .weui-article {
   padding: 48rpx 32rpx 40rpx;
-  font-size: calc(30rpx * var(--fs, 1));   /* 15pt 正文基准 */
-  color: var(--text2);
+  font-size: calc(34rpx * var(--fs, 1));   /* 17pt 正文基准（同 WeUI article 的 17px） */
+  color: var(--text);                      /* FG-0：正文用主文色，标题靠字号/字重区分 */
   line-height: 1.65;
 }
-.weui-article__h2 {                       /* 章节标题 17pt */
+/* 分节容器：WeUI 规定 48px 下边距、嵌套逐级收窄（32px / 24px）。
+   注意本页把 __h2 写在 __section 之外（WeUI 是 h2-in-section 结构），
+   所以章节间距 = __section 的 96rpx + 下一个 __h2 的 40rpx 上边距。 */
+.weui-article__section { margin-bottom: 96rpx; }
+.weui-article__section .weui-article__section { margin-bottom: 64rpx; }
+.weui-article__section .weui-article__section .weui-article__section { margin-bottom: 48rpx; }
+.weui-article__h1 {                        /* 文章标题 22pt */
+  font-size: calc(44rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.35;
+  margin: 0 0 16rpx;
+}
+.weui-article__h2 {                        /* 章节标题 17pt */
   font-size: calc(34rpx * var(--fs, 1));
   font-weight: 600;
   color: var(--text);
   margin: 40rpx 0 16rpx;
 }
-.weui-article__p {                        /* 正文 15pt */
-  font-size: calc(30rpx * var(--fs, 1));
+.weui-article__h3 {                        /* 小节标题 17pt（靠间距与 h2 区分层级） */
+  font-size: calc(34rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text);
+  margin: 24rpx 0 12rpx;
+}
+.weui-article__h4 {                        /* 四级标题 17pt 加粗（随正文提到 34rpx，否则会小于正文） */
+  font-size: calc(34rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text);
+  margin: 16rpx 0 8rpx;
+}
+.weui-article__p {                         /* 正文 17pt */
+  font-size: calc(34rpx * var(--fs, 1));
   line-height: 1.65;
-  color: var(--text2);
+  color: var(--text);
   margin-bottom: 16rpx;
 }
 .weui-article__p:last-child { margin-bottom: 0; }
-
-/* ===== 文章内语义类 ===== */
-.about-desc {                             /* 副标题 14pt */
+.weui-article__desc {                      /* 次级说明 14pt */
   font-size: calc(28rpx * var(--fs, 1));
   color: var(--text3);
-  margin-bottom: 8rpx;
 }
-.about-note {                             /* 辅助说明 12pt */
+.weui-article__note {                      /* 注脚 / 免责说明 12pt */
   font-size: calc(24rpx * var(--fs, 1));
   color: var(--text3);
   text-align: justify;
 }
-.about-strong-p {                         /* 重点提示段：主色（区别于周围次级灰） */
-  color: var(--text);
-  font-weight: 500;
-}
-.about-strong {                           /* 行内/序号强调：主色加粗（替代原红字 .hl） */
+.weui-article__strong {                    /* 行内强调：主色加粗 */
   color: var(--text);
   font-weight: 600;
 }
-.about-li {                               /* 列表项（· 前缀），继承正文 15pt */
-  color: var(--text2);
+
+/* ===== 列表（借 Markdown 的结构语义，视觉保持微信文章的无框无底色） ===== */
+.about-list { margin: 0 0 16rpx; }
+.about-li {
+  position: relative;
+  padding-left: 32rpx;                     /* 悬挂缩进：符号落在左侧留白内 */
+  font-size: calc(34rpx * var(--fs, 1));
+  line-height: 1.65;
+  color: var(--text);
+  margin-bottom: 8rpx;
+}
+.about-li:last-child { margin-bottom: 0; }
+.about-li::before {
+  content: '•';                            /* 用真正的列表符号，不再手写 · */
+  position: absolute;
+  left: 4rpx; top: 0;
+  color: var(--text3);
+}
+
+.about-ol { margin: 0 0 16rpx; counter-reset: about-ol; }
+.about-oli {
+  position: relative;
+  padding-left: 40rpx;                     /* 悬挂缩进：序号占位比无序列表略宽 */
+  font-size: calc(34rpx * var(--fs, 1));
+  line-height: 1.65;
+  color: var(--text);
+  margin-bottom: 8rpx;
+  counter-increment: about-ol;
+}
+.about-oli:last-child { margin-bottom: 0; }
+.about-oli::before {
+  content: counter(about-ol) '.';          /* 自动编号：增删条目不必手改序号 */
+  position: absolute;
+  left: 0; top: 0;
+  color: var(--text3);
 }
 
 /* ===== 阶段参考（文章内段落式，无 cell 框） ===== */
 .about-stage { margin-bottom: 20rpx; }
 .about-stage:last-child { margin-bottom: 0; }
-.about-stage__name {                      /* 阶段名 17pt 加粗 */
+.about-stage__name {                       /* 阶段名 17pt 加粗 */
   font-size: calc(34rpx * var(--fs, 1));
   font-weight: 600;
   color: var(--text);
 }
-.about-stage__line {                      /* 标准 15pt */
-  font-size: calc(30rpx * var(--fs, 1));
-  line-height: 1.6;
-  color: var(--text2);
-  margin-top: 6rpx;
-}
+/* 阶段内的条目直接复用全局列表样式，只收窄外边距（阶段块之间已有间距） */
+.about-stage .about-list { margin: 8rpx 0 0; }
 
 /* ===== 使用说明（方式分区，文章内间距分隔，无卡片框） ===== */
 .about-method { margin-bottom: 32rpx; }
 .about-method:last-child { margin-bottom: 0; }
-.about-method__name {                     /* 方式名 17pt 加粗 */
-  font-size: calc(34rpx * var(--fs, 1));
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 12rpx;
-}
-.about-sub {                              /* 子标题 15pt 加粗 */
-  font-size: calc(30rpx * var(--fs, 1));
-  font-weight: 600;
-  color: var(--text);
-  margin: 16rpx 0 8rpx;
+
+/* ===== 分享入口（文章末尾，无卡片框，沿用文章左右留白） ===== */
+.about-share { padding: 24rpx 32rpx 8rpx; }
+.about-share__tip {
+  margin-top: 16rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  line-height: 1.5;
+  color: var(--text3);
+  text-align: center;
 }

@@ -591,7 +591,7 @@ Page({
 
     const content = (!opt.key || opt.key === 'all')
       ? '将清空全部打卡记录、已读次数与自定义资源，此操作不可恢复，是否继续？'
-      : `将清空「${opt.name}」的所有打卡记录与该阶段的自定义资源，此操作不可恢复，是否继续？`;
+      : `将清空「${opt.label}」的所有打卡记录与该阶段的自定义资源，此操作不可恢复，是否继续？`;
 
     wx.showModal({
       title: '确认清空',
@@ -618,7 +618,7 @@ Page({
           wx.removeStorageSync(checkin.DEFAULT_REMARK_KEY);
           wx.removeStorageSync(checkin.READ_COUNT_KEY);
           // 清空后回到初始未设置态：移除当前阶段与已完成名单（与首启引导一致）
-          wx.removeStorageSync(checkin.CURRENT_STAGE_KEY);
+          checkin.clearCurrentStage();
           checkin.setCompletedStages([]);
           // 连带清除全部自定义资源
           customResources.clearAll();

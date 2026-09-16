@@ -1,4 +1,5 @@
 const checkin = require('../../utils/checkin.js')
+const share = require('../../utils/share.js')
 
 // 左滑操作区宽度（rpx）：编辑 + 删除 各 150，与 records.wxss 的 .swipe-bg 保持一致
 const SWIPE_W = 300
@@ -51,6 +52,11 @@ Page({
     if (app && app.applyFontLevel) app.applyFontLevel(this)
 
     this._refresh()
+  },
+
+  // 分享给好友
+  onShareAppMessage() {
+    return share.appMessage('records')
   },
 
   // 阻止月份选择弹层内容区的点击冒泡（catchtap）

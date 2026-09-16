@@ -1,5 +1,6 @@
 const { routeData, getRequiredHours } = require('../../utils/data.js')
 const checkin = require('../../utils/checkin.js')
+const share = require('../../utils/share.js')
 
 Page({
   data: {
@@ -38,6 +39,11 @@ Page({
         this._scrollToStage(this.data.currentStageIndex)
       }
     })
+  },
+
+  // 分享给好友：文案与落地页集中在 utils/share.js
+  onShareAppMessage() {
+    return share.appMessage('route')
   },
 
   // 加载当前阶段，预计算每阶段状态（unset / done / current / locked）

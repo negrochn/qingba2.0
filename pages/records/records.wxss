@@ -203,11 +203,16 @@ page {
   min-width: 0;
 }
 
+/* 本页标签统一收紧内边距与圆角（.weui-tag 基类默认 4rpx 16rpx / 8rpx，在密集列表里偏大）。
+   集中写在这里，避免各标签各写一份、日后漏改。 */
+.record-tags .weui-tag {
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
+}
+
 .tag-stage {
   color: #7a5200;
   background: #fff7e6;
-  padding: 2rpx 10rpx;
-  border-radius: 6rpx;
 }
 
 /* 各分类标签颜色 */
@@ -221,24 +226,21 @@ page {
 .tag-group-fusion_apps { color: #531dab; background: #f5f0ff; }
 .tag-group-default { color: var(--text3); background: var(--cell-active); }
 
+/* 备注：字号与内边距均不覆盖，走 .weui-tag 基类 + .record-tags .weui-tag */
 .record-remark {
-  font-size: calc(28rpx * var(--fs, 1));
   color: #52c41a;
   background: #f0fff0;
-  padding: 2rpx 10rpx;
-  border-radius: 6rpx;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-/* 补录标记（中性灰，弱于分类彩色标签） */
+/* 补录标记（中性灰，弱于分类彩色标签）
+   字号与内边距均不覆盖，走 .weui-tag 基类 + .record-tags .weui-tag
+   （原先写 font-size:28rpx 比同行其它标签大一号，与「弱于分类彩色标签」的本意相反） */
 .record-backfill {
-  font-size: calc(28rpx * var(--fs, 1));
   color: var(--text2);
   background: var(--cell-active);
-  padding: 2rpx 10rpx;
-  border-radius: 6rpx;
 }
 
 .record-duration {

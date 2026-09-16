@@ -1,0 +1,6 @@
+/* 样式全部来自共享文件（与 app.wxss 同一份来源，不会分叉）。
+   cell 尺寸 / 颜色走 --card / --text / --divider 等变量，
+   字号走 calc(Nrpx * var(--fs)) —— 变量从页面根节点（.container / .dm-*）继承下来，
+   因此深色三态与字号档位自动跟随，此处不需要任何重复定义。 */
+@import "../../styles/weui-cells.wxss";
+@import "../../styles/iconfont.wxss";

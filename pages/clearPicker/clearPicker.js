@@ -24,9 +24,9 @@ Page({
   _loadScopes() {
     const options = (routeData.stages || []).map(s => ({
       key: s.stage_id,
-      name: s.stage_name
+      label: s.stage_name
     }));
-    options.unshift({ key: 'all', name: '全部数据' });
+    options.unshift({ key: 'all', label: '全部数据' });
     this.setData({ scopes: options });
   },
 
@@ -35,8 +35,8 @@ Page({
     return pages.length >= 2 ? pages[pages.length - 2] : null;
   },
 
-  pick(e) {
-    const key = e.currentTarget.dataset.key;
+  onPick(e) {
+    const key = e.detail.key;
     const opt = (this.data.scopes || []).find(o => o.key === key);
     if (!opt) return;
     const settings = this._getSettingsPage();

@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "清空范围",
-  "usingComponents": {}
+  "usingComponents": {
+    "c-radio-list": "/components/radio-list/radio-list"
+  }
 }

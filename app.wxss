@@ -2,6 +2,13 @@
    全部色板 / 字号 / 间距 / 圆角沿用 .codebuddy/skills/ui-design-spec 的 token。
    类名采用 WeUI 规范（.weui-*）。颜色统一引用项目 --* 变量（已对齐 WeUI，见 skill design-tokens.md §9）。 */
 
+/* 可被自定义组件复用的样式抽到 styles/ 下，由 app.wxss 与组件共同 @import，
+   保证全项目只有一份来源（详见各文件头注释）：
+     styles/weui-cells.wxss  —— 列表分组 / 单元格 / 单选
+     styles/iconfont.wxss    —— .iconfont / .icon-* 字形类（@font-face 仍在下方本文件注册） */
+@import "./styles/weui-cells.wxss";
+@import "./styles/iconfont.wxss";
+
 /* ===== 主题色板（--* 变量，已对齐 WeUI） =====
    浅色为默认；深色通过根节点 class（dm-light / dm-dark / dm-auto）切换 CSS 变量。
    对应 WeUI：--bg=BG-0 / --card=BG-2 / --text=FG-0(主文字) / --text2=FG-1(次级) /
@@ -10,14 +17,14 @@
 page {
   --bg: #ededed;
   --card: #ffffff;
-  --card2: #f7f8fa;
+  --card2: #f7f7f7;
   --text: #1a1a1a;                  /* FG-0 rgba(0,0,0,.9) 主文字 */
   --text2: #737373;                 /* FG-1 rgba(0,0,0,.55) 次级：标题 / 说明 / cell 值 */
   --text3: #b2b2b2;                 /* FG-2 rgba(0,0,0,.3) 三级 / 占位 */
   --divider: #e5e5e5;               /* ≈FG-3 rgba(0,0,0,.1) 分隔线 */
   --brand: #07C160;
   --danger: #fa5151;               /* RED light */
-  --cell-active: #f5f5f5;
+  --cell-active: #ececec;          /* BG-COLOR-ACTIVE light */
   /* 默认浅色背景；系统深色时由下方 media query 覆盖为深色。
      这里不能用 var(--bg) —— dm-light/dm-dark 类挂在 .container 上，
      变量只能向下继承，page 上解析到的永远是基础值 #ededed。*/
@@ -57,43 +64,43 @@ view, text {
 .dm-light {
   --bg: #ededed;
   --card: #ffffff;
-  --card2: #f7f8fa;
+  --card2: #f7f7f7;
   --text: #1a1a1a;                  /* FG-0 主文字 */
   --text2: #737373;                 /* FG-1 次级 */
   --text3: #b2b2b2;                 /* FG-2 三级 / 占位 */
   --divider: #e5e5e5;               /* ≈FG-3 分隔线 */
   --brand: #07C160;
   --danger: #fa5151;               /* RED light */
-  --cell-active: #f5f5f5;
+  --cell-active: #ececec;          /* BG-COLOR-ACTIVE light */
 }
 
-/* 手动深色（微信官方深色色板：BG #111 / 卡片 #1C1C1E / 文字 FG-0 .8 / FG-1 .5 / FG-2 .3） */
+/* 手动深色（微信官方深色色板：BG #111 / 卡片 BG-2 #191919 / 文字 FG-0 .8 / FG-1 .5 / FG-2 .3） */
 .dm-dark {
   --bg: #111111;
-  --card: #1c1c1e;
-  --card2: #232326;
+  --card: #191919;
+  --card2: #202020;
   --text: rgba(255, 255, 255, 0.8);     /* FG-0 dark 主文字 */
   --text2: rgba(255, 255, 255, 0.5);    /* FG-1 dark 次级 */
   --text3: rgba(255, 255, 255, 0.3);    /* FG-2 dark 三级 / 占位 */
   --divider: rgba(255, 255, 255, 0.1);
   --brand: #07C160;
   --danger: #fa5151;               /* RED dark（与浅色一致，WeUI RED 不随深浅变化） */
-  --cell-active: #2c2c2e;
+  --cell-active: #373737;          /* BG-COLOR-ACTIVE dark */
 }
 
 /* 跟随系统 */
 @media (prefers-color-scheme: dark) {
   .dm-auto {
     --bg: #111111;
-    --card: #1c1c1e;
-    --card2: #232326;
+    --card: #191919;
+    --card2: #202020;
     --text: rgba(255, 255, 255, 0.8);     /* FG-0 dark 主文字 */
     --text2: rgba(255, 255, 255, 0.5);    /* FG-1 dark 次级 */
     --text3: rgba(255, 255, 255, 0.3);    /* FG-2 dark 三级 / 占位 */
     --divider: rgba(255, 255, 255, 0.1);
     --brand: #07C160;
     --danger: #fa5151;               /* RED dark（与浅色一致，WeUI RED 不随深浅变化） */
-    --cell-active: #2c2c2e;
+    --cell-active: #373737;          /* BG-COLOR-ACTIVE dark */
   }
 }
 
@@ -123,158 +130,6 @@ view, text {
 .mt-24 { margin-top: 24rpx; }
 
 /* ============================================================
-   原语 1：列表分组容器 .weui-cells（WeUI 原生：无圆角、无阴影，
-   靠上间距与灰底分组；上下 1px 通栏分隔线）
-   ============================================================ */
-.weui-cells {
-  background-color: var(--card);
-  position: relative;
-  overflow: hidden;
-}
-/* 细线统一方案（TDesign hairline 同款）：
-   布局尺寸用整数 1px，再用 transform 缩到 0.5px。
-   原因：1rpx 在小数逻辑像素上参与布局，会被浏览器按像素网格吸附、在真机上整条消失；
-   而 1px 是整数，布局阶段稳定落格，transform 缩放属于合成阶段、只会让线变淡不会让它消失。
-   横线用 scaleY(0.5)、竖线用 scaleX(0.5)；transform-origin 必须锚定线所在的那条边（top/bottom/left），
-   否则默认原点 center 会让线向两侧各缩一半、位置漂移。 */
-.weui-cells::before,
-.weui-cells::after {
-  content: " ";
-  position: absolute;
-  left: 0; right: 0;
-  height: 1px;
-  background: var(--divider);
-  transform: scaleY(0.5);
-  pointer-events: none;
-}
-.weui-cells::before { top: 0; transform-origin: top; }
-.weui-cells::after { bottom: 0; transform-origin: bottom; }
-
-/* 分组标题 / 说明（纯灰文字，无彩色竖条；margin-top/margin-bottom 已合入 padding，左右统一 32rpx） */
-.weui-cells__title {
-  padding: 32rpx 32rpx 6rpx;       /* 上=原 margin-top，左右 32rpx，下=WeUI 原 margin-bottom 3px(6rpx) */
-  color: var(--text2);
-  font-size: calc(28rpx * var(--fs, 1));   /* 14px 分组标题 */
-  line-height: 1.4;
-}
-.weui-cells__tips {
-  margin-top: 16rpx;
-  padding: 0 32rpx;
-  color: var(--text2);
-  font-size: calc(28rpx * var(--fs, 1));
-  line-height: 1.4;
-}
-.weui-cells__tips a { color: var(--brand); }
-
-/* 通用分隔线（非 cell 上下文，如表单卡片内行分隔） */
-.weui-divider {
-  height: 1px;
-  background: var(--divider);
-  transform: scaleY(0.5);
-  transform-origin: top;
-  margin: 0;
-}
-
-/* ============================================================
-   原语 2：单元格 .weui-cell（左文右值，可点击/箭头/开关）
-   行高 56px(112rpx) 由 padding + 字号自然撑出；单元格间 0.5px 分隔线 left 缩进 32rpx，首行无
-   ============================================================ */
-.weui-cell {
-  position: relative;
-  padding: 32rpx;                   /* @weuiCellGapV/H 16px */
-  display: flex;
-  align-items: center;
-  font-size: calc(34rpx * var(--fs, 1));   /* 17px 主文 */
-  line-height: 1.41176471;
-  color: var(--text);
-  min-height: 112rpx;               /* @weuiCellHeight 56px，保证点击热区 */
-}
-.weui-cell::before {
-  content: " ";
-  position: absolute;
-  left: 32rpx; right: 0; top: 0;
-  height: 1px;
-  background: var(--divider);
-  transform: scaleY(0.5);
-  transform-origin: top;
-}
-.weui-cell:first-child::before { display: none; }
-.weui-cell:active { background-color: var(--cell-active); }
-
-.weui-cell__hd {                   /* 行首图标列 */
-  margin-right: 16rpx;             /* 8px(16rpx) */
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  font-size: calc(40rpx * var(--fs, 1));
-  line-height: 1;
-}
-.weui-cell__bd {                   /* 左侧主内容（标题 / 堆叠 label+desc） */
-  flex: 1;
-  min-width: 0;
-  margin-right: 24rpx;
-}
-.weui-cell__bd_text {              /* 纯标题文字（34rpx 主文） */
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text);
-  line-height: 1.41176471;
-}
-.weui-cell__desc {                 /* 描述文字（12px FG-2） */
-  display: block;
-  font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text3);
-  line-height: 1.4;
-  margin-top: 4rpx;
-}
-.weui-cell__ft {                   /* 右侧内容（值 / 箭头 / 开关） */
-  flex-shrink: 0;
-  max-width: 60%;
-  text-align: right;
-  color: var(--text2);
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-.weui-cell__ft_value {             /* 右侧值文字（34rpx，FG-1） */
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text2);
-  line-height: 1.41176471;
-}
-.weui-cell__ft_value.placeholder { opacity: 0.6; }
-
-/* 箭头（iconfont .icon-right，色随 FG-2） */
-.weui-cell__ft .icon-right {
-  font-size: calc(34rpx * var(--fs, 1)) !important;
-  color: var(--text3);
-  line-height: 1.4;
-  margin-left: 12rpx;
-}
-
-/* 变体 */
-.weui-cell_access { -webkit-tap-highlight-color: rgba(0, 0, 0, 0); }   /* 可点击带箭头 */
-.weui-cell_link .weui-cell__bd { color: var(--brand); }               /* 链接蓝（项目用品牌绿） */
-.weui-cell_warn .weui-cell__bd { color: var(--danger); }              /* 警告红 */
-.weui-cell_empty {
-  padding: 48rpx 32rpx;
-  font-size: calc(28rpx * var(--fs, 1));
-  color: var(--text3);
-  text-align: center;
-  min-height: auto;
-}
-
-/* ============================================================
-   原语 7：单选 .weui-cells_radio（选中标记统一品牌绿对勾）
-   ============================================================ */
-.weui-cells_radio .weui-cell__ft { max-width: none; }
-.weui-cells_radio .weui-icon-checked {
-  font-size: calc(44rpx * var(--fs, 1)) !important;
-  color: var(--brand);             /* 选中态品牌绿对勾 */
-  line-height: 1;
-  flex-shrink: 0;
-}
-.weui-cells_radio .weui-icon-checked.is-hidden { display: none; }
-
-/* ============================================================
    原语 4：按钮 Button
    默认高 48px(96rpx)、圆角 8px(16rpx)；变体 primary(绿)/default(灰)/warn(红)/disabled
    ============================================================ */
@@ -283,7 +138,7 @@ view, text {
   width: auto;
   max-width: 560rpx;
   margin: 0 auto;
-  padding: 24rpx 48rpx;            /* 高 ≈ 96rpx（@weuiBtnBorderRadius 8px） */
+  padding: 24rpx 48rpx;            /* 高 ≈ 96rpx（@weuiBtnHeight 48px） */
   font-size: calc(34rpx * var(--fs, 1));
   font-weight: 500;
   line-height: 1.41176471;
@@ -481,39 +336,6 @@ view, text {
   margin-bottom: 16rpx;
 }
 .weui-panel__bd { color: var(--text); }
-
-/* ============================================================
-   iconfont（Project id 5231154）
-   维护说明：后续在 iconfont.cn 增删图标后，重新下载并把 iconfont.ttf / iconfont.woff
-   覆盖到 assets/fonts/ 目录，运行 scripts/gen_iconfont_base64.ps1 输出新的 base64 data URI，
-   同步替换本文件顶部 @font-face src 中的 data URI 段，并按 iconfont.css 更新下方
-   .icon-* 类的 content 编码。字族在全局 app.wxss 以 @font-face 注册，对所有页面 webview 生效
-   （之前 WXSS 本地路径 @font-face 会被开发者工具改写为 -do-not-use-local-path-；改在 App.onLaunch
-   用 wx.loadFontFace 又仅作用于 App 所在 webview，跨页面失效，故最终方案是 WXSS 内联 data URI）。
-   ============================================================ */
-.iconfont {
-  font-family: "iconfont" !important;
-  font-size: 32rpx;
-  font-style: normal;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-.icon-check:before { content: "\e645"; }
-.icon-right:before { content: "\e6a3"; }
-.icon-homefill:before { content: "\e6bb"; }
-.icon-lock:before { content: "\e6c0"; }
-.icon-unlock:before { content: "\e6c2"; }
-.icon-myfill:before { content: "\e78c"; }
-.icon-circlefill:before { content: "\e7b0"; }
-.icon-info:before { content: "\e6e5"; }
-.icon-squarecheck:before { content: "\e6d6"; }
-.icon-rank:before { content: "\e722"; }
-.icon-settings:before { content: "\e68a"; }
-.icon-location:before { content: "\e651"; }
-.icon-circle:before { content: "\e7b1"; }
-.icon-home:before { content: "\e6b8"; }
-.icon-my:before { content: "\e78b"; }
-.icon-calendar:before { content: "\e74a"; }
 
 /* ============================================================
    全局深色适配（微信小程序深色规范）

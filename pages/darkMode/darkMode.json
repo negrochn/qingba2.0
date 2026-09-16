@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "深色模式",
-  "usingComponents": {}
+  "usingComponents": {
+    "c-radio-list": "/components/radio-list/radio-list"
+  }
 }

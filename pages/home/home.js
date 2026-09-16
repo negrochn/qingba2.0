@@ -1,5 +1,6 @@
 const checkin = require('../../utils/checkin.js')
 const { routeData, getRequiredHours } = require('../../utils/data.js')
+const share = require('../../utils/share.js')
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const MONTH_EN = ['January', 'February', 'March', 'April', 'May', 'June',
@@ -61,6 +62,14 @@ Page({
     this._refresh()
     // 弹窗处于打开态时同步重建，避免展示上一次的内容
     if (this.data.sheetVisible) this._buildSheet(this.data.sheetMode)
+  },
+
+  // 分享给好友：标题带上当前累计时长（比纯口号更有说服力），落地页统一首页
+  onShareAppMessage() {
+    const hours = Number(this.data.totalHours) || 0
+    return share.appMessage('home', {
+      title: hours > 0 ? `陪孩子练英语听力，已累计 ${this.data.totalHours} 小时` : ''
+    })
   },
 
   // 主刷新：全部以「当前阶段」为口径聚合

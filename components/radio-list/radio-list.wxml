@@ -1,0 +1,19 @@
+<view class="weui-cells weui-cells_radio">
+  <block wx:if="{{items.length}}">
+    <view
+      class="weui-cell"
+      wx:for="{{items}}"
+      wx:key="key"
+      data-key="{{item.key}}"
+      data-index="{{index}}"
+      bindtap="onPick"
+    >
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text">{{item.label}}</view>
+        <view class="weui-cell__desc" wx:if="{{item.desc}}">{{item.desc}}</view>
+      </view>
+      <text class="weui-icon-checked iconfont icon-check" hidden="{{value !== item.key}}"></text>
+    </view>
+  </block>
+  <view wx:else class="weui-cell_empty">{{emptyText}}</view>
+</view>

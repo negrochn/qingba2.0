@@ -1,0 +1,160 @@
+/* ============================================================
+   共享样式 · 列表分组 / 单元格 / 单选
+   来源：WeUI 官方（Tencent/weui v2.6.26）设计 token。
+
+   本文件由 app.wxss 与自定义组件共同 @import。
+   组件内直接写 .weui-* 类即可拿到完整样式（含深色与字号缩放），
+   因为颜色 / 字号全部走 CSS 变量，变量从页面根节点继承而来，
+   不受自定义组件 styleIsolation 的限制。
+   ============================================================ */
+
+/* ============================================================
+   原语 1：列表分组容器 .weui-cells（WeUI 原生：无圆角、无阴影，
+   靠上间距与灰底分组；上下 1px 通栏分隔线）
+   ============================================================ */
+.weui-cells {
+  background-color: var(--card);
+  position: relative;
+  overflow: hidden;
+}
+/* 细线统一方案（TDesign hairline 同款）：
+   布局尺寸用整数 1px，再用 transform 缩到 0.5px。
+   原因：1rpx 在小数逻辑像素上参与布局，会被浏览器按像素网格吸附、在真机上整条消失；
+   而 1px 是整数，布局阶段稳定落格，transform 缩放属于合成阶段、只会让线变淡不会让它消失。
+   横线用 scaleY(0.5)、竖线用 scaleX(0.5)；transform-origin 必须锚定线所在的那条边（top/bottom/left），
+   否则默认原点 center 会让线向两侧各缩一半、位置漂移。 */
+.weui-cells::before,
+.weui-cells::after {
+  content: " ";
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  background: var(--divider);
+  transform: scaleY(0.5);
+  pointer-events: none;
+}
+.weui-cells::before { top: 0; transform-origin: top; }
+.weui-cells::after { bottom: 0; transform-origin: bottom; }
+
+/* 分组标题 / 说明（纯灰文字，无彩色竖条；margin-top/margin-bottom 已合入 padding，左右统一 32rpx） */
+.weui-cells__title {
+  padding: 32rpx 32rpx 6rpx;       /* 上=原 margin-top，左右 32rpx，下=WeUI 原 margin-bottom 3px(6rpx) */
+  color: var(--text2);
+  font-size: calc(28rpx * var(--fs, 1));   /* 14px 分组标题 */
+  line-height: 1.4;
+}
+.weui-cells__tips {
+  margin-top: 16rpx;
+  padding: 0 32rpx;
+  color: var(--text2);
+  font-size: calc(28rpx * var(--fs, 1));
+  line-height: 1.4;
+}
+.weui-cells__tips a { color: var(--brand); }
+
+/* 通用分隔线（非 cell 上下文，如表单卡片内行分隔） */
+.weui-divider {
+  height: 1px;
+  background: var(--divider);
+  transform: scaleY(0.5);
+  transform-origin: top;
+  margin: 0;
+}
+
+/* ============================================================
+   原语 2：单元格 .weui-cell（左文右值，可点击/箭头/开关）
+   行高 56px(112rpx) 由 padding + 字号自然撑出；单元格间 0.5px 分隔线 left 缩进 32rpx，首行无
+   ============================================================ */
+.weui-cell {
+  position: relative;
+  padding: 32rpx;                   /* @weuiCellGapV/H 16px */
+  display: flex;
+  align-items: center;
+  font-size: calc(34rpx * var(--fs, 1));   /* 17px 主文 */
+  line-height: 1.41176471;
+  color: var(--text);
+  min-height: 112rpx;               /* @weuiCellHeight 56px，保证点击热区 */
+}
+.weui-cell::before {
+  content: " ";
+  position: absolute;
+  left: 32rpx; right: 0; top: 0;
+  height: 1px;
+  background: var(--divider);
+  transform: scaleY(0.5);
+  transform-origin: top;
+}
+.weui-cell:first-child::before { display: none; }
+.weui-cell:active { background-color: var(--cell-active); }
+
+.weui-cell__hd {                   /* 行首图标列 */
+  margin-right: 16rpx;             /* 8px(16rpx) */
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  font-size: calc(40rpx * var(--fs, 1));
+  line-height: 1;
+}
+.weui-cell__bd {                   /* 左侧主内容（标题 / 堆叠 label+desc） */
+  flex: 1;
+  min-width: 0;
+  margin-right: 24rpx;
+}
+.weui-cell__bd_text {              /* 纯标题文字（34rpx 主文） */
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text);
+  line-height: 1.41176471;
+}
+.weui-cell__desc {                 /* 描述文字（12px FG-2） */
+  display: block;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1.4;
+  margin-top: 4rpx;
+}
+.weui-cell__ft {                   /* 右侧内容（值 / 箭头 / 开关） */
+  flex-shrink: 0;
+  max-width: 60%;
+  text-align: right;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.weui-cell__ft_value {             /* 右侧值文字（34rpx，FG-1） */
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text2);
+  line-height: 1.41176471;
+}
+.weui-cell__ft_value.placeholder { opacity: 0.6; }
+
+/* 箭头（iconfont .icon-right，色随 FG-2） */
+.weui-cell__ft .icon-right {
+  font-size: calc(34rpx * var(--fs, 1)) !important;
+  color: var(--text3);
+  line-height: 1.4;
+  margin-left: 12rpx;
+}
+
+/* 变体 */
+.weui-cell_access { -webkit-tap-highlight-color: rgba(0, 0, 0, 0); }   /* 可点击带箭头 */
+.weui-cell_link .weui-cell__bd { color: var(--brand); }               /* 链接蓝（项目用品牌绿） */
+.weui-cell_warn .weui-cell__bd { color: var(--danger); }              /* 警告红 */
+.weui-cell_empty {
+  padding: 48rpx 32rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
+  text-align: center;
+  min-height: auto;
+}
+
+/* ============================================================
+   原语 7：单选 .weui-cells_radio（选中标记统一品牌绿对勾）
+   ============================================================ */
+.weui-cells_radio .weui-cell__ft { max-width: none; }
+.weui-cells_radio .weui-icon-checked {
+  font-size: calc(44rpx * var(--fs, 1)) !important;
+  color: var(--brand);             /* 选中态品牌绿对勾 */
+  line-height: 1;
+  flex-shrink: 0;
+}

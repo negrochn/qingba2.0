@@ -25,8 +25,8 @@ Page({
     if (app && app.applyFontLevel) app.applyFontLevel(this);
   },
 
-  pick(e) {
-    const key = e.currentTarget.dataset.key;
+  onPick(e) {
+    const key = e.detail.key;
     if (theme.indexOf(key) < 0) return;
 
     theme.setFontLevel(key);

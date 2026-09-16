@@ -2,24 +2,21 @@
 const checkin = require('../../utils/checkin.js');
 const { routeData } = require('../../utils/data.js');
 
-const NONE_ID = '__none__';
-
 Page({
   data: {
     fontClass: '',
     darkClass: '',
-    stages: [],     // [{ id, name }]
-    selectedId: ''  // 当前选中 id，'' = 未设置
+    items: [],      // [{ key, label }]，由 routeData.stages 直接映射
+    selectedId: ''  // 当前选中 stage_id，'' = 尚未选择
   },
 
   onLoad() {
     const app = getApp();
     if (app && app.applyFontLevel) app.applyFontLevel(this);
 
-    const stages = routeData.stages.map(s => ({ id: s.stage_id, name: s.stage_name }));
     const saved = checkin.getCurrentStage();
     this.setData({
-      stages,
+      items: routeData.stages.map(s => ({ key: s.stage_id, label: s.stage_name })),
       selectedId: saved ? saved.id : ''
     });
   },
@@ -29,19 +26,11 @@ Page({
     if (app && app.applyFontLevel) app.applyFontLevel(this);
   },
 
-  pick(e) {
-    const id = e.currentTarget.dataset.id;
+  onPick(e) {
+    const key = e.detail.key;
 
-    // 未设置：清除当前阶段与已完成名单（回到未选择起点的初始状态）
-    if (id === NONE_ID) {
-      checkin.clearCurrentStage();
-      checkin.setCompletedStages([]);
-      this.setData({ selectedId: '' });
-      setTimeout(() => wx.navigateBack(), 300);
-      return;
-    }
-
-    const index = this.data.stages.findIndex(s => s.id === id);
+    // 按 key 回查数据源，取得真实阶段对象与顺序
+    const index = (routeData.stages || []).findIndex(s => s.stage_id === key);
     if (index < 0) return;
 
     const stage = routeData.stages[index];
@@ -55,10 +44,10 @@ Page({
 
     // 保存：当前阶段 + 前序阶段标记完成
     checkin.setCurrentStage(stageData);
-    const done = this.data.stages.slice(0, index).map(s => s.id);
+    const done = routeData.stages.slice(0, index).map(s => s.stage_id);
     checkin.setCompletedStages(done);
 
-    this.setData({ selectedId: id });
+    this.setData({ selectedId: key });
     wx.navigateBack();
   }
 });

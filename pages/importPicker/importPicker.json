@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "导入方式",
-  "usingComponents": {}
+  "usingComponents": {
+    "c-radio-list": "/components/radio-list/radio-list"
+  }
 }

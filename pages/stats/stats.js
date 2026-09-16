@@ -5,6 +5,7 @@ const { routeData, resourceLabels } = require('../../utils/data.js')
 const theme = require('../../utils/theme.js')
 const echarts = require('../../utils/echarts')
 const WxCanvas = require('../../utils/wx-canvas')
+const share = require('../../utils/share.js')
 
 // ===== 日期工具 =====
 function pad(n) { return String(n).padStart(2, '0') }
@@ -431,6 +432,11 @@ Page({
     this.setData({ darkClass: theme.getDarkClass() })
     // 数据可能在其它页变更，每次展示重算
     if (this.data.stage) this._recompute()
+  },
+
+  // 分享给好友
+  onShareAppMessage() {
+    return share.appMessage('stats')
   },
 
   onReady() {

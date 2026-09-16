@@ -4,8 +4,8 @@ Page({
     fontClass: '',
     darkClass: '',
     modes: [
-      { key: 'overwrite', name: '覆盖式导入', desc: '用备份数据完整替换现有数据' },
-      { key: 'merge', name: '合并式导入', desc: '将备份数据合并到现有数据，保留已有内容' }
+      { key: 'overwrite', label: '覆盖式导入', desc: '用备份数据完整替换现有数据' },
+      { key: 'merge', label: '合并式导入', desc: '将备份数据合并到现有数据，保留已有内容' }
     ],
     selectedKey: ''
   },
@@ -25,8 +25,8 @@ Page({
     return pages.length >= 2 ? pages[pages.length - 2] : null;
   },
 
-  pick(e) {
-    const key = e.currentTarget.dataset.key;
+  onPick(e) {
+    const key = e.detail.key;
     const settings = this._getSettingsPage();
     this.setData({ selectedKey: key });
 
