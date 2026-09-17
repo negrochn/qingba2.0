@@ -4,6 +4,12 @@
  * 为什么双列而不是逐级下钻：切换分组点左边即可，不用返回上一级；
  * 常规1 只有 6 个分组，双列能一次看全。
  *
+ * 高度：不做拖拽、不写内联 style —— 由 wxss 按分组数给三档（.rp-sheet / .h8 / .h9），
+ * 每档 = 固定占高 + 分组行高 × N + 余量 + 底部安全区，N 取 7 / 8 / 9，
+ * 也就是「正好放下 7 / 8 / 9 个分组、左列不出滚动条」的高度。这里只负责按分组数切 class。
+ * （不用「高度 auto 让内容撑开」：左右都是 scroll-view，必须有确定高度才能滚动；
+ *   且右列资源条数动态、可能很多，撑开后会超出屏幕且无法滚动。）
+ *
  * 用法：
  *   <resource-picker
  *     show="{{pickerShow}}" stage-id="{{selectedStageId}}" value="{{pickerValue}}"
@@ -27,9 +33,10 @@ Component({
   },
 
   data: {
-    groups: [],          // [{ key, label }]
+    groups: [],            // [{ key, label }]
     activeGroupKey: '',
-    items: []            // [{ id, name, groupKey, groupLabel, custom }]
+    items: [],             // [{ id, name, groupKey, groupLabel, custom }]
+    sheetSizeClass: ''     // 高度档：'' = 7 行档，h8 / h9 = 8 / 9 行档（高度写在 wxss 里）
   },
 
   lifetimes: {
@@ -49,6 +56,14 @@ Component({
 
   methods: {
     noop() {},
+
+    // 按分组数选高度档：≤7 用默认档（装 7 行），8 / 9 分别挂 .h8 / .h9；
+    // 超过 9 个分组仍用 9 档，多出来的分组由左列 scroll-view 滚动承担
+    _applySheetSize() {
+      const n = (this.data.groups || []).length
+      const cls = n >= 9 ? 'h9' : (n >= 8 ? 'h8' : '')
+      if (cls !== this.data.sheetSizeClass) this.setData({ sheetSizeClass: cls })
+    },
 
     // 拉取该阶段的全部资源（官方 + 自定义），并定位默认分组
     _load() {
@@ -86,6 +101,7 @@ Component({
 
       this.setData({ groups, activeGroupKey })
       this._refreshItems()
+      this._applySheetSize()
     },
 
     // 只展示当前分组的资源

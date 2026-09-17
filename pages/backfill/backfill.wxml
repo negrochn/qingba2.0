@@ -1,9 +1,10 @@
 <view class="container {{fontClass}} {{darkClass}}">
-  <!-- 日期 + 阶段 -->
-  <view class="weui-cells__title">补录日期</view>
-  <view class="weui-cells">
+  <!-- 日期 / 阶段 一块白底分组；「学习内容」标题分隔出记录行块（含添加按钮）。
+       行间线统一走 .weui-cell::before 与 .bf-row::before 的 left:32rpx 缩进细线；
+       首行 cell-first 显式关线（picker 多包了一层，:first-child 判不到） -->
+  <view class="bf-rows">
     <picker mode="date" value="{{dateStr}}" end="{{todayStr}}" bindchange="onDateChange">
-      <view class="weui-cell weui-cell_access">
+      <view class="weui-cell weui-cell_access cell-first">
         <view class="weui-cell__bd">
           <text class="weui-cell__bd_text">日期</text>
         </view>
@@ -27,7 +28,6 @@
     </picker>
   </view>
 
-  <!-- 当天记录行 -->
   <view class="weui-cells__title">学习内容</view>
   <view class="bf-rows">
     <view class="bf-row" wx:for="{{rows}}" wx:key="rid">

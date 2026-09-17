@@ -7,8 +7,9 @@ page {
   background: var(--bg);
 }
 
-/* 底部固定栏占位：避免内容被遮住 */
+/* 底部固定栏占位：避免内容被遮住；顶部留白顶替原「补录日期」标题 */
 .container {
+  padding-top: 32rpx;
   padding-bottom: calc(env(safe-area-inset-bottom) + 220rpx);
 }
 
@@ -57,6 +58,9 @@ page {
 }
 
 .bf-row:first-child::before { display: none; }
+
+/* picker 多包了一层，:first-child 判不到，日期行首行缩进线显式关掉 */
+.cell-first::before { display: none; }
 
 .bf-res {
   flex: 1;

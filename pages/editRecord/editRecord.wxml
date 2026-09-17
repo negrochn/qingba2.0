@@ -1,10 +1,11 @@
 <view class="container {{fontClass}} {{darkClass}}">
-  <!-- 打卡信息：日期 / 阶段 / 资源三项同类信息合并为一组 ——
-       分三组时各要一个分组标题（约 78rpx）和一组上下边线，纯属浪费 -->
-  <view class="weui-cells__title">打卡信息</view>
+  <!-- 整页只留一块 cells：日期 / 阶段 / 资源 / 时长 / 快捷时长 / 备注。
+       去掉两个分组标题与两条 tips —— 标题每组约 78rpx 且各带一组通栏线，
+       而这些信息靠行首标签已能区分；行间线由 .weui-cell::before 自动画，
+       少一层分组也就少一次视线跳转 -->
   <view class="weui-cells">
     <picker mode="date" value="{{dateStr}}" end="{{todayStr}}" bindchange="onDateChange">
-      <view class="weui-cell weui-cell_access">
+      <view class="weui-cell weui-cell_access cell-first">
         <view class="weui-cell__bd">
           <text class="weui-cell__bd_text">日期</text>
         </view>
@@ -42,53 +43,47 @@
           <view class="weui-cell__desc" wx:if="{{selectedGroupLabel}}">{{selectedGroupLabel}}</view>
         </view>
         <view class="weui-cell__ft">
-          <text class="weui-cell__ft_value {{selectedResourceName ? '' : 'placeholder'}}">{{selectedResourceName || '请选择'}}</text>
+          <!-- 未选阶段时 picker 是 disabled，右侧文案接过原 tips 的引导职责 -->
+          <text class="weui-cell__ft_value {{selectedResourceName ? '' : 'placeholder'}}">{{selectedResourceName || (groups.length ? '请选择' : '请先选阶段')}}</text>
           <text class="iconfont icon-right"></text>
         </view>
       </view>
     </picker>
-  </view>
-  <!-- 两条提示互斥：未选阶段时更需要「先选阶段」的引导 -->
-  <view class="weui-cells__tips" wx:if="{{groups.length === 0}}">选择阶段后可挑选分组与资源。</view>
-  <view class="weui-cells__tips" wx:else>修改后会计入阶段时长与统计。</view>
 
-  <!-- 学习记录：时长 / 快捷时长 / 备注
-       合并进同一张卡片，用分隔线分节 —— 省一个分组标题与一份卡片间距 -->
-  <view class="weui-cells__title">学习记录</view>
-  <view class="form-card">
-    <view class="form-row">
-      <view class="form-label">时长</view>
-      <view class="form-right">
+    <!-- 时长 / 备注：与上面同属一块 cells，
+         行间线由 .weui-cell::before 自动画，不再需要 weui-divider 分节 -->
+    <view class="weui-cell">
+      <view class="weui-cell__bd">
+        <text class="weui-cell__bd_text">时长</text>
+      </view>
+      <view class="weui-cell__ft cell-ft-flex">
         <input
-          class="form-field"
+          class="cell-input"
           type="number"
           placeholder="请输入"
+          placeholder-class="cell-input-ph"
           value="{{durationInput}}"
           bindinput="onDurationInput"
         />
-        <text class="form-unit">分钟</text>
+        <text class="cell-unit">分钟</text>
       </view>
     </view>
-    <view class="weui-divider"></view>
-    <view class="form-row">
-      <view class="seg-control seg-control-grid">
-        <view class="seg-item {{durationInput==='10' ? 'seg-active' : ''}}" data-val="10" bindtap="quickDuration">10</view>
-        <view class="seg-item {{durationInput==='15' ? 'seg-active' : ''}}" data-val="15" bindtap="quickDuration">15</view>
-        <view class="seg-item {{durationInput==='20' ? 'seg-active' : ''}}" data-val="20" bindtap="quickDuration">20</view>
-        <view class="seg-item {{durationInput==='25' ? 'seg-active' : ''}}" data-val="25" bindtap="quickDuration">25</view>
-        <view class="seg-item {{durationInput==='30' ? 'seg-active' : ''}}" data-val="30" bindtap="quickDuration">30</view>
+
+    <!-- 备注与时长同构：行首标签 + 右对齐输入，用 placeholder 说明「选填」 -->
+    <view class="weui-cell">
+      <view class="weui-cell__bd">
+        <text class="weui-cell__bd_text">备注</text>
       </view>
-    </view>
-    <view class="weui-divider"></view>
-    <!-- 备注不单独占标签位：满宽输入，用 placeholder 说明，长备注也能看全 -->
-    <view class="form-row">
-      <input
-        class="form-field form-field-full"
-        placeholder="备注，选填，如：第1-2册"
-        value="{{remarkInput}}"
-        bindinput="onRemarkInput"
-        maxlength="50"
-      />
+      <view class="weui-cell__ft cell-ft-flex">
+        <input
+          class="cell-input"
+          placeholder="选填，如：第1-2册"
+          placeholder-class="cell-input-ph"
+          value="{{remarkInput}}"
+          bindinput="onRemarkInput"
+          maxlength="50"
+        />
+      </view>
     </view>
   </view>
 

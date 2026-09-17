@@ -1,10 +1,15 @@
 /* 编辑记录页：原生 picker（阶段 selector / 分组+资源 multiSelector 两列联动）
-   + 表单（原语 13/15）+ 分段控件（原语 14）
+   + 表单（原语 13/15）
+   整页只有一块 cells（打卡信息与学习记录合并，去掉分组标题与 tips），
    weui-cells / weui-cell 等基础样式见全局 app.wxss */
 
 page {
   background: var(--bg);
 }
+
+/* 去掉分组标题后，页面顶部要自己顶上留白（原由 .weui-cells__title 的 padding-top 提供）。
+   按项目约定走父容器 padding，而非给 .weui-cells 加 margin */
+.container { padding-top: 32rpx; }
 
 /* 注：原先的 .bf-custom（自定义资源尾标）已删除 ——
    改两列 picker 后资源名只能渲染纯文本，「自定义」标记改为拼在名字里（见 editRecord.js 的 _itemLabel） */
@@ -13,67 +18,23 @@ page {
    本页上方只有一张卡片，96rpx 会显得空。页面样式加载在 app.wxss 之后，同特异性即覆盖 */
 .weui-btn-area { padding-top: 32rpx; }
 
-/* ===== 表单卡片（打卡弹窗同款） ===== */
-.form-card {
-  background: var(--card);
-  border-radius: 16rpx;
-  padding: 0 32rpx;
-  margin-bottom: 20rpx;
-}
-.form-row {
-  display: flex;
-  align-items: center;
-  min-height: 88rpx;
-  padding: 16rpx 0;
-  box-sizing: border-box;
-}
-.form-row:active { background: var(--cell-active); }
-.form-label {
-  flex-shrink: 0;
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text);
-  width: 140rpx;
-}
-.form-right {
+/* ===== cells 内的表单控件（时长 / 备注） =====
+   cells / cell 结构与行间线全部复用全局原语，这里只处理控件自身的对齐与宽度。
+   两个输入统一右对齐，与全局 .weui-cell__ft_value 的值对齐方式保持一致 */
+.cell-first::before { display: none; }   /* picker 多包了一层，首行缩进线需显式关掉 */
+.cell-ft-flex { max-width: none; flex: 1; }
+.cell-input {
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12rpx;
-}
-.form-field {
-  flex: 1;
+  min-width: 0;
+  height: 64rpx;
   text-align: right;
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);
-  height: 64rpx;
 }
-.form-field-full { text-align: left; }
-.form-unit {
+.cell-input-ph { color: var(--text3); }
+.cell-unit {
   flex-shrink: 0;
+  margin-left: 8rpx;
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text3);
-  margin-left: 8rpx;
 }
-.form-card .weui-divider { height: 1px; background: var(--divider); margin: 0; }
-
-/* 快捷时长分段控件（等宽 variant） */
-.seg-control { display: flex; align-items: center; flex: 1; }
-.seg-control-grid .seg-item { flex: 1; text-align: center; }
-.seg-item {
-  height: 56rpx;
-  padding: 0 32rpx;
-  margin-left: 16rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2rpx solid var(--divider);
-  border-radius: 8rpx;
-  background: var(--card);
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text);
-  box-sizing: border-box;
-}
-.seg-item:first-child { margin-left: 0; }
-.seg-item:active { background: var(--cell-active); }
-.seg-active { border-color: var(--brand); color: var(--brand); background: var(--card); }

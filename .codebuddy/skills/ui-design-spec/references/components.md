@@ -523,6 +523,7 @@ WeUI 提供 `weui-icon-*`（mask + `background-color: currentColor` 方案，色
 - 原生 `<picker>` **没有任何样式属性**（无 `style` / `class` / 字号），弹层由原生层渲染、WXSS 渗透不进去；唯一接近的 `header-text`（选择器标题）**仅安卓有效**。官方给的出路就是「要完全自定义请用 `picker-view`，并自行实现弹层容器」。
 - 原生可用的 `mode`：`selector`（单列）/ `multiSelector`（多列联动）/ `date` / `time` / `region`。
 - **`multiSelector` 两列联动的关键坑**：左列滚动时必须在 `bindcolumnchange` 里**同时把右列下标重置为 0**，否则右列会停在上一分组的旧下标上而错位。
+- **`multiSelector` 的 `value` 是受控的（第二个坑，更隐蔽）**：`bindcolumnchange` 里改 `range` 时，除了把右列下标重置为 0，还必须**把左列下标一并写回**（整体 `setData({ multiValue: [value, 0] })`）。只写 `multiValue[1]` 的话，picker 收到新 `range` 后会按传入的旧 `value` 把左列复位回原分组——表现为「滚到第 2 个分组又被弹回第一个」，也就是用户口中的「分组切不动」。`bindchange`（点确定）里同样建议写回 `multiValue: [gi, ri]`，否则再次打开弹层会跳回旧位置。先例 `pages/editRecord` 的资源行。
 - 原生只能渲染**纯文本**：需要尾标 / 图标时只能拼进文案（如 `书名（自定义）`），不能挂类；值的「占位灰字」也只能靠给 `__ft_value` 加 `placeholder` 类实现。
 - **同一个 App 里两种观感并存是平台限制，不是缺陷**：项目现状是日期 / 阶段行用原生（一次只选一屏，原生更省心），月份 / 阶段选择器用自绘（需跟随变量）。要全站统一，只能把日期行也换成自绘（见 `pages/records` 的 `.mp-*` 原语）。
 
@@ -652,6 +653,81 @@ onTouchMove(e) {
 - **强调只保留「主色加粗」一档**：行内 `__strong` 给 `--text` + `font-weight:600` 即可，**不引入彩色语义**（如 TDesign `mark` 硬编码黄底、`theme` 的蓝色 primary），与项目「扁平纯色、禁彩色字」一致；也不为单段引入带竖线的提示块
 - **样式定义在页面内、未提升为全局原语**：目前只有这一处文章页，类名沿用 WeUI 的 `.weui-article__*` 体系，页面特有结构（阶段参考块 / 方法分区 / 列表）留在 `about.wxss`——**等出现第二处文章页再抽取**
 - **结尾动作区（分享）**：文章末尾如需按钮，用独立容器 `.about-share { padding: 24rpx 32rpx 8rpx; }` + `.weui-btn_block`，附一行 `24rpx` `--text3` 居中说明；`open-type="share"` 在单页模式下禁用，需按 `scene === 1154` 隐藏（见 `design-guidelines.md` §六）
+
+---
+
+## 原语 22：双列选择弹层（左分组 / 右资源，项目 `components/resource-picker`）
+
+用于「在两个强关联维度里各选一项」的场景（先分组、再该分组下的资源）。**不逐级下钻**：切分组点左边即可，不用返回上一级，两列一次看全。项目现状：`pages/backfill` 的选资源入口（`pages/editRecord` 走的是原生 `multiSelector`，见原语 19 的选型表）。
+
+```html
+<view class="rp-mask {{fontClass}} {{darkClass}} {{show ? 'show' : ''}}" bindtap="onCancel" catchtouchmove="noop">
+  <view class="rp-sheet {{sheetSizeClass}}" catchtap="noop">
+    <view class="rp-handle"></view>
+    <view class="rp-head">
+      <view class="rp-title">选择资源</view>
+      <view class="rp-close iconfont icon-close" catchtap="onCancel"></view>
+    </view>
+    <view class="rp-body">
+      <scroll-view class="rp-groups" scroll-y>
+        <view class="rp-group {{item.key === activeGroupKey ? 'active' : ''}}"
+              wx:for="{{groups}}" wx:key="key" data-key="{{item.key}}" bindtap="onSwitchGroup">
+          <text class="rp-group-name">{{item.label}}</text>
+          <text class="rp-check iconfont icon-check" wx:if="{{item.key === activeGroupKey}}"></text>
+        </view>
+      </scroll-view>
+      <scroll-view class="rp-items" scroll-y>
+        <view class="rp-item {{item.id === value ? 'active' : ''}}" wx:for="{{items}}" wx:key="id"
+              data-id="{{item.id}}" bindtap="onPickItem">
+          <text class="rp-item-name">{{item.name}}</text>
+          <text class="rp-custom" wx:if="{{item.custom}}">自定义</text>
+          <text class="rp-check iconfont icon-check" wx:if="{{item.id === value}}"></text>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+</view>
+```
+
+```css
+/* 高度按「能装下几个分组行」分三档：默认 7 行 / .h8 8 行 / .h9 9 行。
+   固定占高 172rpx = 上 padding 16 + 抓手 8+8+24 + 头部 56+28 + 下 padding 32 */
+.rp-sheet {
+  --rp-rows: 7;
+  height: calc(172rpx + 24rpx + 96rpx * var(--rp-rows) + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; background: var(--card);
+  border-radius: 24rpx 24rpx 0 0;
+  padding: 16rpx 0 calc(env(safe-area-inset-bottom) + 32rpx);
+  transform: translateY(100%); transition: transform .25s ease;   /* 隐藏态沉到视口下方 */
+}
+.rp-sheet.h8 { --rp-rows: 8; }
+.rp-sheet.h9 { --rp-rows: 9; }
+.rp-mask.show .rp-sheet { transform: translateY(0); }
+
+.rp-body   { flex: 1; min-height: 0; display: flex; overflow: hidden; }   /* 左右同白底 */
+.rp-groups { position: relative; width: 300rpx; flex-shrink: 0; height: 100%; }
+/* 列间竖线：1px + scaleX(.5) + transform-origin: right（细线统一方案） */
+.rp-group  { position: relative; display: flex; align-items: center; box-sizing: border-box;
+             min-height: 96rpx; padding: 16rpx 24rpx;
+             font-size: calc(34rpx * var(--fs, 1)); color: var(--text2); }
+.rp-group-name { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.rp-group.active { color: var(--brand); font-weight: 500; }
+.rp-items  { flex: 1; min-width: 0; height: 100%; background: var(--card); }
+.rp-item   { position: relative; display: flex; align-items: center;
+             min-height: 112rpx; padding: 32rpx 24rpx;                  /* 对齐 @weuiCellHeight */
+             font-size: calc(34rpx * var(--fs, 1)); color: var(--text); }
+.rp-item.active { color: var(--brand); }
+.rp-check  { flex-shrink: 0; font-size: calc(44rpx * var(--fs, 1)) !important;
+             color: var(--brand); line-height: 1; }                      /* 与 .weui-cells_radio 的选中勾同档 */
+```
+
+- **左右两列同白底，分栏靠列间竖线**：左列曾铺 `--card2` 灰底，它与右列 `--card` 只差一档（浅色下几乎看不出、深色更弱），反而不如一根定位在列边界的 `1px + scaleX(.5)` 竖线干脆。
+- **两列选中态同款：文字品牌绿 + 行尾 `icon-check`**。左列早期用「右侧竖线指示条」（还要 `z-index` 去盖列间竖线），与右列的对勾不一致；统一成勾后选中语义只由一个字形承担。
+- **高度不要用「内容 auto 撑开」**：左右都是 `scroll-view`，必须有确定高度才能滚动——`height:100%` 落在 auto 高度的父级上会形成循环依赖，iOS 上可能塌成 0；且右列资源条数动态（自定义资源每阶段上限 50 条），撑开后会超出屏幕、被 `.rp-body` 的 `overflow:hidden` 裁掉，**既看不到也滚不到**。
+- **每档高度 = 固定占高 + 行高 × N + 余量 + 安全区**。余量取 `24rpx`：固定占高是理论估算（大字号档头部会变高几 rpx、`env()` 取值也会取整），余量太小会在真机上冒出滚动条。用 `rpx + env()` 表达，随屏宽与安全区自动适配，**不必用 JS 量窗口再换算 px**。
+- **不需要拖拽改高度**：三档自动取高已能满足（曾实现过「拖拽 + 吸附三档 + 下滑关闭」并整体移除）。若将来确实要拖拽，注意 `scroll-view` 仍要有确定高度，且拖拽期间要关掉 `transition`。
+- **常驻挂载 + `show` 切 class**（不是 `wx:if` 创建销毁）：隐藏态必须显式 `visibility: hidden` + `transform: translateY(100%)` 移出视口——只写 `pointer-events: none` 只是不接收点击，面板仍会渲染在页面上挡住内容。
+- 其余约定同原语 8：根节点带 `{{fontClass}} {{darkClass}}`、头部统一「抓手 + 标题左 + 关闭右」、关闭按钮用 `icon-close` 且热区补足 88rpx。
 
 ---
 

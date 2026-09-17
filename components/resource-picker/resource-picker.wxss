@@ -36,11 +36,14 @@
 
 .rp-sheet {
   width: 100%;
-  /* 双列 scroll-view 必须有确定高度才能滚动，故固定 70vh（打卡弹窗是内容自适应）。
-     常规6 为 8 个分组、后续加「熏听」共 9 个：9 × 80rpx = 720rpx，
-     在 iPhone 8（1334rpx）上 70vh 的可视区约 730rpx，刚好容得下；
-     再多就需要滚动，左列本就是 scroll-view，能兜住 */
-  height: 70vh;
+  /* 高度按「能装下几个分组行」分三档（默认档 7 行 / .h8 8 行 / .h9 9 行）：
+       固定占高 172rpx（上 padding 16 + 抓手 8+8+24 + 头部 56+28 + 下 padding 32）
+     + 行高 96rpx × N + 余量 24rpx + 底部安全区。
+     用 rpx + env() 表达，随屏宽 / 安全区自动适配，不必用 JS 量窗口；
+     双列 scroll-view 因此始终有确定高度 —— 内容多于档位时在档内滚动，不会撑出屏幕。
+     余量 24rpx 用于吸收大字号档头部变高、安全区取整等几像素的波动 */
+  --rp-rows: 7;
+  height: calc(172rpx + 24rpx + 96rpx * var(--rp-rows) + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   background: var(--card);
@@ -59,6 +62,10 @@
 .rp-mask.show .rp-sheet {
   transform: translateY(0);
 }
+
+/* 高度档：默认档装 7 个分组行，这两个类分别装 8 / 9 行 */
+.rp-sheet.h8 { --rp-rows: 8; }
+.rp-sheet.h9 { --rp-rows: 9; }
 
 /* ===== 头部：抓手 + 标题左 + 关闭右（对齐 .sheet-handle / .sheet-head / .sheet-close） ===== */
 .rp-handle {
@@ -103,13 +110,12 @@
 
 /* ===== 双列主体 =====
    通栏铺满弹窗宽度，不做「内缩 + 圆角」的内嵌卡片（那是表单卡的形态）。
-   分栏交给左右两列的底色差异表达，顶部圆角由 .rp-sheet 承担 */
+   左右两列同白底，分栏只靠 .rp-groups::after 的列间竖线表达，顶部圆角由 .rp-sheet 承担 */
 .rp-body {
   flex: 1;
   min-height: 0;
   display: flex;
   overflow: hidden;
-  background: var(--card2);
 }
 
 .rp-groups {
@@ -136,18 +142,26 @@
 
 /* 分组项：字号取微信 17pt 主文档（34rpx）——与右列 .rp-item 同档，层级由颜色承担
    （未选中 --text2 灰 / 选中 --brand 品牌绿）。
-   高度 80rpx：左列现有 9 个分组（常规6 的 8 个 + 熏听），80 × 9 = 720rpx
-   才能在 70vh 的弹窗里一屏放下 —— 这里取 80rpx 而非设计指南的 88rpx，是为分组数量让路 */
+   高度 96rpx；分组多时超出 70vh 由 scroll-view 滚动兜底 */
 .rp-group {
   position: relative;
   display: flex;
   align-items: center;
   box-sizing: border-box;
-  min-height: 80rpx;
+  min-height: 96rpx;
   padding: 16rpx 24rpx;
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text2);
   line-height: 1.3;
+}
+
+/* 分组名：flex:1 把行尾选中勾推到右侧，长名省略号 */
+.rp-group-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* 行间细线：与右列 .rp-item::before 同款 —— 左缩进 24rpx 对齐文字，
@@ -168,27 +182,8 @@
 
 .rp-group:active { background: var(--cell-active); }
 
-/* 选中提示：右侧竖线 —— 位置正好压在列间分隔线（.rp-groups::after）上，
-   把那一段点亮成品牌绿，比再加一个图标更接近 WeUI tabs 的「指示条」语义。
-   取居中短条（40rpx ≈ 项高 80rpx 的一半）而非整项高度：只标出「这一项被选中」，
-   不会把整段边界都点亮。用 margin-top 负值居中而非 transform —— 小程序伪元素上
-   transform 偶有不生效 */
-.rp-group.active::after {
-  content: ' ';
-  position: absolute;
-  right: 0;
-  top: 50%;
-  width: 6rpx;
-  height: 40rpx;
-  margin-top: -20rpx;
-  background: var(--brand);
-  border-radius: 3rpx;
-  z-index: 1;   /* 盖住 .rp-groups::after 那根 1px 灰线 */
-}
-
-/* 选中态：文字变品牌色 + 微粗，右侧再压一条竖线（见上），三者同色不同形，不改背景。
-   （曾用过「左侧指示条」，但主体改通栏后它正好贴在弹窗乃至屏幕的最左边缘，观感很挤；
-   而背景色方案里 --card2 与 --card 只差一档，浅色下几乎看不出、深色下更弱） */
+/* 选中态：文字变品牌色，行尾打对勾（.rp-check，与右列 .rp-item 选中勾同款），
+   不再用竖线指示条，也不改背景 —— 与右侧资源的选中表达保持一致 */
 .rp-group.active {
   color: var(--brand);
   font-weight: 500;

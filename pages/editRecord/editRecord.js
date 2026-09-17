@@ -155,15 +155,17 @@ Page({
     })
   },
 
-  // 左列（分组）滚动：重建右列，并且必须同时把右列下标重置为 0 ——
-  // 否则右列会停在上一分组的旧下标上而错位
+  // 左列（分组）滚动：重建右列，并把两列下标一起写回 ——
+  // picker 的 value 是受控的，只改右列的话，它会拿没变的 multiValue[0]
+  // 把左列复位回第一个分组（表现为「分组切不动」）；
+  // 右列也必须重置为 0，否则会停在上一分组的旧下标上而错位
   onColumnChange(e) {
     const { column, value } = e.detail
     if (column !== 0) return
     const list = this._groupItems[value] || []
     this.setData({
       'multiRange[1]': list.map(_itemLabel),
-      'multiValue[1]': 0
+      multiValue: [value, 0]
     })
   },
 
@@ -173,8 +175,14 @@ Page({
     const g = (this.data.groups || [])[gi]
     const list = this._groupItems[gi] || []
     const r = list[ri]
-    if (!g || !r) return
+    if (!g || !r) {
+      // 空分组点确定不应静默失败，否则像「改不动」
+      wx.showToast({ title: '该分组暂无资源', icon: 'none' })
+      return
+    }
     this.setData({
+      // 同步下标：下次打开弹层停在这次选中的分组，而不是记录原来的分组
+      multiValue: [gi, ri],
       selectedGroupKey: g.key,
       selectedGroupLabel: g.label,
       selectedResourceId: r.id,
@@ -186,11 +194,6 @@ Page({
   // ===== 时长 / 备注 =====
   onDurationInput(e) {
     this.setData({ durationInput: e.detail.value })
-    this._refreshSubmit()
-  },
-
-  quickDuration(e) {
-    this.setData({ durationInput: String(e.currentTarget.dataset.val) })
     this._refreshSubmit()
   },
 
