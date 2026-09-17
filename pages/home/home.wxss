@@ -215,6 +215,15 @@
   background: rgba(0, 0, 0, 0.5);
   pointer-events: auto;
 }
+
+/* 深色蒙层取 rgba(0,0,0,.8)，与 app.wxss 的 .dm-dark .weui-mask 同值。
+   蒙层根节点同时挂 dm-* 与该显示修饰类，故选择器要写成同元素复合
+   （`.dm-dark .hs-mask` 会要求 dm-dark 是祖先，匹配不到） */
+.hs-mask.dm-dark.hs-mask-show { background: rgba(0, 0, 0, 0.8); }
+
+@media (prefers-color-scheme: dark) {
+  .hs-mask.dm-auto.hs-mask-show { background: rgba(0, 0, 0, 0.8); }
+}
 .hs-sheet {
   width: 100%;
   box-sizing: border-box;
@@ -247,13 +256,17 @@
   font-weight: 600;
   color: var(--text);
 }
+/* 关闭：热区 88rpx 见方（设计指南「可点项最小热区 ≥ 88rpx」），字形走 iconfont icon-close。
+   负 margin 抵消热区外扩，标题与关闭图标的视觉间距不变 */
 .hs-close {
   flex-shrink: 0;
-  width: 56rpx;
-  height: 56rpx;
-  line-height: 50rpx;
-  text-align: center;
-  font-size: 53rpx;
+  width: 88rpx;
+  height: 88rpx;
+  margin: -16rpx -16rpx -16rpx 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(34rpx * var(--fs, 1));
   color: var(--text3);
   border-radius: 50%;
 }

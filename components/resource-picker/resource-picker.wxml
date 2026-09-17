@@ -1,0 +1,44 @@
+<!-- 资源选择器：底部半屏弹层，双列（左分组 / 右资源）
+     头部布局对齐 WeUI picker：左上角关闭 + 居中标题。
+     蒙层根节点自带主题 class，见 resource-picker.wxss 头注释 -->
+<view class="rp-mask {{fontClass}} {{darkClass}} {{show ? 'show' : ''}}" bindtap="onCancel" catchtouchmove="noop">
+  <view class="rp-sheet" catchtap="noop">
+
+    <view class="rp-hd">
+      <view class="rp-hd-side">
+        <view class="rp-close iconfont icon-close" catchtap="onCancel"></view>
+      </view>
+      <view class="rp-hd-main">
+        <text class="rp-title">选择资源</text>
+      </view>
+    </view>
+
+    <view class="rp-body">
+      <scroll-view class="rp-groups" scroll-y>
+        <view
+          class="rp-group {{item.key === activeGroupKey ? 'active' : ''}}"
+          wx:for="{{groups}}"
+          wx:key="key"
+          data-key="{{item.key}}"
+          bindtap="onSwitchGroup"
+        >{{item.label}}</view>
+      </scroll-view>
+
+      <scroll-view class="rp-items" scroll-y>
+        <view
+          class="rp-item {{item.id === value ? 'active' : ''}}"
+          wx:for="{{items}}"
+          wx:key="id"
+          data-id="{{item.id}}"
+          bindtap="onPickItem"
+        >
+          <text class="rp-item-name">{{item.name}}</text>
+          <text class="rp-custom" wx:if="{{item.custom}}">自定义</text>
+          <text class="rp-check iconfont icon-check" wx:if="{{item.id === value}}"></text>
+        </view>
+        <view class="rp-empty" wx:if="{{items.length === 0}}">该分组暂无资源</view>
+      </scroll-view>
+    </view>
+
+  </view>
+</view>

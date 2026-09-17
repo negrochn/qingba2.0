@@ -245,7 +245,7 @@
   color: #fff;
 }
 .swipe-act-main {
-  font-size: calc(32rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1));
   font-weight: 500;
   line-height: 1.2;
 }
@@ -381,13 +381,17 @@
   white-space: nowrap;
   padding-right: 12rpx;
 }
+/* 关闭：热区 88rpx 见方（设计指南「可点项最小热区 ≥ 88rpx」），字形走 iconfont icon-close。
+   负 margin 抵消热区外扩，标题与关闭图标的视觉间距不变 */
 .sheet-close {
   flex-shrink: 0;
-  width: 56rpx;
-  height: 56rpx;
-  line-height: 50rpx;
-  text-align: center;
-  font-size: 53rpx;
+  width: 88rpx;
+  height: 88rpx;
+  margin: -16rpx -16rpx -16rpx 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(34rpx * var(--fs, 1));
   color: var(--text3);
   border-radius: 50%;
 }
@@ -500,11 +504,14 @@
 }
 .pm-title { flex: 1; font-size: calc(34rpx * var(--fs, 1)); color: var(--text); }
 .pm-close {
-  width: 56rpx;
-  height: 56rpx;
-  line-height: 50rpx;
-  text-align: center;
-  font-size: 53rpx;
+  flex-shrink: 0;
+  width: 88rpx;
+  height: 88rpx;
+  margin: -16rpx -16rpx -16rpx 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(34rpx * var(--fs, 1));
   color: var(--text3);
   border-radius: 50%;
 }
@@ -620,3 +627,14 @@
 /* 详情页字体基准：常规路径 34rpx 起算（子节点 calc(Nrpx*var(--fs)) 已同步；此处供 input 继承） */
 .sheet-mask,
 .pm-mask { font-size: calc(34rpx * var(--fs, 1)); }
+
+/* ===== 深色蒙层（与 app.wxss 的 .dm-dark .weui-mask 同值） =====
+   蒙层根节点同时挂 dm-* 与该页的显示修饰类，故选择器要写成同元素复合
+   （`.dm-dark .sheet-mask` 会要求 dm-dark 是祖先，匹配不到） */
+.sheet-mask.dm-dark.sheet-mask-show,
+.pm-mask.dm-dark.pm-mask-show { background: rgba(0, 0, 0, 0.8); }
+
+@media (prefers-color-scheme: dark) {
+  .sheet-mask.dm-auto.sheet-mask-show,
+  .pm-mask.dm-auto.pm-mask-show { background: rgba(0, 0, 0, 0.8); }
+}

@@ -1,6 +1,6 @@
 <view class="container {{fontClass}} {{darkClass}}">
-  <!-- 日期 -->
-  <view class="weui-cells__title">{{isEdit ? '打卡日期' : '补录日期'}}</view>
+  <!-- 日期 + 阶段 -->
+  <view class="weui-cells__title">补录日期</view>
   <view class="weui-cells">
     <picker mode="date" value="{{dateStr}}" end="{{todayStr}}" bindchange="onDateChange">
       <view class="weui-cell weui-cell_access">
@@ -13,109 +13,69 @@
         </view>
       </view>
     </picker>
-  </view>
-  <view class="weui-cells__tips">{{isEdit ? '修改后会计入阶段时长与统计，可在「打卡记录」中查看。' : '补录数据会计入阶段时长与统计，可在「打卡记录」中查看。'}}</view>
 
-  <!-- 阶段 -->
-  <view class="weui-cells__title">选择阶段</view>
-  <view class="weui-cells weui-cells_radio">
-    <view
-      class="weui-cell"
-      wx:for="{{stages}}"
-      wx:key="id"
-      wx:for-item="s"
-      data-id="{{s.id}}"
-      bindtap="pickStage"
-    >
-      <view class="weui-cell__bd">{{s.name}}</view>
-      <text class="weui-icon-checked iconfont icon-check" hidden="{{selectedStageId !== s.id}}"></text>
-    </view>
-  </view>
-
-  <!-- 分组 -->
-  <block wx:if="{{groups.length > 0}}">
-    <view class="weui-cells__title">选择分组</view>
-    <view class="weui-cells weui-cells_radio">
-      <view
-        class="weui-cell"
-        wx:for="{{groups}}"
-        wx:key="key"
-        wx:for-item="g"
-        data-key="{{g.key}}"
-        bindtap="pickGroup"
-      >
-        <view class="weui-cell__bd">{{g.label}}</view>
-        <text class="weui-icon-checked iconfont icon-check" hidden="{{selectedGroupKey !== g.key}}"></text>
-      </view>
-    </view>
-  </block>
-
-  <!-- 资源 -->
-  <block wx:if="{{items.length > 0}}">
-    <view class="weui-cells__title">选择资源</view>
-    <view class="weui-cells weui-cells_radio">
-      <view
-        class="weui-cell"
-        wx:for="{{items}}"
-        wx:key="id"
-        wx:for-item="r"
-        data-id="{{r.id}}"
-        bindtap="pickResource"
-      >
+    <picker mode="selector" range="{{stageNames}}" value="{{stageIndex}}" bindchange="onStageChange">
+      <view class="weui-cell weui-cell_access">
         <view class="weui-cell__bd">
-          {{r.name}}<text class="bf-custom" wx:if="{{r.custom}}">自定义</text>
+          <text class="weui-cell__bd_text">阶段</text>
         </view>
-        <text class="weui-icon-checked iconfont icon-check" hidden="{{selectedResourceId !== r.id}}"></text>
+        <view class="weui-cell__ft">
+          <text class="weui-cell__ft_value">{{selectedStageName || '请选择'}}</text>
+          <text class="iconfont icon-right"></text>
+        </view>
       </view>
-    </view>
-  </block>
+    </picker>
+  </view>
 
-  <!-- 时长 -->
-  <view class="weui-cells__title">学习时长</view>
-  <view class="form-card">
-    <view class="form-row">
-      <view class="form-label">时长</view>
-      <view class="form-right">
+  <!-- 当天记录行 -->
+  <view class="weui-cells__title">学习内容</view>
+  <view class="bf-rows">
+    <view class="bf-row" wx:for="{{rows}}" wx:key="rid">
+      <view class="bf-res" data-rid="{{item.rid}}" bindtap="openPicker">
+        <text class="bf-res-name {{item.resourceName ? '' : 'placeholder'}}">{{item.resourceName || '选择资源'}}</text>
+        <text class="bf-res-group" wx:if="{{item.groupLabel}}">{{item.groupLabel}}</text>
+      </view>
+      <view class="bf-dur">
         <input
-          class="form-field"
+          class="bf-dur-input"
           type="number"
-          placeholder="请输入"
-          value="{{durationInput}}"
+          placeholder="0"
+          placeholder-class="bf-dur-ph"
+          value="{{item.durationInput}}"
+          focus="{{focusRowKey === item.rid}}"
+          data-rid="{{item.rid}}"
+          confirm-type="done"
           bindinput="onDurationInput"
+          bindconfirm="onDurationConfirm"
         />
-        <text class="form-unit">分钟</text>
+        <text class="bf-dur-unit">分钟</text>
       </view>
+      <view class="bf-del iconfont icon-close" data-rid="{{item.rid}}" catchtap="onRemoveRow"></view>
     </view>
-    <view class="weui-divider"></view>
-    <view class="form-row">
-      <view class="seg-control seg-control-grid">
-        <view class="seg-item {{durationInput==='10' ? 'seg-active' : ''}}" data-val="10" bindtap="quickDuration">10</view>
-        <view class="seg-item {{durationInput==='15' ? 'seg-active' : ''}}" data-val="15" bindtap="quickDuration">15</view>
-        <view class="seg-item {{durationInput==='20' ? 'seg-active' : ''}}" data-val="20" bindtap="quickDuration">20</view>
-        <view class="seg-item {{durationInput==='25' ? 'seg-active' : ''}}" data-val="25" bindtap="quickDuration">25</view>
-        <view class="seg-item {{durationInput==='30' ? 'seg-active' : ''}}" data-val="30" bindtap="quickDuration">30</view>
-      </view>
-    </view>
+
+    <view class="bf-add" bindtap="onAddRow">＋ 添加一条</view>
   </view>
 
-  <!-- 备注 -->
-  <view class="weui-cells__title">备注</view>
-  <view class="form-card">
-    <view class="form-row">
-      <input
-        class="form-field form-field-full"
-        placeholder="选填，如：第1-2册"
-        value="{{remarkInput}}"
-        bindinput="onRemarkInput"
-        maxlength="50"
-      />
-    </view>
-  </view>
+  <view class="weui-cells__tips">同一天可以添加多条，不同资源 / 时长各占一条。补录后可在「打卡记录」里编辑或删除。</view>
 
-  <view class="weui-btn-area">
+  <!-- 底部固定栏：实时汇总 + 一次提交 -->
+  <view class="bf-footer">
+    <view class="bf-summary">{{totalText}}</view>
     <button
       class="weui-btn weui-btn_block {{canSubmit ? 'weui-btn_primary' : 'weui-btn_disabled'}}"
       bindtap="submit"
-    >{{isEdit ? '保存修改' : '确认补录'}}</button>
+    >确认补录</button>
   </view>
+
+  <!-- 资源选择器（双列：左分组 / 右资源） -->
+  <resource-picker
+    show="{{pickerShow}}"
+    stage-id="{{selectedStageId}}"
+    value="{{pickerValue}}"
+    font-class="{{fontClass}}"
+    dark-class="{{darkClass}}"
+    bind:change="onResourceChange"
+    bind:close="onPickerClose"
+  />
+
 </view>

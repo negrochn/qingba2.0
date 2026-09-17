@@ -238,11 +238,11 @@ Page({
     })
   },
 
-  // 编辑记录：跳补录页的编辑态（复用同一套表单，见 backfill.js onLoad 的 options.id 分支）
+  // 编辑记录：跳独立的编辑页（单条完整表单，见 pages/editRecord）
   editRecord(e) {
     const { id } = e.currentTarget.dataset
     if (!id) return
-    wx.navigateTo({ url: `/pages/backfill/backfill?id=${id}` })
+    wx.navigateTo({ url: `/pages/editRecord/editRecord?id=${id}` })
   },
 
   // 删除记录

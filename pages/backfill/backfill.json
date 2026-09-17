@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "补录打卡",
-  "usingComponents": {}
+  "usingComponents": {
+    "resource-picker": "/components/resource-picker/resource-picker"
+  }
 }

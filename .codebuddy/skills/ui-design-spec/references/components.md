@@ -277,7 +277,9 @@ WeUI 提供 `weui-icon-*`（mask + `background-color: currentColor` 方案，色
 <text class="iconfont icon-homefill"></text>   <!-- 字族来自 .iconfont，字形来自 .icon-*:before { content:"\e6bb" } -->
 <text class="cell-check iconfont icon-check"></text>  <!-- 单选对勾，颜色走 var(--brand) -->
 ```
-常用：`icon-check` `\e645`（对勾）、`icon-right` `\e6a3`（箭头）、`icon-homefill` `\e6bb`、`icon-lock`/`icon-unlock`、`icon-myfill`、`icon-circlefill`。颜色由父级 `color` 决定（品牌绿对勾用 `var(--brand)`）。
+常用：`icon-check` `\e645`（对勾）、`icon-close` `\e646`（关闭）、`icon-right` `\e6a3`（箭头）、`icon-homefill` `\e6bb`、`icon-lock`/`icon-unlock`、`icon-myfill`、`icon-circlefill`。颜色由父级 `color` 决定（品牌绿对勾用 `var(--brand)`）。
+
+**自定义组件内使用时，必须在组件自己的 wxss 里 `@import "../../styles/iconfont.wxss";`**。`@font-face` 注册在 `app.wxss`（webview 级全局生效），所以字族本身在组件内可用；但 `.iconfont` / `.icon-*::before` 是 **class 选择器**，而 app.wxss 的 class 样式不穿透进自定义组件（只有标签名选择器会穿透），漏引会表现为「图标位置是空白」而没有任何报错。已有先例：`components/radio-list/radio-list.wxss`。
 
 ---
 

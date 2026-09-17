@@ -79,7 +79,7 @@
 
     <view class="hs-head">
       <view class="hs-title">{{sheetTitle}}</view>
-      <view class="hs-close" catchtap="closeSheet">×</view>
+      <view class="hs-close iconfont icon-close" catchtap="closeSheet"></view>
     </view>
 
     <view class="hs-summary" wx:if="{{sheetItems.length > 0}}">

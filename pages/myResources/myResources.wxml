@@ -72,7 +72,7 @@
 
     <view class="sheet-head">
       <view class="sheet-head-title">{{sheetTitle}}</view>
-      <view class="sheet-close" catchtap="closeSheet">×</view>
+      <view class="sheet-close iconfont icon-close" catchtap="closeSheet"></view>
     </view>
 
     <view class="form-card">

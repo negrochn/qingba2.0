@@ -367,6 +367,66 @@ function addCheckin(opts) {
   return saveAll(all) ? record : null
 }
 
+/**
+ * 批量新增「同一天」的多条打卡记录（一次读 / 一次写）
+ * 补录页一天填多行时用它落盘：比循环调 addCheckin 少 N-1 轮全量 I/O，
+ * 且要么全部写入、要么全不写，不会出现「只写进去一半」的脏数据。
+ * @param {string} day 'YYYY-MM-DD'（非法返回 null）
+ * @param {Array} records [{ stageId, stageName, groupKey, groupLabel, resourceId, resourceName, durationMinutes }]
+ * @returns {{ ok: boolean, count: number, minutes: number, day: string }|null}
+ */
+function addCheckinsOnDay(day, records) {
+  const d = normalizeDay(day)
+  if (!d) return null
+  const list = Array.isArray(records) ? records : []
+  if (!list.length) return null
+
+  const backfilled = d !== todayStr()
+
+  try {
+    // 一次全量读
+    const all = getAll()
+    const dayList = Array.isArray(all[d]) ? all[d] : []
+    let count = 0
+    let minutes = 0
+
+    // 字段口径与 addCheckin 完全一致（含 backfilled / timestamp 规则）
+    list.forEach(o => {
+      if (!o) return
+      const record = {
+        id: genId(),
+        day: d,
+        stageId: o.stageId || '',
+        stageName: o.stageName || '',
+        groupKey: o.groupKey || '',
+        groupLabel: o.groupLabel || '',
+        resourceId: o.resourceId || '',
+        resourceName: o.resourceName || '',
+        durationMinutes: Number(o.durationMinutes) || 0,
+        remark: o.remark || '',
+        timestamp: backfilled ? dayToTimestamp(d) : Date.now()
+      }
+      if (backfilled) record.backfilled = true
+
+      dayList.push(record)
+      count++
+      minutes += record.durationMinutes
+    })
+
+    if (!count) return null
+
+    all[d] = dayList
+
+    // 一次全量写（跨月 / 分片由 saveAll 自动重组）
+    if (!saveAll(all)) return null
+
+    return { ok: true, count, minutes, day: d }
+  } catch (e) {
+    console.error('addCheckinsOnDay failed:', e)
+    return null
+  }
+}
+
 // 默认备注存储: { "stageId|groupKey|resourceId": remark }
 // （迁移前遗留的 name key 由 migrateResourceKeysToId() / migrateResourceRecords() 处理）
 function _getDefaultRemarks() {
@@ -1128,6 +1188,7 @@ module.exports = {
   normalizeDay,
   dayToTimestamp,
   addCheckin,
+  addCheckinsOnDay,
   getCheckinById,
   updateCheckin,
   deleteCheckin,

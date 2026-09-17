@@ -1,8 +1,36 @@
-// 打卡补录页：日期 + 阶段/分组/资源三级级联（同页渐进展开）+ 时长 + 备注
-// 补录数据计入阶段时长、统计与晋级判定，记录带 backfilled 标记
+// 补录页：一次补「一天」，当天可以填多条（不同资源 / 时长各占一条），一次写盘
+//
+// 三个提效点：
+//   1) 不离开页面 —— 资源用底部弹层选，选完直接聚焦该行时长输入框
+//   2) 不重复选上下文 —— 阶段固定在页面顶部（默认当前阶段），分组随资源一起带出
+//   3) 不分次提交 —— 全填完一次性落盘（checkin.addCheckinsOnDay，一次读一次写）
+//
+// 单条记录的编辑在 pages/editRecord，两页职责分离
 const resources = require('../../utils/resources.js')
 const checkin = require('../../utils/checkin.js')
 const { routeData } = require('../../utils/data.js')
+
+const MAX_ROWS = 10 // 单天上限
+
+let _ridSeq = 0
+function _newRid() {
+  _ridSeq++
+  return 'r' + Date.now().toString(36) + '_' + _ridSeq
+}
+
+function _fmtDateText(day, today) {
+  return day === today ? `${day}（今天）` : day
+}
+
+// 时长：>0、<=999、取整后 >=1（与 editRecord、阶段页打卡弹窗同口径）
+function _parseDuration(v) {
+  const raw = String(v == null ? '' : v).trim()
+  if (!raw) return 0
+  const num = Number(raw)
+  if (!isFinite(num) || num <= 0 || num > 999) return 0
+  const minutes = Math.round(num)
+  return minutes > 0 ? minutes : 0
+}
 
 Page({
   data: {
@@ -11,90 +39,55 @@ Page({
     todayStr: '',
     dateStr: '',
     dateText: '',
+
+    // 阶段：原生 picker 选择（与日期行同一交互）
     stages: [],       // [{ id, name }]
-    groups: [],       // [{ key, label }]
-    items: [],        // [{ id, name, custom }]
+    stageNames: [],   // picker range
+    stageIndex: 0,
     selectedStageId: '',
     selectedStageName: '',
-    selectedGroupKey: '',
-    selectedGroupLabel: '',
-    selectedResourceId: '',
-    selectedResourceName: '',
-    durationInput: '20',
-    remarkInput: '',
-    canSubmit: false,
-    // 编辑态：records 页左滑「编辑」带 ?id=xxx 进入，复用本页表单
-    isEdit: false,
-    editId: ''
+
+    // 当天的记录行
+    rows: [],
+    focusRowKey: '',     // 当前聚焦的时长输入框
+
+    // 资源选择器弹层
+    pickerShow: false,
+    pickerRowKey: '',
+    pickerValue: '',
+
+    totalCount: 0,
+    totalMinutes: 0,
+    totalText: '',
+    canSubmit: false
   },
 
-  onLoad(options) {
+  onLoad() {
     const app = getApp()
     if (app && app.applyFontLevel) app.applyFontLevel(this)
 
     const today = checkin.todayStr()
     const stages = (routeData.stages || []).map(s => ({ id: s.stage_id, name: s.stage_name }))
 
-    this.setData({ todayStr: today, stages })
-
-    // 编辑态：?id=xxx
-    const editId = (options && options.id) || ''
-    const editing = editId ? checkin.getCheckinById(editId) : null
-    if (editing) {
-      this.setData({ isEdit: true, editId })
-      wx.setNavigationBarTitle({ title: '编辑记录' })
-      this._fillForm(editing)
-      return
-    }
-    // 记录已不存在（被删除 / 数据异常）时静默回落为补录态，避免白屏
-
     // 默认阶段：当前阶段优先，否则第一个
     const cur = checkin.getCurrentStage()
-    const stageId = (cur && resources.getStageById(cur.id))
-      ? cur.id
-      : (stages[0] ? stages[0].id : '')
+    const stageId = (cur && resources.getStageById(cur.id)) ? cur.id : (stages[0] ? stages[0].id : '')
+    const stage = resources.getStageById(stageId)
+
+    const idx = stages.findIndex(s => s.id === stageId)
 
     this.setData({
+      todayStr: today,
       dateStr: today,
-      dateText: _fmtDateText(today, today)
+      dateText: _fmtDateText(today, today),
+      stages,
+      stageNames: stages.map(s => s.name),
+      stageIndex: idx >= 0 ? idx : 0,
+      selectedStageId: stageId,
+      selectedStageName: stage ? stage.stage_name : '',
+      rows: [this._blankRow()]
     })
-    this._selectStage(stageId)
-  },
-
-  // 编辑态：把记录回填进表单（含阶段 → 分组 → 资源三级级联的展开与选中）
-  _fillForm(rec) {
-    const day = rec.day || this.data.todayStr
-    const stageId = rec.stageId || ''
-    const groupKey = rec.groupKey || ''
-    const resourceId = rec.resourceId || ''
-
-    // 必须先选阶段：_selectStage 会重载分组列表并清空下级
-    this._selectStage(stageId)
-
-    if (groupKey) {
-      const items = _loadItems(stageId, groupKey)
-      // 资源可能已被删除 / 改名（记录里存的是当时的名称快照），
-      // 或老记录本就没有 resourceId：把快照补进列表，保证选中态可见、可保存
-      const hit = !!resourceId && items.some(it => it.id === resourceId)
-      if (!hit) {
-        items.unshift({ id: resourceId, name: rec.resourceName || '未知资源', custom: true })
-      }
-      this.setData({
-        selectedGroupKey: groupKey,
-        selectedGroupLabel: resources.getGroupLabel(groupKey),
-        items,
-        selectedResourceId: resourceId,
-        selectedResourceName: rec.resourceName || ''
-      })
-    }
-
-    this.setData({
-      dateStr: day,
-      dateText: _fmtDateText(day, this.data.todayStr),
-      durationInput: rec.durationMinutes ? String(rec.durationMinutes) : '',
-      remarkInput: rec.remark || ''
-    })
-    this._refreshSubmit()
+    this._refreshTotals()
   },
 
   onShow() {
@@ -102,104 +95,190 @@ Page({
     if (app && app.applyFontLevel) app.applyFontLevel(this)
   },
 
-  // ===== 日期 =====
+  onUnload() {
+    if (this._totalsTimer) clearTimeout(this._totalsTimer)
+    this._totalsTimer = null
+  },
+
+  _blankRow() {
+    return {
+      rid: _newRid(),
+      resourceId: '',
+      resourceName: '',
+      groupKey: '',
+      groupLabel: '',
+      durationInput: ''
+    }
+  },
+
+  // ===== 日期（原生 picker，end 锁今天 → 未来不可选） =====
   onDateChange(e) {
-    const day = String(e.detail.value || '')
+    const day = e.detail.value || ''
+    if (!day) return
     this.setData({
       dateStr: day,
       dateText: _fmtDateText(day, this.data.todayStr)
     })
-    this._refreshSubmit()
   },
 
-  // ===== 阶段 / 分组 / 资源（渐进展开，改上级清空下级） =====
-  pickStage(e) {
-    this._selectStage(e.currentTarget.dataset.id || '')
+  // ===== 阶段（原生 picker，点「取消」不触发 bindchange，故无需额外处理） =====
+  onStageChange(e) {
+    const idx = Number(e.detail.value)
+    const stage = (this.data.stages || [])[idx]
+    if (!stage || stage.id === this.data.selectedStageId) return
+
+    const apply = () => {
+      this.setData({
+        stageIndex: idx,
+        selectedStageId: stage.id,
+        selectedStageName: stage.name,
+        rows: [this._blankRow()],
+        focusRowKey: ''
+      })
+      this._refreshTotals()
+    }
+
+    // 行里存的是旧阶段的资源快照，切阶段必须清掉，否则会写出「阶段与资源不匹配」的记录
+    const filled = (this.data.rows || []).filter(r => r.resourceId).length
+    if (filled > 0) {
+      wx.showModal({
+        title: '切换阶段',
+        content: `已填写的 ${filled} 条记录会被清空，确认切换？`,
+        success: (res) => { if (res.confirm) apply() }
+      })
+      return
+    }
+    apply()
   },
 
-  _selectStage(stageId) {
-    const stage = resources.getStageById(stageId)
-    const nextId = stage ? stageId : ''
+  // ===== 记录行 =====
+  onAddRow() {
+    if (this.data.rows.length >= MAX_ROWS) {
+      wx.showToast({ title: `单日最多 ${MAX_ROWS} 条`, icon: 'none' })
+      return
+    }
+    const rows = this.data.rows.concat([this._blankRow()])
+    this.setData({ rows })
+    // 新行直接弹出资源选择器，省掉一次点击
+    this._openPicker(rows[rows.length - 1].rid)
+  },
+
+  onRemoveRow(e) {
+    const rid = e.currentTarget.dataset.rid
+    if (!rid) return
     this.setData({
-      selectedStageId: nextId,
-      selectedStageName: stage ? stage.stage_name : ''
+      rows: this.data.rows.filter(r => r.rid !== rid),
+      focusRowKey: ''
     })
-    this._loadGroups(nextId)
-    this._refreshSubmit()
+    this._refreshTotals()
   },
 
-  _loadGroups(stageId) {
-    const groups = stageId
-      ? resources.getStageGroupKeys(stageId).map(k => ({ key: k, label: resources.getGroupLabel(k) }))
-      : []
+  // ===== 资源选择 =====
+  openPicker(e) {
+    const rid = e.currentTarget.dataset.rid
+    if (rid) this._openPicker(rid)
+  },
+
+  _openPicker(rid) {
+    const row = (this.data.rows || []).find(r => r.rid === rid) || null
+    this._pickerRid = rid
     this.setData({
-      groups,
-      items: [],
-      selectedGroupKey: '',
-      selectedGroupLabel: '',
-      selectedResourceId: '',
-      selectedResourceName: ''
+      pickerShow: true,
+      pickerRowKey: rid,
+      pickerValue: row ? row.resourceId : ''
     })
   },
 
-  pickGroup(e) {
-    const key = e.currentTarget.dataset.key || ''
-    if (!key) return
-    this.setData({
-      selectedGroupKey: key,
-      selectedGroupLabel: resources.getGroupLabel(key),
-      items: _loadItems(this.data.selectedStageId, key),
-      selectedResourceId: '',
-      selectedResourceName: ''
-    })
-    this._refreshSubmit()
+  onPickerClose() {
+    this.setData({ pickerShow: false, pickerRowKey: '' })
   },
 
-  pickResource(e) {
-    const id = e.currentTarget.dataset.id || ''
-    const hit = this.data.items.find(it => it.id === id)
-    if (!hit) return
-    this.setData({ selectedResourceId: hit.id, selectedResourceName: hit.name })
-    this._refreshSubmit()
+  // 选中资源 → 更新该行（分组一并带出）→ 关弹层 → 自动聚焦该行时长框
+  onResourceChange(e) {
+    const d = e.detail || {}
+    const rid = this._pickerRid
+    const idx = (this.data.rows || []).findIndex(r => r.rid === rid)
+    if (idx < 0) {
+      this.setData({ pickerShow: false, pickerRowKey: '' })
+      return
+    }
+
+    const updates = {
+      pickerShow: false,
+      pickerRowKey: '',
+      pickerValue: d.resourceId || ''
+    }
+    updates[`rows[${idx}].resourceId`] = d.resourceId || ''
+    updates[`rows[${idx}].resourceName`] = d.resourceName || ''
+    updates[`rows[${idx}].groupKey`] = d.groupKey || ''
+    updates[`rows[${idx}].groupLabel`] = d.groupLabel || ''
+
+    this.setData(updates)
+    this._refreshTotals()
+    this._focusRow(rid)
   },
 
-  // ===== 时长 / 备注 =====
+  // 聚焦某行的时长输入框（rid 传空串 = 收起键盘）
+  // 同一行重复聚焦时 focus 属性值没变化、不会重新唤起键盘，故先置空、下一拍再置回
+  _focusRow(rid) {
+    if (rid && rid === this.data.focusRowKey) {
+      this.setData({ focusRowKey: '' })
+      setTimeout(() => this.setData({ focusRowKey: rid }), 60)
+      return
+    }
+    this.setData({ focusRowKey: rid })
+  },
+
+  // ===== 时长 =====
   onDurationInput(e) {
-    this.setData({ durationInput: e.detail.value })
-    this._refreshSubmit()
+    const rid = e.currentTarget.dataset.rid
+    const idx = (this.data.rows || []).findIndex(r => r.rid === rid)
+    if (idx < 0) return
+    // 只更新对应行的路径，避免整个 rows 走一轮 setData
+    this.setData({ [`rows[${idx}].durationInput`]: e.detail.value })
+    this._scheduleTotals()
   },
 
-  quickDuration(e) {
-    this.setData({ durationInput: String(e.currentTarget.dataset.val) })
-    this._refreshSubmit()
+  // 键盘「完成」→ 跳到下一条已选资源的行；没有则收起键盘
+  onDurationConfirm(e) {
+    const rid = e.currentTarget.dataset.rid
+    const rows = this.data.rows || []
+    const idx = rows.findIndex(r => r.rid === rid)
+    let next = ''
+    for (let i = idx + 1; i < rows.length; i++) {
+      if (rows[i].resourceId) { next = rows[i].rid; break }
+    }
+    this._focusRow(next)
   },
 
-  onRemarkInput(e) {
-    this.setData({ remarkInput: e.detail.value })
+  // 汇总做 200ms 节流：连续输入时不必每敲一个数字都重算
+  _scheduleTotals() {
+    if (this._totalsTimer) clearTimeout(this._totalsTimer)
+    this._totalsTimer = setTimeout(() => {
+      this._totalsTimer = null
+      this._refreshTotals()
+    }, 200)
   },
 
-  // 时长校验：>0、<=999、取整后 >=1（与阶段页打卡弹窗同口径）
-  _validateDuration() {
-    const raw = String(this.data.durationInput || '').trim()
-    if (!raw) return { ok: false, msg: '请输入时长' }
-    const num = Number(raw)
-    if (!isFinite(num) || num <= 0) return { ok: false, msg: '时长需为正数' }
-    if (num > 999) return { ok: false, msg: '时长过大，请确认' }
-    const minutes = Math.round(num)
-    if (minutes <= 0) return { ok: false, msg: '时长不足 1 分钟' }
-    return { ok: true, minutes }
-  },
-
-  _refreshSubmit() {
-    const dur = this._validateDuration()
-    // 资源判定：id 优先；老记录可能只有名称快照（无 resourceId），此时按名称放行
-    const hasResource = !!this.data.selectedResourceId || !!this.data.selectedResourceName
+  _refreshTotals() {
+    let count = 0
+    let minutes = 0
+    ;(this.data.rows || []).forEach(r => {
+      const m = _parseDuration(r.durationInput)
+      if (r.resourceId && m > 0) {
+        count++
+        minutes += m
+      }
+    })
     this.setData({
-      canSubmit: !!this.data.dateStr && hasResource && dur.ok
+      totalCount: count,
+      totalMinutes: minutes,
+      totalText: count ? `共 ${count} 条 · ${checkin.fmtMinutes(minutes)}` : '还没填内容',
+      canSubmit: count > 0
     })
   },
 
-  // ===== 提交（新增补录 / 保存编辑 共用） =====
+  // ===== 提交 =====
   submit() {
     // 防重复提交：成功后要等 600ms 才 navigateBack，期间连点会重复写入
     if (this._submitting) return
@@ -210,60 +289,71 @@ Page({
       return
     }
     if (d.dateStr > d.todayStr) {
-      wx.showToast({ title: d.isEdit ? '不能改为未来日期' : '不能补录未来日期', icon: 'none' })
+      wx.showToast({ title: '不能补录未来日期', icon: 'none' })
       return
     }
-    if (!d.selectedResourceId && !d.selectedResourceName) {
-      wx.showToast({ title: '请选择资源', icon: 'none' })
+    if (!d.selectedStageId) {
+      wx.showToast({ title: '请选择阶段', icon: 'none' })
       return
     }
-    const dur = this._validateDuration()
-    if (!dur.ok) {
-      wx.showToast({ title: dur.msg, icon: 'none' })
+
+    const records = []
+    let partial = 0      // 半填行（只选了资源 / 只填了时长）
+    let badDuration = 0  // 时长非法
+
+    ;(d.rows || []).forEach(r => {
+      const hasRes = !!r.resourceId
+      const durRaw = String(r.durationInput == null ? '' : r.durationInput).trim()
+      const hasDur = !!durRaw
+      if (!hasRes && !hasDur) return // 完全空行：静默跳过
+      if (!hasRes || !hasDur) {
+        partial++
+        return
+      }
+      const m = _parseDuration(durRaw)
+      if (!m) {
+        badDuration++
+        return
+      }
+      records.push({
+        stageId: d.selectedStageId,
+        stageName: d.selectedStageName,
+        groupKey: r.groupKey,
+        groupLabel: r.groupLabel,
+        resourceId: r.resourceId,
+        resourceName: r.resourceName,
+        durationMinutes: m
+      })
+    })
+
+    if (partial) {
+      wx.showToast({ title: '有未填完的记录，请补全或删除', icon: 'none' })
+      return
+    }
+    if (badDuration) {
+      wx.showToast({ title: '时长需为 1~999 分钟', icon: 'none' })
+      return
+    }
+    if (!records.length) {
+      wx.showToast({ title: '请至少填写一条记录', icon: 'none' })
       return
     }
 
     // 校验全部通过后才上锁（失败路径负责释放）
     this._submitting = true
 
-    const payload = {
-      day: d.dateStr,
-      stageId: d.selectedStageId,
-      stageName: d.selectedStageName,
-      groupKey: d.selectedGroupKey,
-      groupLabel: d.selectedGroupLabel,
-      resourceId: d.selectedResourceId,
-      resourceName: d.selectedResourceName,
-      durationMinutes: dur.minutes,
-      remark: String(d.remarkInput || '').trim()
-    }
-
-    // 编辑：原地更新记录（保留 id；跨日 / 跨月由 updateCheckin 处理）
-    if (d.isEdit) {
-      const res = checkin.updateCheckin(d.editId, payload)
-      if (!res || !res.ok) {
-        this._submitting = false
-        wx.showToast({ title: '保存失败，请检查存储空间', icon: 'none' })
-        return
-      }
-      wx.showToast({ title: '已保存', icon: 'success' })
-      this._backToList(res.day)
-      return
-    }
-
-    // 新增补录
-    const record = checkin.addCheckin({ ...payload, backfilled: true })
-    if (!record) {
+    const res = checkin.addCheckinsOnDay(d.dateStr, records)
+    if (!res || !res.ok) {
       this._submitting = false
       wx.showToast({ title: '保存失败，请检查存储空间', icon: 'none' })
       return
     }
 
-    wx.showToast({ title: `已补录 ${checkin.fmtMinutes(dur.minutes)}`, icon: 'success' })
+    wx.showToast({ title: `已补录 ${res.count} 条`, icon: 'success' })
     this._backToList(d.dateStr)
   },
 
-  // 返回记录页并让它切到目标月份（回调 records.applyBackfill），新增 / 改后的记录立即可见
+  // 返回记录页并让它切到补录月份（回调 records.applyBackfill），新记录立即可见
   _backToList(day) {
     const pages = getCurrentPages()
     const prev = pages.length >= 2 ? pages[pages.length - 2] : null
@@ -278,15 +368,3 @@ Page({
     }, 600)
   }
 })
-
-// 该阶段某分组的资源清单（官方 + 自定义）
-function _loadItems(stageId, groupKey) {
-  const map = resources.getStageResources(stageId)
-  const list = map[groupKey]
-  if (!Array.isArray(list)) return []
-  return list.map(it => ({ id: it.id, name: it.name, custom: !!it.custom }))
-}
-
-function _fmtDateText(day, today) {
-  return day === today ? `${day}（今天）` : day
-}

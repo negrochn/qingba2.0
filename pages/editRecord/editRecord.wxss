@@ -1,0 +1,81 @@
+/* 编辑记录页：整页单选（原语 3）+ 表单（原语 13/15）+ 分段控件（原语 14）
+   weui-cells / weui-cell 等基础样式见全局 app.wxss */
+
+page {
+  background: var(--bg);
+}
+
+/* 自定义资源标记（复用阶段页同语义） */
+.bf-custom {
+  margin-left: 12rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 8rpx;
+  background: var(--card2);
+  color: var(--text3);
+  font-size: calc(24rpx * var(--fs, 1));
+}
+
+/* ===== 表单卡片（打卡弹窗同款） ===== */
+.form-card {
+  background: var(--card);
+  border-radius: 16rpx;
+  padding: 0 32rpx;
+  margin-bottom: 20rpx;
+}
+.form-row {
+  display: flex;
+  align-items: center;
+  min-height: 88rpx;
+  padding: 16rpx 0;
+  box-sizing: border-box;
+}
+.form-row:active { background: var(--cell-active); }
+.form-label {
+  flex-shrink: 0;
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text);
+  width: 140rpx;
+}
+.form-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12rpx;
+}
+.form-field {
+  flex: 1;
+  text-align: right;
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text);
+  height: 64rpx;
+}
+.form-field-full { text-align: left; }
+.form-unit {
+  flex-shrink: 0;
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text3);
+  margin-left: 8rpx;
+}
+.form-card .weui-divider { height: 1px; background: var(--divider); margin: 0; }
+
+/* 快捷时长分段控件（等宽 variant） */
+.seg-control { display: flex; align-items: center; flex: 1; }
+.seg-control-grid .seg-item { flex: 1; text-align: center; }
+.seg-item {
+  height: 56rpx;
+  padding: 0 32rpx;
+  margin-left: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid var(--divider);
+  border-radius: 8rpx;
+  background: var(--card);
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text);
+  box-sizing: border-box;
+}
+.seg-item:first-child { margin-left: 0; }
+.seg-item:active { background: var(--cell-active); }
+.seg-active { border-color: var(--brand); color: var(--brand); background: var(--card); }

@@ -15,7 +15,8 @@
     "pages/clearPicker/clearPicker",
     "pages/myResources/myResources",
     "pages/resourcePicker/resourcePicker",
-    "pages/backfill/backfill"
+    "pages/backfill/backfill",
+    "pages/editRecord/editRecord"
   ],
   "window": {
     "backgroundTextStyle": "@bgTextStyle",

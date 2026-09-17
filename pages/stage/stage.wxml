@@ -126,7 +126,7 @@
 
     <view class="pm-head">
       <view class="pm-title">晋级测试校验</view>
-      <view class="pm-close" catchtap="closePromoteModal">×</view>
+      <view class="pm-close iconfont icon-close" catchtap="closePromoteModal"></view>
     </view>
 
     <view class="pm-stage-info">
@@ -172,7 +172,7 @@
 
     <view class="sheet-head">
       <view class="sheet-head-title">{{currentResource}}</view>
-      <view class="sheet-close" catchtap="closeCheckin">×</view>
+      <view class="sheet-close iconfont icon-close" catchtap="closeCheckin"></view>
     </view>
 
     <!-- 表单卡片 1：学习时长 + 快捷时长 -->
