@@ -619,8 +619,11 @@
   padding: 0 !important;
 }
 .pm-btn::after { border: none; }
-.pm-btn-cancel { background: var(--cell-active); color: var(--text2); margin-right: 4%; }
-.pm-btn-cancel:active { background: var(--divider); }
+/* 底与打卡弹窗的「取消」同色（WeUI FG-5 半透明叠加，落在 --card 面上深浅都可见）。
+   按下反馈改用 --cell-active（BG-COLOR-ACTIVE 本就是「按下态」令牌）：
+   原来用 --divider，其深色档恰好等于 FG-5 的 rgba(255,255,255,.1)，按下时毫无变化 */
+.pm-btn-cancel { background: var(--btn-default); color: var(--text2); margin-right: 4%; }
+.pm-btn-cancel:active { background: var(--cell-active); }
 .pm-btn-ok { background: var(--brand); color: #fff; }
 .pm-btn-ok:active { opacity: 0.88; }
 

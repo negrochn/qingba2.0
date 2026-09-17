@@ -1,11 +1,11 @@
 /* 资源选择器（双列：左分组 / 右资源）
-   头部布局对齐 WeUI picker（源码 D:\github\weui\src\style\widget\weui-tips\weui-half-screen-dialog.less）：
-   左上角「关闭」+ 居中标题。本弹层没有底部按钮（点资源即选中并关闭）。
+   弹层样式对齐项目原语 4「action-sheet」（pages/stage 打卡弹窗同款）：抓手 + 标题左 + 关闭右。
+   本弹层没有底部按钮（点资源即选中并关闭）。
 
    颜色 / 字号全部走 --* 变量与 calc(Nrpx * var(--fs))，跟随页面根节点（.container / .dm-*）。
    弹层是 position:fixed，由页面把 fontClass / darkClass 透传进来挂在本根节点上。
 
-   字号只用 WeUI 标准 UI 三档（34 / 28 / 24rpx），不使用已废弃的 22 / 26 / 30 / 32 / 36rpx。 */
+   字号只用微信标准 UI 三档（34 / 28 / 24rpx），不使用已废弃的 22 / 26 / 30 / 32 / 36rpx。 */
 
 /* .iconfont / .icon-* 是 class 选择器，而 app.wxss 的 class 样式**不会**穿透进自定义组件
    （只用标签名选择器才会），所以组件内用 iconfont 必须自己 @import 一份。
@@ -29,104 +29,94 @@
 }
 
 .rp-mask.show {
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.5);   /* 与 .sheet-mask-show 同值 */
   pointer-events: auto;
   visibility: visible;
 }
 
 .rp-sheet {
   width: 100%;
-  height: 75vh;
+  /* 双列 scroll-view 必须有确定高度才能滚动，故固定 70vh（打卡弹窗是内容自适应）。
+     常规6 为 8 个分组、后续加「熏听」共 9 个：9 × 80rpx = 720rpx，
+     在 iPhone 8（1334rpx）上 70vh 的可视区约 730rpx，刚好容得下；
+     再多就需要滚动，左列本就是 scroll-view，能兜住 */
+  height: 70vh;
   display: flex;
   flex-direction: column;
   background: var(--card);
   /* 半屏弹窗顶部圆角 24rpx（@weuiDialogBorderRadius 同档） */
   border-top-left-radius: 24rpx;
   border-top-right-radius: 24rpx;
-  padding: 24rpx 32rpx calc(env(safe-area-inset-bottom) + 32rpx);
+  /* 左右不留内边距：双列主体要通栏铺满（WeUI 列表的做法）——
+     左右留白由 .rp-head 自己维护，主体的分栏才不会被「内缩 + 圆角」框成一张卡片 */
+  padding: 16rpx 0 calc(env(safe-area-inset-bottom) + 32rpx);
   box-sizing: border-box;
   /* 隐藏态整体沉到视口下方 */
   transform: translateY(100%);
-  transition: transform 0.3s ease;   /* WeUI: transition: transform 0.3s */
+  transition: transform 0.25s ease;   /* 对齐 .action-sheet */
 }
 
 .rp-mask.show .rp-sheet {
   transform: translateY(0);
 }
 
-/* ===== 头部：左上角关闭 + 居中标题（对齐 WeUI .weui-half-screen-dialog__hd） ===== */
-.rp-hd {
-  position: relative;
-  display: flex;
-  align-items: center;
-  min-height: 112rpx;
-  margin-bottom: 16rpx;
-}
-
-/* 通栏细线（对齐 WeUI .weui-picker__hd::after；左右用负值抵到面板边缘） */
-.rp-hd::after {
-  content: ' ';
-  position: absolute;
-  left: -32rpx;
-  right: -32rpx;
-  bottom: 0;
-  height: 1px;
+/* ===== 头部：抓手 + 标题左 + 关闭右（对齐 .sheet-handle / .sheet-head / .sheet-close） ===== */
+.rp-handle {
+  width: 72rpx;
+  height: 8rpx;
   background: var(--divider);
-  transform: scaleY(0.5);
-  transform-origin: bottom;
+  border-radius: 4rpx;
+  margin: 8rpx auto 24rpx;
 }
 
-/* 关闭按钮槽位：绝对定位，使标题不受按钮宽度影响而真正居中（WeUI 同款做法） */
-.rp-hd-side {
-  position: absolute;
-  left: -32rpx;
-  top: 0;
-  bottom: 0;
+.rp-head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  margin: 0 32rpx 28rpx;   /* 面板左右 padding 已归零，头部自己留白 */
 }
 
-/* 关闭：纯图标，热区 88rpx 见方（设计指南「可点项最小热区 ≥ 88rpx」） */
+.rp-title {
+  flex: 1;
+  min-width: 0;
+  font-size: calc(34rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* 关闭：纯图标，热区 88rpx 见方（设计指南「可点项最小热区 ≥ 88rpx」），
+   负 margin 抵消热区外扩，让标题与图标的视觉间距保持不变 */
 .rp-close {
+  flex-shrink: 0;
   width: 88rpx;
   height: 88rpx;
+  margin: -16rpx -16rpx -16rpx 0;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text3);
+  border-radius: 50%;
 }
 
-.rp-close:active { opacity: 0.5; }
+.rp-close:active { background: var(--cell-active); color: var(--text2); }
 
-.rp-hd-main {
-  flex: 1;
-  min-width: 0;
-  text-align: center;
-  padding: 0 80rpx;
-}
-
-/* WeUI .weui-half-screen-dialog__title：15px / font-weight 500 */
-.rp-title {
-  font-size: calc(30rpx * var(--fs, 1));
-  color: var(--text);
-  font-weight: 500;
-}
-
-/* ===== 双列主体 ===== */
+/* ===== 双列主体 =====
+   通栏铺满弹窗宽度，不做「内缩 + 圆角」的内嵌卡片（那是表单卡的形态）。
+   分栏交给左右两列的底色差异表达，顶部圆角由 .rp-sheet 承担 */
 .rp-body {
   flex: 1;
   min-height: 0;
   display: flex;
   overflow: hidden;
-  /* 内嵌面板走「分组卡片」圆角 20rpx */
-  border-radius: 20rpx;
   background: var(--card2);
 }
 
 .rp-groups {
   position: relative;
-  width: 200rpx;
+  /* 300rpx：够放「副课分级读物」这类 6 字分组名（34rpx × 6 = 204rpx），
+     加左右内边距 48rpx 共 252rpx，留出余量以便字号档调大时不换行 */
+  width: 300rpx;
   flex-shrink: 0;
   height: 100%;
 }
@@ -144,16 +134,63 @@
   transform-origin: right;
 }
 
+/* 分组项：字号取微信 17pt 主文档（34rpx）——与右列 .rp-item 同档，层级由颜色承担
+   （未选中 --text2 灰 / 选中 --brand 品牌绿）。
+   高度 80rpx：左列现有 9 个分组（常规6 的 8 个 + 熏听），80 × 9 = 720rpx
+   才能在 70vh 的弹窗里一屏放下 —— 这里取 80rpx 而非设计指南的 88rpx，是为分组数量让路 */
 .rp-group {
-  padding: 28rpx 16rpx 28rpx 24rpx;
-  font-size: calc(28rpx * var(--fs, 1));
+  position: relative;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 80rpx;
+  padding: 16rpx 24rpx;
+  font-size: calc(34rpx * var(--fs, 1));
   color: var(--text2);
   line-height: 1.3;
 }
 
+/* 行间细线：与右列 .rp-item::before 同款 —— 左缩进 24rpx 对齐文字，
+   右端也留 24rpx，避免顶到列间那根竖线上 */
+.rp-group::before {
+  content: ' ';
+  position: absolute;
+  left: 24rpx;
+  right: 24rpx;
+  top: 0;
+  height: 1px;
+  background: var(--divider);
+  transform: scaleY(0.5);
+  transform-origin: top;
+}
+
+.rp-group:first-child::before { display: none; }
+
+.rp-group:active { background: var(--cell-active); }
+
+/* 选中提示：右侧竖线 —— 位置正好压在列间分隔线（.rp-groups::after）上，
+   把那一段点亮成品牌绿，比再加一个图标更接近 WeUI tabs 的「指示条」语义。
+   取居中短条（40rpx ≈ 项高 80rpx 的一半）而非整项高度：只标出「这一项被选中」，
+   不会把整段边界都点亮。用 margin-top 负值居中而非 transform —— 小程序伪元素上
+   transform 偶有不生效 */
+.rp-group.active::after {
+  content: ' ';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 6rpx;
+  height: 40rpx;
+  margin-top: -20rpx;
+  background: var(--brand);
+  border-radius: 3rpx;
+  z-index: 1;   /* 盖住 .rp-groups::after 那根 1px 灰线 */
+}
+
+/* 选中态：文字变品牌色 + 微粗，右侧再压一条竖线（见上），三者同色不同形，不改背景。
+   （曾用过「左侧指示条」，但主体改通栏后它正好贴在弹窗乃至屏幕的最左边缘，观感很挤；
+   而背景色方案里 --card2 与 --card 只差一档，浅色下几乎看不出、深色下更弱） */
 .rp-group.active {
-  background: var(--card);
-  color: var(--text);
+  color: var(--brand);
   font-weight: 500;
 }
 
@@ -162,8 +199,6 @@
   min-width: 0;
   height: 100%;
   background: var(--card);
-  border-top-right-radius: 20rpx;
-  border-bottom-right-radius: 20rpx;
 }
 
 /* 列表项：主文 34rpx，行高对齐 @weuiCellHeight 112rpx */

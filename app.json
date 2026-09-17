@@ -9,8 +9,6 @@
     "pages/settings/settings",
     "pages/stats/stats",
     "pages/stagePicker/stagePicker",
-    "pages/fontPicker/fontPicker",
-    "pages/darkMode/darkMode",
     "pages/importPicker/importPicker",
     "pages/clearPicker/clearPicker",
     "pages/myResources/myResources",

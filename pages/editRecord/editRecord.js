@@ -1,6 +1,10 @@
 // 编辑记录页：单条打卡记录的完整表单（日期 / 阶段 / 分组 / 资源 / 时长 / 备注）
 // 入口：记录页左滑「编辑」带 ?id=xxx 进入
 // 与补录页（pages/backfill，一次补一天的多条）职责分离，互不影响
+//
+// 阶段用原生 <picker mode="selector">；分组 + 资源用 <picker mode="multiSelector">
+// 两列联动（左列分组、右列该分组的资源），与补录页改用原生选择器的取向一致，
+// 也免去原先「三组整页单选列表」依次展开的长表单。
 const resources = require('../../utils/resources.js')
 const checkin = require('../../utils/checkin.js')
 const { routeData } = require('../../utils/data.js')
@@ -12,9 +16,12 @@ Page({
     todayStr: '',
     dateStr: '',
     dateText: '',
-    stages: [],       // [{ id, name }]
-    groups: [],       // [{ key, label }]
-    items: [],        // [{ id, name, custom }]
+    stages: [],            // [{ id, name }]
+    stageNames: [],        // 阶段 picker 的 range
+    stageIndex: 0,
+    groups: [],            // [{ key, label }]
+    multiRange: [[], []],  // 两列 picker 的 range：[分组名数组, 当前分组的资源名数组]
+    multiValue: [0, 0],    // 两列 picker 的选中下标
     selectedStageId: '',
     selectedStageName: '',
     selectedGroupKey: '',
@@ -33,7 +40,7 @@ Page({
 
     const today = checkin.todayStr()
     const stages = (routeData.stages || []).map(s => ({ id: s.stage_id, name: s.stage_name }))
-    this.setData({ todayStr: today, stages })
+    this.setData({ todayStr: today, stages, stageNames: stages.map(s => s.name) })
 
     const id = (options && options.id) || ''
     const rec = id ? checkin.getCheckinById(id) : null
@@ -54,28 +61,36 @@ Page({
     if (app && app.applyFontLevel) app.applyFontLevel(this)
   },
 
-  // 把记录回填进表单（含阶段 → 分组 → 资源三级级联的展开与选中）
+  // 把记录回填进表单：阶段 → 分组 → 资源各级反查下标，让两个 picker 定位到原值
   _fillForm(rec) {
     const day = rec.day || this.data.todayStr
     const stageId = rec.stageId || ''
     const groupKey = rec.groupKey || ''
     const resourceId = rec.resourceId || ''
 
-    // 必须先选阶段：_selectStage 会重载分组列表并清空下级
+    // 先选阶段：_selectStage 会重建分组列表与 multiRange
     this._selectStage(stageId)
 
     if (groupKey) {
-      const items = _loadItems(stageId, groupKey)
+      const groups = this.data.groups || []
+      let gi = groups.findIndex(g => g.key === groupKey)
+      if (gi < 0) gi = 0
+
+      const list = (this._groupItems[gi] || []).slice()
       // 资源可能已被删除 / 改名（记录里存的是当时的名称快照），
       // 或老记录本就没有 resourceId：把快照补进列表，保证选中态可见、可保存
-      const hit = !!resourceId && items.some(it => it.id === resourceId)
-      if (!hit) {
-        items.unshift({ id: resourceId, name: rec.resourceName || '未知资源', custom: true })
+      let ri = resourceId ? list.findIndex(it => it.id === resourceId) : -1
+      if (ri < 0) {
+        list.unshift({ id: resourceId, name: rec.resourceName || '未知资源', custom: true })
+        ri = 0
       }
+      this._groupItems[gi] = list
+
       this.setData({
+        'multiRange[1]': list.map(_itemLabel),
+        multiValue: [gi, ri],
         selectedGroupKey: groupKey,
         selectedGroupLabel: resources.getGroupLabel(groupKey),
-        items,
         selectedResourceId: resourceId,
         selectedResourceName: rec.resourceName || ''
       })
@@ -101,29 +116,38 @@ Page({
     this._refreshSubmit()
   },
 
-  // ===== 阶段 / 分组 / 资源（渐进展开，改上级清空下级） =====
-  pickStage(e) {
-    this._selectStage(e.currentTarget.dataset.id || '')
+  // ===== 阶段（原生 picker：点「取消」不触发 bindchange，无需额外处理） =====
+  onStageChange(e) {
+    const s = (this.data.stages || [])[Number(e.detail.value)]
+    if (!s) return
+    // 改阶段会清空下级（分组 / 资源），与原「渐进展开」逻辑一致
+    this._selectStage(s.id)
   },
 
   _selectStage(stageId) {
     const stage = resources.getStageById(stageId)
     const nextId = stage ? stageId : ''
+    const stages = this.data.stages || []
     this.setData({
       selectedStageId: nextId,
-      selectedStageName: stage ? stage.stage_name : ''
+      selectedStageName: stage ? stage.stage_name : '',
+      stageIndex: Math.max(0, stages.findIndex(s => s.id === nextId))
     })
     this._loadGroups(nextId)
     this._refreshSubmit()
   },
 
+  // 载入该阶段的全部资源并按分组缓存 —— 两列联动的右列直接从缓存取，不必反复读存储
   _loadGroups(stageId) {
     const groups = stageId
       ? resources.getStageGroupKeys(stageId).map(k => ({ key: k, label: resources.getGroupLabel(k) }))
       : []
+    this._groupItems = groups.map(g => _loadItems(stageId, g.key))
+    const first = this._groupItems[0] || []
     this.setData({
       groups,
-      items: [],
+      multiRange: [groups.map(g => g.label), first.map(_itemLabel)],
+      multiValue: [0, 0],
       selectedGroupKey: '',
       selectedGroupLabel: '',
       selectedResourceId: '',
@@ -131,24 +155,31 @@ Page({
     })
   },
 
-  pickGroup(e) {
-    const key = e.currentTarget.dataset.key || ''
-    if (!key) return
+  // 左列（分组）滚动：重建右列，并且必须同时把右列下标重置为 0 ——
+  // 否则右列会停在上一分组的旧下标上而错位
+  onColumnChange(e) {
+    const { column, value } = e.detail
+    if (column !== 0) return
+    const list = this._groupItems[value] || []
     this.setData({
-      selectedGroupKey: key,
-      selectedGroupLabel: resources.getGroupLabel(key),
-      items: _loadItems(this.data.selectedStageId, key),
-      selectedResourceId: '',
-      selectedResourceName: ''
+      'multiRange[1]': list.map(_itemLabel),
+      'multiValue[1]': 0
     })
-    this._refreshSubmit()
   },
 
-  pickResource(e) {
-    const id = e.currentTarget.dataset.id || ''
-    const hit = this.data.items.find(it => it.id === id)
-    if (!hit) return
-    this.setData({ selectedResourceId: hit.id, selectedResourceName: hit.name })
+  // 点「确定」才落实选中（滚动过程中不改数据）
+  onMultiConfirm(e) {
+    const [gi, ri] = e.detail.value || []
+    const g = (this.data.groups || [])[gi]
+    const list = this._groupItems[gi] || []
+    const r = list[ri]
+    if (!g || !r) return
+    this.setData({
+      selectedGroupKey: g.key,
+      selectedGroupLabel: g.label,
+      selectedResourceId: r.id,
+      selectedResourceName: r.name
+    })
     this._refreshSubmit()
   },
 
@@ -261,6 +292,12 @@ function _loadItems(stageId, groupKey) {
   const list = map[groupKey]
   if (!Array.isArray(list)) return []
   return list.map(it => ({ id: it.id, name: it.name, custom: !!it.custom }))
+}
+
+// 两列 picker 里每项显示的文字：原生 picker 只能渲染纯文本，
+// 所以「自定义」标记拼进名字（语义与补录页资源选择弹层的尾标一致）
+function _itemLabel(it) {
+  return it.custom ? `${it.name}（自定义）` : it.name
 }
 
 function _fmtDateText(day, today) {

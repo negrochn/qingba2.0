@@ -67,8 +67,8 @@ Page({
     isDark: false
   },
 
-  // 同步"实际是否深色"（手动 dm-dark 或跟随系统），供 JS 侧深色判断
-  // 旧实现读 app._systemDark，而该字段全项目从未赋值 —— dm-auto + 系统深色时会判成浅色
+  // 同步"实际是否深色"（固定跟随系统 / 微信主题），供 JS 侧深色判断
+  // 旧实现读 app._systemDark，而该字段全项目从未赋值 —— 系统深色时会判成浅色
   _syncDark() {
     this.setData({ isDark: theme.isDarkNow() })
   },

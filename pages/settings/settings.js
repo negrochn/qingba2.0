@@ -41,12 +41,9 @@ Page({
     youquEnabled: true,
     myResourceCount: 0,
     _importMode: 'overwrite',
-    // 字体大小
+    // 字号 / 深色 class（跟随微信设置，由 app.applyFontLevel 下发）
     fontClass: 'fs-normal',
-    fontLevelText: '',
-    // 深色模式
     darkClass: 'dm-auto',
-    darkModeText: '',
   },
 
   onLoad() {
@@ -69,8 +66,6 @@ Page({
     const app = getApp();
     if (app && app.applyFontLevel) app.applyFontLevel(this);
 
-    this.loadFontLevel();
-    this.loadDarkMode();
     this.loadStats();
     this.loadCurrentStage();
     this.loadYouquPlan();
@@ -89,32 +84,6 @@ Page({
   // 跳转「我的资源」管理页
   goMyResources() {
     wx.navigateTo({ url: '/pages/myResources/myResources' });
-  },
-
-  // ===== 字体大小 =====
-  loadFontLevel() {
-    this.setData({
-      fontLevelText: theme.getFontLevelText(),
-      fontClass: theme.getFontClass()
-    });
-  },
-
-  // 跳转字号选择页（原语 3：picker-page 整页单选）
-  goFontPicker() {
-    wx.navigateTo({ url: '/pages/fontPicker/fontPicker' });
-  },
-
-  // ===== 深色模式 =====
-  loadDarkMode() {
-    this.setData({
-      darkModeText: theme.getDarkModeText(),
-      darkClass: theme.getDarkClass()
-    });
-  },
-
-  // 跳转深色模式选择页（微信风格：单 toggle）
-  goDarkMode() {
-    wx.navigateTo({ url: '/pages/darkMode/darkMode' });
   },
 
   // 读取小小优趣成长计划开关
@@ -556,11 +525,7 @@ Page({
         checkin.setYouquPlanEnabled(data.youqu_plan);
       }
 
-      // 恢复字体大小档位（旧备份无此字段时保持当前设置）
-      if (typeof data.font_level === 'string' && theme.indexOf(data.font_level) >= 0) {
-        theme.setFontLevel(data.font_level);
-        this.loadFontLevel();
-      }
+      // 字体大小档位：已改为跟随微信设置，旧备份里的 fontLevel 有意忽略（写进存储也不再生效）
 
       wx.hideLoading();
       this.loadStats();

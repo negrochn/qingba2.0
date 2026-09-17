@@ -98,6 +98,8 @@ Page({
   onUnload() {
     if (this._totalsTimer) clearTimeout(this._totalsTimer)
     this._totalsTimer = null
+    if (this._kbTimer) clearTimeout(this._kbTimer)
+    this._kbTimer = null
   },
 
   _blankRow() {
@@ -182,11 +184,36 @@ Page({
   _openPicker(rid) {
     const row = (this.data.rows || []).find(r => r.rid === rid) || null
     this._pickerRid = rid
+
+    // 开弹层前必须收键盘：软键盘是原生层、**永远盖在弹层之上**（表现为弹层刚推出就被数字键盘压住）。
+    // 真机上「先收键盘、再显示弹层」不够：
+    //   · iOS 有「input 失焦后键盘不自动收起」的已知问题；
+    //   · 弹层自身的 transform 过渡会在输入框仍聚焦时把键盘重新拉起来
+    //     （官方 input 文档 Tip：「在 input 聚焦期间，避免使用 css 动画」）。
+    // 所以分两步：先把受控 focus 归零 —— 配合 onDurationFocus，focusRowKey 一定指向真正聚焦的
+    // 那一行，置空才会产生 true→false 的属性变化、框架才可能失焦；再等弹层渲染落地后补收一次
+    // 键盘，让键盘成为最后一个动作。
+    if (this._kbTimer) clearTimeout(this._kbTimer)
+    this.setData({ focusRowKey: '' })
+    this._hideKeyboard()
+
     this.setData({
       pickerShow: true,
       pickerRowKey: rid,
       pickerValue: row ? row.resourceId : ''
     })
+
+    this._kbTimer = setTimeout(() => {
+      this._kbTimer = null
+      // 弹层已被关掉就别再动键盘 —— 用户选中资源时 _focusRow 刚把键盘叫回来，不能误收
+      if (!this.data.pickerShow) return
+      this._hideKeyboard()
+    }, 120)
+  },
+
+  // 收软键盘：低版本客户端没有该方法，先判断再调（同 theme.js 的兜底写法）；无键盘时它走 fail，忽略
+  _hideKeyboard() {
+    if (wx.hideKeyboard) wx.hideKeyboard({ fail: () => {} })
   },
 
   onPickerClose() {
@@ -230,6 +257,14 @@ Page({
   },
 
   // ===== 时长 =====
+  // 用户直接点击某行时长框也会聚焦，这里跟着记下来 —— 否则 focusRowKey 只反映
+  // _focusRow() 的程序化聚焦，「置空 focusRowKey 以失焦」时可能清的是个不相干的值，
+  // 真正聚焦的那个 input 属性值没变化、框架无从失焦（真机踩坑，详见 _openPicker）
+  onDurationFocus(e) {
+    const rid = e.currentTarget.dataset.rid
+    if (rid && rid !== this.data.focusRowKey) this.setData({ focusRowKey: rid })
+  },
+
   onDurationInput(e) {
     const rid = e.currentTarget.dataset.rid
     const idx = (this.data.rows || []).findIndex(r => r.rid === rid)

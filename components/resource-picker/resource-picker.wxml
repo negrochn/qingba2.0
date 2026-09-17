@@ -1,16 +1,14 @@
 <!-- 资源选择器：底部半屏弹层，双列（左分组 / 右资源）
-     头部布局对齐 WeUI picker：左上角关闭 + 居中标题。
+     弹层样式对齐项目原语 4「action-sheet」（打卡弹窗同款）：抓手 + 标题左 + 关闭右。
      蒙层根节点自带主题 class，见 resource-picker.wxss 头注释 -->
 <view class="rp-mask {{fontClass}} {{darkClass}} {{show ? 'show' : ''}}" bindtap="onCancel" catchtouchmove="noop">
   <view class="rp-sheet" catchtap="noop">
 
-    <view class="rp-hd">
-      <view class="rp-hd-side">
-        <view class="rp-close iconfont icon-close" catchtap="onCancel"></view>
-      </view>
-      <view class="rp-hd-main">
-        <text class="rp-title">选择资源</text>
-      </view>
+    <view class="rp-handle"></view>
+
+    <view class="rp-head">
+      <view class="rp-title">选择资源</view>
+      <view class="rp-close iconfont icon-close" catchtap="onCancel"></view>
     </view>
 
     <view class="rp-body">

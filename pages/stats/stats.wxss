@@ -105,8 +105,12 @@ page { background: var(--bg); }
   --grid: rgba(0, 0, 0, .06);
   --bar: rgba(7, 193, 96, .14);
 }
-.dm-dark .chart-skel {
-  --grid: rgba(255, 255, 255, .10);
+/* 深色骨架网格：必须挂 .dm-auto + 媒体查询 —— 深色已固定跟随系统，
+   原写的 .dm-dark 不再被挂载，会让深色下网格仍是浅色的 rgba(0,0,0,.06)（在深色遮罩下看不见） */
+@media (prefers-color-scheme: dark) {
+  .dm-auto .chart-skel {
+    --grid: rgba(255, 255, 255, .10);
+  }
 }
 .chart-skel-ring {
   height: 520rpx;

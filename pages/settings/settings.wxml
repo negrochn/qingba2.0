@@ -1,24 +1,5 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- 显示 -->
-  <view class="weui-cells__title">显示</view>
-  <view class="weui-cells">
-    <view class="weui-cell weui-cell_access" bindtap="goFontPicker">
-      <view class="weui-cell__bd">字体大小</view>
-      <view class="weui-cell__ft">
-        <text class="weui-cell__ft_value">{{fontLevelText}}</text>
-        <text class="iconfont icon-right"></text>
-      </view>
-    </view>
-    <view class="weui-cell weui-cell_access" bindtap="goDarkMode">
-      <view class="weui-cell__bd">深色模式</view>
-      <view class="weui-cell__ft">
-        <text class="weui-cell__ft_value">{{darkModeText}}</text>
-        <text class="iconfont icon-right"></text>
-      </view>
-    </view>
-  </view>
-
   <!-- 学习设置 -->
   <view class="weui-cells__title">学习设置</view>
   <view class="weui-cells">

@@ -1,6 +1,0 @@
-<view class="container {{fontClass}} {{darkClass}}">
-
-  <!-- 字体大小选择（整页单选列表，选中品牌绿对勾） -->
-  <c-radio-list items="{{levels}}" value="{{selectedKey}}" bindchange="onPick" />
-
-</view>

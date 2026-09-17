@@ -1,19 +1,17 @@
-/* 编辑记录页：整页单选（原语 3）+ 表单（原语 13/15）+ 分段控件（原语 14）
+/* 编辑记录页：原生 picker（阶段 selector / 分组+资源 multiSelector 两列联动）
+   + 表单（原语 13/15）+ 分段控件（原语 14）
    weui-cells / weui-cell 等基础样式见全局 app.wxss */
 
 page {
   background: var(--bg);
 }
 
-/* 自定义资源标记（复用阶段页同语义） */
-.bf-custom {
-  margin-left: 12rpx;
-  padding: 2rpx 10rpx;
-  border-radius: 8rpx;
-  background: var(--card2);
-  color: var(--text3);
-  font-size: calc(24rpx * var(--fs, 1));
-}
+/* 注：原先的 .bf-custom（自定义资源尾标）已删除 ——
+   改两列 picker 后资源名只能渲染纯文本，「自定义」标记改为拼在名字里（见 editRecord.js 的 _itemLabel） */
+
+/* 按钮区上边距收窄：全局 .weui-btn-area 是 96rpx（原语给卡片堆叠留的呼吸位），
+   本页上方只有一张卡片，96rpx 会显得空。页面样式加载在 app.wxss 之后，同特异性即覆盖 */
+.weui-btn-area { padding-top: 32rpx; }
 
 /* ===== 表单卡片（打卡弹窗同款） ===== */
 .form-card {

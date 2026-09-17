@@ -102,9 +102,16 @@ page {
 
 .bf-dur-ph { color: var(--text3); }
 
-/* 单位：辅助档 24rpx（FG-2） */
+/* 弹层打开期间替代 <input> 的纯文本（见 wxml 注释）：
+   复用 .bf-dur-input 的宽 / 高 / 右对齐 / 字号，只补 line-height 让它在 88rpx 盒子里垂直居中，
+   避免切换时行宽与行高跳动 */
+.bf-dur-static { line-height: 88rpx; }
+
+/* 单位：与输入框数字同档 34rpx，与 .form-unit（stage 打卡弹窗 / editRecord）一致。
+   原先用辅助档 24rpx，虽然 flex 居中让两者盒子中心对齐，但字号差一档会让
+   上下边界和基线都错开，看起来「分钟」矮了一截、与数字不齐 */
 .bf-dur-unit {
-  font-size: calc(24rpx * var(--fs, 1));
+  font-size: calc(34rpx * var(--fs, 1));
   color: var(--text3);
 }
 

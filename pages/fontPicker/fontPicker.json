@@ -1,6 +1,0 @@
-{
-  "navigationBarTitleText": "字体大小",
-  "usingComponents": {
-    "c-radio-list": "/components/radio-list/radio-list"
-  }
-}

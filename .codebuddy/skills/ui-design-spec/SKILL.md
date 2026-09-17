@@ -11,7 +11,8 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 ## 何时使用
 - 实现微信 / WeUI 风格的列表、设置、详情、表单页。
 - 对齐配色、字号、间距、圆角、阴影等视觉参数。
-- 做深色模式（`dm-light` / `dm-dark` / `dm-auto`）适配。
+- 做深色模式适配（项目固定 `dm-auto`：内容区跟随系统，与 `theme.json` 渲染的导航栏 / tabBar 同源）。
+- 处理字号缩放 / 适老化适配（项目 `--fs` 派生档的驱动源是微信字体设置，见下「项目实现备注」）。
 - 引入新复用组件，需确认是否符合微信原生观感。
 - 需要判断某段样式是否「像微信」。
 - 实现统计 / 概览类看板页（大号数字 + 卡片 + 图表，见 `components.md` 原语 17）。
@@ -20,8 +21,8 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 ## 设计原则
 1. 所有颜色、字号、间距以 `design-tokens.md` 的 token 为准；禁止硬编码同质值。
 2. 优先用项目 `--*` 变量（已对齐 WeUI），确需引用原始变量名时用 `--weui-*`。
-3. 字号默认固定 rpx（1px = 2rpx，见 tokens）；如需系统字号缩放再引入 `--fs` 派生。
-4. 深色模式只切换变量，不新增独立样式。
+3. 字号默认固定 rpx（1px = 2rpx，见 tokens）；需要跟随用户大字偏好时用 `--fs` 派生（本项目已落地，驱动源是**微信字体设置**，见下「项目实现备注」）。
+4. 深色模式只切换变量，不新增独立样式；**深色规则必须写成 `.dm-auto` + `@media (prefers-color-scheme: dark)` 的成对形式**——项目已把三态收敛为 `dm-auto` 一态，只写 `.dm-light` / `.dm-dark` 的规则不会再匹配到任何节点（静默失效，不报错）。
 5. 列表页先用容器/卡片原语（`.group` 圆角卡片 / `.group-flat` 裸白带），再填 cell 变体。
 
 ## 如何使用本规范
@@ -37,28 +38,31 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 - **分隔线（细线统一方案，TDesign hairline 同款）**：**一律 `1px` + `transform: scaleY(0.5)`（竖线用 `scaleX(0.5)`），并用 `transform-origin` 锚定线所在的那条边**（横线 `top` / `bottom`、竖线 `left` / `center`）。原因：`1rpx` 约合 0.5 个逻辑像素，是小数尺寸，真机 WebView 会在像素网格吸附阶段把它舍成 0、**整条线消失**（开发者工具不触发该舍入，所以只丢真机）；`1px` 是整数逻辑像素、任何 DPR 下都渲染为整数个物理像素，布局阶段稳定落格，而 `transform` 缩放属合成阶段、只会让线变淡、不会让它消失。**漏写 `transform-origin` 会因默认原点 `center` 让线向两侧各缩一半而位置漂移**——这正是本项目当年误判「`scaleY` 不可用」的真正原因（不是 `scaleY` 的问题，是没锚定原点）。**线挂在容器自身 `border` 上时不能直接加 transform**（`scaleY` 会连同容器内容一起压扁），须改由伪元素承担画线（`::after` 画底边 / `::before` 画顶边），分组块（如 `.res-list`）即此写法、末组 `:last-child` 去线。cell 内线 `left:32rpx` 缩进、首行无。`picker-view` 的选中框（`.mp-pv-indicator`）是 80rpx 高的框、不能缩放，其上下线直接给 `1px`。
 - **按钮**：`.weui-btn` 默认高 48px(96rpx)、圆角 8px；变体 `primary`(BRAND 绿)/`default`(灰底)/`warn`(RED)/`disabled`；尺寸 `medium`(40px)/`mini`(32px)、`block`/`inline`。项目 `.btn` 族高 88rpx（44pt iOS），新按钮沿用。**原生能力按钮（如 `<button open-type="share">`）直接套 `.weui-btn` 系列类、无需额外样式**；`open-type` 在朋友圈单页模式下被禁用，需按场景值 `1154` 隐藏（见 `design-guidelines.md` §六）。
 - **单元格**：`.weui-cell` 内边距 16px(32rpx)、主文 17px(34rpx)；`__bd` flex:1、`__ft` 右对齐 FG-1；`__desc` 12px(24rpx) FG-2。变体 `access`(箭头)/`link`(蓝)/`warn`(红)。项目 `.cell` 家族：`cell--single`(110rpx)/`cell--desc`(146rpx)/`cell-radio`/`cell-check`(iconfont 品牌绿对勾)。
-- **开关**：原生 `<switch color="#07c160">`；项目自绘 `.switch`（开 `#07c160`/关 `#e9e9e9`）。
+- **开关**：一律用原生 `<switch color="#07c160">`（早期自绘的 `.switch` 胶囊开关已随深色模式选择页删除，项目中不再存在，勿再引用）。
 - **单选/多选**：选中标记统一品牌绿 `#07c160`（圆底绿勾 / 对勾）。
 - **弹窗**：蒙层 OVERLAY；dialog 卡片 `#fff` 圆角 12px，主操作 BRAND；actionsheet 底部上滑、取消独立灰带；toast 反白居中。
 - **导航/标签栏**：原生组件，颜色在 `app.json`（导航栏 `#ededed`、tabBar 选中 `#07c160`）。
-- **图标**：本项目用内联 iconfont（`@font-face` base64 注册于 `app.wxss`，跨页面生效）`.iconfont` + `.icon-*:before`；可用字形：`icon-check` 对勾（走 `var(--brand)`）/ `icon-close` 关闭（走 `var(--text3)`）/ `icon-right` 右箭头 / `icon-lock` `icon-unlock` / `icon-info` / `icon-squarecheck` / `icon-rank` / `icon-settings` / `icon-calendar` 日历 / `icon-location` / `icon-home` `icon-homefill` / `icon-my` `icon-myfill` / `icon-circle` `icon-circlefill`。箭头 `icon-right` 统一取 `var(--text3)`（FG-2）作为「正常箭头色」。**自定义组件内使用须先在自己 wxss 里 `@import "../../styles/iconfont.wxss"`** —— `app.wxss` 的 class 选择器不会穿透进组件（只有标签名选择器会），漏引会表现为图标位置空白（见 `components/radio-list/radio-list.wxss`）。
+- **图标**：本项目用内联 iconfont（`@font-face` base64 注册于 `app.wxss`，跨页面生效）`.iconfont` + `.icon-*:before`；可用字形：`icon-check` 对勾（走 `var(--brand)`）/ `icon-close` 关闭（走 `var(--text3)`，**弹层关闭按钮统一用它**，热区补足 88rpx 并用负 margin 抵消外扩；勿用裸字符 `×`）/ `icon-right` 右箭头 / `icon-lock` `icon-unlock` / `icon-info` / `icon-squarecheck` / `icon-rank` / `icon-settings` / `icon-calendar` 日历 / `icon-location` / `icon-home` `icon-homefill` / `icon-my` `icon-myfill` / `icon-circle` `icon-circlefill`。箭头 `icon-right` 统一取 `var(--text3)`（FG-2）作为「正常箭头色」。**自定义组件内使用须先在自己 wxss 里 `@import "../../styles/iconfont.wxss"`** —— `app.wxss` 的 class 选择器不会穿透进组件（只有标签名选择器会），漏引会表现为图标位置空白（见 `components/radio-list/radio-list.wxss`）。
 - **数据看板卡片（原语 17）**：统计 / 概览类「非列表」页用白底圆角卡片（`--card` + 20rpx 圆角，**无阴影**）；主数据用大号数字（40/44/56/72rpx），单位与说明走 28rpx `--text2`；图表「今日」用 `var(--brand)`、「非今日」用 `var(--card2)`（主题自适应灰，勿硬编码 `rgba(0,0,0,.05)`）；角标箭头用 `.iconfont .icon-right`（`--text3`），勿用裸字符 `↗`；指标网格左右内距 32rpx 对齐页面边距。
 - **阶段统计详情页（原语 18）**：单个阶段的「累计」视图，核心数据**不套卡片**（扁平大数字贴页面底），累计时长用「X 小时 Y 分钟」分段（`splitCumulative()`，数字 64rpx 远大于单位 28rpx，勿用 `h/m` 缩写）；副行显示阶段跨度「首次打卡日 → 最后打卡日，阶段名称 历时 N 天」（跨度从打卡记录派生）；汇总三项用简单 flex 两列（`width:50%` + `flex-wrap`，前两项一行、第三项换行），每项 `prefix + 大数字 + unit + icon-right`，箭头紧贴 unit（`margin-left:8rpx`）勿用裸字符 `›`。详见 `components.md` 原语 18。
 - **滚轮选择器弹层（原语 19）**：选择月份 / 阶段等互斥选项用「可点胶囊 + ▾ → 半屏 `.mp-mask`/`.mp-sheet` + `<picker-view>` + 取消/确定」；浅色 `#e5e5e5` / 深色 `rgba(255,255,255,.1)` 上下细线标识选中项。三个必写项：弹层根节点带 `{{fontClass}} {{darkClass}}`、`mask-class="mp-pv-mask"`（去内置白蒙层）、`indicator-class="mp-pv-indicator"`（透明背景 + `var(--divider)` 细线，**切勿填实色底——会盖住选中行文字**）。详见 `components.md` 原语 19。
 - **左滑操作（原语 20）**：列表行左滑露出「编辑 / 删除」——非破坏操作在左、破坏性在右；JS 的 `SWIPE_W` 与 wxss 的 `.swipe-bg { width }` 必须双处同步（头号易错点）；位移过半（`-SWIPE_W/2`）才吸附展开、拖动限位 `-(SWIPE_W+20)`、位移变化 <2rpx 跳过 `setData`；按钮固定彩色（编辑 `#c7c7cc` / 删除 `#ff4d4f`），深色模式不另做适配。详见 `components.md` 原语 20。
 - **文章页排版（原语 21）**：说明 / 关于 / 协议类「文章型」页用整页 `.weui-article`（无卡片框，padding `48rpx 32rpx`），层级 h1 `44rpx`(22pt) / h2·h3·h4 `34rpx`(17pt，靠间距与字重区分) / 正文 `34rpx` + `--text` + 行高 1.65 / 注脚 `24rpx` `--text3`；分节 `__section` `margin-bottom:96rpx`（嵌套 64 / 48rpx）。列表借 Markdown 语义：无序 `::before '•'` + 悬挂缩进 32rpx，有序用 CSS `counter` 自动编号；行内强调只保留「主色加粗」一档，不引彩色提示块。**目前仅 `about` 一页，样式留在页面内、未提升为全局原语**。详见 `components.md` 原语 21。
 - **标签 / 徽标**：`.weui-tag` 无 margin，间距由父级 flex `gap` 控制；同一行并列多个标签时，字号 / 内边距 / 圆角**在父级集中收紧一次**（如 `.record-tags .weui-tag`），勿在每个标签类里各写一份覆盖，否则会出现「个别标签大一号」的行内不一致。
+- **原生 `<picker>` 与自绘 `picker-view` 的取舍（原语 19 补充）**：原生 `<picker>` 的弹层由微信客户端渲染，**不受 WXSS 控制**——没有 `style` / `class` / 字号属性，不吃 `--fs`、不吃 `dm-*`（随系统深色），唯一接近的 `header-text` **仅安卓有效**；只有页面上被包裹的那一行能跟项目变量。要弹层也跟随，只能用自绘 `picker-view` + 半屏弹层（原语 19）。项目现状：日期 / 阶段行用原生（一次只选一屏，原生更省心、零维护），月份 / 阶段选择器用自绘（需跟随）。**同一个 App 内两套观感是平台限制，不是缺陷**。
+- **表单页密度：分组标题有成本（原语 3 / 5）**：一个分组标题约占 78rpx，还额外带来一组上下通栏线。同类信息（如同一张表单里的几个选择项）**优先合并进同一个 `.weui-cells`**，靠行首标签区分，而不是各起一组；同一张卡片能容纳的相邻小节（如时长 + 快捷按钮 + 备注）用 `.weui-divider` 分节而不是再开一张卡。整页规划时先估「分组数 × 78rpx + 行数 × 112rpx + 卡片与按钮区」，超过一屏（约 1334rpx）再逐项收口；按钮区上边距（全局 96rpx）在卡片少时可按页覆盖收窄。
 - **设计原则 / 交互规范**：四大原则（友好 / 清晰 / 便捷 / 统一）、导航（小程序菜单右上固定且深浅两套、Tab 2–5 建议≤4）、反馈（局部加载优先、同页 ≤1 加载动画、成功 toast 1.5s）、层级（模态阻断 / 弹出不打断）——详见 `references/design-guidelines.md`；量化令牌（22/17/15/14/12pt、热区 7–9mm、设计稿 375/390、弹窗 1.5s 等）见 `design-tokens.md` §7。
 
 ## 项目实现备注（与 qingba 代码对齐）
-- **字号缩放已落地**：实际页面用 `calc(34rpx * var(--fs,1))` 派生，`--fs` 由根节点 `fs-*` class 切换。
-- **自定义胶囊开关 `.switch`**：独立设置页（如深色模式「跟随系统」）用自绘 iOS 胶囊开关，开启 `#07c160`/关闭 `#e9e9e9`、深浅一致；内联设置行仍用原生 `<switch>`。
+- **字号缩放已落地（驱动源＝微信字体设置）**：实际页面用 `calc(34rpx * var(--fs,1))` 派生，`--fs` 由根节点 `fs-*` class 切换；**档位不再由页内手动选择，而是读微信的字体大小设置后归并**——`wx.getAppBaseInfo().fontSizeScaleFactor`（约基础库 2.26.0 起返回，标准档为 `1`，判断须用 `typeof === 'number'` 而不是真值判断），老基础库回退 `fontSizeSetting ÷ 平台基准`（Android 16 / iOS 17）。官方《小程序适老化设计指南》明确建议「根据用户的微信字体大小设置，对小程序进行适配」，但 **`rpx` 本身不跟随**（只跟屏宽），必须像这样主动读 + 映射。**微信没有提供字号变化的监听 API**，靠各页 `onShow` 重新下发（沿用 `app.applyFontLevel`），用户改完设置切回小程序即生效。上限压在 `1.3` 一档——官方同页警告字号过大会导致文字溢出 / 截断 / 横向滚动。
+- **深色固定 `dm-auto`**：`dm-light` / `dm-dark` 两个手动档已移除（`.dm-auto` 及二者的规则体仍保留在 `app.wxss`，属**休眠机制，不要删**）。导航栏 / tabBar / 下拉背景由 `app.json` 的 `darkmode` + `theme.json` 渲染，**框架级、JS 碰不到**，所以内容区若还跟手动档，必然出现「导航栏浅、内容深」的割裂。
+- **开关一律用原生 `<switch>`**：早期自绘的 iOS 胶囊开关 `.switch`（曾用于深色模式选择页）已随该页删除，项目内不再有 `.switch` 样式，勿再引用（见原语 6）。
 - **单元格间分隔线（项目实现）**：qingba **不用** `border-bottom`，也**没有** `.cell-divider` 兄弟节点（那是早期方案，代码中早已不存在，旧文档里的相关描述已作废、勿再引用）。现行做法是纯 CSS、wxml 里不插任何节点：`.weui-cell::before` 画 cell 之间的缩进线（`left:32rpx`、`first-child` 不显示），`.weui-cells::before/::after` 画分组上下通栏线——两者都是 `height:1px` + `background:var(--divider)` + `transform: scaleY(0.5)` + `transform-origin: top|bottom`。
 - **`.cell` 行高由 modifier 提供（项目实现）**：qingba 的 `.cell` 基类**不设** `min-height`；行高由 `cell--single`(min-height 110rpx≈55pt) / `cell--desc`(146rpx≈73pt) 提供，每个 `.cell` 必须挂其一，否则无高度。
 - **间距工具类 `.mb-16`**：`app.wxss` 提供 `.mb-16 { margin-bottom:16rpx }`，按需扩展 `mb-8`/`mb-24`，用于卡片/分组间统一留白。
 - **列表分组间距（项目实现）**：`.weui-cells` 容器**不设 `margin-top`**（避免与上层卡片/分组间距叠加，分组留白改用 `.mb-16` 工具类或父容器 padding 控制）。`.weui-cells__title`（分组标题）的 `margin-top`/`margin-bottom` **均已合入 `padding`**（当前 `padding: 32rpx 32rpx 6rpx`：上 32rpx = WeUI 标题 margin-top 16px，下 6rpx = WeUI margin-bottom 3px），不再使用任何 margin——目的是让深色模式下卡片背景连续铺满、避免标题上下露出页面底色。新代码如需分组标题与内容之间留白，统一用 `padding` 而非 `margin`。
 - **项目 CSS 变量**：`--bg/--card/--card2/--text/--text2/--text3/--divider/--brand/--danger/--cell-active` 对应 WeUI 的 BG-0/BG-2/BG-3/FG-0/FG-1/FG-2/FG-3/BRAND/RED/BG-COLOR-ACTIVE（见 `design-tokens.md` 末节映射表）；早期 `--text4` 已并入 `--text3` 移除，勿再引用。
-- **浮层弹层必须自带主题 class（项目约定，易漏）**：`dm-light/dm-dark/dm-auto` 只挂在页面根节点 `.container` 上，`page` 上仅有浅色基础变量（`@media (prefers-color-scheme: dark)` 只覆盖 `background-color`，未覆盖变量）。因此任何 `position:fixed` 的蒙层/弹层若写在 `.container` 之外，其内部所有 `var(--*)` 都会回落到浅色基础值——表现为「手动深色 + 系统浅色」时弹层整体发白。所有弹层根节点统一写作 `class="xxx-mask {{fontClass}} {{darkClass}} <显示态class>"`（现有：`.mp-mask` / `.sheet-mask` / `.pm-mask` / `.hs-mask`）。新增浮层必须照此办理。
+- **浮层弹层必须自带主题 class（项目约定，易漏）**：`dm-auto` 只挂在页面根节点 `.container` 上，`page` 上仅有浅色基础变量（`@media (prefers-color-scheme: dark)` 只覆盖 `background-color`，未覆盖变量）。因此任何 `position:fixed` 的蒙层/弹层若写在 `.container` 之外，其内部所有 `var(--*)` 都会回落到浅色基础值——**系统深色时弹层整体发白**（手动深色档已移除，这是现存唯一的触发路径）。所有弹层根节点统一写作 `class="xxx-mask {{fontClass}} {{darkClass}} <显示态class>"`（现有：`.mp-mask` / `.sheet-mask` / `.pm-mask` / `.hs-mask`）。新增浮层必须照此办理。
 - **原生 `picker-view` 蒙层与选中框（项目约定）**：组件内置的上下蒙层是固定白色渐变，深色下会在卡片上留下灰白块，且不吃 CSS 变量。写法固定为 `<picker-view indicator-style="height:80rpx" indicator-class="mp-pv-indicator" mask-class="mp-pv-mask">`；`.mp-pv-mask` 用 `background-image:none!important; background-color:transparent!important` 去掉内置蒙层；`.mp-pv-indicator` **只能保持透明背景 + `var(--divider)` 上下细线**，切勿设 `background:var(--card2)` 之类不透明底色——indicator 覆盖在内容层之上，实色底会把选中行整行文字盖住（已踩坑，表现为深色下选中项「消失」），选中态靠上下两条主题色细线标识。
 - **`.group-title` 项目取值（与规范差异）**：全局 `.group-title`（`app.wxss`）`padding: 32rpx 32px 16rpx 32rpx`，**右内边距是 `32px`（像素）而非 `32rpx`**（疑似笔误）；新代码建议统一为 `32rpx`。
 - **扁平纯色，禁止渐变 / 外发光（项目约定）**：所有色块 / 标签 / 按钮一律用扁平纯色（`var(--brand)`、固定 HEX 或低透明叠加），**禁止 `linear-gradient` 与 `box-shadow` 外发光**；深色档同理用纯色低透明（如 `rgba(7,193,96,.14)`）替代渐变。
@@ -72,8 +76,8 @@ description: 微信小程序 UI 设计规范，基于 WeUI 官方（weui.io / Te
 ## Resources
 ### references/
 - `design-tokens.md` — 配色（浅/深）、字号、间距、圆角、分隔线、项目变量映射（单一事实来源）。
-- `components.md` — WeUI 组件原语（按钮 / cells·cell / 表单 / 开关 / 单选·多选 / 弹窗 / 导航栏 / 徽标 / 图标 / 时间线 / 看板 / 选择器弹层 / 左滑操作 / 文章页排版）及本项目已有原语对照。
-- `design-guidelines.md` — 微信官方设计指南的原则层：四大设计原则、视觉规范指针、导航 / Tab、加载与结果反馈、异常与层级、分享入口与单页模式能力边界（§六）、落地自检清单（§七）。
+- `components.md` — WeUI 组件原语（按钮 / cells·cell / 表单 / 开关 / 单选·多选 / 弹窗 / 导航栏 / 徽标 / 图标 / 时间线 / 看板 / 选择器弹层（含原生 `<picker>` 与自绘 `picker-view` 的取舍）/ 左滑操作 / 文章页排版）及本项目已有原语对照。
+- `design-guidelines.md` — 微信官方设计指南的原则层：四大设计原则、视觉规范指针、导航 / Tab、加载与结果反馈、异常与层级、分享入口与单页模式能力边界（§六）、字号与深色跟随系统 / 微信（§七）、落地自检清单（§八）。
 
 ### scripts / assets
 （暂不需要）

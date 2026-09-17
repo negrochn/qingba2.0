@@ -83,6 +83,8 @@ WeUI 的列表单位，承载一组 cell。默认无圆角、无阴影，靠上�
 ```
 说明文字（caption）超过 2 行时允许换行，`color: FG-1`，不与标题同色。
 
+**分组标题有成本，别滥用（项目约定）**：一个分组标题约占 **78rpx**，还额外带来一组 `.weui-cells` 的上下通栏线（视觉上等于又多一层边界）。**同类信息优先合并进同一个 `.weui-cells`**，靠行首标签区分，而不是各起一组——例如「日期 / 阶段 / 资源」三项本属同一张表单的一组属性，分三组要多付两个标题与两组通栏线（`pages/editRecord` 实测省 156rpx）；同一张卡内的相邻小节（如时长 + 快捷按钮 + 备注）用 `.weui-divider` 分节，也别再开第二张卡。整页规划时先估「分组数 × 78rpx + 行数 × 112rpx + 卡片与按钮区」，超过一屏（iPhone 8 约 1334rpx）再逐项收口。
+
 ---
 
 ## 原语 4：按钮 Button（项目 `.btn` 家族）
@@ -107,6 +109,7 @@ WeUI 的列表单位，承载一组 cell。默认无圆角、无阴影，靠上�
 ```
 - 高度档：默认 `--weui-BTN-HEIGHT: 48`(96rpx)、medium 40(80rpx)、mini 32(64rpx)。
 - **项目 `.btn` 当前高 88rpx(44pt iOS)**：与 WeUI 官方 96rpx 略有差异；如需完全对齐 WeUI 可上调至 96rpx，否则保持项目现状，新按钮沿用 `.btn-*`。
+- **`weui-btn_default` 的底色必须是半透明叠加（项目约定，踩过两次）**：WeUI 官方的 default 按钮底是 `--weui-FG-5`（`rgba(0,0,0,.05)` / `rgba(255,255,255,.1)`），**不是实色**。因为同一枚 default 按钮既要落在页面 `--bg` 上（如 `stage` 的「晋级下一阶段」进度按钮），又要落在 `--card` 上（弹窗里的「取消」，而 `.weui-btn::after` 的 WeUI 边框已按项目约定去掉）——**换成任何不透明实色都只适配一种底，在另一种上直接隐形**。项目令牌 `--btn-default` 即此值（见 `design-tokens.md` §9）。
 
 ```html
 <button class="weui-btn weui-btn_primary">主操作</button>
@@ -140,6 +143,10 @@ WeUI 的列表单位，承载一组 cell。默认无圆角、无阴影，靠上�
 ```
 **项目原语**：`.form-card` / `.form-row` / `.form-field`（原语 13/15）。
 
+- **表单页密度（项目约定）**：`.form-row` 最小高度 88rpx（`min-height:88rpx` + `padding:16rpx 0`），一张 `.form-card` 是一个白底圆角块（`padding:0 32rpx`，行间用 `.weui-divider` 分节）。**相邻小节优先合进同一张卡**（如「时长 / 快捷时长 / 备注」三段共用一张卡），别一段一张卡——省下的不只是卡片间距，还有各自的分组标题（见原语 3）。
+- **输入行的两种形态**：右侧要带单位 / 后缀时用 `.form-unit`（`--text3`、`margin-left:8rpx`）配 `.form-field`；**不需要左侧标签位的输入**（如备注）直接满宽 `.form-field-full`，用 placeholder 承担说明，长内容能看全——但此时 placeholder 必须自带语义（「备注，选填，如：第1-2册」），因为不再有标签。
+- **按钮区上边距**：全局 `.weui-btn-area` 是 `padding-top:96rpx`（WeUI「按钮区上 48px」），那是给多张卡片堆叠留的呼吸位；卡片少的页面可在**页面级覆盖**收窄（`pages/editRecord` 收到 32rpx），页面样式加载在 `app.wxss` 之后、同特异性即覆盖。
+
 ---
 
 ## 原语 6：开关 Switch（原生 `<switch>`）
@@ -151,7 +158,7 @@ WeUI 开关用小程序原生组件，勾选态跟随 `color` 品牌绿：
 ```
 - 关：灰（`#e9e9e9` / `FG-3` 系）；开：品牌绿 `BRAND`。
 - 尺寸约 52×32px（104×64rpx），iOS 胶囊态。
-- **项目自定义**：独立设置页（如深色模式「跟随系统」）自绘 iOS 胶囊开关 `.switch`（开启 `#07c160` / 关闭 `#e9e9e9`，深浅一致）；内联设置行仍用原生 `<switch>`。
+- **项目现状**：一律用原生 `<switch color="#07c160">`。早期有个自绘 iOS 胶囊开关 `.switch`（曾用于已删除的深色模式选择页），随该页一并移除，项目中已无 `.switch` 样式。
 
 ---
 
@@ -180,7 +187,7 @@ WeUI 开关用小程序原生组件，勾选态跟随 `color` 品牌绿：
 ```
 对勾/选中标记统一用 **品牌绿 `#07c160`**。
 
-**项目原语**：`stagePicker` / `fontPicker` / `importPicker` / `clearPicker` 用 `.cell-radio` + `.cell-check`（iconfont `icon-check`，品牌绿）呈现单选勾选；分隔线由 `.weui-cell::before` 伪元素自动提供，wxml 无需插节点。
+**项目原语**：`stagePicker` / `importPicker` / `clearPicker` 用 `.cell-radio` + `.cell-check`（iconfont `icon-check`，品牌绿）呈现单选勾选；分隔线由 `.weui-cell::before` 伪元素自动提供，wxml 无需插节点。
 
 ---
 
@@ -221,6 +228,14 @@ WeUI 开关用小程序原生组件，勾选态跟随 `color` 品牌绿：
 .weui-toast__content { margin-top:8px(16rpx); font-size:14px(28rpx); }
 ```
 **项目原语**：`.sheet-mask` / `.action-sheet`（原语 4）；居中 modal 用 `.weui-dialog` 同款结构。
+
+- **弹层头部只有一派（项目约定）**：半屏面板统一「**抓手 + 标题左 + 关闭右**」，**不要**混用 WeUI half-screen-dialog 的「左上角关闭 + 居中标题 + 通栏细线」——两派并存会让同一个 App 的弹层观感分裂（本版即把 `components/resource-picker` 的头部统一过来，删掉 `.rp-hd` 三件套与通栏细线）。标题取 `34rpx` / `font-weight:600`。
+- **关闭按钮统一用 iconfont `icon-close`**：不要用裸字符 `×` 靠 `font-size` 硬撑（字形随字族回退，不同机型粗细不一）。热区补足 **88rpx**（设计指南「可点项最小热区 ≥ 88rpx」），并用**负 margin** 抵消热区外扩，避免标题与图标的视觉间距被撑开；按压反馈用 `background: var(--cell-active)` 而非 `opacity`。
+- **底部弹层与软键盘：优先用「移除输入框」的结构性方案（项目约定，两次真机失败后定稿）**：软键盘由**原生层**渲染、**永远盖在底部弹层之上**，表现为弹层刚推出就被数字键盘压住、内容根本看不到。
+  1. **推荐做法**：弹层打开期间用 `wx:if` 把页面上的 `<input>` 整体移出 DOM、换成同宽同高的纯文本（`wx:else`）。**键盘必须有「聚焦的输入框」作宿主** —— 输入框不在了，它既不可能继续挂着，也不会被弹层的入场动画重新拉起；与 `focus` 属性语义、`hideKeyboard` 在哪些机型生效、渲染先后统统无关。替代文本要与输入框**同宽 / 同档 / 同对齐**，只补 `line-height` 让它在原盒高内垂直居中，避免切换时行宽行高跳动。
+  2. **为什么不用「收键盘」那一套**（`wx.hideKeyboard()` + 清受控 `focus` 变量）：真机上两次都没压住。不可控的变量太多 —— 官方文档对 `focus` 只写「获取焦点」，**没有说置 `false` 会失焦**；`wx.hideKeyboard` 的生效条件（是否要求键盘已弹出、时机是否须在用户手势内）未写明；iOS 另有「input 失焦后键盘不自动收起」的已知问题；而官方 input 文档的 Tip 明写「**在 input 聚焦期间，避免使用 css 动画**」，弹层自带的 transform 过渡正是把键盘重新拉起来的元凶。这些只能作为**辅助**保留（低版本客户端无 `wx.hideKeyboard`，加 `if (wx.hideKeyboard)` 判断）。
+  3. **关弹层时记得清掉受控聚焦变量**：输入框会被重新创建，若该变量仍指向某行，它会带着 `focus=true` 出生、反而把键盘弹回来。
+  先例 `pages/backfill` 的时长输入框 + 资源选择弹层。
 
 ---
 
@@ -487,12 +502,29 @@ WeUI 提供 `weui-icon-*`（mask + `background-color: currentColor` 方案，色
                    border-top: 1px solid var(--divider); border-bottom: 1px solid var(--divider); }
 ```
 
-- **弹层根节点必须带 `{{fontClass}} {{darkClass}}`（头号易漏点）**：`dm-*` 只挂在页面根 `.container` 上，`page` 上只有浅色基础变量。弹层若写在 `.container` 之外又不自带主题类，内部所有 `var(--*)` 都会回落到浅色值——「手动深色 + 系统浅色」时表现为白卡片、浅灰「取消」按钮、深色文字。项目另有 4 处弹层（`.sheet-mask` / `.pm-mask` / `.hs-mask`）已按此写法，新增浮层必须照办。
+- **弹层根节点必须带 `{{fontClass}} {{darkClass}}`（头号易漏点）**：`dm-auto` 只挂在页面根 `.container` 上，`page` 上只有浅色基础变量。弹层若写在 `.container` 之外又不自带主题类，内部所有 `var(--*)` 都会回落到浅色值——**系统深色时表现为白卡片、浅灰「取消」按钮、深色文字**（手动档已移除，这是现存唯一的触发路径）。项目另有 4 处弹层（`.sheet-mask` / `.pm-mask` / `.hs-mask`）已按此写法，新增浮层必须照办。
 - **`mask-class` 与 `indicator-class` 必写**：`picker-view` 的蒙层与选中框是组件内置样式，不读 CSS 变量、也不跟随 `dm-*`。蒙层一律去掉；选中框**只能保持透明背景 + `var(--divider)` 上下细线**（项目表现为浅色 `#e5e5e5` / 深色 `rgba(255,255,255,.1)`），与微信原生 picker 观感一致。
 - **切勿给 indicator 填实色底**：indicator 是覆盖在内容层之上的元素，`background: var(--card2)` 这类不透明底色会把**选中行整行文字盖住**（表现为选中项「消失」）。若确实想要选中行底色，唯一可行方向是给 `.mp-item` 提 `position: relative; z-index`，但依赖组件内部层级，需真机验证。
 - **`indicator-style` 的 height 与 `.mp-item` 的 `line-height` 必须相等**（项目取 `80rpx`），否则选中项与细线错位。
 - **滚动项由页面自己渲染**，故 `.mp-item` 直接吃项目 token 与 `--fs`，字号档位切换时选择器文字同步缩放。
 - **交互细节**：遮罩 `bindtap` 关闭、面板 `catchtap="noop"` 防穿透；两按钮等宽（`width:45%` + `gap:20rpx`），取消在前用 `--cell-active`、确定在后用 `--brand`。
+
+### 原生 `<picker>` 还是自绘 `picker-view`（选型）
+
+两者**互斥**：原生零维护但弹层完全不受样式控制，自绘能跟随项目变量但要自己养一整套。项目按「**是否需要跟随**」分派：
+
+| | 原生 `<picker>` | 自绘 `picker-view` + 半屏弹层（本原语） |
+|---|---|---|
+| 弹层跟 `--fs` 字号档 | ❌ | ✅ |
+| 弹层跟 `dm-auto` 深色 | ❌（跟随系统深色） | ✅ |
+| 弹层样式 / 标题 / 按钮 | ❌ 全不可控 | ✅ |
+| 维护成本 / 系统级适配 | ✅ 零维护 | ⚠️ 蒙层 / 滚轮 / 动画 / 深色 / 无障碍都要自己补 |
+
+- 原生 `<picker>` **没有任何样式属性**（无 `style` / `class` / 字号），弹层由原生层渲染、WXSS 渗透不进去；唯一接近的 `header-text`（选择器标题）**仅安卓有效**。官方给的出路就是「要完全自定义请用 `picker-view`，并自行实现弹层容器」。
+- 原生可用的 `mode`：`selector`（单列）/ `multiSelector`（多列联动）/ `date` / `time` / `region`。
+- **`multiSelector` 两列联动的关键坑**：左列滚动时必须在 `bindcolumnchange` 里**同时把右列下标重置为 0**，否则右列会停在上一分组的旧下标上而错位。
+- 原生只能渲染**纯文本**：需要尾标 / 图标时只能拼进文案（如 `书名（自定义）`），不能挂类；值的「占位灰字」也只能靠给 `__ft_value` 加 `placeholder` 类实现。
+- **同一个 App 里两种观感并存是平台限制，不是缺陷**：项目现状是日期 / 阶段行用原生（一次只选一屏，原生更省心），月份 / 阶段选择器用自绘（需跟随变量）。要全站统一，只能把日期行也换成自绘（见 `pages/records` 的 `.mp-*` 原语）。
 
 ---
 

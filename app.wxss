@@ -10,10 +10,11 @@
 @import "./styles/iconfont.wxss";
 
 /* ===== 主题色板（--* 变量，已对齐 WeUI） =====
-   浅色为默认；深色通过根节点 class（dm-light / dm-dark / dm-auto）切换 CSS 变量。
+   浅色为默认；深色通过根节点 class 切换 CSS 变量（现只挂 dm-auto = 跟随系统，
+   dm-light / dm-dark 两个手动档已移除，规则体保留为休眠机制）。
    对应 WeUI：--bg=BG-0 / --card=BG-2 / --text=FG-0(主文字) / --text2=FG-1(次级) /
    --text3=FG-2(三级·占位) / --divider≈FG-3 / --brand=BRAND /
-   --danger=RED / --cell-active≈BG-COLOR-ACTIVE */
+   --danger=RED / --cell-active≈BG-COLOR-ACTIVE / --btn-default=FG-5(默认按钮底) */
 page {
   --bg: #ededed;
   --card: #ffffff;
@@ -25,6 +26,11 @@ page {
   --brand: #07C160;
   --danger: #fa5151;               /* RED light */
   --cell-active: #ececec;          /* BG-COLOR-ACTIVE light */
+  /* 默认按钮底（= WeUI FG-5）：**必须是半透明叠加、不能是不透明实色**。
+     同一枚 .weui-btn_default 既要落在页面 --bg 上（stage 的「晋级下一阶段」），
+     又要落在 --card 上（弹窗里的「取消」）——取任一实色都只适配一种底，
+     在另一种底上就会与背景同色而隐形（历史两次踩坑：--cell-active 撞 --bg、--card 撞 --card） */
+  --btn-default: rgba(0, 0, 0, 0.05);
   /* 默认浅色背景；系统深色时由下方 media query 覆盖为深色。
      这里不能用 var(--bg) —— dm-light/dm-dark 类挂在 .container 上，
      变量只能向下继承，page 上解析到的永远是基础值 #ededed。*/
@@ -72,6 +78,7 @@ view, text {
   --brand: #07C160;
   --danger: #fa5151;               /* RED light */
   --cell-active: #ececec;          /* BG-COLOR-ACTIVE light */
+  --btn-default: rgba(0, 0, 0, 0.05);   /* FG-5 light：默认按钮底 */
 }
 
 /* 手动深色（微信官方深色色板：BG #111 / 卡片 BG-2 #191919 / 文字 FG-0 .8 / FG-1 .5 / FG-2 .3） */
@@ -86,6 +93,7 @@ view, text {
   --brand: #07C160;
   --danger: #fa5151;               /* RED dark（与浅色一致，WeUI RED 不随深浅变化） */
   --cell-active: #373737;          /* BG-COLOR-ACTIVE dark */
+  --btn-default: rgba(255, 255, 255, 0.1);   /* FG-5 dark：默认按钮底 */
 }
 
 /* 跟随系统 */
@@ -101,6 +109,7 @@ view, text {
     --brand: #07C160;
     --danger: #fa5151;               /* RED dark（与浅色一致，WeUI RED 不随深浅变化） */
     --cell-active: #373737;          /* BG-COLOR-ACTIVE dark */
+    --btn-default: rgba(255, 255, 255, 0.1);   /* FG-5 dark：默认按钮底 */
   }
 }
 
@@ -155,11 +164,21 @@ view, text {
 .weui-btn:active { opacity: 0.85; }
 
 .weui-btn_primary { background-color: var(--brand); color: #fff; }
-.weui-btn_default { background-color: var(--cell-active); color: var(--text); }
+/* 默认按钮底 = WeUI 官方 FG-5 的半透明叠加（项目令牌 --btn-default）。
+   这里**不能用不透明实色**：同一枚按钮既要落在页面 --bg 上
+   （stage 的「晋级下一阶段」进度按钮 —— 它靠 transparent 透出这层底色），
+   又要落在 --card 上（弹窗里的「取消」），而 .weui-btn::after 的边框已按项目约定去掉，
+   实色必有一处与背景同色而隐形。两次踩坑：先用 --cell-active
+   （#ececec vs --bg #ededed 只差 1 个色阶），后改 --card（又正好等于弹窗自身底色）。 */
+.weui-btn_default { background-color: var(--btn-default); color: var(--text); }
 .weui-btn_warn { background-color: var(--danger); color: #fff; }
 .weui-btn_disabled { background-color: #C7C7CC; color: #fff; pointer-events: none; }
 .weui-btn_disabled:active { opacity: 1; }
-.dm-dark .weui-btn_disabled { background-color: #3A3A3C; }
+/* 深色禁用色：原写的是 .dm-dark，但深色已固定跟随系统、dm-dark 不再挂载，
+   故必须改成 .dm-auto + 媒体查询才生效 */
+@media (prefers-color-scheme: dark) {
+  .dm-auto .weui-btn_disabled { background-color: #3A3A3C; }
+}
 
 /* 满宽：用 .weui-btn.weui-btn_block 提高特异性(0,2,0)，盖过原生 button 默认
    wx-button:not([size=mini]) 的 width:184px(0,1,1)，否则满宽不生效 */

@@ -36,7 +36,13 @@
         <text class="bf-res-group" wx:if="{{item.groupLabel}}">{{item.groupLabel}}</text>
       </view>
       <view class="bf-dur">
+        <!-- 弹层打开期间把 <input> 整体移出 DOM、换成纯文本：
+             键盘必须有「聚焦的输入框」作宿主，输入框不在了，它就不可能继续挂着、也不会被弹层的
+             入场动画重新拉起。这是结构性保证 —— 不依赖 focus 属性的未文档化语义、不依赖
+             wx.hideKeyboard 在哪些机型生效、也不依赖收键盘与弹层渲染谁先谁后（前两种做法真机均无效）。
+             代价仅是：弹层打开期间时长以纯文本呈现，视觉与输入框一致（同宽同档同对齐） -->
         <input
+          wx:if="{{!pickerShow}}"
           class="bf-dur-input"
           type="number"
           placeholder="0"
@@ -45,9 +51,11 @@
           focus="{{focusRowKey === item.rid}}"
           data-rid="{{item.rid}}"
           confirm-type="done"
+          bindfocus="onDurationFocus"
           bindinput="onDurationInput"
           bindconfirm="onDurationConfirm"
         />
+        <text wx:else class="bf-dur-input bf-dur-static {{item.durationInput ? '' : 'bf-dur-ph'}}">{{item.durationInput || '0'}}</text>
         <text class="bf-dur-unit">分钟</text>
       </view>
       <view class="bf-del iconfont icon-close" data-rid="{{item.rid}}" catchtap="onRemoveRow"></view>

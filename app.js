@@ -3,8 +3,6 @@ const checkin = require('./utils/checkin.js')
 
 App({
   onLaunch() {
-    this.globalData.fontLevel = theme.getFontLevel()
-    this.globalData.darkMode = theme.getDarkMode()
     // 官方资源 id 化：把老的「资源名」key 一次性迁移为「资源 id」key（幂等，重复调用无副作用）
     try {
       checkin.migrateResourceKeysToId()
@@ -43,18 +41,17 @@ App({
   },
 
   // 在页面 onLoad / onShow 中调用：getApp().applyFontLevel(this)
-  // 仅下发字号 + 内容区深色模式 class（dm-light / dm-dark / dm-auto）
+  // 下发两个 class：
+  //   fontClass —— fs-*，跟随「微信 → 我 → 设置 → 通用 → 字体大小」
+  //   darkClass —— 固定 dm-auto（内容区跟随系统深色）
   // 导航栏 / tabBar / 页面背景（含下拉/上拉橡皮筋区）已交给 app.json + theme.json
   // 的微信原生 darkmode 配置，不再用 JS 覆盖
+  // 字号与主题都没有变化监听 API，所以各页 onShow 重新调用一次，
+  // 覆盖"用户去微信里改完设置、切回小程序"的场景
   applyFontLevel(page) {
-    const level = theme.getFontLevel()
-    const darkMode = theme.getDarkMode()
-    this.globalData.fontLevel = level
-    this.globalData.darkMode = darkMode
     if (page && typeof page.setData === 'function') {
       page.setData({
         fontClass: theme.getFontClass(),
-        fontLevelIndex: theme.getFontLevelIndex(),
         darkClass: theme.getDarkClass()
       })
     }
@@ -62,8 +59,6 @@ App({
 
   globalData: {
     // 首页"去打卡"跳路线页时置为 true，路线页 onShow 后滚动到当前阶段并复位
-    scrollToCurrentStage: false,
-    fontLevel: theme.DEFAULT_LEVEL,
-    darkMode: theme.DEFAULT_DARK_MODE
+    scrollToCurrentStage: false
   }
 })

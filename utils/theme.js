@@ -1,114 +1,44 @@
-// 字体大小设置工具
-// 通过切换根节点 class 改变 CSS 变量 --fs，实现全站字号缩放
-// 存储: qingba_font_level = 'small' | 'normal' | 'large' | 'xlarge'
+// 字号档位工具
+// 通过给根节点挂 class（.fs-*）改变 CSS 变量 --fs，实现全站字号缩放。
+//
+// 档位不再由用户在小程序内选择，而是自动跟随「微信 → 我 → 设置 → 通用 > 字体大小」：
+// 小程序侧拿不到手机系统的字号，只有微信透传的 fontSizeSetting / fontSizeScaleFactor。
+// 各页在 onShow 调用 app.applyFontLevel(this) 重新下发，以覆盖"改完字体切回小程序"的场景
+// （官方没有字号变化监听 API，只能这样重读）。
+//
+// 旧存储 key qingba_font_level 已彻底弃用（不再读写），本地残留值无害。
 
-const FONT_LEVEL_KEY = 'qingba_font_level'
-
-const DEFAULT_LEVEL = 'normal'
-
-// 档位定义：scale 为字号缩放系数（作用于 40rpx 以下的正文类字号）
-const LEVELS = [
-  { key: 'small', label: '小', desc: '紧凑，一屏显示更多', scale: 0.9 },
-  { key: 'normal', label: '标准', desc: '默认字号', scale: 1 },
-  { key: 'large', label: '大', desc: '更清晰易读', scale: 1.15 },
-  { key: 'xlarge', label: '特大', desc: '最大字号', scale: 1.3 }
-]
-
-function indexOf(key) {
-  for (let i = 0; i < LEVELS.length; i++) {
-    if (LEVELS[i].key === key) return i
-  }
-  return -1
-}
-
-// 读取当前档位 key（脏数据/未设置时回落到标准）
-function getFontLevel() {
-  let key = ''
-  try {
-    key = wx.getStorageSync(FONT_LEVEL_KEY) || ''
-  } catch (e) {}
-  if (indexOf(key) < 0) return DEFAULT_LEVEL
-  return key
-}
-
-// 保存当前档位 key
-function setFontLevel(key) {
-  if (indexOf(key) < 0) return false
-  try {
-    wx.setStorageSync(FONT_LEVEL_KEY, key)
-  } catch (e) {}
-  return true
-}
-
-// ===== 深色模式 =====
-// 微信风格：跟随系统 toggle（开启 → 跟随系统，关闭 → 可手动选择浅色 / 深色）
-// 存储: qingba_dark_mode = 'auto' (跟随系统) | 'light' (普通模式) | 'dark' (深色模式)
-// 关闭「跟随系统」时默认进入普通模式（DEFAULT_MANUAL_MODE）
-
-const DARK_MODE_KEY = 'qingba_dark_mode'
-const DEFAULT_DARK_MODE = 'auto'
-const VALID_DARK_KEYS = ['auto', 'light', 'dark']
-
-// 关闭态默认进入普通模式
-const DEFAULT_MANUAL_MODE = 'light'
-
-const DARK_MODE_LABELS = {
-  auto: '跟随系统',
-  light: '已关闭',
-  dark: '已开启'
-}
-
-function getDarkMode() {
-  let key = ''
-  try {
-    key = wx.getStorageSync(DARK_MODE_KEY) || ''
-  } catch (e) {}
-  return VALID_DARK_KEYS.indexOf(key) >= 0 ? key : DEFAULT_DARK_MODE
-}
-
-function setDarkMode(key) {
-  if (VALID_DARK_KEYS.indexOf(key) < 0) return false
-  try {
-    wx.setStorageSync(DARK_MODE_KEY, key)
-  } catch (e) {}
-  return true
-}
-
-// 根节点的深色 class：dm-auto | dm-light | dm-dark
-function getDarkClass() {
-  return 'dm-' + getDarkMode()
-}
-
-// 设置页 cell 显示文本：'auto'→'跟随系统'，'light'→'已关闭'，'dark'→'已开启'（显示状态，而非重复模式名）
-function getDarkModeText() {
-  return DARK_MODE_LABELS[getDarkMode()] || DARK_MODE_LABELS[DEFAULT_DARK_MODE]
-}
-
-// 是否实际处于深色：'dark' 或 ('auto' 且系统深色)
-function isDarkMode(systemDark) {
-  const mode = getDarkMode()
-  return mode === 'dark' || (mode === 'auto' && !!systemDark)
-}
-
-// 当前是否实际处于深色（自行读取系统主题）
-// 供 canvas / JS 侧需要真实深色判断的场景使用（CSS 侧仍走 dm-* 类）
-function isDarkNow() {
-  let systemDark = false
+// 微信字体设置的缩放倍率（「标准」档 = 1）
+// wx.getAppBaseInfo 需基础库 2.20.1+；fontSizeScaleFactor 约 2.26.0+ 才有，
+// 老基础库用 fontSizeSetting ÷ 平台基准字号折算（Android 16 / iOS 17）
+// 注意：fontSizeScaleFactor 的"正常值"就是 1，判断时不能用 if (!x)
+function getFontScale() {
   try {
     const info = wx.getAppBaseInfo ? wx.getAppBaseInfo() : wx.getSystemInfoSync()
-    systemDark = !!(info && info.theme === 'dark')
+    if (!info) return 1
+    if (typeof info.fontSizeScaleFactor === 'number' && info.fontSizeScaleFactor > 0) {
+      return info.fontSizeScaleFactor
+    }
+    const px = Number(info.fontSizeSetting)
+    if (px > 0) {
+      const device = wx.getDeviceInfo ? wx.getDeviceInfo() : info
+      const base = device && device.platform === 'ios' ? 17 : 16
+      return px / base
+    }
   } catch (e) {}
-  return isDarkMode(systemDark)
+  return 1
 }
 
-function defaultIndex() {
-  return indexOf(DEFAULT_LEVEL)
-}
-
-// 当前档位下标（用于 picker / slider）
-function getFontLevelIndex() {
-  const i = indexOf(getFontLevel())
-  return i >= 0 ? i : defaultIndex()
+// 当前生效的档位 key —— 四个 key 与各页 CSS 的 .fs-* 规则一一对应：
+//   small → .fs-small(0.9) / normal → .fs-normal(1) / large → .fs-large(1.15) / xlarge → .fs-xlarge(1.3)
+// 微信自己的档位比这里多，故按区间归并；上限压在 1.3 一档，
+// 依据官方《适老化设计指南》的警告：字号过大会导致文字溢出、截断、横向滚动
+function getFontLevel() {
+  const scale = getFontScale()
+  if (scale < 1) return 'small'
+  if (scale <= 1.05) return 'normal'
+  if (scale <= 1.2) return 'large'
+  return 'xlarge'
 }
 
 // 根节点的缩放 class，如 fs-large
@@ -116,33 +46,31 @@ function getFontClass() {
   return 'fs-' + getFontLevel()
 }
 
-// 当前档位名称（如「标准」），供设置页 cell 右侧展示
-// 注：LEVELS 里的 desc（如「默认字号」）目前未在任何界面展示
-function getFontLevelText() {
-  const level = LEVELS[indexOf(getFontLevel())] || LEVELS[defaultIndex()]
-  return level.label
+// ===== 深色模式 =====
+// 完全跟随系统 / 微信主题。导航栏、tabBar、页面背景（含下拉橡皮筋区）已由 app.json 的
+// darkmode + theme.json 接管，而那一层是框架级的、JS 改不了；内容区因此也固定挂 dm-auto
+// （媒体查询规则写在 app.wxss），保证两层同源。
+// 小程序内不再提供手动切换 —— 否则会出现"导航栏跟系统、内容区跟手动档"的割裂。
+
+// 根节点深色 class（固定值）
+function getDarkClass() {
+  return 'dm-auto'
 }
 
+// 当前是否实际处于深色：canvas / JS 侧需要真实判断时使用（CSS 侧一律走 dm-auto）
+function isDarkNow() {
+  try {
+    const info = wx.getAppBaseInfo ? wx.getAppBaseInfo() : wx.getSystemInfoSync()
+    return !!(info && info.theme === 'dark')
+  } catch (e) {
+    return false
+  }
+}
+
+// 只导出外部实际引用到的（app.js / settings / stats / stage / mine）
 module.exports = {
-  FONT_LEVEL_KEY,
-  LEVELS,
-  DEFAULT_LEVEL,
   getFontLevel,
-  setFontLevel,
-  getFontLevelIndex,
   getFontClass,
-  getFontLevelText,
-  indexOf,
-  defaultIndex,
-  DARK_MODE_KEY,
-  DEFAULT_DARK_MODE,
-  VALID_DARK_KEYS,
-  DEFAULT_MANUAL_MODE,
-  DARK_MODE_LABELS,
-  getDarkMode,
-  setDarkMode,
   getDarkClass,
-  getDarkModeText,
-  isDarkMode,
   isDarkNow
 }

@@ -2,9 +2,10 @@
 
 本项目所有重要变更都会记录在此文件中，格式参照 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
-## [Unreleased]
+## [3.5.0] - 2026-09-17
 
-> 补录由「一本书进一次页面」改为**一次补「一天」的多条**：日期 + 阶段 + 当天多行，在同一屏里填完、一次提交；单条编辑拆为独立页面（`pages/editRecord`），与补录页职责分离。
+> 补录由「一本书进一次页面」改为**一次补「一天」的多条**：日期 + 阶段 + 当天多行，在同一屏里填完、一次提交；单条编辑拆为独立页面（`pages/editRecord`），选择器改用原生 picker，并整页纵向瘦身约 320rpx（一屏可容纳）。
+> 字号与深色模式改为**完全跟随微信 / 系统**（不再提供小程序内手动档），设置页「显示」分组与两个选择页一并移除 —— 内容区与 `theme.json` 渲染的导航栏 / tabBar 从此同源。
 > 另把各页弹层的关闭按钮由裸字符 `×` 换成 iconfont 的 `icon-close` 字形，热区统一补足 88rpx，并补齐首页 / 我的资源 / 阶段页半屏面板的深色蒙层。
 
 ### 新增
@@ -20,7 +21,7 @@
 - **`checkin.addCheckinsOnDay(day, records)`**：一次 `getAll()` + 一次 `saveAll()` 写完当天多条。**不能循环调 `addCheckin`** —— 它每次都是一轮全量读 + 一轮全量写，几条就是几轮 I/O，且中途失败会写进去一半（脏数据）。字段口径（含 `backfilled` / `timestamp` 规则）与 `addCheckin` 完全一致，跨月 / 分片由 `saveAll` 自动重组。
 - **`pages/editRecord`（新页面）**：把原补录页的编辑态（`?id=xxx` 的单条完整表单，含备注）拆成独立页面。两页职责一分为二：`backfill` 只做补录、`editRecord` 只做编辑，补录页不再背 `isEdit` 双形态。记录页左滑「编辑」改跳新页。
 - **`components/resource-picker`（新组件）**：底部半屏弹层，**左列分组 / 右列资源**（不逐级下钻，切分组点左边即可）。选中输出 `resourceId / resourceName / groupKey / groupLabel / custom`；自定义资源带「自定义」标记、已选项打品牌绿对勾、空分组显示「该分组暂无资源」。**分组定位优先级**：当前已选资源所在分组 → 上次选过的分组 → 第一个分组（记住上次选择，连补多天时不必重复点）。常驻挂载 + `show` 切 class（不是 `wx:if` 创建销毁），因此**隐藏态必须显式 `visibility: hidden` + `transform: translateY(100%)` 移出视口**——只写 `pointer-events: none` 只是不接收点击，面板仍会渲染出来挡住页面。
-- **`components/date-picker`（新组件，暂未接入页面）**：自绘日期选择弹层（三列滚轮，`max` 锁今天）。`styleIsolation: "shared"` 是为了让组件作用域内的类名能命中 `picker-view` 由基础库渲染的内置蒙层与选中框；组件内用 iconfont 已按规范自行 `@import` 字形类。补录页与编辑页的日期行最终改用原生 `<picker mode="date">`，本组件暂作保留。
+- **`components/date-picker`（新组件）**：自绘日期选择弹层（三列滚轮，`max` 锁今天）。`styleIsolation: "shared"` 是为了让组件作用域内的类名能命中 `picker-view` 由基础库渲染的内置蒙层与选中框；组件内用 iconfont 已按规范自行 `@import` 字形类。补录页与编辑页的日期行最终改用原生 `<picker mode="date">`，该组件始终未接入页面，已随本版清理删除。
 
 ### 变更
 
@@ -28,15 +29,68 @@
   - **热区 56rpx → 88rpx**（设计指南「可点项最小热区 ≥ 88rpx」），用负 margin 抵消热区外扩，标题与关闭图标的**视觉间距不变**
   - 字号改 `calc(34rpx * var(--fs, 1))` 跟随字号档（原 `53rpx` 硬编码，切「特大」时不缩放）
 - 阶段页左滑操作主文字 `32rpx` → `34rpx`，与全站正文基准一致。
+- **字号改为跟随微信字体设置，深色固定跟随系统（全站）**：此前两者都是小程序内的手动档（`.fs-*` 四档 / `dm-light`·`dm-dark`·`dm-auto` 三态），与微信 / 系统状态可以不一致。
+  - **字号**：`theme.js` 改读 `wx.getAppBaseInfo()` 的 `fontSizeScaleFactor`，老基础库用 `fontSizeSetting ÷ 平台基准` 折算（Android 16 / iOS 17），按区间归并到原有四档；上限压在 1.3 一档（官方《适老化设计指南》警告字号过大会导致文字溢出、截断、横向滚动）。**CSS 零改动** —— 全站 178 处 `calc(Nrpx * var(--fs, 1))` 与四个 `.fs-*` 规则原样复用
+  - **深色**：`getDarkClass()` 固定返回 `dm-auto`，内容区与 `theme.json` 渲染的导航栏 / tabBar **两层同源**。顺带修掉一个一直存在的割裂：手动深色时导航栏（框架级、只跟系统）与内容区（跟手动档）本就不一致
+  - 字号与主题都没有变化监听 API，靠各页 `onShow` 重新下发（沿用既有的 `app.applyFontLevel`），用户去微信改完设置切回小程序即生效
+  - 连带影响：上一版「补录日期 / 阶段改用原生 `<picker>`」时记下的代价（系统弹层不吃 `dm-*` / `--fs`）**不再构成割裂** —— 全站都以系统为准了
+- **资源选择弹层改为对齐项目原语 4「action-sheet」（`components/resource-picker`）**：它的头部原本学的是 WeUI half-screen-dialog（左上角关闭 + 居中标题 + 通栏细线），与项目自己的弹层风格（`stage` 打卡弹窗 / `myResources` / `home` 用的「抓手 + 标题左 + 关闭右」）不一致，同一个 App 里并存两派弹层。现统一到原语 4：
+  - 头部换成抓手 + 标题左 + 关闭右，删除 `.rp-hd` / `.rp-hd-side` / `.rp-hd-main` 与通栏细线（约 50 行）
+  - 标题 `30rpx` / `font-weight: 500` → **34rpx / 600**（原值取自 WeUI 的 15px 档，且正落在本项目「已废弃的 30rpx」区间，与文件内注释自相矛盾）
+  - 关闭按钮补 `-16rpx` 负 margin 抵消 88rpx 热区外扩 + `border-radius: 50%`，按压反馈由 `opacity` 改为 `background: var(--cell-active)`
+  - 遮罩展开色 `0.45` → `0.5`、面板上内边距 `24rpx` → `16rpx`（给抓手留位）、过渡 `0.3s` → `0.25s`，逐项对齐 `.action-sheet`
+  - **唯一保留的差异**：`.rp-sheet` 固定 `75vh`（双列 `scroll-view` 必须有确定高度才能滚动），打卡弹窗则是内容自适应
+- **编辑记录页的选择器改为原生 picker（`editRecord`）**：原先「阶段 / 分组 / 资源」是**三组整页单选列表**，靠逐级展开（选完阶段才出现分组、选完分组才出现资源），表单很长、要来回滚动。现改为：
+  - **阶段** → `<picker mode="selector">`，与补录页同款
+  - **分组 + 资源** → 合并为**一个 `<picker mode="multiSelector">` 两列联动**（左列分组、右列该分组的资源）。因此不是两行，而是**一行「资源」**，分组名作为该行的次级说明显示在标题下方
+  - 两列联动的关键坑：左列滚动时必须在 `bindcolumnchange` 里**同时把右列下标重置为 0**，否则右列会停在上一分组的旧下标上而错位（已写入注释）
+  - 原生 picker 只能渲染纯文本，故「自定义」标记由尾标改为拼进名字（`书名（自定义）`），页面里的 `.bf-custom` 样式随之删除
+  - 回填逻辑改为**反查各级下标**（`groupKey` / `resourceId` → `multiValue`），打开滚轮即停在原值；资源被删除 / 改名 / 老记录无 `resourceId` 时仍把名称快照补进列表，保证可见可保存
+  - 未选阶段时资源行 `disabled`，并给一行提示
+- **编辑记录页纵向瘦身（`editRecord`）**：改用原生 picker 后整页仍有 **5 个分组标题 + 5 个独立块**（约 1393rpx），一屏（iPhone 8 = 1334rpx）放不下、要滚一截才见按钮。四处收口后约 **1076rpx**：
+  - **日期 / 阶段 / 资源合并为一组**，标题改「打卡信息」——三项同属「这条记录的属性」，各自成组要多付两个分组标题与两组上下通栏线（省 156rpx）
+  - **备注并入「学习记录」卡片**（原「学习时长」）：与时长 / 快捷时长同卡，用 `.weui-divider` 分节，省一个分组标题与一份卡片间距（省 98rpx）；备注不再占左侧标签位，改满宽输入 + placeholder 说明「备注，选填，如：第1-2册」，长备注能看全
+  - **两条 tips 改为 `wx:if` / `wx:else` 互斥**：原「选择阶段后可挑选分组与资源」是条件显示、「修改后会计入阶段时长与统计」是常驻，同一位置会先后出现两条
+  - **按钮区上边距 96rpx → 32rpx**（页面级覆盖全局 `.weui-btn-area`）：该值原为多张卡片堆叠留的呼吸位，本页上方只剩一张卡片（省 64rpx）
+  - 刻意保留：每个 cell 的 112rpx 最小行高（WeUI 标准，动它会破坏与全站列表的一致性）、快捷时长独占一行（5 按钮 + 输入框同行会过窄）
+
+### 清理
+
+- 移除 `pages/fontPicker` 与 `pages/darkMode` 两个手动选择页（`app.json` 注销 + 8 个文件删除），设置页「显示」分组整体移除。
+- `theme.js` 精简：删掉手动档相关 API（`getDarkMode` / `setDarkMode` / `getDarkModeText` / `isDarkMode` / `getFontLevelIndex` / `getFontLevelText` / `LEVELS` 等）与已废弃的 `qingba_font_level` 存储读写，只导出仍在用的 4 个方法（`getFontLevel` / `getFontClass` / `getDarkClass` / `isDarkNow`）。
+- `app.js` 去掉无人读取的 `globalData.fontLevel` / `darkMode` 与 `fontLevelIndex` 下发；`settings.js` 去掉与 `applyFontLevel` 完全重复的 `loadFontLevel` / `loadDarkMode`。
+- 删除 `components/date-picker/`（4 个文件）：自绘日期选择弹层。补录页与编辑页的日期行改用原生 `<picker mode="date">` 后它已无任何页面引用，且同属上面被统一掉的「WeUI 派」头部。
 
 ### 修复
+
+- **打卡弹窗的「取消」按钮看不到底色与边框（`stage` / `myResources`）**：上一版为修「晋级下一阶段」按钮与页面融成一片，把 `.weui-btn_default` 的底色由 `--cell-active` 改成了 `--card` —— 但**弹窗本身就在 `--card` 面上**，按钮底色与弹窗同色，而 `.weui-btn::after` 的 WeUI 边框早已按项目约定去掉，于是按钮只剩文字、毫无轮廓。
+  - **根因是「用不透明实色做默认按钮底」这件事本身**：同一枚 default 按钮既要落在页面 `--bg` 上（`stage` 的晋级按钮），又要落在 `--card` 上（两处弹窗的「取消」），不透明色只能适配其中一种底 —— 取哪个都会在另一种底上隐形。上一版只是把撞色的位置从「页面」搬到了「弹窗」
+  - **改法（对齐 WeUI 官方）**：WeUI 的 default 按钮底是 `--weui-FG-5` = `rgba(0,0,0,.05)` / `rgba(255,255,255,.1)`，是**半透明叠加**，落在任何底色上都有对比。新增项目令牌 `--btn-default`（= FG-5），`.weui-btn_default` 与 `stage` 晋级弹窗的 `.pm-btn-cancel` 一并改用它
+  - 顺带统一了两个弹窗的「取消」：原先一个是 `--cell-active`（不透明 `#ececec`）、一个是 `--card`，同一页两枚同功能按钮却是两种色
+  - 复核三处落点均有明显对比：弹窗取消（`--card` 面，浅 `#f2f2f2` / 深 ≈`#2c2c2c`）、晋级按钮（页面 `--bg` 面，浅 `#e1e1e1` / 深 ≈`#2a2a2a`）
+- **补录页：数字键盘盖住资源选择弹层（`backfill`）**：时长输入框是 `focus="{{focusRowKey === item.rid}}"` 受控的，而 `_openPicker()` 里没有任何一处收键盘 —— 软键盘由**原生层**渲染、**永远盖在弹层之上**，于是「填完时长 → 点『＋ 添加一条』」时弹层刚推出就被数字键盘压住、数字键优先显示。
+  - **前两版修法真机上均无效**（记录在此以免重蹈）：①「清 `focusRowKey` + `wx.hideKeyboard()`」；② 再补 `bindfocus` 让变量说实话、收键盘挪到弹层渲染之后（+120ms 补收）、并把 `focus` 绑定写成 `pickerShow ? false : …` 从状态上禁止聚焦。这条路不可控的变量太多：官方文档对 `focus` 只写「获取焦点」、**没说置 `false` 会失焦**；`wx.hideKeyboard` 的生效条件未写明；iOS 另有「input 失焦后键盘不自动收起」的已知问题；官方 input 文档还有一条 Tip「**在 input 聚焦期间，避免使用 css 动画**」，而弹层自带的 transform 过渡正是把键盘重新拉起来的元凶
+  - **补 `bindfocus`**：`focusRowKey` 原先只在 `_focusRow()`（选完资源后的程序化聚焦）里维护，用户**直接点**某行时长框时它并不更新 —— 于是「清 `focusRowKey`」很可能清的是个不相干的值、根本不产生 `true→false` 的属性变化，框架也就无从失焦。现在聚焦事件也一并记录，`focusRowKey` 保证指向真正聚焦的那一行
+  - **最终改成结构性方案**：弹层打开期间用 `wx:if` 把 `<input>` 整个移出 DOM、换成纯文本（`wx:else`）。**键盘必须有「聚焦的输入框」作宿主** —— 输入框不在了，它既不可能继续挂着、也不会被弹层入场动画重新拉起，与 `focus` 绑定语义 / `hideKeyboard` 生效情况 / 渲染顺序统统无关
+  - 替代文本复用 `.bf-dur-input` 的宽 / 高 / 右对齐 / 字号，只补 `line-height: 88rpx`（`.bf-dur-static`）并沿用 placeholder 色，切换时行宽行高不跳动
+  - **前两版的做法保留为辅助措施**（已不承担主要职责，留着无害）：`bindfocus` 维护 `focusRowKey`、`_hideKeyboard()`（带低版本存在性判断）、弹层渲染后 +120ms 补收一次、`onUnload` 清延迟定时器。其中「清 `focusRowKey`」在**关弹层**时仍必要 —— 输入框会重新创建，若该变量还指向某行，它会带着 `focus=true` 出生、反而把键盘弹回来
+  - 同一入口覆盖了另一个路径：直接点资源名打开弹层时同样先收键盘
+- **「晋级下一阶段」按钮与页面背景融成一片（`stage`）**：该按钮的进度填色用 `linear-gradient(…, transparent …)` 让**按钮底色透出来**，而底色取自 `--cell-active`（浅色 `#ececec`）—— 它与页面背景 `--bg`（`#ededed`）**只差 1 个色阶**（RGB 差 1/255），加上 `.weui-btn::after` 的 WeUI 细线边框早已按项目约定去掉，浅色下按钮边界完全消失。此为既有配色问题（深色下 `#373737` vs `#111` 对比正常，故只在浅色暴露），也只在「进度未满、落在 `weui-btn_default`」时可见。现把 `.weui-btn_default` 底色改为 `var(--card)`（浅 `#fff` / 深 `#191919`），与 WeUI 的 default 按钮取 BG-2 一致，进度填充也更清楚。
+- **深色下两处样式因 `dm-dark` 不再挂载而失效（`app.wxss` / `stats`）**：深色改为固定跟随系统后根节点只挂 `dm-auto`，凡是**只写 `.dm-dark`、没有 `.dm-auto` 配对**的规则都会永久失配。全项目逐条核对 13 处，其中两处漏了配对：
+  - `app.wxss` 的 `.dm-dark .weui-btn_disabled` → 深色下禁用按钮会露出浅灰 `#C7C7CC`；已改为 `.dm-auto` + 媒体查询
+  - `stats.wxss` 的 `.dm-dark .chart-skel` → 深色下图表骨架网格仍是浅色的 `rgba(0,0,0,.06)`，在深色遮罩下看不见；同样改为 `.dm-auto` + 媒体查询
+  - 其余 11 处（`tag-group` / 各处深色蒙层 / 分类色变量块 / `current-cell` / `tag-stage`）均已成对，无需改动
 
 - **首页 / 我的资源 / 阶段页半屏面板缺深色蒙层**：三处的 `.hs-mask` / `.sheet-mask` / `.pm-mask` 原本只有浅色的 `rgba(0,0,0,.5)`，深色下没有加深到 `.8`（与 `app.wxss` 的 `.dm-dark .weui-mask` 不一致），弹层打开时蒙层偏浅。这三处的蒙层根节点**同时挂 `dm-*` 与自身的显示修饰类**（不在祖先链上），故选择器必须写成**同元素复合**（`.hs-mask.dm-dark.hs-mask-show`），并另写一份 `@media` 下的 `.dm-auto` 版本。
 
 ### 文档 / 规范同步
 
-- README「打卡记录」章节：左滑「编辑」改述为独立编辑页；补录改述为「一次补一天的多条」（含选择弹层与兜底规则）。项目结构补 `pages/editRecord`、`components/` 段（`radio-list` / `resource-picker` / `date-picker`），并补 `checkin.js` 的「当天多条批量写入」说明。
-- `ui-design-spec` skill：图标条目补 `icon-close` 字形，并新增提醒「**自定义组件内使用 iconfont 必须先在自己 wxss 里 `@import "styles/iconfont.wxss"`**」——`app.wxss` 的 class 选择器不穿透进自定义组件（只有标签名选择器会），漏引表现为图标位置空白且无任何报错（先例 `components/radio-list`）。
+- README：顶部版本块补 v3.5.0；「打卡记录」章节同步编辑页的选择器与布局变化。
+- `ui-design-spec` skill 同步本版两处机制变化与一批已过时描述：
+  - **字号**：`--fs` 的驱动源由「页内手动四档」改为**微信字体设置**（`SKILL.md` 的何时使用 / 设计原则 / 项目实现备注，`design-tokens.md` §9 字号档与 §8 care 接入说明一并更新 —— 不再自建适老档，直接跟随微信）。
+  - **深色**：三态收敛为 `dm-auto` 一态；新增约定「**深色规则必须 `.dm-auto` + `@media (prefers-color-scheme: dark)` 成对书写**」——只写 `.dm-light` / `.dm-dark` 的规则在手动档移除后会永久失配（本版即据此逐条核对 13 处、修掉 2 处）。
+  - `components.md`：原语 19 补「**原生 `<picker>` vs 自绘 `picker-view`** 的取舍与代价」（原生弹层不吃 `--fs` / `dm-*`，要跟随只能用自绘）；原语 3 / 5 补「分组标题有成本、同类信息优先合并为一组」的表单页密度约定；原语 8 补弹层关闭按钮统一 `icon-close` + 88rpx 热区；清理已失效的 `.switch` 自绘胶囊开关与 `fontPicker` 引用。
+- README「设置」章节：移除「显示」（字体大小四档 / 深色模式三态）两栏，改为「跟随微信设置」的说明并附原因；项目结构树同步 `settings` 页注释与 `theme.js` 描述。
 
 ## [3.4.1] - 2026-09-16
 
@@ -471,6 +525,7 @@
 
 | 版本 | 说明 |
 | ---- | ---- |
+| 3.5.0 | 字号与深色改为跟随微信 / 系统，移除小程序内手动档与两个选择页；补录改为一次补一天的多条，单条编辑拆为独立页并改用原生选择器、压缩布局；另统一弹层关闭按钮并补齐深色蒙层。 |
 | 3.4.1 | 新增分享能力：各页定制转发标题、落地页统一首页，「关于」页可分享给好友与朋友圈；「关于」页排版按 WeUI 规范重构（22pt 主标题、正文 17pt）；修复记录页标签不一致。 |
 | 3.4.0 | 打卡记录左滑新增「编辑」；首页指标卡可点开今日明细弹窗；统计页排行榜占比分母改为累计值；全站细线改用 hairline 方案修复真机不可见；另修复深色选择器弹层与一批数据安全问题。 |
 | 3.3.0 | 首页新增 Day N（当前阶段进行天数）与未设置阶段的欢迎卡引导；2×2「打卡天数」改为「连续打卡」；路线页未设置阶段不再显示满屏锁，顶部「当前阶段」可直达选择页。 |
