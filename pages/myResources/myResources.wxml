@@ -15,6 +15,8 @@
               <view class="rg-dot rg-dot-{{grp.key}}"></view>
               <view class="rg-label rg-label-{{grp.key}}">{{grp.label}}</view>
               <view class="rg-count">{{grp.items.length}} 项</view>
+              <!-- 分组当前不可见（如熏听开关关闭）：资源仍在，只是不参与阶段页打卡 -->
+              <view class="rg-hidden" wx:if="{{grp.hidden}}">已隐藏</view>
             </view>
             <view class="rg-head-right">
               <view class="rg-arrow {{expandedGroups[grp.uid] ? 'rg-arrow-open' : ''}}">›</view>
@@ -48,6 +50,8 @@
                 </view>
               </view>
             </view>
+            <!-- 隐藏分组说明：讲清「资源还在、只是不参与打卡」，避免误以为数据丢了 -->
+            <view class="mr-hidden-tip" wx:if="{{grp.hidden}}">该分组当前已隐藏（「设置 → 熏听」开关关闭）：资源仍保留，可改名或改归属；开启开关后可在阶段页打卡</view>
           </view>
         </view>
       </view>
@@ -87,13 +91,27 @@
         />
       </view>
       <view class="weui-divider"></view>
-      <view class="form-row" bindtap="goPicker">
-        <view class="form-label">归属</view>
-        <view class="form-right">
-          <text class="form-value-text">{{locationText}}</text>
-          <text class="iconfont icon-right"></text>
+      <!-- 归属：拆成「阶段」+「分组」两行原生 picker，二者联动 ——
+           不同阶段的分组集合有差异，切阶段后分组列表需重建、下标归零 -->
+      <picker mode="selector" range="{{stageNames}}" value="{{stageIndex}}" bindchange="onStageChange">
+        <view class="form-row">
+          <view class="form-label">阶段</view>
+          <view class="form-right">
+            <text class="form-value-text">{{stageNames[stageIndex]}}</text>
+            <text class="iconfont icon-right"></text>
+          </view>
         </view>
-      </view>
+      </picker>
+      <view class="weui-divider"></view>
+      <picker mode="selector" range="{{groupNames}}" value="{{groupIndex}}" bindchange="onGroupChange">
+        <view class="form-row">
+          <view class="form-label">分组</view>
+          <view class="form-right">
+            <text class="form-value-text">{{groupNames[groupIndex]}}</text>
+            <text class="iconfont icon-right"></text>
+          </view>
+        </view>
+      </picker>
     </view>
 
     <!-- 删除统一走列表左滑（同打卡记录页），弹窗只保留取消 / 保存 -->

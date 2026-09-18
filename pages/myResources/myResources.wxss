@@ -116,6 +116,25 @@ page {
 .rg-label-listening_audio { color: var(--dot-lis); }
 .rg-label-default { color: var(--text3); }
 
+/* 「已隐藏」标记：该分组当前不可见（如熏听开关关闭），但资源仍在、可正常管理 */
+.rg-hidden {
+  flex-shrink: 0;
+  margin-left: 8rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text2);
+  background: var(--cell-active);
+}
+
+/* 隐藏分组在列表中的说明行（仅管理页出现） */
+.mr-hidden-tip {
+  padding: 16rpx 32rpx 24rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  line-height: 1.5;
+  color: var(--text3);
+}
+
 .rg-count {
   font-size: calc(28rpx * var(--fs, 1));
   color: var(--text3);

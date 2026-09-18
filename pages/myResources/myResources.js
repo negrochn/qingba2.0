@@ -29,9 +29,15 @@ Page({
     isEdit: false,
     editId: '',
     nameInput: '',
+    // 归属：阶段 + 分组两行原生 picker（联动 —— 不同阶段的分组集合有差异）
+    stageOptions: [],   // [{ id, name }]
+    stageNames: [],     // 阶段 picker 的 range
+    stageIndex: 0,
+    groupOptions: [],   // 当前阶段的 [{ key, label }]
+    groupNames: [],     // 分组 picker 的 range
+    groupIndex: 0,
     pickStageId: '',
-    pickGroupKey: '',
-    locationText: '未选择'
+    pickGroupKey: ''
   },
 
   onLoad() {
@@ -54,7 +60,17 @@ Page({
     ;(routeData.stages || []).forEach(stage => {
       const byGroup = all[stage.stage_id] || {}
       const groups = []
-      resources.getStageGroupKeys(stage.stage_id).forEach(key => {
+      // 渲染集合 = 该阶段「可见分组」∪「已挂有资源但当前不可见的分组」（典型：熏听开关被关掉）。
+      // 这是管理页：必须能看到并管理自己的全部数据。若只按可见分组渲染，
+      // 会出现「设置页计数 N 项、这里却空空如也」，用户会以为资源丢了。
+      // 隐藏分组在模板里标「已隐藏」并给说明（阶段页仍按开关隐藏，属打卡视图，两处口径不同是有意的）
+      const visible = resources.getStageGroupKeys(stage.stage_id)
+      const keys = visible.slice()
+      Object.keys(byGroup).forEach(k => {
+        const l = byGroup[k]
+        if (Array.isArray(l) && l.length && keys.indexOf(k) < 0) keys.push(k)
+      })
+      keys.forEach(key => {
         const list = Array.isArray(byGroup[key]) ? byGroup[key] : []
         if (!list.length) return
         const groupsBefore = groups.length
@@ -63,6 +79,7 @@ Page({
           uid: `${stage.stage_id}|${key}`,
           key,
           label: resources.getGroupLabel(key),
+          hidden: visible.indexOf(key) < 0,
           items: list.map((it, ii) => ({
             id: it.id,
             name: it.name,
@@ -90,19 +107,61 @@ Page({
     this.setData({ sections, totalCount: total, isEmpty: total === 0, expandedGroups })
   },
 
-  _stageName(stageId) {
-    const stage = resources.getStageById(stageId)
-    return stage ? stage.stage_name : ''
+  // ===== 归属：阶段 + 分组两行原生 picker（联动） =====
+  // 打开弹窗时初始化归属：阶段定位到目标阶段，分组定位到目标分组（找不到则取第一个）
+  _initLocation(stageId, groupKey) {
+    const stageOptions = (routeData.stages || []).map(s => ({ id: s.stage_id, name: s.stage_name }))
+    let si = stageOptions.findIndex(s => s.id === stageId)
+    if (si < 0) si = 0
+    const id = stageOptions[si] ? stageOptions[si].id : ''
+    this.setData({
+      stageOptions,
+      stageNames: stageOptions.map(s => s.name),
+      stageIndex: si,
+      pickStageId: id
+    })
+    this._loadGroupOptions(id, groupKey)
   },
 
-  _syncLocationText(stageId, groupKey) {
-    if (!stageId || !groupKey) {
-      this.setData({ locationText: '未选择' })
-      return
+  // 载入某阶段的分组选项；keepGroupKey 传空即取第一个分组。
+  // 目标分组不在该阶段的列表里时（典型：熏听开关被关掉）补一行占位 ——
+  // 否则会静默落到第一个分组，一保存就把资源挪到了别的分组
+  _loadGroupOptions(stageId, keepGroupKey) {
+    const keys = stageId ? resources.getStageGroupKeys(stageId) : []
+    const groupOptions = keys.map(k => ({ key: k, label: resources.getGroupLabel(k) }))
+    let gi = 0
+    if (keepGroupKey) {
+      const i = groupOptions.findIndex(g => g.key === keepGroupKey)
+      if (i >= 0) {
+        gi = i
+      } else {
+        groupOptions.unshift({ key: keepGroupKey, label: resources.getGroupLabel(keepGroupKey) })
+        gi = 0
+      }
     }
     this.setData({
-      locationText: `${this._stageName(stageId)} · ${resources.getGroupLabel(groupKey)}`
+      groupOptions,
+      groupNames: groupOptions.map(g => g.label),
+      groupIndex: gi,
+      pickGroupKey: groupOptions[gi] ? groupOptions[gi].key : ''
     })
+  },
+
+  // 阶段 picker：切阶段要重建分组列表（不同阶段的分组集合有差异），分组下标归零
+  onStageChange(e) {
+    const si = Number(e.detail.value)
+    const st = (this.data.stageOptions || [])[si]
+    if (!st) return
+    this.setData({ stageIndex: si, pickStageId: st.id })
+    this._loadGroupOptions(st.id, '')
+  },
+
+  // 分组 picker
+  onGroupChange(e) {
+    const gi = Number(e.detail.value)
+    const g = (this.data.groupOptions || [])[gi]
+    if (!g) return
+    this.setData({ groupIndex: gi, pickGroupKey: g.key })
   },
 
   // 分组展开 / 折叠（与阶段详情页同交互）
@@ -120,18 +179,16 @@ Page({
     const stageId = (cur && resources.getStageById(cur.id))
       ? cur.id
       : ((routeData.stages[0] || {}).stage_id || '')
-    const keys = resources.getStageGroupKeys(stageId)
 
     this.setData({
       showSheet: true,
       sheetTitle: '添加资源',
       isEdit: false,
       editId: '',
-      nameInput: '',
-      pickStageId: stageId,
-      pickGroupKey: keys[0] || ''
+      nameInput: ''
     })
-    this._syncLocationText(stageId, keys[0] || '')
+    // 默认归属：当前阶段 + 该阶段第一个分组（keepGroupKey 传空即落到第 0 项）
+    this._initLocation(stageId, '')
   },
 
   openEdit(e) {
@@ -151,11 +208,10 @@ Page({
       sheetTitle: '编辑资源',
       isEdit: true,
       editId: id,
-      nameInput: found.resource.name,
-      pickStageId: found.stageId,
-      pickGroupKey: found.groupKey
+      nameInput: found.resource.name
     })
-    this._syncLocationText(found.stageId, found.groupKey)
+    // 回填归属：阶段与分组各自定位到原值
+    this._initLocation(found.stageId, found.groupKey)
   },
 
   closeSheet() {
@@ -166,21 +222,6 @@ Page({
 
   onNameInput(e) {
     this.setData({ nameInput: e.detail.value })
-  },
-
-  // 跳转归属选择页（整页单选，返回后由本页 applyPickLocation 接收）
-  goPicker() {
-    const { pickStageId, pickGroupKey } = this.data
-    wx.navigateTo({
-      url: `/pages/resourcePicker/resourcePicker?stageId=${pickStageId}&groupKey=${pickGroupKey}`
-    })
-  },
-
-  // 归属选择页回调
-  applyPickLocation(opt) {
-    if (!opt || !opt.stageId) return
-    this.setData({ pickStageId: opt.stageId, pickGroupKey: opt.groupKey || '' })
-    this._syncLocationText(opt.stageId, opt.groupKey || '')
   },
 
   // 提交新增 / 保存编辑
