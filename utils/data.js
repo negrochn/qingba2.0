@@ -388,6 +388,54 @@ const routeData = {
   ]
 }
 
+// ===== 熏听分组与折算系数 =====
+// 「熏听」= about 页的方式三（听音频）。官方数据里不含任何素材，它只是个占位分组：
+// 家长在「我的资源」里挂自己的音频素材，打卡时按阶段系数折算为有效时长（见 LISTENING_FACTORS）。
+// 七个阶段统一补空数组（「是数组」即分组存在，这也是 getStageGroupKeys 的判定条件）。
+// 注：该分组属于程序占位、不属于路线内容，故无需同步根目录 qingba_listening_route.json。
+const LISTENING_GROUP_KEY = 'listening_audio'
+
+;(routeData.stages || []).forEach(stage => {
+  if (!stage.resources) stage.resources = {}
+  if (!Array.isArray(stage.resources[LISTENING_GROUP_KEY])) stage.resources[LISTENING_GROUP_KEY] = []
+})
+
+// 熏听折算系数：按「打卡所属阶段」唯一确定，家长无需选难度。依据两处：
+//   1) about 页的时间计算：牛1-2 可听但不计入；牛3 ×0.5；牛4 及以后 ×0.8
+//   2) 各阶段主线里的牛津树素材（实测）：常规2 = L1-2、常规3 = L3、…、常规6 = L6、准桥梁 = L7
+//      → 常规N 对应牛N；常规1 无牛津树素材，落在「牛1-2」档
+const LISTENING_FACTORS = {
+  regular_1: 0,     // 牛1-2 档：可听，但不计入有效时长
+  regular_2: 0,     // 牛1-2（主线素材为「牛津树L1-2」）
+  regular_3: 0.5,   // 牛3
+  regular_4: 0.8,   // 牛4 及以后
+  regular_5: 0.8,
+  regular_6: 0.8,
+  pre_bridge: 0.8
+}
+
+// 记录的折算系数：仅熏听分组打折，其余分组恒为 1
+// ⚠️ 0 是合法系数（常规1/2 不计入），调用方判断缺省值时不能用 `||`
+function listeningFactor(stageId, groupKey) {
+  if (groupKey !== LISTENING_GROUP_KEY) return 1
+  const f = LISTENING_FACTORS[stageId]
+  return typeof f === 'number' ? f : 1
+}
+
+// 熏听折算提示文案（打卡弹窗 / 补录 / 编辑页共用，避免三处各写一份）
+// minutes 传 0 时只说明系数；大于 0 时给出「X 分钟计 Y 分钟」的具体换算
+function listeningTip(stageId, groupKey, minutes) {
+  if (groupKey !== LISTENING_GROUP_KEY) return ''
+  const f = LISTENING_FACTORS[stageId]
+  if (typeof f !== 'number') return ''
+  if (f === 0) return '本阶段属于牛1-2 档：熏听可记录，但不计入有效时长'
+  const pct = `×${f}`
+  const m = Math.round(Number(minutes) || 0)
+  return m > 0
+    ? `熏听按 ${pct} 折算：${m} 分钟计 ${Math.round(m * f)} 分钟有效时长`
+    : `本阶段熏听按 ${pct} 折算后计入有效时长`
+}
+
 // 资源分组的中文名称映射
 const resourceLabels = {
   main_picture_books: '主线绘本',
@@ -397,7 +445,8 @@ const resourceLabels = {
   sub_animations: '辅线动画',
   fun_extensions: '趣味拓展',
   science_extensions: '科普拓展',
-  fusion_apps: '融合APP'
+  fusion_apps: '融合APP',
+  listening_audio: '熏听'
 }
 
 // 三大方法数组化（便于渲染）
@@ -477,6 +526,10 @@ function getRequiredHours(stage) {
 module.exports = {
   routeData,
   resourceLabels,
+  LISTENING_GROUP_KEY,
+  LISTENING_FACTORS,
+  listeningFactor,
+  listeningTip,
   methodList,
   timeCalculation,
   parseTargetHours,

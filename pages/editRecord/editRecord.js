@@ -7,7 +7,7 @@
 // 也免去原先「三组整页单选列表」依次展开的长表单。
 const resources = require('../../utils/resources.js')
 const checkin = require('../../utils/checkin.js')
-const { routeData } = require('../../utils/data.js')
+const { routeData, listeningFactor, listeningTip } = require('../../utils/data.js')
 
 Page({
   data: {
@@ -30,6 +30,7 @@ Page({
     selectedResourceName: '',
     durationInput: '',
     remarkInput: '',
+    listeningTip: '',      // 熏听折算提示（选中熏听分组的资源时显示）
     canSubmit: false,
     id: ''
   },
@@ -72,9 +73,15 @@ Page({
     this._selectStage(stageId)
 
     if (groupKey) {
-      const groups = this.data.groups || []
+      const groups = (this.data.groups || []).slice()
       let gi = groups.findIndex(g => g.key === groupKey)
-      if (gi < 0) gi = 0
+      if (gi < 0) {
+        // 记录里的分组不在当前列表（典型：熏听开关被关掉）：补一行占位。
+        // 否则会静默落到第一个分组，一保存就把这条记录的分组改掉了
+        groups.unshift({ key: groupKey, label: resources.getGroupLabel(groupKey) })
+        this._groupItems.unshift(_loadItems(stageId, groupKey))
+        gi = 0
+      }
 
       const list = (this._groupItems[gi] || []).slice()
       // 资源可能已被删除 / 改名（记录里存的是当时的名称快照），
@@ -87,12 +94,15 @@ Page({
       this._groupItems[gi] = list
 
       this.setData({
+        groups,
+        'multiRange[0]': groups.map(g => g.label),
         'multiRange[1]': list.map(_itemLabel),
         multiValue: [gi, ri],
         selectedGroupKey: groupKey,
         selectedGroupLabel: resources.getGroupLabel(groupKey),
         selectedResourceId: resourceId,
-        selectedResourceName: rec.resourceName || ''
+        selectedResourceName: rec.resourceName || '',
+        listeningTip: listeningTip(stageId, groupKey, rec.durationMinutes)
       })
     }
 
@@ -151,7 +161,8 @@ Page({
       selectedGroupKey: '',
       selectedGroupLabel: '',
       selectedResourceId: '',
-      selectedResourceName: ''
+      selectedResourceName: '',
+      listeningTip: ''
     })
   },
 
@@ -186,14 +197,22 @@ Page({
       selectedGroupKey: g.key,
       selectedGroupLabel: g.label,
       selectedResourceId: r.id,
-      selectedResourceName: r.name
+      selectedResourceName: r.name,
+      listeningTip: listeningTip(this.data.selectedStageId, g.key, this.data.durationInput)
     })
     this._refreshSubmit()
   },
 
   // ===== 时长 / 备注 =====
   onDurationInput(e) {
-    this.setData({ durationInput: e.detail.value })
+    const v = e.detail.value
+    this.setData({ durationInput: v })
+    // 熏听分组的折算提示随时长变化（非熏听分组返回空串，自动清除）
+    if (this.data.selectedGroupKey) {
+      this.setData({
+        listeningTip: listeningTip(this.data.selectedStageId, this.data.selectedGroupKey, v)
+      })
+    }
     this._refreshSubmit()
   },
 

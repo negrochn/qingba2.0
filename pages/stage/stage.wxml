@@ -74,7 +74,14 @@
             <view class="r-no r-no-char" wx:else>{{res.name[0]}}</view>
             <view class="r-body">
               <view class="r-name">{{res.name}}<text class="r-tag" wx:if="{{res.custom}}">自定义</text></view>
-              <view class="r-sub" wx:if="{{resTotals[g.key + '|' + res.name]}}">今日已打卡 {{resTotals[g.key + '|' + res.name]}} 分钟 · 可继续追加</view>
+              <!-- 已打卡副文：时长按「原始投入」展示（家长视角「今天听了多久」）；
+                   熏听行补一句有效时长，常规1/2 有效为 0 时显示「本阶段不计入」，
+                   这样 ×0 档也能看到「今天打过卡」的痕迹 -->
+              <view class="r-sub" wx:if="{{resTotals[g.key + '|' + res.name]}}">
+                <text>今日已打卡 {{resTotals[g.key + '|' + res.name]}} 分钟</text>
+                <text wx:if="{{g.key === 'listening_audio'}}"> · {{resEffective[g.key + '|' + res.name] ? '有效 ' + resEffective[g.key + '|' + res.name] + ' 分钟' : '本阶段不计入'}}</text>
+                <text wx:else> · 可继续追加</text>
+              </view>
               <view class="r-sub r-sub-hint" wx:elif="{{g.clickable && !stageLocked}}">点击打卡 · 左滑标记读完</view>
               <view class="r-sub r-sub-locked" wx:elif="{{g.clickable && stageLocked}}">
                 <text wx:if="{{stageStatus === 'completed'}}">本阶段已完成，仅可查看</text>
@@ -88,6 +95,11 @@
               <view class="r-arrow" wx:else>·</view>
             </view>
           </view>
+        </view>
+        <!-- 空分组提示：熏听分组官方不含素材，给一句引导（其余空分组只说明为空） -->
+        <view class="rg-empty" wx:if="{{!g.items.length}}">
+          <text wx:if="{{g.key === 'listening_audio'}}">还没有熏听素材，去「设置 → 我的资源」添加</text>
+          <text wx:else>该分组暂无资源</text>
         </view>
       </view>
     </view>
@@ -188,6 +200,10 @@
             bindinput="onDurationInput"
           />
           <text class="form-unit">分钟</text>
+          <!-- 熏听折算系数就地显示（贴着输入单位，视线不用下移到卡片底部）：
+               只给系数，具体换算交给下方 .listen-tip；×0 阶段不写「×0」而写「不计入」，
+               避免让家长以为「乘 0」是某种正常规则 -->
+          <text class="form-factor" wx:if="{{listeningFactor !== 1}}">{{listeningFactor > 0 ? '×' + listeningFactor : '不计入'}}</text>
         </view>
       </view>
       <view class="weui-divider"></view>
@@ -200,6 +216,8 @@
           <view class="seg-item {{durationInput==='30' ? 'seg-active' : ''}}" data-val="30" bindtap="quickDuration">30</view>
         </view>
       </view>
+      <!-- 熏听分组：按阶段折算的说明（含「X 分钟计 Y 分钟」实时换算） -->
+      <view class="listen-tip" wx:if="{{listeningTip}}">{{listeningTip}}</view>
     </view>
 
     <!-- 表单卡片 2：备注 -->

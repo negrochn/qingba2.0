@@ -16,7 +16,7 @@
     <view class="weui-cell weui-cell_access" bindtap="goMyResources">
       <view class="weui-cell__bd">
         <view class="weui-cell__bd_text">我的资源</view>
-        <view class="weui-cell__desc">把自己买的书 / 动画加进来一起打卡</view>
+        <view class="weui-cell__desc">把自己买的书 / 动画 / 熏听音频加进来一起打卡</view>
       </view>
       <view class="weui-cell__ft">
         <text class="weui-cell__ft_value">{{myResourceCount}} 项</text>
@@ -29,6 +29,13 @@
         <view class="weui-cell__desc">开启后，完成阶段会校验测试结果</view>
       </view>
       <switch checked="{{youquEnabled}}" bindchange="onYouquPlanChange" color="#07c160" />
+    </view>
+    <view class="weui-cell">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text">熏听</view>
+        <view class="weui-cell__desc">开启后在阶段页显示「熏听」分组；打卡时长按阶段系数折算为有效时长</view>
+      </view>
+      <switch checked="{{listeningEnabled}}" bindchange="onListeningChange" color="#07c160" />
     </view>
   </view>
 

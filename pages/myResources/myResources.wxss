@@ -12,6 +12,7 @@ page {
   --dot-fex: #3498db;   /* 趣味拓展 */
   --dot-sex: #9b59b6;   /* 科普拓展 */
   --dot-fap: #8e44ad;   /* 融合APP */
+  --dot-lis: #607d8b;   /* 熏听（蓝灰，与其它分类拉开） */
   --dot-def: #888888;   /* 默认 */
 }
 
@@ -25,6 +26,7 @@ page {
   --dot-fex: #5dade2;
   --dot-sex: #bb8fce;
   --dot-fap: #af7ac5;
+  --dot-lis: #90a4ae;
   --dot-def: #b2b2b2;
 }
 
@@ -38,6 +40,7 @@ page {
     --dot-fex: #5dade2;
     --dot-sex: #bb8fce;
     --dot-fap: #af7ac5;
+    --dot-lis: #90a4ae;
     --dot-def: #b2b2b2;
   }
 }
@@ -95,6 +98,7 @@ page {
 .rg-dot-fun_extensions { background: var(--dot-fex); }
 .rg-dot-science_extensions { background: var(--dot-sex); }
 .rg-dot-fusion_apps { background: var(--dot-fap); }
+.rg-dot-listening_audio { background: var(--dot-lis); }
 
 .rg-label {
   flex: 1;
@@ -109,6 +113,7 @@ page {
 .rg-label-fun_extensions { color: var(--dot-fex); }
 .rg-label-science_extensions { color: var(--dot-sex); }
 .rg-label-fusion_apps { color: var(--dot-fap); }
+.rg-label-listening_audio { color: var(--dot-lis); }
 .rg-label-default { color: var(--text3); }
 
 .rg-count {

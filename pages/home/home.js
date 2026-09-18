@@ -105,7 +105,7 @@ Page({
       const list = all[day] || []
       for (const r of list) {
         if (r.stageId !== stageId) continue          // 只统计当前阶段
-        const min = Number(r.durationMinutes) || 0
+        const min = checkin.effectiveMinutes(r)      // 熏听时长按 factor 折算后计入
         totalMinutes += min                            // 阶段时长（当前阶段）
         daysSet.add(day)
         if (!firstDayStr || day < firstDayStr) firstDayStr = day   // 阶段首次打卡日（YYYY-MM-DD 字典序即时间序）
@@ -246,7 +246,7 @@ Page({
         map[key] = it
         order.push(it)
       }
-      const min = Number(r.durationMinutes) || 0
+      const min = checkin.effectiveMinutes(r)   // 熏听按 factor 折算
       it.minutes += min
       it.count += 1
       totalMinutes += min
@@ -258,9 +258,14 @@ Page({
       ? (b.count - a.count || b.minutes - a.minutes)
       : (b.minutes - a.minutes || b.count - a.count))
 
+    // 时长模式过滤掉有效时长为 0 的项（如常规1/2 的熏听）：它们确实是当天的打卡，
+    // 但在这张「有效时长」榜里没有可展示的量，留着只会显示「0分钟」；
+    // 次数模式保留（「打过一次」本身有意义）
+    const rows = byCount ? order : order.filter(it => it.minutes > 0)
+
     // 占比分母为该统计范围的累计值（今日总时长 / 今日总次数），各行相加为 100%
     const base = byCount ? totalCount : totalMinutes
-    const items = order.map(it => {
+    const items = rows.map(it => {
       const val = byCount ? it.count : it.minutes
       return {
         key: it.key,

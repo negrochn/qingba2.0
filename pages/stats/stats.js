@@ -1,7 +1,8 @@
 // 数据统计（累计视图）：顶部阶段选择器 + 核心时长 / 打卡时长分布 / 分组对比 / 排行榜
 // 原「阶段统计详情」页已合并到本页，用顶部选择器切换阶段（参考打卡记录页的月份选择器）
 const checkin = require('../../utils/checkin.js')
-const { routeData, resourceLabels } = require('../../utils/data.js')
+const { routeData } = require('../../utils/data.js')
+const resources = require('../../utils/resources.js')
 const theme = require('../../utils/theme.js')
 const echarts = require('../../utils/echarts')
 const WxCanvas = require('../../utils/wx-canvas')
@@ -119,7 +120,8 @@ function buildViewModel(stageId, dimension, cursor) {
     if (!Array.isArray(list)) continue
     for (const r of list) {
       if (!r || r.stageId !== stageId) continue
-      const m = Number(r.durationMinutes) || 0
+      // 熏听分组按 factor 折算后的有效时长（其余分组 factor 为 1，结果同原值）
+      const m = checkin.effectiveMinutes(r)
       countTotal += 1
       totalMinutes += m
       uniqueDays.add(dayStr)
@@ -216,7 +218,7 @@ function buildViewModel(stageId, dimension, cursor) {
       const list = all[dayStr]
       if (!Array.isArray(list)) continue
       for (const r of list) {
-        if (r && r.stageId === stageId) prevTotal += Number(r.durationMinutes) || 0
+        if (r && r.stageId === stageId) prevTotal += checkin.effectiveMinutes(r)
       }
     }
     const prevLabel = DIM_PREV_LABEL[dimension]
@@ -258,6 +260,8 @@ function buildViewModel(stageId, dimension, cursor) {
   // 占比分母为统计维度内的累计总时长（与 totalMinutes 同循环同过滤，天然同口径），各行相加为 100%
   const bookArr = Object.keys(resTotal)
     .map(name => ({ name, value: resTotal[name] }))
+    // 有效时长为 0 的资源不进榜（如常规1/2 的熏听：可记录但不计入），否则会显示「0分钟」
+    .filter(r => r.value > 0)
     .sort((a, b) => b.value - a.value)
   const rankList = bookArr.map(r => ({
     name: r.name,
@@ -644,11 +648,24 @@ Page({
     this._barChart.setOption(option)
   },
 
-  // 8 个分组的时长值：固定按 resourceLabels 顺序，无数据的轴也保留（值为 0）
+  // 雷达图的分组轴集合：当前阶段显示的分组 ∪ 记录里出现过的分组
+  // - 前者让轴数「按阶段动态」（熏听开关关闭时该轴不出现）
+  // - 后者兜住官方分组调整后的历史数据：那部分时长仍写在记录里，
+  //   若只按当前分组取轴，会「有数据但没轴」而画不出来
+  _ringAxisKeys() {
+    const stageId = this.data.curStageId
+    const keys = stageId ? resources.getStageGroupKeys(stageId).slice() : []
+    ;(this._ringData || []).forEach(d => {
+      if (d && d.key && keys.indexOf(d.key) < 0) keys.push(d.key)
+    })
+    return keys
+  },
+
+  // 各分组时长值：按 _ringAxisKeys 顺序取，无数据的轴保留为 0
   _ringValues() {
     const valByKey = {}
     ;(this._ringData || []).forEach(d => { valByKey[d.key] = d.value })
-    return Object.keys(resourceLabels).map(k => valByKey[k] || 0)
+    return this._ringAxisKeys().map(k => valByKey[k] || 0)
   },
 
   // 弹层打开时 canvas 会被 wx:if 摘掉，用 CSS 复刻的雷达轮廓顶上，避免遮罩下留白
@@ -665,19 +682,21 @@ Page({
   // 分组时长对比（雷达图）
   _renderRing() {
     if (!this._ringData) return
+    const axisKeys = this._ringAxisKeys()
+    // 3 轴以下画不出雷达形状，直接不画（避免 ECharts 报错）
+    if (axisKeys.length < 3) return
     const vals = this._ringValues()
     this._updateRingSkeleton(vals)
     if (!this._ringChart) return
     const isDark = theme.isDarkNow()   // canvas 走不了 CSS 媒体查询，需含「跟随系统」的真实深色
     const subTextColor = isDark ? 'rgba(255,255,255,0.5)' : '#737373'
     const splitColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.06)'
-    const groupKeys = Object.keys(resourceLabels)
     const maxVal = Math.max.apply(null, vals) || 1
     const option = {
       radar: {
         center: ['50%', '54%'],
         radius: '62%',
-        indicator: groupKeys.map(k => ({ name: resourceLabels[k], max: maxVal })),
+        indicator: axisKeys.map(k => ({ name: resources.getGroupLabel(k), max: maxVal })),
         axisName: { color: subTextColor, fontSize: 12 },
         splitLine: { lineStyle: { color: splitColor } },
         axisLine: { lineStyle: { color: splitColor } },
@@ -696,7 +715,11 @@ Page({
         }]
       }]
     }
-    this._ringChart.setOption(option)
+    // 轴数变化时必须 notMerge：ECharts 对 indicator 数组是按下标合并的，
+    // 轴数变少时会残留旧轴 / 标签错位（切阶段、开关熏听都会改变轴数）
+    const axisChanged = this._ringAxisCount !== axisKeys.length
+    this._ringAxisCount = axisKeys.length
+    this._ringChart.setOption(option, axisChanged)
   },
 
   _chartByTouch(e) {

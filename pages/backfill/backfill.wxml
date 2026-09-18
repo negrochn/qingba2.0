@@ -64,6 +64,8 @@
     <view class="bf-add" bindtap="onAddRow">＋ 添加一条</view>
   </view>
 
+  <!-- 熏听折算说明：仅当行里出现熏听素材时出现 -->
+  <view class="weui-cells__tips" wx:if="{{listeningTip}}">{{listeningTip}}</view>
   <view class="weui-cells__tips">同一天可以添加多条，不同资源 / 时长各占一条。补录后可在「打卡记录」里编辑或删除。</view>
 
   <!-- 底部固定栏：实时汇总 + 一次提交 -->

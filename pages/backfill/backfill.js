@@ -8,7 +8,7 @@
 // 单条记录的编辑在 pages/editRecord，两页职责分离
 const resources = require('../../utils/resources.js')
 const checkin = require('../../utils/checkin.js')
-const { routeData } = require('../../utils/data.js')
+const { routeData, LISTENING_GROUP_KEY, listeningFactor, listeningTip } = require('../../utils/data.js')
 
 const MAX_ROWS = 10 // 单天上限
 
@@ -57,8 +57,10 @@ Page({
     pickerValue: '',
 
     totalCount: 0,
-    totalMinutes: 0,
+    totalMinutes: 0,     // 原始投入（家长实际填写的时长合计）
+    totalEffective: 0,   // 有效时长（熏听行折算后）
     totalText: '',
+    listeningTip: '',    // 熏听折算提示（存在熏听行时才显示）
     canSubmit: false
   },
 
@@ -296,19 +298,37 @@ Page({
   },
 
   _refreshTotals() {
+    const stageId = this.data.selectedStageId
     let count = 0
-    let minutes = 0
+    let minutes = 0     // 原始投入
+    let effective = 0   // 有效时长（熏听按阶段系数折算）
+    let hasListening = false
+    let listeningMinutes = 0   // 熏听行的原始合计（供提示里的换算示例用）
     ;(this.data.rows || []).forEach(r => {
       const m = _parseDuration(r.durationInput)
-      if (r.resourceId && m > 0) {
-        count++
-        minutes += m
+      if (!r.resourceId || m <= 0) return
+      count++
+      minutes += m
+      if (r.groupKey === LISTENING_GROUP_KEY) {
+        hasListening = true
+        listeningMinutes += m
       }
+      effective += Math.round(m * listeningFactor(stageId, r.groupKey))
     })
+    // 同一阶段下所有熏听行的系数相同，一条说明即可；
+    // 传入熏听行原始合计 → 提示会带上「X 分钟计 Y 分钟」的具体换算（一行没填时长时退化为只讲系数）
+    const tip = hasListening ? listeningTip(stageId, LISTENING_GROUP_KEY, listeningMinutes) : ''
+    let totalText = '还没填内容'
+    if (count) {
+      totalText = `共 ${count} 条 · ${checkin.fmtMinutes(minutes)}`
+      if (hasListening) totalText += `（有效 ${checkin.fmtMinutes(effective)}）`
+    }
     this.setData({
       totalCount: count,
       totalMinutes: minutes,
-      totalText: count ? `共 ${count} 条 · ${checkin.fmtMinutes(minutes)}` : '还没填内容',
+      totalEffective: effective,
+      totalText,
+      listeningTip: tip,
       canSubmit: count > 0
     })
   },

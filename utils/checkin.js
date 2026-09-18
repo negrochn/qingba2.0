@@ -1,10 +1,11 @@
 // 打卡存储工具
 // 存储结构: qingba_checkins = Record<dayStr(YYYY-MM-DD), Checkin[]>
-// Checkin: { id, stageId, stageName, groupKey, groupLabel, resourceId, resourceName, durationMinutes, timestamp }
+// Checkin: { id, stageId, stageName, groupKey, groupLabel, resourceId, resourceName, durationMinutes, factor?, timestamp }
 // 说明：resourceId 为资源唯一 id（官方 o_ 前缀 / 自定义 u_ 前缀）；
-//      老记录可能缺少 resourceId，此时按「阶段+分组+名称」回退匹配
+//      老记录可能缺少 resourceId，此时按「阶段+分组+名称」回退匹配；
+//      factor 为时长折算系数（熏听分组按阶段取 0 / 0.5 / 0.8），缺省视为 1，故只在 ≠1 时写入
 
-const { routeData } = require('./data.js')
+const { routeData, listeningFactor } = require('./data.js')
 
 const STORAGE_KEY = 'qingba_checkins'
 const CHUNK_PREFIX = 'qingba_checkins_' // 按月分片: qingba_checkins_2021-06
@@ -15,6 +16,7 @@ const DEFAULT_REMARK_KEY = 'qingba_default_remarks'
 const READ_COUNT_KEY = 'qingba_read_counts'
 const CURRENT_STAGE_KEY = 'qingba_current_stage'
 const YOUQU_PLAN_KEY = 'qingba_youqu_plan'
+const LISTENING_ENABLED_KEY = 'qingba_listening_enabled'   // 熏听分组开关（控制分组显示与录入）
 const STAGE_DONE_KEY = 'qingba_stage_done'   // 已完成阶段 id 列表
 
 // 单条 storage 上限（字节），留余量
@@ -339,6 +341,10 @@ function addCheckin(opts) {
   }
   if (backfilled) record.backfilled = true
 
+  // 熏听分组按阶段固化折算系数（其余分组恒为 1，不落字段，与老记录形态一致）
+  const factor = listeningFactor(record.stageId, record.groupKey)
+  if (factor !== 1) record.factor = factor
+
   // 快路径：分片模式下只读写该日所在月份的分片，避免全量 I/O
   if (_isChunkMode()) {
     try {
@@ -407,6 +413,10 @@ function addCheckinsOnDay(day, records) {
         timestamp: backfilled ? dayToTimestamp(d) : Date.now()
       }
       if (backfilled) record.backfilled = true
+
+      // 折算系数口径与 addCheckin 一致（熏听分组才落 factor）
+      const factor = listeningFactor(record.stageId, record.groupKey)
+      if (factor !== 1) record.factor = factor
 
       dayList.push(record)
       count++
@@ -486,6 +496,39 @@ function setYouquPlanEnabled(enabled) {
   }
 }
 
+// ===== 熏听开关（feature flag） =====
+// 语义：开 = 阶段页显示「熏听」分组并可打卡；关 = 该分组隐藏
+// （已挂在熏听分组下的自定义资源不删除，重新开启即恢复）
+// 只影响「显示与录入」，不改历史统计口径：记录里的 factor 已固化，统计照常按它折算
+// 默认关闭（官方数据里熏听分组没有任何素材，默认开着也只是个空分组）
+function isListeningEnabled() {
+  try {
+    const v = wx.getStorageSync(LISTENING_ENABLED_KEY)
+    return typeof v === 'boolean' ? v : false
+  } catch (e) {
+    return false
+  }
+}
+
+function setListeningEnabled(enabled) {
+  try {
+    wx.setStorageSync(LISTENING_ENABLED_KEY, !!enabled)
+    return true
+  } catch (e) {
+    console.error('setListeningEnabled failed:', e)
+    return false
+  }
+}
+
+// 单条记录的有效时长（分钟）= 原始时长 × factor
+// factor 缺省 1（老记录没有该字段）；熏听分组在常规1/2 的 factor 为 0，即「可听但不计入」
+// ⚠️ 不能用 `r.factor || 1`：0 是合法值，会被误判为 1
+function effectiveMinutes(record) {
+  const r = record || {}
+  const f = typeof r.factor === 'number' ? r.factor : 1
+  return (Number(r.durationMinutes) || 0) * f
+}
+
 // 获取某天所有打卡
 function getByDay(day) {
   const d = day || todayStr()
@@ -496,20 +539,26 @@ function getByDay(day) {
 // 批量汇总某天某阶段下各资源的累计时长
 // 只需一次 getAll，避免在页面循环里对每个资源重复全量读取
 // key 口径：来自打卡记录，按 "groupKey|resourceName" 聚合（resourceName 为记录里的名称快照）
-// @returns {Object} { minutes: { "groupKey|resourceName": min } }
+// 两个口径都给：minutes = 折算后的有效时长（统计口径），rawMinutes = 原始投入（展示口径）
+// 阶段页用 rawMinutes 判断「今天是否打过卡」—— 熏听在常规1/2 的有效时长为 0，
+// 若按有效值判断，这些行会被当成没打过卡（徽标与分组头都不显示）
+// @returns {Object} { minutes: {...}, rawMinutes: {...} }
 function getDayTotalsByStage(stageId, day) {
   const minutes = {}
+  const rawMinutes = {}
   try {
     const list = getByDay(day || todayStr())
     for (const c of list) {
       if (!c || c.stageId !== stageId) continue
       const k = `${c.groupKey}|${c.resourceName}`
-      minutes[k] = (minutes[k] || 0) + (Number(c.durationMinutes) || 0)
+      const raw = Number(c.durationMinutes) || 0
+      rawMinutes[k] = (rawMinutes[k] || 0) + raw
+      minutes[k] = (minutes[k] || 0) + effectiveMinutes(c)
     }
   } catch (e) {
     console.error('getDayTotalsByStage failed:', e)
   }
-  return { minutes }
+  return { minutes, rawMinutes }
 }
 
 // 获取某月所有打卡记录
@@ -626,6 +675,14 @@ function updateCheckin(id, opts) {
       resourceName: o.resourceName || '',
       durationMinutes: Number(o.durationMinutes) || 0,
       remark: o.remark || ''
+    }
+    // 折算系数按「新的阶段 + 新的分组」重算：改阶段（常规3 → 常规4）或改分组
+    // （熏听 → 主线）都必须跟着变，否则会把旧系数带到新记录上
+    const factor = listeningFactor(next.stageId, next.groupKey)
+    if (factor !== 1) {
+      next.factor = factor
+    } else {
+      delete next.factor
     }
     if (backfilled) {
       next.backfilled = true
@@ -750,7 +807,7 @@ function getStageMinutes(stageId) {
     if (!Array.isArray(all[day])) continue
     for (const r of all[day]) {
       if (r && r.stageId === stageId) {
-        minutes += Number(r.durationMinutes) || 0
+        minutes += effectiveMinutes(r)
       }
     }
   }
@@ -769,7 +826,7 @@ function getAccumulatedMinutes(stageId) {
     for (const r of all[day]) {
       const m = String(r && r.stageId || '').match(/^regular_(\d+)$/)
       if (m && +m[1] <= targetNum) {
-        minutes += Number(r.durationMinutes) || 0
+        minutes += effectiveMinutes(r)
       }
     }
   }
@@ -1109,7 +1166,7 @@ function getResourceCheckinSummary(resourceId, resourceName, stageId, groupKey) 
         : (r.stageId === stageId && r.groupKey === groupKey && r.resourceName === resourceName)
       if (!same) continue
       count++
-      minutes += Number(r.durationMinutes) || 0
+      minutes += effectiveMinutes(r)
     }
   }
   return { count, minutes }
@@ -1221,6 +1278,9 @@ module.exports = {
   saveAll,
   isYouquPlanEnabled,
   setYouquPlanEnabled,
+  isListeningEnabled,
+  setListeningEnabled,
+  effectiveMinutes,
   getStageMinutes,
   getAccumulatedMinutes
 }

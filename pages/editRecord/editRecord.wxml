@@ -87,6 +87,9 @@
     </view>
   </view>
 
+  <!-- 熏听折算说明：选中熏听分组的资源时出现 -->
+  <view class="weui-cells__tips" wx:if="{{listeningTip}}">{{listeningTip}}</view>
+
   <view class="weui-btn-area">
     <button
       class="weui-btn weui-btn_block {{canSubmit ? 'weui-btn_primary' : 'weui-btn_disabled'}}"

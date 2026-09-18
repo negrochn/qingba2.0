@@ -72,20 +72,26 @@ Page({
 
     const monthRecords = checkin.getByMonth(ym)
     monthRecords.sort((a, b) => b.timestamp - a.timestamp)
-    const records = monthRecords.map(r => ({
-      id: r.id,
-      stageName: r.stageName,
-      groupKey: r.groupKey,
-      groupLabel: r.groupLabel,
-      resourceName: r.resourceName,
-      firstChar: (r.resourceName || '').trim().charAt(0) || '📖',
-      remark: r.remark || '',
-      backfilled: !!r.backfilled,
-      durationText: checkin.fmtMinutes(r.durationMinutes),
-      dateText: this._fmtDate(r.timestamp),
-      _dx: 0,
-      _anim: false
-    }))
+    const records = monthRecords.map(r => {
+      // 熏听记录：主数值仍是原始时长，后面跟一个系数标记（×0.5 / ×0.8 / 不计入），
+      // 与打卡弹窗单位旁的标记同一套语汇；折算后的具体数值由统计 / 阶段进度体现
+      const factor = typeof r.factor === 'number' ? r.factor : 1
+      return {
+        id: r.id,
+        stageName: r.stageName,
+        groupKey: r.groupKey,
+        groupLabel: r.groupLabel,
+        resourceName: r.resourceName,
+        firstChar: (r.resourceName || '').trim().charAt(0) || '📖',
+        remark: r.remark || '',
+        backfilled: !!r.backfilled,
+        durationText: checkin.fmtMinutes(r.durationMinutes),
+        factorText: factor === 1 ? '' : (factor > 0 ? `×${factor}` : '不计入'),
+        dateText: this._fmtDate(r.timestamp),
+        _dx: 0,
+        _anim: false
+      }
+    })
 
     const idx = this.data.yearRange.indexOf(y)
     this.setData({

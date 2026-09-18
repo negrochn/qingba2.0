@@ -39,6 +39,7 @@ Page({
     currentStage: null,
     currentStageDisplay: '',
     youquEnabled: true,
+    listeningEnabled: false,
     myResourceCount: 0,
     _importMode: 'overwrite',
     // 字号 / 深色 class（跟随微信设置，由 app.applyFontLevel 下发）
@@ -69,6 +70,7 @@ Page({
     this.loadStats();
     this.loadCurrentStage();
     this.loadYouquPlan();
+    this.loadListening();
     this.loadMyResources();
   },
 
@@ -96,6 +98,18 @@ Page({
     const enabled = !!e.detail.value;
     checkin.setYouquPlanEnabled(enabled);
     this.setData({ youquEnabled: enabled });
+  },
+
+  // 读取熏听分组开关
+  loadListening() {
+    this.setData({ listeningEnabled: checkin.isListeningEnabled() });
+  },
+
+  // 切换熏听分组开关：开 = 阶段页显示「熏听」分组并可打卡（时长按阶段系数折算）
+  onListeningChange(e) {
+    const enabled = !!e.detail.value;
+    checkin.setListeningEnabled(enabled);
+    this.setData({ listeningEnabled: enabled });
   },
 
   // 加载当前阶段
@@ -197,6 +211,9 @@ Page({
 
       // 小小优趣成长计划开关
       data.youqu_plan = checkin.isYouquPlanEnabled();
+
+      // 熏听分组开关
+      data.listening_enabled = checkin.isListeningEnabled();
 
       // 字体大小档位
       data.font_level = theme.getFontLevel();
@@ -523,6 +540,11 @@ Page({
       // 恢复小小优趣成长计划开关（备份缺该字段时不修改，保持当前设置）
       if (typeof data.youqu_plan === 'boolean') {
         checkin.setYouquPlanEnabled(data.youqu_plan);
+      }
+
+      // 恢复熏听分组开关（同上，缺字段不覆盖）
+      if (typeof data.listening_enabled === 'boolean') {
+        checkin.setListeningEnabled(data.listening_enabled);
       }
 
       // 字体大小档位：已改为跟随微信设置，旧备份里的 fontLevel 有意忽略（写进存储也不再生效）

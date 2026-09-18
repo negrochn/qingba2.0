@@ -224,6 +224,7 @@ page {
 .tag-group-fun_extensions { color: #389e0d; background: #f0ffe0; }
 .tag-group-science_extensions { color: #ad6800; background: #fffbe6; }
 .tag-group-fusion_apps { color: #531dab; background: #f5f0ff; }
+.tag-group-listening_audio { color: #37474f; background: #eceff1; }
 .tag-group-default { color: var(--text3); background: var(--cell-active); }
 
 /* 备注：字号与内边距均不覆盖，走 .weui-tag 基类 + .record-tags .weui-tag */
@@ -252,6 +253,15 @@ page {
   line-height: 1;
   align-self: flex-end;
   padding-bottom: 2rpx;
+}
+
+/* 熏听记录的折算标记（×0.5 / ×0.8 / 不计入）：紧跟原始时长，
+   与打卡弹窗单位旁的那个标记同档（28rpx / --text3），弱于主数值的 34rpx / --text */
+.record-factor {
+  margin-left: 8rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  font-weight: 400;
+  color: var(--text3);
 }
 
 /* ===== 空状态 ===== */

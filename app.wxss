@@ -368,6 +368,7 @@ view, text {
 .dm-dark .tag-group-fun_extensions { color: #95de64; background: rgba(149, 222, 100, 0.16); }
 .dm-dark .tag-group-science_extensions { color: #ffd666; background: rgba(255, 214, 102, 0.16); }
 .dm-dark .tag-group-fusion_apps { color: #b37feb; background: rgba(179, 127, 235, 0.16); }
+.dm-dark .tag-group-listening_audio { color: #b0bec5; background: rgba(176, 190, 197, 0.16); }
 .dm-dark .record-remark { color: #95de64; background: rgba(149, 222, 100, 0.16); }
 
 @media (prefers-color-scheme: dark) {
@@ -379,5 +380,6 @@ view, text {
   .dm-auto .tag-group-fun_extensions { color: #95de64; background: rgba(149, 222, 100, 0.16); }
   .dm-auto .tag-group-science_extensions { color: #ffd666; background: rgba(255, 214, 102, 0.16); }
   .dm-auto .tag-group-fusion_apps { color: #b37feb; background: rgba(179, 127, 235, 0.16); }
+  .dm-auto .tag-group-listening_audio { color: #b0bec5; background: rgba(176, 190, 197, 0.16); }
   .dm-auto .record-remark { color: #95de64; background: rgba(149, 222, 100, 0.16); }
 }

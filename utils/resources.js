@@ -3,10 +3,12 @@
 //
 // 依赖方向：data.js ← checkin.js ← customResources.js ← resources.js
 
-const { routeData, resourceLabels } = require('./data.js')
+const { routeData, resourceLabels, LISTENING_GROUP_KEY } = require('./data.js')
 const customResources = require('./customResources.js')
+const checkin = require('./checkin.js')
 
-// 分组顺序（与阶段页展示顺序一致，8 类全部可打卡）
+// 分组顺序（与阶段页展示顺序一致）
+// 「熏听」仅作占位（官方无素材，靠自定义资源填充），且受设置页开关控制是否可见
 const GROUP_ORDER = [
   'main_picture_books',   // 主线绘本
   'main_graded_readers',  // 主线分级
@@ -15,19 +17,33 @@ const GROUP_ORDER = [
   'sub_animations',       // 辅线动画
   'fun_extensions',       // 趣味拓展
   'science_extensions',   // 科普拓展
-  'fusion_apps'           // 融合APP
+  'fusion_apps',          // 融合APP
+  'listening_audio'       // 熏听
 ]
 
 function getStageById(stageId) {
   return (routeData.stages || []).find(s => s.stage_id === stageId) || null
 }
 
+// 熏听分组是否可见（设置页开关；读不到时按关闭处理）
+// 收敛在此一处判断，阶段页 / 我的资源 / 资源归属 / 资源选择弹层全部自动一致
+function isListeningVisible() {
+  try {
+    return !!checkin.isListeningEnabled()
+  } catch (e) {
+    return false
+  }
+}
+
 // 该阶段官方数据里实际存在的分组（按 GROUP_ORDER 顺序）
+// 熏听开关关闭时把该分组摘掉：不展示、不可打卡、资源归属里也不可选
 function getStageGroupKeys(stageId) {
   const stage = getStageById(stageId)
   if (!stage) return []
   const res = stage.resources || {}
-  return GROUP_ORDER.filter(k => Array.isArray(res[k]))
+  const keys = GROUP_ORDER.filter(k => Array.isArray(res[k]))
+  if (isListeningVisible()) return keys
+  return keys.filter(k => k !== LISTENING_GROUP_KEY)
 }
 
 function getGroupLabel(groupKey) {
@@ -90,6 +106,7 @@ module.exports = {
   GROUP_ORDER,
   getStageById,
   getStageGroupKeys,
+  isListeningVisible,
   getGroupLabel,
   getStageResources,
   getStageGroups,

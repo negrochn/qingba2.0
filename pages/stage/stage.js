@@ -1,4 +1,4 @@
-const { routeData, getRequiredHours } = require('../../utils/data.js')
+const { routeData, getRequiredHours, listeningFactor, listeningTip } = require('../../utils/data.js')
 const resources = require('../../utils/resources.js')
 const checkin = require('../../utils/checkin.js')
 const theme = require('../../utils/theme.js')
@@ -35,7 +35,8 @@ Page({
       sub_animations: true,
       fun_extensions: true,
       science_extensions: true,
-      fusion_apps: true
+      fusion_apps: true,
+      listening_audio: true   // 熏听（是否展示由设置页开关决定）
     },
     // 分组进度摘要 { groupKey: { todayMin } }
     groupProgress: {},
@@ -46,8 +47,11 @@ Page({
     currentResourceId: '',    // 资源 id（读写 key）
     durationInput: '',    // 输入框(分钟数值文本)
     remarkInput: '',      // 备注输入
+    listeningFactor: 1,   // 当前资源所属分组的折算系数（非熏听恒为 1）
+    listeningTip: '',     // 熏听折算提示（仅熏听分组显示）
     // 资源今日累计打卡(展示徽标用) { "groupKey|资源名": 分钟 }
-    resTotals: {},
+    resTotals: {},       // 原始投入（徽标与「今日已打卡 X 分钟」）
+    resEffective: {},    // 有效时长（熏听行补「有效 X 分钟」，与统计 / 进度同口径）
     readCounts: {},
     // 晋级信息
     canPromote: false,
@@ -300,7 +304,8 @@ Page({
     if (this.data.stageIndex >= routeData.stages.length - 1) {
       checkin.markStageDone(stage.stage_id)
       wx.showToast({
-        title: `已达成目标：${stage.stage_name}`,
+        // 文案压到 6 个汉字以内：带 icon 的 toast 标题超过约 7 个汉字会被截断
+        title: `已达成：${stage.stage_name}`,
         icon: 'success'
       })
       // 返回路线页并滚动到当前（已达成）阶段
@@ -352,11 +357,12 @@ Page({
   _refreshResTotals() {
     const stage = this.data.stage
     if (!stage) return
-    const totals = {}
+    const totals = {}        // 原始投入（徽标 / 副文）
+    const effective = {}     // 有效时长（熏听行的「有效 X 分钟」）
     const groupProgress = {}
 
     // 一次读取当天该阶段全部资源的时长，避免在循环内重复全量读取
-    const { minutes } = checkin.getDayTotalsByStage(stage.stage_id, checkin.todayStr())
+    const { minutes, rawMinutes } = checkin.getDayTotalsByStage(stage.stage_id, checkin.todayStr())
 
     this.data.resourceGroups.forEach(g => {
       if (!g.clickable) return
@@ -364,15 +370,18 @@ Page({
       g.items.forEach(res => {
         // 时长 key 用资源名（记录里的名称快照）
         const minKey = `${g.key}|${res.name}`
-        const min = minutes[minKey] || 0
-        if (min > 0) {
-          totals[minKey] = min
-          groupToday += min
+        // 是否「今天打过卡」按原始投入判断：熏听在常规1/2 的有效时长为 0，
+        // 若按有效值判断，这些行会被当成今天没打卡（徽标与分组头都不显示）
+        const raw = rawMinutes[minKey] || 0
+        if (raw > 0) {
+          totals[minKey] = raw
+          effective[minKey] = minutes[minKey] || 0
+          groupToday += raw
         }
       })
       groupProgress[g.key] = { todayMin: groupToday }
     })
-    this.setData({ resTotals: totals, groupProgress })
+    this.setData({ resTotals: totals, resEffective: effective, groupProgress })
   },
 
   _refreshReadCounts() {
@@ -400,6 +409,8 @@ Page({
     }
     const stage = this.data.stage
     const defaultRemark = checkin.getDefaultRemark(stage.stage_id, groupKey, resourceId)
+    // 熏听分组按当前阶段折算（0 / 0.5 / 0.8），其余分组恒为 1
+    const factor = listeningFactor(stage.stage_id, groupKey)
     // 收起左滑操作区，避免弹窗关闭后行仍停在展开态
     this._closeSwipe()
     this.setData({
@@ -408,7 +419,9 @@ Page({
       currentResource: resourceName,
       currentResourceId: resourceId,
       durationInput: '20',
-      remarkInput: defaultRemark
+      remarkInput: defaultRemark,
+      listeningFactor: factor,
+      listeningTip: listeningTip(stage.stage_id, groupKey, 20)
     })
   },
 
@@ -558,13 +571,25 @@ Page({
   noop() {},
 
   onDurationInput(e) {
-    this.setData({ durationInput: e.detail.value })
+    const v = e.detail.value
+    this.setData({ durationInput: v })
+    this._refreshListeningTip(v)
   },
 
   // 快捷时长按钮
   quickDuration(e) {
     const { val } = e.currentTarget.dataset
     this.setData({ durationInput: String(val) })
+    this._refreshListeningTip(val)
+  },
+
+  // 熏听折算提示随时长变化更新（非熏听分组 listeningFactor 为 1，直接跳过）
+  _refreshListeningTip(minutes) {
+    if (this.data.listeningFactor === 1) return
+    const stage = this.data.stage
+    const g = this.data.currentGroup
+    if (!stage || !g) return
+    this.setData({ listeningTip: listeningTip(stage.stage_id, g.key, minutes) })
   },
 
   onRemarkInput(e) {
@@ -621,22 +646,31 @@ Page({
     // 保存备注为默认值
     checkin.saveDefaultRemark(stage.stage_id, currentGroup.key, currentResourceId, remarkText)
 
+    // 有效时长：熏听分组按系数折算（0 / 0.5 / 0.8），其余分组与原始值相同
+    // 徽标与分组今日时长展示的是「原始投入」，有效值只用于熏听行副文的「有效 X 分钟」
+    // （统计与阶段进度另行按有效值算）
+    const factor = typeof this.data.listeningFactor === 'number' ? this.data.listeningFactor : 1
+    const effMinutes = Math.round(minutes * factor)
+
     const resKey = `${currentGroup.key}|${currentResource}`
     // 基于本地值累加，避免再触发一次全量读取
     const newTotal = (Number(this.data.resTotals[resKey]) || 0) + minutes
+    const newEffective = (Number(this.data.resEffective[resKey]) || 0) + effMinutes
     
     // 更新分组今日时长
     const groupProgress = { ...this.data.groupProgress }
     const prev = groupProgress[currentGroup.key] || { todayMin: 0 }
     groupProgress[currentGroup.key] = { todayMin: prev.todayMin + minutes }
     
-    // 整体下发 resTotals：资源名可能含 . [ ]（如「RAZ D.2」），
+    // 整体下发两个 map：资源名可能含 . [ ]（如「RAZ D.2」），
     // 用 `resTotals.${resKey}` 这种 dataPath 会被解析成多级路径，导致该行徽标不刷新
     const resTotals = { ...this.data.resTotals, [resKey]: newTotal }
+    const resEffective = { ...this.data.resEffective, [resKey]: newEffective }
 
     this.setData({
       showCheckin: false,
       resTotals,
+      resEffective,
       groupProgress
     })
     this._submitting = false
@@ -644,6 +678,8 @@ Page({
     // 打卡成功后刷新阶段进度（按钮填色 / 已投入时长 / 可完成态）
     this._refreshPromoteInfo()
 
+    // toast 只报「原始时长」，两档统一带对勾：带 icon 的标题超过约 7 个汉字会被截断，
+    // 而「有效 X」在弹窗提示行、阶段页徽标与记录页都能看到，不必挤进 toast
     wx.showToast({
       title: `已打卡 ${checkin.fmtMinutes(minutes)}`,
       icon: 'success'
