@@ -2,9 +2,10 @@
 
 本项目所有重要变更都会记录在此文件中，格式参照 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
-## [Unreleased]
+## [3.7.0] - 2026-09-20
 
-> 「我的资源」弹窗的「归属」由整页选择页改为弹窗内的**「阶段 + 分组」两行原生 picker（联动）**；随之失去唯一入口的 `pages/resourcePicker` 一并清理。另给分享路径统一追加 `isShowSplashAd=false`，新用户从分享进入不再先看封面广告。**阶段进度的分母改为可配置**：默认取建议区间**上限**（不再是下限），并新增「阶段目标时长」设置页支持逐阶段自定义。
+> 「我的资源」归属与记录 / 统计页的选择器统一改用**原生 picker**；阶段进度分母改为**可配置**（默认取建议区间上限，可逐阶段自定义）；分享进入不再先看封面广告。
+> 可用 `git log v3.6.0..v3.7.0` 查看对应提交范围。
 
 ### 变更
 
@@ -22,6 +23,10 @@
   - ⚠️ **默认档位由下限改为上限是行为变更**：常规1/2/3 与准桥梁的进度百分比会当场下降，已攒够旧下限但未晋级的用户会从「可晋级」退回「未达标」（常规4/5/6 的 `"60H"` 无区间，两档同值，不受影响）。已标记完成的阶段不会回退（`getCompletedStages` 独立存储）；设置页随时可切回「下限」恢复旧口径
   - 入口在「设置 → 学习设置 → 阶段目标时长」，右侧显示当前档位与自定义阶段数（如「上限 · 2 项自定义」）；导出 / 导入备份带上 `target_mode` 与 `target_custom`（沿用「缺字段不覆盖」惯例）
 - **进度相关的展示补上生效目标**：路线页「当前阶段」行在阶段名下方补一行「目标 80H」，阶段详情页晋级按钮上方补「已投入 12.5h / 目标 80h」—— 分母不再恒等于官方区间下限，只留官方区间原文会让用户困惑「写着 60-80H 却要攒到 80」。官方建议区间（`time_investment`）仍原样显示在路线行与阶段页标题里；「关于」页的建议文案保持原样
+- **弹层表单卡片的底色与按压反馈（`app.wxss` 的「弹层表单」原语）**：`.form-card` 的底由 `--card` 改为 **`--card2`** —— 它与半屏弹层面板同色时，卡片的边界、16rpx 圆角与左右 32rpx 内缩全都读不出来（圆角是死样式，那点内缩只像「没和弹层标题对齐」）；低一档后弹层里才有了「块」的层次。**四个弹层同时生效**：目标时长 / 打卡 / 晋级测试 / 添加编辑资源
+  - 连带把 `.form-row:active` 的按压色由 `--cell-active` 换成 **`--divider`**：前者是按 `--card` 底选的「一档」，落在 `--card2` 上只剩 11 个色阶（按住几乎无反应）；`--divider` 浅色 `#e5e5e5` 差 18、深色 `rgba(255,255,255,.1)` 叠在 `#202020` 上差 22，与原先落在 `--card` 上的手感相当
+  - `.seg-item:active` **不动** —— 它自带 `--card` 白底，按压前后是「白 → `--cell-active`」差 19 个色阶，与容器底色无关。判据：**透明底的元素按压色跟容器底配，自带底色的元素跟自己的底配**（与 `--btn-default` 必须保持半透明同源）
+  - 深色档 `--card2`(`#202020`) 比 `--card`(`#191919`) **亮**，与浅色档相反：`.seg-item` 在灰卡上浅色呈凸起、深色呈凹陷，方向不一致但两边都能看清边界，暂不处理；`.seg-active` 的选中态反而因此更清楚
 
 - **半屏弹层抽成公共组件（`components/half-sheet`）**：打卡 / 晋级测试 / 目标时长 / 添加编辑资源 / 今日明细 / 资源选择六处弹层的外壳完全同构 —— 蒙层 + 面板 + 抓手 + 头部（标题左 / 关闭右）+ 可选操作区，此前每处各写一份，重复约 300 行。现收敛为一个组件，只封装外壳，内容与操作区分别走默认 slot 与 `footer` slot（slot 内容由页面编译，其样式本就不归组件管，故组件不提供任何内容级样式）
   - 属性 `show` / `title` / `showClose` / `maskClosable` / `fontClass` / `darkClass` / `sheetClass` / `footer`；事件 `bind:close`（点蒙层与关闭按钮都触发）
@@ -30,6 +35,16 @@
   - 迁完 `pages/stage`（打卡 + 晋级）、`pages/targetSetting`、`pages/myResources`、`pages/home`、`components/resource-picker` 共 6 个弹层；各页删掉重复的外壳样式合计约 380 行，并顺带清掉三处冗余的 `.xxx .weui-btn { flex: 1 }`（全局 `.weui-btn-area_inline .weui-btn` 早已覆盖）与四个页面里已无引用的 `noop()`
   - 组件化顺带统一了两处此前不一致的取值：标题下间距一律 24rpx（打卡弹窗原为 28rpx）、标题字重一律 600
   - `resource-picker` 的面板固定占高由 172rpx 调整为 168rpx（头部下间距统一为 24rpx 后重新推导），高度档公式与注释同步更新
+- **弹层内容层的公共原语（`app.wxss` 新增「弹层表单」原语；`pages/stage` 晋级弹窗改造）**：`half-sheet` 只封装外壳，内容样式此前没有公共原语，于是 `form-*` / `seg-*` 一族在三页各存一份、而晋级弹窗自带第四套 `.pm-*`，同一个页面上两个弹层观感不一致。
+  - `form-card` / `form-row` / `form-row-static` / `form-label` / `form-label-muted` / `form-right` / `form-field` / `form-unit` / `form-static` / `seg-control` / `seg-control-grid` / `seg-item` / `seg-active` 提升到 `app.wxss` 的「弹层表单」原语（三份取值本就一致，只是子集不同），`pages/stage` / `pages/myResources` / `pages/targetSetting` 删掉本地副本；`myResources` 的 `.form-value-text` 并入 `.form-static`（两者只差一个冗余的 `text-align`），以及删掉两处冗余的 `.form-card .weui-divider` 覆盖（全局 `.weui-divider` 本就是 1px + scaleY(0.5)）
+  - 晋级测试弹窗改用公共原语，删掉 `.pm-form` / `.pm-quick-*` / `.pm-actions` / `.pm-btn` 约 92 行：表单区改 `.form-card` 三节（晋级要求 / 测试结果 / 快捷值）+ `.weui-divider` 分节，快捷值改 `.seg-item` 并**新增选中态**（输入内容与该阶段目标 phase 一致时高亮；为此 `stage.js` 补了一个 `promoteTargetPhaseStr`，因为 wxml 里不能调 `String()` 做比对），底部按钮改 `.weui-btn-area_inline`（高 88→96rpx、圆角 16→8px、间距换成 `gap: 32rpx`，与打卡 / 目标时长弹窗一致）
+  - 阶段名并入弹层标题（`title="{{stage.stage_name}} · 晋级测试校验"`），原先独立的浅灰「阶段说明块」`.pm-stage-info` 取消、说明句改用全局 `.weui-cells__tips` —— `stage.wxss` 的 `.pm-` 前缀至此彻底清零，弹层结构与「目标时长」弹窗完全同构
+- **表单行高与输入框高度统一到同一口径（`app.wxss` 弹层表单原语 + `pages/editRecord`）**：同一张卡片内的行高此前参差 —— `.form-row` 的内容区只有 56rpx（88 − 上下 padding 32），而 `.form-field` 是 64rpx，于是「有输入框的那一行」被撑到 96rpx、邻行仍是 88rpx（真机上量到的 49pt vs 45pt 就是这个差）。`editRecord` 更明显：`.weui-cell` 的 `padding: 32rpx` 配 64rpx 输入框把时长 / 备注行撑到 128rpx，比同页其他行（112rpx）高 16rpx。
+  - 统一口径取 **行高 112rpx + 输入框 88rpx**：112rpx 是 WeUI 的 cell 标准行高（`@weuiCellHeight: 56px`），也是 `backfill` 早已在用的值；88rpx（44pt）是项目「可点项最小热区 ≥ 88rpx」的取值，同样是 `backfill` 的 `.bf-dur-input` 取值
+  - 弹层表单：`.form-row` 的 `min-height` 88→112rpx、上下 `padding` 16→12rpx，`.form-field` 的 `height` 64→88rpx（88 + 12×2 = 112，输入框正好占满内容区）
+  - `editRecord`：页面级把 `.weui-cell` 的上下 `padding` 由 32rpx 收到 12rpx、`.cell-input` 的 `height` 64→88rpx —— 时长 / 备注行由 128rpx 收到 112rpx（行更紧凑），输入框反而从 64 长到 88rpx（热区更大）
+  - 代价：各弹层每行长高 24rpx，3 行的弹层（打卡 / 目标时长 / 晋级 / 添加编辑资源）各高约 72rpx
+  - 至此全项目表单行高与输入框高度各只有一档：行 `.weui-cell` / `.bf-row` / `.rp-group` / `.form-row` 全是 112rpx，输入框 `.form-field` / `.cell-input` / `.bf-dur-input` 全是 88rpx
 
 ### 修复
 
@@ -37,6 +52,9 @@
   - 管理页渲染集合改为「该阶段可见分组 ∪ 已挂有资源的分组」：隐藏分组照常列出，资源可正常改名 / 改归属 / 删除
   - 隐藏分组加「已隐藏」标记 + 一句说明（资源仍保留；开启「设置 → 熏听」后可在阶段页打卡）
   - 阶段页仍按开关隐藏该分组 —— 那是打卡视图口径，与管理页「必须能看到并管理全部数据」的取向不同，是有意保留的差异
+- **补录页 / 编辑记录页的「日期 / 阶段（/ 资源）」之间没有行间线（`pages/backfill` / `pages/editRecord`）**：全局行间线是 `.weui-cell::before` 画线 + `.weui-cell:first-child::before { display: none }` 关掉首行，而这几个 cell 都被 `<picker>` 包了一层 —— **每个 cell 都成了自己父容器的首个子节点**，于是两行（`editRecord` 是三行，资源行一起）的线一起被关掉。原先补的 `.cell-first::before { display: none }` 因此是死代码，注释里「:first-child 判不到」的因果也写反了（不是判不到，是对每一行都判到了）。
+  - 改法反过来：给非首个 picker 里的 cell 显式开线 —— `.weui-cells > picker:not(:first-child) .weui-cell::before { display: block }`（特异性 0,3,0 高于全局的 0,2,0，且页面样式加载在 `app.wxss` 之后）；两页的 `.cell-first` 死代码与 wxml 上的类名一并删除
+  - 顺带把 `backfill` 第一个分组（日期 / 阶段）的容器由自绘的 `.bf-rows` 收敛为全局 `.weui-cells`（两者外观等价：同款白底 + `1px + scaleY(.5)` 通栏线）；`.bf-rows` 仍服务「学习内容」块 —— 那块的行不是 `.weui-cell`（资源名两行 + 时长输入 + 删除按钮 + 「＋添加一条」，内边距策略不同），刻意不一起收编
 
 ## [3.6.0] - 2026-09-18
 
@@ -642,6 +660,7 @@
 
 | 版本 | 说明 |
 | ---- | ---- |
+| 3.7.0 | 「我的资源」归属与记录 / 统计页选择器改用原生 picker；阶段进度分母可配置（默认建议区间上限，新增「阶段目标时长」页可逐阶段自定义）；分享进入不再先看封面广告。 |
 | 3.6.0 | 新增「熏听」分组：开关打开后阶段页可打卡音频素材，时长按阶段系数折算为有效时长（常规1/2 不计入、常规3 ×0.5、常规4 起 ×0.8）；记录/统计同步口径，雷达图按阶段分组动态出轴。 |
 | 3.5.1 | 资源选择弹层按分组数自动取高，左列选中态统一为品牌绿对勾、左右同白底；编辑页整页收成一块 cells，补录页收敛为「日期 / 阶段」与「学习内容」两块；修复编辑页资源选择「分组切不动」。 |
 | 3.5.0 | 字号与深色改为跟随微信 / 系统，移除小程序内手动档与两个选择页；补录改为一次补一天的多条，单条编辑拆为独立页并改用原生选择器、压缩布局；另统一弹层关闭按钮并补齐深色蒙层。 |
