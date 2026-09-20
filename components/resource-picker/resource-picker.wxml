@@ -1,45 +1,40 @@
-<!-- 资源选择器：底部半屏弹层，双列（左分组 / 右资源）
-     弹层样式对齐项目原语 4「action-sheet」（打卡弹窗同款）：抓手 + 标题左 + 关闭右。
-     蒙层根节点自带主题 class，见 resource-picker.wxss 头注释 -->
-<view class="rp-mask {{fontClass}} {{darkClass}} {{show ? 'show' : ''}}" bindtap="onCancel" catchtouchmove="noop">
-  <view class="rp-sheet {{sheetSizeClass}}" catchtap="noop">
+<!-- 资源选择器：底部半屏弹层（外壳走 components/half-sheet），主体双列（左分组 / 右资源）
+     面板的高度档与「左右内边距归零」通过 sheet-class 传入，见 resource-picker.wxss -->
+<half-sheet
+  show="{{show}}"
+  title="选择资源"
+  font-class="{{fontClass}}"
+  dark-class="{{darkClass}}"
+  sheet-class="rp-sheet {{sheetSizeClass}}"
+  bind:close="onCancel"
+>
+  <view class="rp-body">
+    <scroll-view class="rp-groups" scroll-y>
+      <view
+        class="rp-group {{item.key === activeGroupKey ? 'active' : ''}}"
+        wx:for="{{groups}}"
+        wx:key="key"
+        data-key="{{item.key}}"
+        bindtap="onSwitchGroup"
+      >
+        <text class="rp-group-name">{{item.label}}</text>
+        <text class="rp-check iconfont icon-check" wx:if="{{item.key === activeGroupKey}}"></text>
+      </view>
+    </scroll-view>
 
-    <view class="rp-handle"></view>
-
-    <view class="rp-head">
-      <view class="rp-title">选择资源</view>
-      <view class="rp-close iconfont icon-close" catchtap="onCancel"></view>
-    </view>
-
-    <view class="rp-body">
-      <scroll-view class="rp-groups" scroll-y>
-        <view
-          class="rp-group {{item.key === activeGroupKey ? 'active' : ''}}"
-          wx:for="{{groups}}"
-          wx:key="key"
-          data-key="{{item.key}}"
-          bindtap="onSwitchGroup"
-        >
-          <text class="rp-group-name">{{item.label}}</text>
-          <text class="rp-check iconfont icon-check" wx:if="{{item.key === activeGroupKey}}"></text>
-        </view>
-      </scroll-view>
-
-      <scroll-view class="rp-items" scroll-y>
-        <view
-          class="rp-item {{item.id === value ? 'active' : ''}}"
-          wx:for="{{items}}"
-          wx:key="id"
-          data-id="{{item.id}}"
-          bindtap="onPickItem"
-        >
-          <text class="rp-item-name">{{item.name}}</text>
-          <text class="rp-custom" wx:if="{{item.custom}}">自定义</text>
-          <text class="rp-check iconfont icon-check" wx:if="{{item.id === value}}"></text>
-        </view>
-        <view class="rp-empty" wx:if="{{items.length === 0}}">该分组暂无资源</view>
-      </scroll-view>
-    </view>
-
+    <scroll-view class="rp-items" scroll-y>
+      <view
+        class="rp-item {{item.id === value ? 'active' : ''}}"
+        wx:for="{{items}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="onPickItem"
+      >
+        <text class="rp-item-name">{{item.name}}</text>
+        <text class="rp-custom" wx:if="{{item.custom}}">自定义</text>
+        <text class="rp-check iconfont icon-check" wx:if="{{item.id === value}}"></text>
+      </view>
+      <view class="rp-empty" wx:if="{{items.length === 0}}">该分组暂无资源</view>
+    </scroll-view>
   </view>
-</view>
+</half-sheet>

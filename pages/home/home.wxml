@@ -72,30 +72,28 @@
 
 </view>
 
-<!-- 今日明细弹窗：今日时长 / 今日打卡 共用一套面板，随入口切换度量 -->
-<view class="hs-mask {{fontClass}} {{darkClass}} {{sheetVisible ? 'hs-mask-show' : ''}}" bindtap="closeSheet" catchtouchmove="noop">
-  <view class="hs-sheet" catchtap="noop" catchtouchmove="noop">
-    <view class="hs-handle"></view>
-
-    <view class="hs-head">
-      <view class="hs-title">{{sheetTitle}}</view>
-      <view class="hs-close iconfont icon-close" catchtap="closeSheet"></view>
-    </view>
-
-    <view class="hs-summary" wx:if="{{sheetItems.length > 0}}">
-      <text class="hs-summary-main">{{sheetSummaryMain}}</text>
-      <text class="hs-summary-sub">{{sheetSummarySub}}</text>
-    </view>
-
-    <scroll-view class="hs-list" scroll-y wx:if="{{sheetItems.length > 0}}">
-      <view class="hs-rank-row" wx:for="{{sheetItems}}" wx:key="key">
-        <view class="hs-rank-fill" style="width: {{item.percent}}%;"></view>
-        <view class="hs-rank-cover">{{item.char}}</view>
-        <view class="hs-rank-name">{{item.name}}</view>
-        <text class="hs-rank-dur">{{item.valueText}}</text>
-      </view>
-    </scroll-view>
-
-    <view class="hs-empty" wx:else>今天还没有打卡记录</view>
+<!-- 今日明细弹窗：今日时长 / 今日打卡 共用一套面板，随入口切换度量
+     无底部操作区，故不传 footer -->
+<half-sheet
+  show="{{sheetVisible}}"
+  title="{{sheetTitle}}"
+  font-class="{{fontClass}}"
+  dark-class="{{darkClass}}"
+  bind:close="closeSheet"
+>
+  <view class="hs-summary" wx:if="{{sheetItems.length > 0}}">
+    <text class="hs-summary-main">{{sheetSummaryMain}}</text>
+    <text class="hs-summary-sub">{{sheetSummarySub}}</text>
   </view>
-</view>
+
+  <scroll-view class="hs-list" scroll-y wx:if="{{sheetItems.length > 0}}">
+    <view class="hs-rank-row" wx:for="{{sheetItems}}" wx:key="key">
+      <view class="hs-rank-fill" style="width: {{item.percent}}%;"></view>
+      <view class="hs-rank-cover">{{item.char}}</view>
+      <view class="hs-rank-name">{{item.name}}</view>
+      <text class="hs-rank-dur">{{item.valueText}}</text>
+    </view>
+  </scroll-view>
+
+  <view class="hs-empty" wx:else>今天还没有打卡记录</view>
+</half-sheet>

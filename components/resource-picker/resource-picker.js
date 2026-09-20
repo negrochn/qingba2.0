@@ -55,8 +55,6 @@ Component({
   },
 
   methods: {
-    noop() {},
-
     // 按分组数选高度档：≤7 用默认档（装 7 行），8 / 9 分别挂 .h8 / .h9；
     // 超过 9 个分组仍用 9 档，多出来的分组由左列 scroll-view 滚动承担
     _applySheetSize() {

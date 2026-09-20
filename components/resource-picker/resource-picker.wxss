@@ -1,9 +1,10 @@
 /* 资源选择器（双列：左分组 / 右资源）
-   弹层样式对齐项目原语 4「action-sheet」（pages/stage 打卡弹窗同款）：抓手 + 标题左 + 关闭右。
+   弹层外壳（蒙层 / 抓手 / 标题左 + 关闭右）走 components/half-sheet，
+   本组件只定制面板高度与左右内边距（见文件末尾的 .rp-sheet）。
    本弹层没有底部按钮（点资源即选中并关闭）。
 
    颜色 / 字号全部走 --* 变量与 calc(Nrpx * var(--fs))，跟随页面根节点（.container / .dm-*）。
-   弹层是 position:fixed，由页面把 fontClass / darkClass 透传进来挂在本根节点上。
+   外壳所需的 fontClass / darkClass 由页面透传进来，再由本组件转交给 half-sheet。
 
    字号只用微信标准 UI 三档（34 / 28 / 24rpx），不使用已废弃的 22 / 26 / 30 / 32 / 36rpx。 */
 
@@ -16,97 +17,30 @@
    所以隐藏态必须显式把面板移出屏幕 + 整体 visibility:hidden。
    只写 pointer-events:none 是不够的 —— 那只是不接收点击，面板仍会渲染在页面上。
    visibility 参与 transition：关闭时延迟到滑出动画结束才真正隐藏。 */
-.rp-mask {
-  position: fixed;
-  left: 0; right: 0; top: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0);
-  z-index: 2000;
-  visibility: hidden;
-  pointer-events: none;
-  transition: background 0.2s, visibility 0.3s;
-  display: flex;
-  align-items: flex-end;
-}
-
-.rp-mask.show {
-  background: rgba(0, 0, 0, 0.5);   /* 与 .sheet-mask-show 同值 */
-  pointer-events: auto;
-  visibility: visible;
-}
-
+/* 面板定制：外壳（蒙层 / 抓手 / 头部 / 圆角 / 隐藏与滑出动画）由 components/half-sheet 提供，
+   这里只补两件组件不知道的事 ——
+   ① 面板高度分三档（默认 7 行 / .h8 8 行 / .h9 9 行），保证左右两列 scroll-view 有确定高度；
+   ② 左右内边距归零，让双列主体通栏铺满（左右留白由头部自己维护） */
 .rp-sheet {
-  width: 100%;
-  /* 高度按「能装下几个分组行」分三档（默认档 7 行 / .h8 8 行 / .h9 9 行）：
-       固定占高 172rpx（上 padding 16 + 抓手 8+8+24 + 头部 56+28 + 下 padding 32）
-     + 行高 96rpx × N + 余量 24rpx + 底部安全区。
-     用 rpx + env() 表达，随屏宽 / 安全区自动适配，不必用 JS 量窗口；
-     双列 scroll-view 因此始终有确定高度 —— 内容多于档位时在档内滚动，不会撑出屏幕。
-     余量 24rpx 用于吸收大字号档头部变高、安全区取整等几像素的波动 */
   --rp-rows: 7;
-  height: calc(172rpx + 24rpx + 96rpx * var(--rp-rows) + env(safe-area-inset-bottom));
+  /* 固定占高 = 上 padding 16 + 抓手(8+8+24) + 头部(56+24) + 下 padding 32 = 168rpx，
+     再 + 行高 96rpx × N + 余量 24rpx + 底部安全区。
+     用 rpx + env() 表达，随屏宽 / 安全区自动适配，不必用 JS 量窗口；
+     余量 24rpx 用于吸收大字号档头部变高、安全区取整等几像素的波动 */
+  height: calc(168rpx + 24rpx + 96rpx * var(--rp-rows) + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  background: var(--card);
-  /* 半屏弹窗顶部圆角 24rpx（@weuiDialogBorderRadius 同档） */
-  border-top-left-radius: 24rpx;
-  border-top-right-radius: 24rpx;
-  /* 左右不留内边距：双列主体要通栏铺满（WeUI 列表的做法）——
-     左右留白由 .rp-head 自己维护，主体的分栏才不会被「内缩 + 圆角」框成一张卡片 */
-  padding: 16rpx 0 calc(env(safe-area-inset-bottom) + 32rpx);
-  box-sizing: border-box;
-  /* 隐藏态整体沉到视口下方 */
-  transform: translateY(100%);
-  transition: transform 0.25s ease;   /* 对齐 .action-sheet */
 }
 
-.rp-mask.show .rp-sheet {
-  transform: translateY(0);
+/* 双类名提高特异性：确保盖过 half-sheet 内 .hsc-sheet 的左右内边距（两者特异性同为 0,1,0） */
+.rp-sheet.rp-sheet {
+  padding-left: 0;
+  padding-right: 0;
 }
 
 /* 高度档：默认档装 7 个分组行，这两个类分别装 8 / 9 行 */
 .rp-sheet.h8 { --rp-rows: 8; }
 .rp-sheet.h9 { --rp-rows: 9; }
-
-/* ===== 头部：抓手 + 标题左 + 关闭右（对齐 .sheet-handle / .sheet-head / .sheet-close） ===== */
-.rp-handle {
-  width: 72rpx;
-  height: 8rpx;
-  background: var(--divider);
-  border-radius: 4rpx;
-  margin: 8rpx auto 24rpx;
-}
-
-.rp-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 0 32rpx 28rpx;   /* 面板左右 padding 已归零，头部自己留白 */
-}
-
-.rp-title {
-  flex: 1;
-  min-width: 0;
-  font-size: calc(34rpx * var(--fs, 1));
-  font-weight: 600;
-  color: var(--text);
-}
-
-/* 关闭：纯图标，热区 88rpx 见方（设计指南「可点项最小热区 ≥ 88rpx」），
-   负 margin 抵消热区外扩，让标题与图标的视觉间距保持不变 */
-.rp-close {
-  flex-shrink: 0;
-  width: 88rpx;
-  height: 88rpx;
-  margin: -16rpx -16rpx -16rpx 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text3);
-  border-radius: 50%;
-}
-
-.rp-close:active { background: var(--cell-active); color: var(--text2); }
 
 /* ===== 双列主体 =====
    通栏铺满弹窗宽度，不做「内缩 + 圆角」的内嵌卡片（那是表单卡的形态）。
@@ -262,12 +196,4 @@
   color: var(--text3);
 }
 
-/* ===== 深色模式 =====
-   蒙层根节点同时挂 dm-* 与 .rp-mask，故深色选择器要写成同元素复合
-   （写 `.dm-dark .rp-mask` 会要求 dm-dark 是祖先，匹配不到）。
-   深色蒙层取 rgba(0,0,0,.8)，与 app.wxss 的 .dm-dark .weui-mask 同值。 */
-.rp-mask.dm-dark.show { background: rgba(0, 0, 0, 0.8); }
-
-@media (prefers-color-scheme: dark) {
-  .rp-mask.dm-auto.show { background: rgba(0, 0, 0, 0.8); }
-}
+/* 深色蒙层已随外壳迁入 components/half-sheet（.hsc-mask.dm-dark / .dm-auto），本组件无需覆盖 */

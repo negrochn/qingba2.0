@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "我的资源",
-  "usingComponents": {}
+  "usingComponents": {
+    "half-sheet": "/components/half-sheet/half-sheet"
+  }
 }

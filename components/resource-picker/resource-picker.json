@@ -1,4 +1,6 @@
 {
   "component": true,
-  "usingComponents": {}
+  "usingComponents": {
+    "half-sheet": "/components/half-sheet/half-sheet"
+  }
 }

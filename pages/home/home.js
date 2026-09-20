@@ -175,7 +175,7 @@ Page({
     if (cur) {
       const stageFull = routeData.stages.find(s => s.stage_id === cur.id)
       if (stageFull) {
-        const required = getRequiredHours(stageFull)
+        const required = getRequiredHours(stageFull, checkin.getTargetOption(cur.id))
         const minutes = required.type === 'accumulated'
           ? checkin.getAccumulatedMinutes(cur.id)
           : totalMinutes
@@ -217,9 +217,6 @@ Page({
   closeSheet() {
     this.setData({ sheetVisible: false })
   },
-
-  // 阻止弹层内容区点击 / 触摸冒泡（列表滚动区不挂，否则滚不动）
-  noop() {},
 
   // 构建今日明细：口径与卡片完全一致（仅当前阶段、仅今天）
   // mode='minutes' 按时长降序；mode='count' 按次数降序

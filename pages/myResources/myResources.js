@@ -218,8 +218,6 @@ Page({
     this.setData({ showSheet: false })
   },
 
-  noop() {},
-
   onNameInput(e) {
     this.setData({ nameInput: e.detail.value })
   },

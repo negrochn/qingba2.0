@@ -1,5 +1,5 @@
 /* 「我的资源」页
-   分组沿用阶段详情页原语（.res-wrap / .res-list / .rg-*），弹窗沿用 action-sheet + form-card 令牌 */
+   分组沿用阶段详情页原语（.res-wrap / .res-list / .rg-*），弹窗外壳走 half-sheet、内容用 form-card 令牌 */
 page {
   background: var(--bg);
 
@@ -240,77 +240,8 @@ page {
   margin: 32rpx;
 }
 
-/* ====== 半屏弹窗（与 stage 页同令牌） ====== */
-.sheet-mask {
-  position: fixed;
-  left: 0; right: 0; top: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0);
-  z-index: 1000;
-  pointer-events: none;
-  transition: background 0.2s ease;
-  display: flex;
-  align-items: flex-end;
-}
-.sheet-mask-show { background: rgba(0, 0, 0, 0.5); pointer-events: auto; }
-
-/* 深色蒙层取 rgba(0,0,0,.8)，与 app.wxss 的 .dm-dark .weui-mask 同值。
-   蒙层根节点同时挂 dm-* 与该显示修饰类，故选择器要写成同元素复合 */
-.sheet-mask.dm-dark.sheet-mask-show { background: rgba(0, 0, 0, 0.8); }
-
-@media (prefers-color-scheme: dark) {
-  .sheet-mask.dm-auto.sheet-mask-show { background: rgba(0, 0, 0, 0.8); }
-}
-.action-sheet {
-  width: 100%;
-  background: var(--card);
-  border-top-left-radius: 24rpx;
-  border-top-right-radius: 24rpx;
-  padding: 16rpx 32rpx calc(env(safe-area-inset-bottom) + 32rpx);
-  box-sizing: border-box;
-  transform: translateY(100%);
-  transition: transform 0.25s ease;
-}
-.sheet-mask-show .action-sheet { transform: translateY(0); }
-
-.sheet-handle {
-  width: 72rpx;
-  height: 8rpx;
-  background: var(--divider);
-  border-radius: 4rpx;
-  margin: 8rpx auto 24rpx;
-}
-.sheet-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 28rpx;
-}
-.sheet-head-title {
-  flex: 1;
-  min-width: 0;
-  font-size: calc(34rpx * var(--fs, 1));
-  font-weight: 600;
-  color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding-right: 12rpx;
-}
-/* 关闭：热区 88rpx 见方（设计指南「可点项最小热区 ≥ 88rpx」），字形走 iconfont icon-close。
-   负 margin 抵消热区外扩，标题与关闭图标的视觉间距不变 */
-.sheet-close {
-  flex-shrink: 0;
-  width: 88rpx;
-  height: 88rpx;
-  margin: -16rpx -16rpx -16rpx 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text3);
-  border-radius: 50%;
-}
-.sheet-close:active { background: var(--cell-active); color: var(--text2); }
+/* 添加 / 编辑 弹窗的外壳（蒙层 / 面板 / 抓手 / 头部 / 操作区容器）已迁到
+   components/half-sheet，本页只保留弹层内的内容样式（form-card 一族） */
 
 .form-card {
   background: var(--card);
@@ -360,5 +291,4 @@ page {
   flex-shrink: 0;
 }
 
-.action-sheet .weui-btn { flex: 1; }
-.action-sheet .weui-btn-area_inline { margin-top: 16rpx; }
+/* 弹窗按钮的等宽由全局 .weui-btn-area_inline 提供，间距由 half-sheet 的 .hsc-footer 承担 */
