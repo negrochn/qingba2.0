@@ -1,10 +1,11 @@
 <view class="container {{fontClass}} {{darkClass}}">
-  <!-- 日期 / 阶段 一块白底分组；「学习内容」标题分隔出记录行块（含添加按钮）。
-       行间线统一走 .weui-cell::before 与 .bf-row::before 的 left:32rpx 缩进细线；
-       首行 cell-first 显式关线（picker 多包了一层，:first-child 判不到） -->
-  <view class="bf-rows">
+  <!-- 日期 / 阶段：直接用全局 .weui-cells（白底 + 上下通栏线现成，不必自绘复刻）。
+       「学习内容」标题分隔出的记录行块仍用自绘的 .bf-rows（那块的行不是 .weui-cell）。
+       行间线走 .weui-cell::before 的 left:32rpx 缩进细线 —— picker 包了一层会让每个 cell
+       都命中 :first-child（两行线一起被关掉），故非首个 picker 里的 cell 在 wxss 里显式开线 -->
+  <view class="weui-cells">
     <picker mode="date" value="{{dateStr}}" end="{{todayStr}}" bindchange="onDateChange">
-      <view class="weui-cell weui-cell_access cell-first">
+      <view class="weui-cell weui-cell_access">
         <view class="weui-cell__bd">
           <text class="weui-cell__bd_text">日期</text>
         </view>

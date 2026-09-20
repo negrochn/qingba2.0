@@ -66,6 +66,7 @@ Page({
     showPromoteModal: false,
     promoteTargetPhase: 0,
     promoteTargetPhaseText: '',
+    promoteTargetPhaseStr: '',
     youquTestInput: '',
     fontClass: '',
     isDark: false
@@ -201,7 +202,9 @@ Page({
       promoteLabel,
       remainHoursText: remainText,
       promoteTargetPhase: targetPhaseNum,
-      promoteTargetPhaseText: targetPhaseNum ? `phase${targetPhaseNum}` : ''
+      promoteTargetPhaseText: targetPhaseNum ? `phase${targetPhaseNum}` : '',
+      // 快捷值按钮的选中态比对用：输入框里存的是 '18' 这种短形式（wxml 里不能调 String()）
+      promoteTargetPhaseStr: targetPhaseNum ? String(targetPhaseNum) : ''
     })
   },
 

@@ -13,8 +13,10 @@ page {
   padding-bottom: calc(env(safe-area-inset-bottom) + 220rpx);
 }
 
-/* ===== 记录行 ===== */
-/* 自绘分组块，外观对齐 .weui-cells：白底 + 上下 1px 通栏线（细线统一方案） */
+/* ===== 记录行（「学习内容」块专用；日期 / 阶段已改用全局 .weui-cells） =====
+   为何这块仍自绘：行不是 .weui-cell —— 资源名两行 + 时长输入 + 删除按钮 + 「＋ 添加一条」，
+   行高与内边距策略（左侧 32rpx、右侧留给 88rpx 热区）都与 .weui-cell 的四周 32rpx 不同，
+   硬套 .weui-cell 反而要写更多覆盖。外观仍对齐它：白底 + 上下 1px 通栏线（细线统一方案） */
 .bf-rows {
   position: relative;
   background: var(--card);
@@ -59,8 +61,13 @@ page {
 
 .bf-row:first-child::before { display: none; }
 
-/* picker 多包了一层，:first-child 判不到，日期行首行缩进线显式关掉 */
-.cell-first::before { display: none; }
+/* picker 会把每个 cell 包成「它自己」的首个子节点，于是全局的
+   `.weui-cell:first-child::before { display: none }` 对两行都生效 —— 不是「只关首行」，
+   而是把日期与阶段的行间线一起关掉了（原先那句「:first-child 判不到」的注释把因果写反了，
+   补的 .cell-first 显式关线其实是死代码）。
+   这里反过来处理：给非首个 picker 里的 cell 显式开线，首行（日期）保持无线。
+   特异性 (0,3,0) 高于全局的 (0,2,0)，且页面样式加载在 app.wxss 之后 */
+.weui-cells > picker:not(:first-child) .weui-cell::before { display: block; }
 
 .bf-res {
   flex: 1;
@@ -70,8 +77,12 @@ page {
   padding: 16rpx 0;
 }
 
+/* 资源名与分组小字收紧行高（1.2）：page 的 line-height 是 1.6，两行叠起来会把
+   「已选资源」的行撑到约 127rpx，比同块的日期 / 阶段行（112rpx）高出一截；
+   收紧后内容约 104rpx，由 .bf-row 的 min-height: 112rpx 兜住，全块行高一致 */
 .bf-res-name {
   font-size: calc(34rpx * var(--fs, 1));
+  line-height: 1.2;
   color: var(--text);
   overflow: hidden;
   white-space: nowrap;
@@ -83,6 +94,7 @@ page {
 /* 分组标签：辅助档 24rpx（FG-2） */
 .bf-res-group {
   font-size: calc(24rpx * var(--fs, 1));
+  line-height: 1.2;
   color: var(--text3);
   margin-top: 2rpx;
 }
@@ -95,9 +107,10 @@ page {
   padding-right: 8rpx;
 }
 
-/* 输入框高度 88rpx：满足可点项最小热区 */
+/* 时长输入框：宽 160rpx（原 120rpx，再宽会让资源名放不下最长的素材名）、
+   高 88rpx（项目「可点项最小热区」口径，与 .cell-input / .form-field 同值） */
 .bf-dur-input {
-  width: 120rpx;
+  width: 160rpx;
   height: 88rpx;
   text-align: right;
   font-size: calc(34rpx * var(--fs, 1));
@@ -133,9 +146,14 @@ page {
 
 .bf-del:active { background: var(--cell-active); }
 
-/* 「＋ 添加一条」：主文档 34rpx，内距对齐 .weui-cell 的 32rpx */
+/* 「＋ 添加一条」：主文档 34rpx，左右内距对齐 .weui-cell 的 32rpx。
+   高度交给 min-height（与 .bf-row 同值），不靠上下 padding 撑 ——
+   靠 padding 撑的话会跟着 page 的 line-height 1.6 变成约 118rpx，比资源行高 6rpx */
 .bf-add {
-  padding: 32rpx;
+  min-height: 112rpx;
+  padding: 0 32rpx;
+  display: flex;
+  align-items: center;
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--brand);
 }

@@ -21,12 +21,34 @@ page {
 /* ===== cells 内的表单控件（时长 / 备注） =====
    cells / cell 结构与行间线全部复用全局原语，这里只处理控件自身的对齐与宽度。
    两个输入统一右对齐，与全局 .weui-cell__ft_value 的值对齐方式保持一致 */
-.cell-first::before { display: none; }   /* picker 多包了一层，首行缩进线需显式关掉 */
+/* picker 会把每个 cell 包成「它自己」的首个子节点，于是全局的
+   `.weui-cell:first-child::before { display: none }` 对日期 / 阶段 / 资源三行都生效 ——
+   行间线一起被关掉（原先补的 .cell-first 显式关线是死代码）。
+   这里反过来：给非首个 picker 里的 cell 显式开线，首行（日期）保持无线；
+   时长 / 备注是 cells 的直接子节点，不受影响，仍由全局规则自动画线。
+   特异性 (0,3,0) 高于全局的 (0,2,0)，且页面样式加载在 app.wxss 之后 */
+.weui-cells > picker:not(:first-child) .weui-cell::before { display: block; }
 .cell-ft-flex { max-width: none; flex: 1; }
+/* 时长 / 备注行的行首标签不参与宽度分配（标签只有两个字），把剩余宽度全让给右侧输入框。
+   否则 .weui-cell__bd 与 .cell-ft-flex 都是 flex: 1，两者平分剩余宽度，输入框实际只剩一半；
+   再加上数字右对齐贴边，视觉上就像只有一个数字那么宽，点起来也容易点偏 */
+.weui-cell__bd.cell-label { flex: none; }
+
+/* 本页行高统一 112rpx（= WeUI cell 的 56px，也是 backfill 的 .bf-row 取值）：
+   .weui-cell 全局是 padding: 32rpx，配上 88rpx 的输入框会撑到 152rpx，
+   故把上下内边距收到 12rpx —— 88 + 12×2 = 112rpx。
+   日期 / 阶段 / 资源行内容更矮，由 min-height 兜住，同样是 112rpx */
+.weui-cell {
+  padding-top: 12rpx;
+  padding-bottom: 12rpx;
+}
+
+/* 输入框 88rpx（44pt）= 项目「可点项最小热区」口径，与 backfill 的 .bf-dur-input、
+   弹层表单的 .form-field 同值 */
 .cell-input {
   flex: 1;
   min-width: 0;
-  height: 64rpx;
+  height: 88rpx;
   text-align: right;
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text);

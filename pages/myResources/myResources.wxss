@@ -243,52 +243,7 @@ page {
 /* 添加 / 编辑 弹窗的外壳（蒙层 / 面板 / 抓手 / 头部 / 操作区容器）已迁到
    components/half-sheet，本页只保留弹层内的内容样式（form-card 一族） */
 
-.form-card {
-  background: var(--card);
-  border-radius: 16rpx;
-  padding: 0 32rpx;
-  margin-bottom: 20rpx;
-}
-.form-row {
-  display: flex;
-  align-items: center;
-  min-height: 88rpx;
-  padding: 16rpx 0;
-  box-sizing: border-box;
-}
-.form-row:active { background: var(--cell-active); }
-.form-label {
-  flex-shrink: 0;
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text);
-  width: 140rpx;
-}
-.form-right {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12rpx;
-}
-.form-field {
-  flex: 1;
-  text-align: right;
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text);
-  height: 64rpx;
-}
-.form-value-text {
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text2);
-  text-align: right;
-}
-.form-card .weui-divider { height: 1px; background: var(--divider); margin: 0; }
-.form-row .icon-right {
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text3);
-  line-height: 1;
-  margin-left: 12rpx;
-  flex-shrink: 0;
-}
+/* 表单卡片 / 行 / 控件：已收敛到 app.wxss 的「弹层表单」原语（原先本页存了一份）；
+   行内只读值原为 .form-value-text，与 .form-static 等价（右对齐由 .form-right 负责），已合并 */
 
 /* 弹窗按钮的等宽由全局 .weui-btn-area_inline 提供，间距由 half-sheet 的 .hsc-footer 承担 */

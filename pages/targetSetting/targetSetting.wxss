@@ -19,78 +19,7 @@ page {
   white-space: nowrap;
 }
 
-/* ====== 表单 / 快捷值：与 stage 页打卡弹窗同款 ======
-   这批类在打卡弹窗（stage.wxss）里是页面级样式，这里保持同名复制一份；
-   调整弹窗表单观感时，两处需同步 */
-.form-card {
-  background: var(--card);
-  border-radius: 16rpx;
-  padding: 0 32rpx;
-  margin-bottom: 20rpx;
-}
-.form-row {
-  display: flex;
-  align-items: center;
-  min-height: 88rpx;
-  padding: 16rpx 0;
-  box-sizing: border-box;
-}
-.form-row:active { background: var(--cell-active); }
-/* 只读行不给按压反馈，避免暗示可点 */
-.form-row-static:active { background: transparent; }
-.form-label {
-  flex-shrink: 0;
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text);
-  width: 140rpx;
-}
-/* 参考信息的标签降一级：弹层内只有「目标时长」保持主色，标题不靠加粗也能站住层级 */
-.form-label-muted { color: var(--text2); }
-.form-right {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12rpx;
-}
-.form-field {
-  flex: 1;
-  text-align: right;
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text);
-  height: 64rpx;
-}
-.form-unit {
-  flex-shrink: 0;
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text3);
-  margin-left: 8rpx;
-}
-.form-static {
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text2);
-}
-/* 卡内分隔线直接用全局 .weui-divider（styles/weui-cells.wxss 已含 1px + scaleY(0.5) + origin），无需覆盖 */
-
-/* 快捷值：分段控件（选中态为品牌绿描边 + 品牌绿字，同打卡弹窗的快捷时长） */
-.seg-control { display: flex; align-items: center; flex: 1; }
-.seg-item {
-  height: 56rpx;
-  padding: 0 32rpx;
-  margin-left: 16rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2rpx solid var(--divider);
-  border-radius: 8rpx;
-  background: var(--card);
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text);
-  box-sizing: border-box;
-}
-.seg-item:first-child { margin-left: 0; }
-.seg-item:active { background: var(--cell-active); }
-.seg-active { border-color: var(--brand); color: var(--brand); background: var(--card); }
+/* ====== 表单 / 快捷值：已收敛到 app.wxss 的「弹层表单」原语（原先本页复制了一份） ====== */
 
 /* 恢复默认：文字按钮，只在已有覆盖时出现 */
 .ts-restore {

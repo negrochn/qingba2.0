@@ -5,7 +5,7 @@
        少一层分组也就少一次视线跳转 -->
   <view class="weui-cells">
     <picker mode="date" value="{{dateStr}}" end="{{todayStr}}" bindchange="onDateChange">
-      <view class="weui-cell weui-cell_access cell-first">
+      <view class="weui-cell weui-cell_access">
         <view class="weui-cell__bd">
           <text class="weui-cell__bd_text">日期</text>
         </view>
@@ -53,7 +53,7 @@
     <!-- 时长 / 备注：与上面同属一块 cells，
          行间线由 .weui-cell::before 自动画，不再需要 weui-divider 分节 -->
     <view class="weui-cell">
-      <view class="weui-cell__bd">
+      <view class="weui-cell__bd cell-label">
         <text class="weui-cell__bd_text">时长</text>
       </view>
       <view class="weui-cell__ft cell-ft-flex">
@@ -71,7 +71,7 @@
 
     <!-- 备注与时长同构：行首标签 + 右对齐输入，用 placeholder 说明「选填」 -->
     <view class="weui-cell">
-      <view class="weui-cell__bd">
+      <view class="weui-cell__bd cell-label">
         <text class="weui-cell__bd_text">备注</text>
       </view>
       <view class="weui-cell__ft cell-ft-flex">

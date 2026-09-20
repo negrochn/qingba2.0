@@ -338,6 +338,110 @@ view, text {
 .weui-toast__content { margin-top: 16rpx; font-size: calc(28rpx * var(--fs, 1)); }
 
 /* ============================================================
+   原语：弹层表单（卡片 + 行 + 控件 + 分段快捷值）
+   半屏弹层里的内容原语 —— components/half-sheet 只管外壳，内容样式归使用方。
+   原先在 pages/stage（打卡弹窗 / 晋级弹窗）、pages/myResources、pages/targetSetting
+   各存一份且取值一致，此处收敛为一处；改弹层表单观感只改这里。
+
+   用法：.form-card 包若干 .form-row，行间用全局 .weui-divider 分节；
+   只读参考行加 .form-row-static + .form-label-muted（整行降一级，不与可填项抢注意力）
+   ============================================================ */
+/* 底色取 --card2 而非 --card：与半屏弹层外壳（--card）拉开一档之后，
+   卡片的边界、16rpx 圆角与左右 32rpx 内缩才读得出来 —— 同色时这三样都不可见，
+   32rpx 内缩只会显得"没和弹层标题对齐"。
+   卡片变浅灰后，行按压反馈不能再用 --cell-active，见下方 .form-row:active */
+.form-card {
+  background: var(--card2);
+  border-radius: 16rpx;
+  padding: 0 32rpx;
+  margin-bottom: 20rpx;
+}
+/* 行高 112rpx = 56px = WeUI 的 cell 标准行高（@weuiCellHeight），
+   也是 backfill 页 .bf-row 的取值。
+   上下内边距 12rpx + 内容区 88rpx：输入框正好放得下 ——
+   只改 min-height 而不动 padding 的话，88rpx 的输入框会把这一行撑得比邻行高出一截 */
+.form-row {
+  display: flex;
+  align-items: center;
+  min-height: 112rpx;
+  padding: 12rpx 0;
+  box-sizing: border-box;
+}
+/* 按压反馈借 --divider 的色值：卡片底改为 --card2 后，--cell-active 的对比只剩 11 个色阶
+   （#ececec on #f7f7f7，按住几乎看不出来），而 --divider 浅色是实色 #e5e5e5、深色是
+   rgba(255,255,255,.1) 叠在 #202020 上 → 浅色差 18、深色差 23，与原先落在 --card 上的手感相当。
+   语义上 --divider 也是「一档浅灰」，与分隔线共用同一档色值，故未新增令牌；
+   ⚠️ 若将来把 .form-card 的底色改回 --card，这里应一并换回 --cell-active */
+.form-row:active { background: var(--divider); }
+/* 只读行不给按压反馈，避免暗示可点 */
+.form-row-static:active { background: transparent; }
+.form-label {
+  flex-shrink: 0;
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text);
+  width: 140rpx;
+}
+/* 参考信息的标签降一级 */
+.form-label-muted { color: var(--text2); }
+.form-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12rpx;
+}
+/* 输入框 88rpx（44pt）= 项目「可点项最小热区 ≥ 88rpx」的口径，与 backfill 的 .bf-dur-input、
+   editRecord 的 .cell-input 同值；正好等于行高 112rpx 减去上下 padding 24rpx */
+.form-field {
+  flex: 1;
+  text-align: right;
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text);
+  height: 88rpx;
+}
+.form-unit {
+  flex-shrink: 0;
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text3);
+  margin-left: 8rpx;
+}
+/* 行内的只读值（右对齐由 .form-right 负责，这里只管字号与层级） */
+.form-static {
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text2);
+}
+/* 行内的箭头：.weui-cell__ft .icon-right 只管 cell，form-row 需要自己一条 */
+.form-row .icon-right {
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1;
+  margin-left: 12rpx;
+  flex-shrink: 0;
+}
+
+/* 分段快捷值（打卡弹窗的 10/15/20/25/30 分钟、目标时长的 60H/80H） */
+.seg-control { display: flex; align-items: center; flex: 1; }
+/* 等宽变体：行内铺满（打卡弹窗的 5 个快捷时长用它） */
+.seg-control-grid .seg-item { flex: 1; text-align: center; }
+.seg-item {
+  height: 56rpx;
+  padding: 0 32rpx;
+  margin-left: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid var(--divider);
+  border-radius: 8rpx;
+  background: var(--card);
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text);
+  box-sizing: border-box;
+}
+.seg-item:first-child { margin-left: 0; }
+.seg-item:active { background: var(--cell-active); }
+.seg-active { border-color: var(--brand); color: var(--brand); background: var(--card); }
+
+/* ============================================================
    原语：卡片 .weui-panel（内容卡：圆角 + 极淡阴影，区别于裸列表）
    ============================================================ */
 .weui-panel {

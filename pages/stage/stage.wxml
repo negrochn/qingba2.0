@@ -132,47 +132,58 @@
   </view>
 </view>
 
-<!-- 晋级测试弹窗（half-sheet 外壳；按钮沿用本页 .pm-btn，保视觉不变） -->
+<!-- 晋级测试弹窗（half-sheet 外壳 + 弹层表单原语）：
+     阶段名并入标题，原先独立那块浅灰「阶段说明块」取消，说明句改用全局 .weui-cells__tips -->
 <half-sheet
   show="{{showPromoteModal}}"
-  title="晋级测试校验"
+  title="{{stage.stage_name}} · 晋级测试校验"
   font-class="{{fontClass}}"
   dark-class="{{darkClass}}"
   footer="{{true}}"
   bind:close="closePromoteModal"
 >
-  <view class="pm-stage-info">
-    <view class="pm-stage-name">{{stage.stage_name}}</view>
-    <view class="pm-stage-tip">开启小小优趣成长计划后，晋级需测试结果达标</view>
-  </view>
-
-  <view class="pm-form">
-    <view class="pm-form-item">
-      <text class="pm-form-label">晋级要求</text>
-      <view class="pm-form-value">稳定 {{promoteTargetPhaseText}}</view>
+  <!-- 晋级要求 / 测试结果 / 快捷值：一张卡片三节，与打卡弹窗、目标时长弹窗同一套原语 -->
+  <view class="form-card">
+    <view class="form-row form-row-static">
+      <view class="form-label">晋级要求</view>
+      <view class="form-right">
+        <text class="form-static">稳定 {{promoteTargetPhaseText}}</text>
+      </view>
     </view>
-    <view class="pm-form-item">
-      <text class="pm-form-label">测试结果</text>
-      <view class="pm-form-control">
+    <view class="weui-divider"></view>
+    <view class="form-row">
+      <view class="form-label">测试结果</view>
+      <view class="form-right">
         <input
-          class="pm-num-input"
+          class="form-field"
           type="number"
           placeholder="请输入 phase 数字"
           value="{{youquTestInput}}"
           bindinput="onYouquTestInput"
         />
-        <text class="pm-form-unit">phase</text>
+        <text class="form-unit">phase</text>
       </view>
     </view>
+    <!-- 快捷值 = 该阶段的目标 phase，点一下填入；与输入框内容一致时高亮 -->
+    <block wx:if="{{promoteTargetPhaseText}}">
+      <view class="weui-divider"></view>
+      <view class="form-row">
+        <view class="seg-control">
+          <view
+            class="seg-item {{youquTestInput === promoteTargetPhaseStr ? 'seg-active' : ''}}"
+            data-val="{{promoteTargetPhase}}"
+            bindtap="quickYouquPhase"
+          >{{promoteTargetPhaseText}}</view>
+        </view>
+      </view>
+    </block>
   </view>
 
-  <view class="pm-quick-row">
-    <view class="pm-quick-btn" data-val="{{promoteTargetPhase}}" bindtap="quickYouquPhase">{{promoteTargetPhaseText}}</view>
-  </view>
+  <view class="weui-cells__tips">开启小小优趣成长计划后，晋级需测试结果达标</view>
 
-  <view slot="footer" class="pm-actions">
-    <button class="pm-btn pm-btn-cancel" bindtap="closePromoteModal">取消</button>
-    <button class="pm-btn pm-btn-ok" bindtap="submitPromote">确认晋级</button>
+  <view slot="footer" class="weui-btn-area_inline">
+    <button class="weui-btn weui-btn_default" bindtap="closePromoteModal">取消</button>
+    <button class="weui-btn weui-btn_primary" bindtap="submitPromote">确认晋级</button>
   </view>
 </half-sheet>
 
@@ -185,7 +196,7 @@
   footer="{{true}}"
   bind:close="closeCheckin"
 >
-  <!-- 表单卡片 1：学习时长 + 快捷时长 -->
+  <!-- 学习时长 / 快捷时长 / 备注：一张卡片三节（与「目标时长」弹窗同构） -->
   <view class="form-card">
     <view class="form-row">
       <view class="form-label">学习时长</view>
@@ -214,12 +225,7 @@
         <view class="seg-item {{durationInput==='30' ? 'seg-active' : ''}}" data-val="30" bindtap="quickDuration">30</view>
       </view>
     </view>
-    <!-- 熏听分组：按阶段折算的说明（含「X 分钟计 Y 分钟」实时换算） -->
-    <view class="listen-tip" wx:if="{{listeningTip}}">{{listeningTip}}</view>
-  </view>
-
-  <!-- 表单卡片 2：备注 -->
-  <view class="form-card">
+    <view class="weui-divider"></view>
     <view class="form-row">
       <view class="form-label">备注</view>
       <input
@@ -230,6 +236,10 @@
         maxlength="50"
       />
     </view>
+
+    <!-- 熏听分组：按阶段折算的说明（含「X 分钟计 Y 分钟」实时换算）。
+         换算值随学习时长实时变化，故贴在卡片底部作注脚、不夹在两行输入之间 -->
+    <view class="listen-tip" wx:if="{{listeningTip}}">{{listeningTip}}</view>
   </view>
 
   <view slot="footer" class="weui-btn-area_inline">
