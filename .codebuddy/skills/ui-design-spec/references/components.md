@@ -726,7 +726,7 @@ onTouchMove(e) {
 - **高度不要用「内容 auto 撑开」**：左右都是 `scroll-view`，必须有确定高度才能滚动——`height:100%` 落在 auto 高度的父级上会形成循环依赖，iOS 上可能塌成 0；且右列资源条数动态（自定义资源每阶段上限 50 条），撑开后会超出屏幕、被 `.rp-body` 的 `overflow:hidden` 裁掉，**既看不到也滚不到**。
 - **每档高度 = 固定占高 + 行高 × N + 余量 + 安全区**。余量取 `24rpx`：固定占高是理论估算（大字号档头部会变高几 rpx、`env()` 取值也会取整），余量太小会在真机上冒出滚动条。用 `rpx + env()` 表达，随屏宽与安全区自动适配，**不必用 JS 量窗口再换算 px**。
 - **不需要拖拽改高度**：三档自动取高已能满足（曾实现过「拖拽 + 吸附三档 + 下滑关闭」并整体移除）。若将来确实要拖拽，注意 `scroll-view` 仍要有确定高度，且拖拽期间要关掉 `transition`。
-- **常驻挂载 + `show` 切 class**（不是 `wx:if` 创建销毁）：隐藏态必须显式 `visibility: hidden` + `transform: translateY(100%)` 移出视口——只写 `pointer-events: none` 只是不接收点击，面板仍会渲染在页面上挡住内容。
+- **常驻挂载 + `show` 切 class**（不是 `wx:if` 创建销毁）：隐藏态只写 `pointer-events: none` 是不够的（只是不接收点击，面板仍会渲染在页面上挡住内容），还要 `visibility: hidden` + `transform: translateY(100%)` 移出视口，并**最终落到 `display: none`** —— 真机上原生输入框不吃前两者，会留下 placeholder 残影（根因与挂/摘时序见原语 23）。
 - 其余约定同原语 8：根节点带 `{{fontClass}} {{darkClass}}`、头部统一「抓手 + 标题左 + 关闭右」、关闭按钮用 `icon-close` 且热区补足 88rpx。
 
 ---
@@ -771,7 +771,12 @@ onTouchMove(e) {
   - `.seg-item` **自带 `--card` 白底** → 按压前后是「白 → `--cell-active`」，差 19 个色阶，**与容器底无关，照用不改**。
   - 判据一句话：**透明底的元素，按压色跟容器的底配；自带底色的元素，按压色跟它自己的底配**。与 `--btn-default` 必须保持半透明同源（见 `design-tokens.md` §9）——跨越不同底的交互色，按最弱的那个底来选。
 - **深色档 `--card2 > --card`（`#202020` > `#191919`），与浅色档方向相反**。连带结果是 `.seg-item`（`--card` 底）在灰卡上**浅色呈凸起、深色呈凹陷**——方向不一致，但两边都看得出边界，暂不特殊处理；`.seg-active` 的选中态（`--card` 底 + 品牌绿边与字）反而因此比同色时更清楚。
-- 组件细节：`styleIsolation: 'apply-shared'`（使用方要能通过 `sheetClass` 定制面板，如 `resource-picker` 的三档高度 `.h8` / `.h9` 与「左右内边距归零」）；**常驻挂载 + `show` 切 class**，隐藏态必须 `visibility: hidden`（只写 `pointer-events: none` 面板仍会渲染在页面上）；蒙层根节点自带 `{{fontClass}} {{darkClass}}`（组件内用 iconfont 需自己 `@import`，见原语 11）。
+- 组件细节：`styleIsolation: 'apply-shared'`（使用方要能通过 `sheetClass` 定制面板，如 `resource-picker` 的三档高度 `.h8` / `.h9` 与「左右内边距归零」）；蒙层根节点自带 `{{fontClass}} {{darkClass}}`（组件内用 iconfont 需自己 `@import`，见原语 11）。
+- **隐藏态必须落到 `display: none`（真机坑）**：外壳是「常驻挂载 + `show` 切 class」，隐藏态只写 `pointer-events: none` 面板仍会渲染在页面上，所以还要 `visibility: hidden` + 面板 `translateY(100%)`。但这两条**挡不住原生输入框**——真机上 `input` 由原生层绘制，**既不吃父级的 `visibility`，也不吃 `transform`**，弹层关闭后普通视图全部隐藏、唯独 placeholder 还停在未变换的布局位置（屏幕底部），表现为页面下方凭空多出几行「请输入」。
+  - 解法：补第三态 `display: none`（`.hsc-hidden`），把整块从渲染树移出、原生层随之销毁；
+  - **挂 / 摘该态要控时序**（在 js 的 `show` observer 里），否则会把过渡动画吞掉：**打开** → 先摘掉 `display:none`、隔一帧（20ms）再挂显示态；**关闭** → 先播 250ms 滑出动画、走完（260ms）再挂上；`detached` 清定时器；
+  - 因此组件内由内部状态 `shown`（滑入 + 蒙层）/ `hidden`（`display:none`）驱动 class，不再直接用 `show`；
+  - 已填数据不受影响 —— `display:none` 只是不渲染，页面 data 仍在，重开弹层照常回填。
 - 现存 6 处：`pages/stage`（打卡 / 晋级测试）、`pages/targetSetting`、`pages/myResources`、`pages/home`（今日明细）、`components/resource-picker`。
 
 ---

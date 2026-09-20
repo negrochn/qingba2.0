@@ -104,7 +104,8 @@ Page({
       })
     })
 
-    this.setData({ sections, totalCount: total, isEmpty: total === 0, expandedGroups })
+    // isEmpty 与模板同口径（按 sections 判断），避免「有资源却列出 0 个分组」时出现空白页
+    this.setData({ sections, totalCount: total, isEmpty: !sections.length, expandedGroups })
   },
 
   // ===== 归属：阶段 + 分组两行原生 picker（联动） =====

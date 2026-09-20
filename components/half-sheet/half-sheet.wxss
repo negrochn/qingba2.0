@@ -8,9 +8,13 @@
    所以组件内用 iconfont 必须自己 @import 一份（同 radio-list / resource-picker） */
 @import "../../styles/iconfont.wxss";
 
-/* 本组件是「常驻挂载 + show 切 class」，隐藏态必须显式把面板移出屏幕 + visibility:hidden。
-   只写 pointer-events:none 是不够的 —— 那只是不接收点击，面板仍会渲染在页面上。
-   visibility 参与 transition：关闭时延迟到滑出动画结束才真正隐藏。 */
+/* 本组件是「常驻挂载 + show 切 class」，隐藏态要做三件事：
+   ① pointer-events:none —— 不接收点击（只做这个远远不够）；
+   ② visibility:hidden + 面板 translateY(100%) —— 把面板与内容移出视口，同时让滑出动画可播；
+   ③ display:none（.hsc-hidden，由 js 在滑出动画结束后挂上）—— 真正把整块移出渲染树。
+   ③ 不可省：真机上 input 由原生层绘制，**不吃父级的 visibility，也不吃 transform**，
+   少了它，弹层隐藏后各输入框的 placeholder 仍会留在屏幕底部（阶段页 / 目标时长 / 我的资源
+   都出现过「请输入」浮在页面下方）。挂 / 摘 ③ 都带了时序，避免把过渡动画吞掉。 */
 .hsc-mask {
   position: fixed;
   left: 0; right: 0; top: 0; bottom: 0;
@@ -29,6 +33,7 @@
   pointer-events: auto;
   visibility: visible;
 }
+.hsc-mask.hsc-hidden { display: none; }
 
 .hsc-sheet {
   width: 100%;

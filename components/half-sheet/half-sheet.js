@@ -24,6 +24,8 @@
  *
  * ⚠️ 组件要「常驻挂载 + show 切 class」，不要用 wx:if 包住整个组件：
  *    弹层关闭后内容仍在，打卡弹窗里已填的时长 / 备注才不会丢。
+ *    隐藏由内部两态完成：shown 控滑入与蒙层，hidden 用 display:none 把整块移出渲染树 ——
+ *    真机上 input 由原生层绘制、不吃 visibility 与 transform，只靠后两者会留下 placeholder 残影。
  *
  * ⚠️ 操作区的按钮等宽不需要组件参与：全局 app.wxss 已有
  *    `.weui-btn-area_inline .weui-btn { flex: 1; max-width: none; margin: 0 }`。
@@ -51,6 +53,44 @@ Component({
     sheetClass: { type: String, value: '' },
     // 是否渲染底部操作区容器：slot 内容无法在组件内探测，只能显式声明
     footer: { type: Boolean, value: false }
+  },
+
+  data: {
+    // 显示态 / 隐藏态分成两态（原因见 wxss 的 .hsc-hidden 注释）：
+    //   shown —— 滑入 + 蒙层；
+    //   hidden —— display:none，把整块（含原生输入框）从渲染树里移除
+    shown: false,
+    hidden: true
+  },
+
+  observers: {
+    show(v) {
+      if (this._timer) { clearTimeout(this._timer); this._timer = null }
+
+      if (v) {
+        // 先摘掉 display:none，隔一帧再挂显示态，滑入过渡才会生效
+        this.setData({ hidden: false }, () => {
+          this._timer = setTimeout(() => {
+            this._timer = null
+            if (this.data.show) this.setData({ shown: true })
+          }, 20)
+        })
+        return
+      }
+
+      this.setData({ shown: false })
+      // 等滑出动画（0.25s）走完，再真正移出渲染树
+      this._timer = setTimeout(() => {
+        this._timer = null
+        this.setData({ hidden: true })
+      }, 260)
+    }
+  },
+
+  lifetimes: {
+    detached() {
+      if (this._timer) { clearTimeout(this._timer); this._timer = null }
+    }
   },
 
   methods: {

@@ -1,6 +1,8 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <block wx:if="{{!isEmpty}}">
+  <!-- 以 sections 是否为空判断，而不是计数：两者一旦不一致（有资源但没有任何分组被列出），
+       页面会两边都不渲染、整页空白。按 sections 判断至少能落到空态提示 -->
+  <block wx:if="{{sections.length}}">
     <block wx:for="{{sections}}" wx:key="stageId" wx:for-item="sec">
       <view class="weui-cells__title">{{sec.stageName}}</view>
       <view class="res-wrap">

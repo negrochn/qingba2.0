@@ -1,7 +1,7 @@
 <!-- 通用半屏弹层：抓手 + 头部（标题左 / 关闭右）+ 内容 slot + 操作区 slot
      蒙层根节点自带主题 class（浮层在 .container 之外，拿不到 dm-* / fs-* 变量） -->
 <view
-  class="hsc-mask {{fontClass}} {{darkClass}} {{show ? 'hsc-show' : ''}}"
+  class="hsc-mask {{fontClass}} {{darkClass}} {{shown ? 'hsc-show' : ''}} {{hidden ? 'hsc-hidden' : ''}}"
   bindtap="onMaskTap"
   catchtouchmove="noop"
 >
