@@ -141,9 +141,9 @@ WeUI 的列表单位，承载一组 cell。默认无圆角、无阴影，靠上�
 .weui-textarea-counter { text-align:right; font-size:14px(28rpx); color: var(--weui-FG-2); }
 .weui-cell_warn .weui-textarea-counter { color: var(--weui-RED); }
 ```
-**项目原语**：`.form-card` / `.form-row` / `.form-field`（原语 13/15）。
+**项目原语**：页面级表单用 `.weui-cells` + `.weui-cell_input`（原语 1/2）；**弹层内**的表单用 `.form-card` / `.form-row` / `.form-field` 一族（原语 23）。
 
-- **表单页密度（项目约定）**：`.form-row` 最小高度 88rpx（`min-height:88rpx` + `padding:16rpx 0`），一张 `.form-card` 是一个白底圆角块（`padding:0 32rpx`，行间用 `.weui-divider` 分节）。**相邻小节优先合进同一张卡**（如「时长 / 快捷时长 / 备注」三段共用一张卡），别一段一张卡——省下的不只是卡片间距，还有各自的分组标题（见原语 3）。
+- **表单页密度（项目约定）**：`.form-row` 最小高度 **112rpx**（`min-height:112rpx` + `padding:12rpx 0`，内容区 88rpx 正好放下 `.form-field`），一张 `.form-card` 是圆角块、**底色取 `--card2`**（`padding:0 32rpx`，行间用 `.weui-divider` 分节）。**相邻小节优先合进同一张卡**（如「时长 / 快捷时长 / 备注」三段共用一张卡），别一段一张卡——省下的不只是卡片间距，还有各自的分组标题（见原语 3）。卡片底色与行按压反馈的取值理由见原语 23。
 - **输入行的两种形态**：右侧要带单位 / 后缀时用 `.form-unit`（`--text3`、`margin-left:8rpx`）配 `.form-field`；**不需要左侧标签位的输入**（如备注）直接满宽 `.form-field-full`，用 placeholder 承担说明，长内容能看全——但此时 placeholder 必须自带语义（「备注，选填，如：第1-2册」），因为不再有标签。
 - **按钮区上边距**：全局 `.weui-btn-area` 是 `padding-top:96rpx`（WeUI「按钮区上 48px」），那是给多张卡片堆叠留的呼吸位；卡片少的页面可在**页面级覆盖**收窄（`pages/editRecord` 收到 32rpx），页面样式加载在 `app.wxss` 之后、同特异性即覆盖。
 
@@ -502,7 +502,7 @@ WeUI 提供 `weui-icon-*`（mask + `background-color: currentColor` 方案，色
                    border-top: 1px solid var(--divider); border-bottom: 1px solid var(--divider); }
 ```
 
-- **弹层根节点必须带 `{{fontClass}} {{darkClass}}`（头号易漏点）**：`dm-auto` 只挂在页面根 `.container` 上，`page` 上只有浅色基础变量。弹层若写在 `.container` 之外又不自带主题类，内部所有 `var(--*)` 都会回落到浅色值——**系统深色时表现为白卡片、浅灰「取消」按钮、深色文字**（手动档已移除，这是现存唯一的触发路径）。项目另有 4 处弹层（`.sheet-mask` / `.pm-mask` / `.hs-mask`）已按此写法，新增浮层必须照办。
+- **弹层根节点必须带 `{{fontClass}} {{darkClass}}`（头号易漏点）**：`dm-auto` 只挂在页面根 `.container` 上，`page` 上只有浅色基础变量。弹层若写在 `.container` 之外又不自带主题类，内部所有 `var(--*)` 都会回落到浅色值——**系统深色时表现为白卡片、浅灰「取消」按钮、深色文字**（手动档已移除，这是现存唯一的触发路径）。项目现存两类浮层都已按此写法：`pages/records` / `pages/stats` 的滚轮弹层 `.mp-mask`，以及六个半屏弹层共用的 `components/half-sheet` 之 `.hsc-mask`（早期各页私有的 `.sheet-mask` / `.pm-mask` / `.hs-mask` 已随组件化清理，勿再引用）。新增浮层必须照办。
 - **`mask-class` 与 `indicator-class` 必写**：`picker-view` 的蒙层与选中框是组件内置样式，不读 CSS 变量、也不跟随 `dm-*`。蒙层一律去掉；选中框**只能保持透明背景 + `var(--divider)` 上下细线**（项目表现为浅色 `#e5e5e5` / 深色 `rgba(255,255,255,.1)`），与微信原生 picker 观感一致。
 - **切勿给 indicator 填实色底**：indicator 是覆盖在内容层之上的元素，`background: var(--card2)` 这类不透明底色会把**选中行整行文字盖住**（表现为选中项「消失」）。若确实想要选中行底色，唯一可行方向是给 `.mp-item` 提 `position: relative; z-index`，但依赖组件内部层级，需真机验证。
 - **`indicator-style` 的 height 与 `.mp-item` 的 `line-height` 必须相等**（项目取 `80rpx`），否则选中项与细线错位。
@@ -728,6 +728,51 @@ onTouchMove(e) {
 - **不需要拖拽改高度**：三档自动取高已能满足（曾实现过「拖拽 + 吸附三档 + 下滑关闭」并整体移除）。若将来确实要拖拽，注意 `scroll-view` 仍要有确定高度，且拖拽期间要关掉 `transition`。
 - **常驻挂载 + `show` 切 class**（不是 `wx:if` 创建销毁）：隐藏态必须显式 `visibility: hidden` + `transform: translateY(100%)` 移出视口——只写 `pointer-events: none` 只是不接收点击，面板仍会渲染在页面上挡住内容。
 - 其余约定同原语 8：根节点带 `{{fontClass}} {{darkClass}}`、头部统一「抓手 + 标题左 + 关闭右」、关闭按钮用 `icon-close` 且热区补足 88rpx。
+
+---
+
+## 原语 23：半屏弹层与弹层表单（项目 `components/half-sheet` + `app.wxss` 的 `.form-*` / `.seg-*`）
+
+项目把「底部半屏弹层」拆成两层：**外壳复用组件、内容走全局原语**。
+
+| 层 | 归属 | 内容 |
+|---|---|---|
+| 外壳 | `components/half-sheet` | 蒙层 / 面板 / 抓手 / 头部（标题左 + 关闭右）/ `footer` 槽 |
+| 内容 | `app.wxss`「弹层表单」原语 | `.form-card` / `.form-row` / `.form-row-static` / `.form-label(-muted)` / `.form-right` / `.form-field` / `.form-unit` / `.form-static` / `.seg-control(-grid)` / `.seg-item` / `.seg-active` |
+
+```html
+<half-sheet show="{{show}}" title="常规1 · 记一笔"
+            font-class="{{fontClass}}" dark-class="{{darkClass}}" bind:close="closeSheet">
+  <view class="form-card">
+    <view class="form-row">…可填行…</view>
+    <view class="weui-divider"></view>
+    <view class="form-row form-row-static">…只读参考行…</view>
+  </view>
+  <view slot="footer" class="weui-btn-area_inline">
+    <button class="weui-btn weui-btn_default">取消</button>
+    <button class="weui-btn weui-btn_primary">确定</button>
+  </view>
+</half-sheet>
+```
+
+```css
+/* 外壳（组件内）：面板 = --card，头部下间距 24rpx，安全区由面板 padding 承担 */
+.hsc-sheet { background: var(--card); border-radius: 24rpx 24rpx 0 0;
+             padding: 16rpx 32rpx calc(env(safe-area-inset-bottom) + 32rpx); }
+/* 内容（app.wxss）：卡片比外壳低一档，行自身不设底色 */
+.form-card { background: var(--card2); border-radius: 16rpx; padding: 0 32rpx; }
+.form-row  { min-height: 112rpx; padding: 12rpx 0; }
+.seg-item  { height: 56rpx; border: 2rpx solid var(--divider); background: var(--card); }
+```
+
+- **卡片底色必须与外壳拉开一档**：`.form-card` 取 `--card2`（`#f7f7f7` / `#202020`），**不是**与面板同色的 `--card`。同色时卡片的**边界、16rpx 圆角、`padding: 0 32rpx` 的内缩全都不可见**——内缩只会被读成「没和弹层标题对齐」，圆角是纯死样式；低一档后三者同时成立，弹层里才有「块」的层次。
+- **按压反馈色按「元素自身有没有底色」来选（易错）**：
+  - `.form-row` **不设底色**（透出卡片的 `--card2`）→ 按压色用 **`--divider`**（浅 `#e5e5e5` / 深 `rgba(255,255,255,.1)`）。沿用 `--cell-active`（`#ececec`）叠在 `#f7f7f7` 上只差 **11** 个色阶，按住几乎无反应；`--divider` 浅色差 18、深色 ≈ 22，与它原先落在 `--card` 上的手感相当。
+  - `.seg-item` **自带 `--card` 白底** → 按压前后是「白 → `--cell-active`」，差 19 个色阶，**与容器底无关，照用不改**。
+  - 判据一句话：**透明底的元素，按压色跟容器的底配；自带底色的元素，按压色跟它自己的底配**。与 `--btn-default` 必须保持半透明同源（见 `design-tokens.md` §9）——跨越不同底的交互色，按最弱的那个底来选。
+- **深色档 `--card2 > --card`（`#202020` > `#191919`），与浅色档方向相反**。连带结果是 `.seg-item`（`--card` 底）在灰卡上**浅色呈凸起、深色呈凹陷**——方向不一致，但两边都看得出边界，暂不特殊处理；`.seg-active` 的选中态（`--card` 底 + 品牌绿边与字）反而因此比同色时更清楚。
+- 组件细节：`styleIsolation: 'apply-shared'`（使用方要能通过 `sheetClass` 定制面板，如 `resource-picker` 的三档高度 `.h8` / `.h9` 与「左右内边距归零」）；**常驻挂载 + `show` 切 class**，隐藏态必须 `visibility: hidden`（只写 `pointer-events: none` 面板仍会渲染在页面上）；蒙层根节点自带 `{{fontClass}} {{darkClass}}`（组件内用 iconfont 需自己 `@import`，见原语 11）。
+- 现存 6 处：`pages/stage`（打卡 / 晋级测试）、`pages/targetSetting`、`pages/myResources`、`pages/home`（今日明细）、`components/resource-picker`。
 
 ---
 
