@@ -1,11 +1,13 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- 顶部：阶段选择器（左对齐，参考打卡记录页的月份选择器） -->
+  <!-- 顶部：阶段选择器（原生 picker，与补录 / 编辑页的阶段选择同款） -->
   <view class="section-head">
-    <view class="stage-picker" bindtap="onToggleStagePicker">
-      <text class="stage-picker-name">{{stageName || '选择阶段'}}</text>
-      <text class="stage-picker-arrow {{stagePickerOpen ? 'up' : ''}}">▾</text>
-    </view>
+    <picker mode="selector" range="{{stageNames}}" value="{{stageIndex}}" bindchange="onStageChange">
+      <view class="stage-picker">
+        <text class="stage-picker-name">{{stageName || '选择阶段'}}</text>
+        <text class="stage-picker-arrow">▾</text>
+      </view>
+    </picker>
   </view>
 
   <block wx:if="{{stage}}">
@@ -49,9 +51,7 @@
           <text class="iconfont icon-calendar card-cal"></text>
         </view>
         <view class="chart">
-          <!-- canvas 是原生组件，层级高于普通视图，弹层打开时用 wx:if 移除 -->
           <canvas
-            wx:if="{{!stagePickerOpen}}"
             type="2d"
             id="chart-bar"
             class="echart-box"
@@ -60,15 +60,6 @@
             bindtouchmove="onChartTouchMove"
             bindtouchend="onChartTouchEnd"
           ></canvas>
-          <!-- 骨架：等高顶上，柱高取真实占比、网格与柱位按 ECharts 的 grid 换算 -->
-          <view class="chart-skel" wx:else>
-            <view class="skel-grid">
-              <view class="skel-line" wx:for="{{[0, 1, 2, 3, 4]}}" wx:key="*this" style="top: {{index * 25}}%"></view>
-            </view>
-            <view class="skel-plot">
-              <view class="skel-col" wx:for="{{chart}}" wx:key="k" style="height: {{item.percent}}%"></view>
-            </view>
-          </view>
         </view>
         <view class="card-foot" wx:if="{{highlightText}}">
           <text class="chip">{{highlightText}}</text>
@@ -82,19 +73,10 @@
         </view>
         <view class="chart">
           <canvas
-            wx:if="{{!stagePickerOpen}}"
             type="2d"
             id="chart-ring"
             class="echart-box echart-box-ring"
           ></canvas>
-          <!-- 骨架：5 圈网格 + 数据面，顶点由 buildRadarClips 按真实值与画布尺寸算出 -->
-          <view class="chart-skel chart-skel-ring" wx:else>
-            <view class="skel-ring" wx:for="{{ringGrids}}" wx:key="k">
-              <view class="skel-ring-out" style="clip-path: {{item.outer}}"></view>
-              <view class="skel-ring-in" style="clip-path: {{item.inner}}"></view>
-            </view>
-            <view class="skel-ring-area" wx:if="{{ringDataClip}}" style="clip-path: {{ringDataClip}}"></view>
-          </view>
         </view>
       </view>
 
@@ -136,20 +118,4 @@
 
   <view class="weui-cell_empty" wx:else>暂无可统计的阶段</view>
 
-</view>
-
-<!-- 阶段选择弹层（与打卡记录页月份选择器同原语） -->
-<view class="mp-mask {{fontClass}} {{darkClass}} {{stagePickerOpen ? 'show' : ''}}" bindtap="onCloseStagePicker" wx:if="{{stagePickerOpen}}">
-  <view class="mp-sheet" catchtap="noop">
-    <view class="mp-title mb-16">选择阶段</view>
-    <picker-view indicator-style="height: 80rpx;" indicator-class="mp-pv-indicator" mask-class="mp-pv-mask" class="mp-pv" value="{{pickerValue}}" bindchange="onPickerChange">
-      <picker-view-column>
-        <view wx:for="{{stageOptions}}" wx:key="stage_id" class="mp-item">{{item.stage_name}}</view>
-      </picker-view-column>
-    </picker-view>
-    <view class="mp-actions">
-      <button class="mp-btn mp-cancel" bindtap="onCloseStagePicker">取消</button>
-      <button class="mp-btn mp-ok" bindtap="onConfirmStagePicker">确定</button>
-    </view>
-  </view>
 </view>

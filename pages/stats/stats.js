@@ -335,62 +335,15 @@ function prepareEcharts() {
   })
 }
 
-// ===== 雷达图骨架：弹层打开时替代 canvas 的 CSS 复刻 =====
-// 几何参数与 _renderRing 保持一致：center ['50%','54%']、radius '62%'（相对短边的一半）、splitNumber 5
-// 每圈由「外圈填网格色 + 内圈填卡片色」挖出 1px 线；必须由大到小绘制，
-// 否则后画的大圈会把先画的小圈整个盖掉
-const RADAR_RING_SCALES = [1, 0.8, 0.6, 0.4, 0.2]
-
-function buildRadarClips(w, h, vals) {
-  const n = (vals && vals.length) || 8
-  const maxVal = Math.max.apply(null, (vals || []).concat([0])) || 1
-  const cx = w * 0.5
-  const cy = h * 0.54
-  const r = 0.62 * Math.min(w, h) / 2
-  // ECharts 雷达起始角在 12 点方向，顺时针排布
-  const poly = radiusOf => {
-    const arr = []
-    for (let i = 0; i < n; i++) {
-      const ang = Math.PI / 2 - i * 2 * Math.PI / n
-      const rr = Math.max(radiusOf(i), 0)
-      const x = (cx + rr * Math.cos(ang)) / w * 100
-      const y = (cy - rr * Math.sin(ang)) / h * 100
-      arr.push(`${x.toFixed(2)}% ${y.toFixed(2)}%`)
-    }
-    return `polygon(${arr.join(', ')})`
-  }
-  return {
-    grids: RADAR_RING_SCALES.map((s, i) => ({
-      k: 'g' + i,
-      outer: poly(() => r * s),
-      inner: poly(() => r * s - 1)
-    })),
-    data: poly(i => r * (vals[i] / maxVal)),
-    key: `${Math.round(w)}x${Math.round(h)}|${(vals || []).join(',')}`
-  }
-}
-
-// 画布尺寸量不到时的兜底：按页面 32rpx 外边距 + 卡片 32rpx 内边距、图表高 520rpx 估算
-function estimateRingBox() {
-  let ww = 375
-  try {
-    const info = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()
-    if (info && info.windowWidth) ww = info.windowWidth
-  } catch (e) {}
-  const rpx = ww / 750
-  return { w: ww - 128 * rpx, h: 520 * rpx }
-}
-
 Page({
   data: {
     fontClass: '',
     darkClass: '',
-    // 阶段选择器
-    stageOptions: [],
+    // 阶段选择器（原生 picker：mode="selector"）
+    stageOptions: [],    // [{ stage_id, stage_name }]
+    stageNames: [],      // picker 的 range（阶段名）
+    stageIndex: 0,       // picker 的选中下标
     curStageId: '',
-    stagePickerOpen: false,
-    pickerValue: [0],
-    _pendingStageIdx: 0,
     // 当前阶段详情
     stage: null,
     stageName: '',
@@ -409,9 +362,6 @@ Page({
     chartLabels: [],
     chartVals: [],
     ringData: [],
-    // 弹层打开时的图表骨架（canvas 被 wx:if 摘掉后的 CSS 复刻）
-    ringGrids: [],
-    ringDataClip: '',
     rankList: [],
     readRankList: []
   },
@@ -426,7 +376,11 @@ Page({
       stage_name: s.stage_name
     }))
     const idx = stageOptions.length ? pickDefaultStageIndex(stageOptions) : -1
-    this.setData({ stageOptions, pickerValue: [idx >= 0 ? idx : 0], _pendingStageIdx: idx >= 0 ? idx : 0 })
+    this.setData({
+      stageOptions,
+      stageNames: stageOptions.map(s => s.stage_name),
+      stageIndex: idx >= 0 ? idx : 0
+    })
     if (idx >= 0) this._applyStageIndex(idx)
   },
 
@@ -455,37 +409,14 @@ Page({
     this._disposeCharts()
   },
 
-  // ===== 阶段选择器（与打卡记录页月份选择器同原语） =====
-  onToggleStagePicker() {
-    const idx = this.data.stageOptions.findIndex(s => s.stage_id === this.data.curStageId)
-    const i = idx >= 0 ? idx : 0
-    // 弹层是普通视图，盖不住 canvas（原生组件）：打开前先销毁实例，
-    // 由模板 wx:if 把 canvas 摘掉，关闭后再按需重建
-    this._disposeCharts()
-    this.setData({
-      stagePickerOpen: true,
-      pickerValue: [i],
-      _pendingStageIdx: i
-    })
-  },
-
-  onCloseStagePicker() {
-    this.setData({ stagePickerOpen: false }, () => {
-      this._ensureCharts()
-    })
-  },
-
-  // 阻止阶段选择弹层内容区的点击冒泡（catchtap）
-  noop() {},
-
-  onPickerChange(e) {
-    const val = e.detail.value
-    this.setData({ _pendingStageIdx: Number(val && val[0]) || 0 })
-  },
-
-  onConfirmStagePicker() {
-    const idx = Number(this.data._pendingStageIdx) || 0
-    this.setData({ stagePickerOpen: false })
+  // ===== 阶段选择（原生 picker：mode="selector"，与补录 / 编辑页同款） =====
+  // 用系统滚轮替代自绘弹层：canvas 是原生组件、层级恒在普通视图之上，原实现必须
+  // 「打开弹层前 dispose 图表 + 用 wx:if 把 canvas 摘掉 + 用 CSS 骨架顶替」；
+  // 系统弹层天然在 canvas 之上，这套规避逻辑连同骨架一起删掉了
+  onStageChange(e) {
+    const idx = Number(e.detail.value)
+    if (!(this.data.stageOptions || [])[idx]) return
+    this.setData({ stageIndex: idx })
     this._applyStageIndex(idx)
   },
 
@@ -498,7 +429,7 @@ Page({
       stage,
       curStageId: stage.stage_id,
       stageName: stage.stage_name,
-      pickerValue: [idx]
+      stageIndex: idx
     })
     this._recompute()
   },
@@ -533,7 +464,6 @@ Page({
       stageName: stage.stage_name,
       deltaText: vm.deltaText,
       isEmpty: vm.isEmpty,
-      chart: vm.chart,
       peakText: vm.peakText,
       highlightText: vm.highlightText,
       summary: vm.summary,
@@ -552,8 +482,6 @@ Page({
         this._ensureCharts()
         if (this._barChart) this._renderBar()
         if (this._ringChart) this._renderRing()
-        // 骨架不依赖 canvas 实例（画布尺寸量不到时按布局估算），先算好，弹层打开即可用
-        this._updateRingSkeleton(this._ringValues())
       }
     })
   },
@@ -572,8 +500,6 @@ Page({
       const chart = echarts.init(canvas, null, { width: w, height: h, devicePixelRatio: dpr })
       canvas.setChart(chart)
       this._ringChart = chart
-      // 记下实际画布尺寸，供弹层打开时的骨架按同一套几何换算顶点
-      this._ringBox = { w, h }
       this._renderRing()
     })
   },
@@ -668,17 +594,6 @@ Page({
     return this._ringAxisKeys().map(k => valByKey[k] || 0)
   },
 
-  // 弹层打开时 canvas 会被 wx:if 摘掉，用 CSS 复刻的雷达轮廓顶上，避免遮罩下留白
-  // 与真图共用同一套几何参数；key 缓存住尺寸与数值，避免重复 setData
-  _updateRingSkeleton(vals) {
-    if (!vals || !vals.length) return
-    const box = this._ringBox || estimateRingBox()
-    const clips = buildRadarClips(box.w, box.h, vals)
-    if (clips.key === this._ringClipKey) return
-    this._ringClipKey = clips.key
-    this.setData({ ringGrids: clips.grids, ringDataClip: clips.data })
-  },
-
   // 分组时长对比（雷达图）
   _renderRing() {
     if (!this._ringData) return
@@ -686,7 +601,6 @@ Page({
     // 3 轴以下画不出雷达形状，直接不画（避免 ECharts 报错）
     if (axisKeys.length < 3) return
     const vals = this._ringValues()
-    this._updateRingSkeleton(vals)
     if (!this._ringChart) return
     const isDark = theme.isDarkNow()   // canvas 走不了 CSS 媒体查询，需含「跟随系统」的真实深色
     const subTextColor = isDark ? 'rgba(255,255,255,0.5)' : '#737373'

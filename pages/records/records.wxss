@@ -67,11 +67,6 @@ page {
 .overview-arrow {
   font-size: calc(28rpx * var(--fs, 1));
   color: var(--text3);
-  transition: transform 0.2s;
-}
-
-.overview-arrow.up {
-  transform: rotate(180deg);
 }
 
 /* ===== 滑动删除 ===== */
@@ -286,107 +281,4 @@ page {
 .empty-hint {
   font-size: calc(28rpx * var(--fs, 1));
   color: var(--text3);
-}
-
-/* ===== 月份选择器弹层（与首页一致） ===== */
-.mp-mask {
-  position: fixed;
-  left: 0; right: 0; top: 0; bottom: 0;
-  background: rgba(0,0,0,0);
-  z-index: 2000;
-  pointer-events: none;
-  transition: background 0.2s;
-  display: flex;
-  align-items: flex-end;
-}
-
-.mp-mask.show {
-  background: rgba(0,0,0,0.45);
-  pointer-events: auto;
-}
-
-.mp-sheet {
-  width: 100%;
-  background: var(--card);
-  border-top-left-radius: 24rpx;
-  border-top-right-radius: 24rpx;
-  padding: 24rpx 32rpx calc(env(safe-area-inset-bottom) + 32rpx);
-  box-sizing: border-box;
-}
-
-.mp-title {
-  text-align: center;
-  font-size: calc(30rpx * var(--fs, 1));
-  color: var(--text);
-  font-weight: 600;
-}
-
-.mp-pv {
-  width: 100%;
-  height: 400rpx;
-}
-
-.mp-item {
-  line-height: 80rpx;
-  text-align: center;
-  font-size: calc(30rpx * var(--fs, 1));
-  color: var(--text);
-}
-
-/* picker-view 的内置蒙层是固定白色渐变，不跟随主题，深色下会在卡片上留下灰白块，
-   用 mask-class 直接去掉。
-   注意：indicator 覆盖在内容层之上，只能保持透明背景——填不透明底色会把选中行整行文字盖住；
-   选中态改用主题色的上下细线标识。 */
-.mp-pv-mask {
-  background-image: none !important;
-  background-color: transparent !important;
-}
-
-.mp-pv-indicator {
-  background: transparent !important;
-  /* 选中框自身不能用 transform（会把整个 80rpx 高的选中区压扁），故直接用 1px */
-  border-top: 1px solid var(--divider);
-  border-bottom: 1px solid var(--divider);
-}
-
-.mp-actions {
-  display: flex;
-  justify-content: center;
-  gap: 20rpx;
-  margin-top: 16rpx;
-}
-
-.mp-btn {
-  width: 45%;
-  height: 80rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16rpx;
-  font-size: calc(28rpx * var(--fs, 1));
-  border: none;
-  padding: 0;
-  line-height: 1;
-}
-
-.mp-btn::after {
-  border: none;
-}
-
-.mp-cancel {
-  background: var(--cell-active);
-  color: var(--text2);
-}
-
-.mp-ok {
-  background: var(--brand);
-  color: #fff;
-  font-weight: 600;
-}
-
-/* ===== 深色模式适配（标签等彩色元素，全局 tag-group 见 app.wxss） ===== */
-.dm-dark .tag-stage { color: #ffd666; background: rgba(255, 214, 102, 0.16); }
-
-@media (prefers-color-scheme: dark) {
-  .dm-auto .tag-stage { color: #ffd666; background: rgba(255, 214, 102, 0.16); }
 }

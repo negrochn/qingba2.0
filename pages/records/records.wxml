@@ -3,10 +3,15 @@
   <view class="section-head">
     <view class="overview-right">
       <text class="overview-year">{{yearText}}</text>
-      <view class="overview-picker" bindtap="onToggleMonthPicker">
-        <text class="overview-month">{{monthDisplay}}</text>
-        <text class="overview-arrow {{monthPickerOpen ? 'up' : ''}}">▾</text>
-      </view>
+      <!-- 月份选择：原生 picker（mode="date" + fields="month"）即系统年月滚轮，
+           与补录 / 编辑页的取向一致，省掉一整套自绘弹层与遮罩；
+           start / end 把范围锁在「今年 -3 年 1 月」到「当前月」，不可选未来 -->
+      <picker mode="date" fields="month" value="{{curYm}}" start="{{minYm}}" end="{{maxYm}}" bindchange="onMonthChange">
+        <view class="overview-picker">
+          <text class="overview-month">{{monthDisplay}}</text>
+          <text class="overview-arrow">▾</text>
+        </view>
+      </picker>
     </view>
     <view class="overview-add" bindtap="goBackfill">
       <text class="overview-add-icon">＋</text>
@@ -70,24 +75,5 @@
     <view class="empty-icon">📖</view>
     <view class="empty-text">本月暂无打卡记录</view>
     <view class="empty-hint">在「路线」中点击资源即可开始打卡，或点上方「补录」补记</view>
-  </view>
-</view>
-
-<!-- 简易月份选择器弹层 -->
-<view class="mp-mask {{fontClass}} {{darkClass}} {{monthPickerOpen ? 'show' : ''}}" bindtap="onCloseMonthPicker" wx:if="{{monthPickerOpen}}">
-  <view class="mp-sheet" catchtap="noop">
-    <view class="mp-title mb-16">选择月份</view>
-    <picker-view indicator-style="height: 80rpx;" indicator-class="mp-pv-indicator" mask-class="mp-pv-mask" class="mp-pv" value="{{pickerValue}}" bindchange="onPickerChange">
-      <picker-view-column>
-        <view wx:for="{{yearRange}}" wx:key="*this" class="mp-item">{{item}}年</view>
-      </picker-view-column>
-      <picker-view-column>
-        <view wx:for="{{monthRange}}" wx:key="*this" class="mp-item">{{item}}月</view>
-      </picker-view-column>
-    </picker-view>
-    <view class="mp-actions">
-      <button class="mp-btn mp-cancel" bindtap="onCloseMonthPicker">取消</button>
-      <button class="mp-btn mp-ok" bindtap="onConfirmMonthPicker">确定</button>
-    </view>
   </view>
 </view>

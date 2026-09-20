@@ -11,13 +11,9 @@ Page({
     curYm: '',           // 'YYYY-MM'
     monthDisplay: '',    // '8月'
     yearText: '',        // '2026年'
-    // 月份选择器
-    monthPickerOpen: false,
-    yearRange: [],
-    monthRange: [],
-    pickerValue: [0, 0],
-    _pendingYear: 0,
-    _pendingMonth: 0,
+    // 月份选择器（原生 picker：mode="date" + fields="month"）
+    minYm: '',           // 最早可选月份 'YYYY-MM'
+    maxYm: '',           // 最晚可选月份（当前月）
     // 滑动状态
     _touchStartX: 0,
     _touchStartY: 0,
@@ -33,16 +29,12 @@ Page({
     const now = new Date()
     const y = now.getFullYear()
 
-    // 年份范围：今年 ±3（与首页一致）
-    const yearRange = []
-    for (let i = y - 3; i <= y + 3; i++) yearRange.push(i)
-    const monthRange = []
-    for (let i = 1; i <= 12; i++) monthRange.push(i)
-
     this.setData({
       curYm: this._toYm(now),
-      yearRange,
-      monthRange
+      // 原生年月滚轮的可选范围：今年 -3 年 1 月 ~ 当前月。
+      // 上限锁当前月 = 不可选未来；下限避免像不设 start 那样从 1900 年一路滚过来
+      minYm: `${y - 3}-01`,
+      maxYm: this._toYm(now)
     })
     // 列表数据统一由 onShow 加载，避免首屏重复计算两次
   },
@@ -58,9 +50,6 @@ Page({
   onShareAppMessage() {
     return share.appMessage('records')
   },
-
-  // 阻止月份选择弹层内容区的点击冒泡（catchtap）
-  noop() {},
 
   // 加载所选月份记录，按时间倒序
   _refresh() {
@@ -93,12 +82,10 @@ Page({
       }
     })
 
-    const idx = this.data.yearRange.indexOf(y)
     this.setData({
       records,
       yearText: `${y}年`,
-      monthDisplay: `${m}月`,
-      pickerValue: [idx >= 0 ? idx : 0, m - 1]
+      monthDisplay: `${m}月`
     })
   },
 
@@ -125,58 +112,36 @@ Page({
   },
 
   // 补录页返回回调：切到补录月份并刷新，让新记录立即可见
-  // （yearText / monthDisplay / pickerValue 由 _refresh 依据 curYm 回填）
+  // （yearText / monthDisplay 由 _refresh 依据 curYm 回填）
   applyBackfill(opt) {
     const day = opt && opt.day ? String(opt.day) : ''
-    const m = /^(\d{4})-(\d{2})$/.exec(day)
-    if (m && this.data.yearRange.indexOf(Number(m[1])) >= 0) {
-      this.setData({ curYm: `${m[1]}-${m[2]}` })
+    // 传进来的是 'YYYY-MM-DD'，只取年月前缀。
+    // 旧实现的正则多写了结尾锚点（/^(\d{4})-(\d{2})$/），对 'YYYY-MM-DD' 永远匹配不上，
+    // 于是除了「补录当月」以外都不会自动切月
+    const m = /^(\d{4})-(\d{2})/.exec(day)
+    if (m) {
+      const ym = `${m[1]}-${m[2]}`
+      // 只在本页可选范围内切月（原生 picker 的 start / end 之外选不中）
+      if (ym >= this.data.minYm && ym <= this.data.maxYm) {
+        this.setData({ curYm: ym })
+      }
     }
     this._refresh()
   },
 
-  // ===== 月份选择器（与首页一致） =====
-  onToggleMonthPicker() {
-    const ym = this.data.curYm
-    // 同上：避免数组解构
-    const ymParts = ym.split('-').map(Number)
-    const y = ymParts[0]
-    const m = ymParts[1]
-    const idx = this.data.yearRange.indexOf(y)
-    this.setData({
-      monthPickerOpen: true,
-      pickerValue: [idx >= 0 ? idx : 0, m - 1],
-      _pendingYear: y,
-      _pendingMonth: m
-    })
-  },
-
-  onCloseMonthPicker() {
-    this.setData({ monthPickerOpen: false })
-  },
-
-  onPickerChange(e) {
-    const val = e.detail.value // [yearIdx, monthIdx]
-    const y = this.data.yearRange[val[0]]
-    const m = this.data.monthRange[val[1]]
-    this.setData({ _pendingYear: y, _pendingMonth: m })
-  },
-
-  onConfirmMonthPicker() {
-    const y = this.data._pendingYear
-    const m = this.data._pendingMonth
-    const ym = `${y}-${String(m).padStart(2, '0')}`
-
-    // 不能超过当前月
-    const nowYm = this._toYm(new Date())
-    if (ym > nowYm) {
+  // ===== 月份选择（原生 picker：mode="date" + fields="month"）=====
+  // 与补录页 / 编辑页同一取向：用系统年月滚轮，省掉一整套自绘弹层、遮罩与确认按钮；
+  // 代价是系统弹层不吃 `dm-*` / `--fs`（外观与字号跟随系统）
+  // 可选范围由 wxml 的 start / end 锁定，这里再防御一次
+  onMonthChange(e) {
+    const ym = e.detail.value || ''
+    if (!/^\d{4}-\d{2}$/.test(ym)) return
+    if (ym > this._toYm(new Date())) {
       wx.showToast({ title: '不能选择未来月份', icon: 'none' })
       return
     }
-    this.setData({
-      curYm: ym,
-      monthPickerOpen: false
-    })
+    if (ym === this.data.curYm) return
+    this.setData({ curYm: ym })
     this._refresh()
   },
 
