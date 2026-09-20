@@ -43,6 +43,9 @@ Page({
     };
 
     // 保存：当前阶段 + 前序阶段标记完成
+    // 注意：前序只写 completed 标记，不补任何时长记录。故中途起步的用户在记录里没有常规1 起的
+    // 完整前序时长，getAccumulatedMinutes() 的累计口径（400H/480H）对其结构性不可达。
+    // 若将来有阶段必须按累计口径判定，需先在此处把前序阶段的时长补上（或改为从起步阶段起算）。
     checkin.setCurrentStage(stageData);
     const done = routeData.stages.slice(0, index).map(s => s.stage_id);
     checkin.setCompletedStages(done);
