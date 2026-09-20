@@ -1,0 +1,96 @@
+/* 通用半屏弹层外壳：蒙层 + 面板 + 抓手 + 头部 + 操作区容器
+   内容与操作区的样式由使用方 slot 提供（见 half-sheet.js 头注释），此处只管外壳。
+
+   字号只用微信标准 UI 三档（34 / 28 / 24rpx）；颜色 / 字号走 --* 变量与
+   calc(Nrpx * var(--fs))，变量由页面把 fontClass / darkClass 透传进来挂在蒙层根节点上。 */
+
+/* .iconfont / .icon-* 是 class 选择器，app.wxss 的 class 样式不会穿透进自定义组件，
+   所以组件内用 iconfont 必须自己 @import 一份（同 radio-list / resource-picker） */
+@import "../../styles/iconfont.wxss";
+
+/* 本组件是「常驻挂载 + show 切 class」，隐藏态必须显式把面板移出屏幕 + visibility:hidden。
+   只写 pointer-events:none 是不够的 —— 那只是不接收点击，面板仍会渲染在页面上。
+   visibility 参与 transition：关闭时延迟到滑出动画结束才真正隐藏。 */
+.hsc-mask {
+  position: fixed;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 1000;
+  visibility: hidden;
+  pointer-events: none;
+  transition: background 0.2s, visibility 0.3s;
+  display: flex;
+  align-items: flex-end;
+  /* 弹层字体基准：子节点的 calc(Nrpx * var(--fs)) 已各自同步，此处供 input 继承 */
+  font-size: calc(34rpx * var(--fs, 1));
+}
+.hsc-mask.hsc-show {
+  background: rgba(0, 0, 0, 0.5);
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.hsc-sheet {
+  width: 100%;
+  background: var(--card);
+  border-top-left-radius: 24rpx;
+  border-top-right-radius: 24rpx;
+  padding: 16rpx 32rpx calc(env(safe-area-inset-bottom) + 32rpx);
+  box-sizing: border-box;
+  transform: translateY(100%);
+  transition: transform 0.25s ease;
+}
+.hsc-mask.hsc-show .hsc-sheet { transform: translateY(0); }
+
+.hsc-handle {
+  width: 72rpx;
+  height: 8rpx;
+  background: var(--divider);
+  border-radius: 4rpx;
+  margin: 8rpx auto 24rpx;
+}
+
+.hsc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+.hsc-title {
+  flex: 1;
+  min-width: 0;
+  font-size: calc(34rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 12rpx;
+}
+
+/* 关闭：热区 88rpx 见方（设计指南「可点项最小热区 ≥ 88rpx」），字形走 iconfont icon-close。
+   负 margin 抵消热区外扩，标题与关闭图标的视觉间距不变 */
+.hsc-close {
+  flex-shrink: 0;
+  width: 88rpx;
+  height: 88rpx;
+  margin: -16rpx -16rpx -16rpx 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text3);
+  border-radius: 50%;
+}
+.hsc-close:active { background: var(--cell-active); color: var(--text2); }
+
+/* 操作区容器：按钮的等宽 / 间距交给全局 .weui-btn-area_inline */
+.hsc-footer { margin-top: 16rpx; }
+
+/* 深色蒙层：蒙层根节点同时挂 dm-* 与显示态类，
+   故选择器要写成同元素复合（`.dm-dark .hsc-mask` 会要求 dm-dark 是祖先，匹配不到） */
+.hsc-mask.dm-dark.hsc-show { background: rgba(0, 0, 0, 0.8); }
+
+@media (prefers-color-scheme: dark) {
+  .hsc-mask.dm-auto.hsc-show { background: rgba(0, 0, 0, 0.8); }
+}

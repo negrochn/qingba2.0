@@ -170,7 +170,7 @@ Page({
     const isCurrent = this.data.stageStatus === 'current'
     const isLastStage = this.data.stageIndex >= routeData.stages.length - 1
     const alreadyDone = checkin.isStageDone(stage.stage_id)
-    const required = getRequiredHours(stage)
+    const required = getRequiredHours(stage, checkin.getTargetOption(stage.stage_id))
 
     let minutes = 0
     if (required.type === 'accumulated') {
@@ -566,9 +566,6 @@ Page({
   closeCheckin() {
     this.setData({ showCheckin: false })
   },
-
-  // 阻止弹层内容区点击冒泡关闭
-  noop() {},
 
   onDurationInput(e) {
     const v = e.detail.value

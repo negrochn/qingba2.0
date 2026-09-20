@@ -1,4 +1,6 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "half-sheet": "/components/half-sheet/half-sheet"
+  },
   "navigationBarTitleText": "阶段详情"
 }

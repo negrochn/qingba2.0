@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "阶段目标时长",
+  "usingComponents": {
+    "c-radio-list": "/components/radio-list/radio-list",
+    "half-sheet": "/components/half-sheet/half-sheet"
+  }
+}

@@ -18,6 +18,8 @@ const CURRENT_STAGE_KEY = 'qingba_current_stage'
 const YOUQU_PLAN_KEY = 'qingba_youqu_plan'
 const LISTENING_ENABLED_KEY = 'qingba_listening_enabled'   // 熏听分组开关（控制分组显示与录入）
 const STAGE_DONE_KEY = 'qingba_stage_done'   // 已完成阶段 id 列表
+const TARGET_MODE_KEY = 'qingba_target_mode'       // 阶段目标档位：'lower' | 'upper'（默认 upper）
+const TARGET_CUSTOM_KEY = 'qingba_target_custom'   // 逐阶段自定义目标：{ [stageId]: hours }
 
 // 单条 storage 上限（字节），留余量
 const MAX_ITEM_BYTES = 900 * 1024 // 约 900KB，微信上限 1MB
@@ -518,6 +520,104 @@ function setListeningEnabled(enabled) {
     console.error('setListeningEnabled failed:', e)
     return false
   }
+}
+
+// ===== 阶段目标时长口径（默认档位 + 逐阶段自定义） =====
+// 语义见 utils/data.js 的 getRequiredHours：
+//   生效目标 = custom[stageId] ?? (mode === 'lower' ? 官方区间下限 : 官方区间上限)
+// 默认档位取「上限」—— 与 about 页「每阶段时间投入需按 80H 来算」的建议一致。
+// ⚠️ 覆盖值是绝对值，不与档位联动：调档位不会改变已自定义阶段的目标。
+const TARGET_MODES = ['lower', 'upper']
+
+function getTargetMode() {
+  try {
+    const v = wx.getStorageSync(TARGET_MODE_KEY)
+    // 从未设置过 / 脏数据时默认上限
+    return TARGET_MODES.indexOf(v) >= 0 ? v : 'upper'
+  } catch (e) {
+    return 'upper'
+  }
+}
+
+function setTargetMode(mode) {
+  if (TARGET_MODES.indexOf(mode) < 0) {
+    console.error('setTargetMode: invalid mode', mode)
+    return false
+  }
+  try {
+    wx.setStorageSync(TARGET_MODE_KEY, mode)
+    return true
+  } catch (e) {
+    console.error('setTargetMode failed:', e)
+    return false
+  }
+}
+
+// 读取逐阶段自定义目标（逐项过滤：只保留正数，脏数据静默丢弃，不让它污染进度计算）
+function getCustomTargets() {
+  try {
+    const raw = wx.getStorageSync(TARGET_CUSTOM_KEY)
+    if (!raw || typeof raw !== 'object') return {}
+    const out = {}
+    for (const id in raw) {
+      const h = Number(raw[id])
+      if (id && isFinite(h) && h > 0) out[id] = h
+    }
+    return out
+  } catch (e) {
+    console.error('getCustomTargets failed:', e)
+    return {}
+  }
+}
+
+function getCustomTarget(stageId) {
+  return getCustomTargets()[stageId]
+}
+
+// 设置某阶段的自定义目标；hours 非法（非正数 / 非数字）时等同于「恢复默认」
+function setCustomTarget(stageId, hours) {
+  if (!stageId) return false
+  const all = getCustomTargets()
+  const h = Number(hours)
+  if (isFinite(h) && h > 0) {
+    all[stageId] = h
+  } else {
+    delete all[stageId]
+  }
+  try {
+    wx.setStorageSync(TARGET_CUSTOM_KEY, all)
+    return true
+  } catch (e) {
+    console.error('setCustomTarget failed:', e)
+    return false
+  }
+}
+
+function clearCustomTarget(stageId) {
+  return setCustomTarget(stageId, 0)
+}
+
+// 整体替换逐阶段自定义目标（导入备份用），非法项丢弃
+function replaceCustomTargets(obj) {
+  const clean = {}
+  if (obj && typeof obj === 'object') {
+    for (const id in obj) {
+      const h = Number(obj[id])
+      if (id && isFinite(h) && h > 0) clean[id] = h
+    }
+  }
+  try {
+    wx.setStorageSync(TARGET_CUSTOM_KEY, clean)
+    return true
+  } catch (e) {
+    console.error('replaceCustomTargets failed:', e)
+    return false
+  }
+}
+
+// 供 getRequiredHours(stage, opt) 直接透传：{ mode, custom }
+function getTargetOption(stageId) {
+  return { mode: getTargetMode(), custom: getCustomTarget(stageId) }
 }
 
 // 单条记录的有效时长（分钟）= 原始时长 × factor
@@ -1280,6 +1380,14 @@ module.exports = {
   setYouquPlanEnabled,
   isListeningEnabled,
   setListeningEnabled,
+  getTargetMode,
+  setTargetMode,
+  getCustomTargets,
+  getCustomTarget,
+  setCustomTarget,
+  clearCustomTarget,
+  replaceCustomTargets,
+  getTargetOption,
   effectiveMinutes,
   getStageMinutes,
   getAccumulatedMinutes

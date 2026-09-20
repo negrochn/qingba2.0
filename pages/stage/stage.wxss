@@ -338,69 +338,17 @@
 /* ====== 完成阶段按钮（复用全局 .weui-btn，仅控制外边距） ====== */
 .promote-btn-area { margin: 32rpx 32rpx 0; }
 
-/* ====== 打卡弹窗（action-sheet 原语 + 表单原语） ====== */
-.sheet-mask {
-  position: fixed;
-  left: 0; right: 0; top: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0);
-  z-index: 1000;
-  pointer-events: none;
-  transition: background 0.2s ease;
-  display: flex;
-  align-items: flex-end;
-}
-.sheet-mask-show { background: rgba(0, 0, 0, 0.5); pointer-events: auto; }
-.action-sheet {
-  width: 100%;
-  background: var(--card);
-  border-top-left-radius: 24rpx;
-  border-top-right-radius: 24rpx;
-  padding: 16rpx 32rpx calc(env(safe-area-inset-bottom) + 32rpx);
-  box-sizing: border-box;
-  transform: translateY(100%);
-  transition: transform 0.25s ease;
-}
-.sheet-mask-show .action-sheet { transform: translateY(0); }
-
-.sheet-handle {
-  width: 72rpx;
-  height: 8rpx;
-  background: var(--divider);
-  border-radius: 4rpx;
-  margin: 8rpx auto 24rpx;
-}
-.sheet-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 28rpx;
-}
-.sheet-head-title {
-  flex: 1;
-  min-width: 0;
-  font-size: calc(34rpx * var(--fs, 1));
-  font-weight: 600;
-  color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding-right: 12rpx;
-}
-/* 关闭：热区 88rpx 见方（设计指南「可点项最小热区 ≥ 88rpx」），字形走 iconfont icon-close。
-   负 margin 抵消热区外扩，标题与关闭图标的视觉间距不变 */
-.sheet-close {
-  flex-shrink: 0;
-  width: 88rpx;
-  height: 88rpx;
-  margin: -16rpx -16rpx -16rpx 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(34rpx * var(--fs, 1));
+/* 按钮上方的「已投入 / 目标」说明：分母口径见 utils/data.js 的 getRequiredHours
+   （默认取建议区间上限，可被设置页「阶段目标时长」的逐阶段自定义覆盖） */
+.promote-target {
+  text-align: center;
+  font-size: calc(24rpx * var(--fs, 1));
   color: var(--text3);
-  border-radius: 50%;
+  margin-bottom: 12rpx;
 }
-.sheet-close:active { background: var(--cell-active); color: var(--text2); }
+
+/* 打卡弹窗的外壳（蒙层 / 面板 / 抓手 / 头部）已迁到 components/half-sheet，
+   本页只保留卡片内的表单 / 快捷值 / 提示等「内容」样式 */
 
 /* 表单卡片（圆角白底） */
 .form-card {
@@ -490,61 +438,10 @@
 .seg-item:active { background: var(--cell-active); }
 .seg-active { border-color: var(--brand); color: var(--brand); background: var(--card); }
 
-/* 弹窗内按钮：两按钮等宽 + 与表单留白 */
-.action-sheet .weui-btn { flex: 1; }
-.action-sheet .weui-btn-area_inline { margin-top: 16rpx; }
+/* 打卡弹窗的按钮：等宽由全局 .weui-btn-area_inline 提供（.weui-btn { flex:1 }），
+   与内容的间距由 half-sheet 的 .hsc-footer + 按钮区自身 padding 共同承担，本页无需覆盖 */
 
-/* ====== 晋级测试弹窗 ====== */
-.pm-mask {
-  position: fixed;
-  left: 0; right: 0; top: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0);
-  z-index: 1000;
-  pointer-events: none;
-  transition: background 0.2s ease;
-  display: flex;
-  align-items: flex-end;
-}
-.pm-mask-show { background: rgba(0, 0, 0, 0.5); pointer-events: auto; }
-.pm-sheet {
-  width: 100%;
-  background: var(--card);
-  border-top-left-radius: 24rpx;
-  border-top-right-radius: 24rpx;
-  padding: 16rpx 32rpx calc(env(safe-area-inset-bottom) + 32rpx);
-  box-sizing: border-box;
-  transform: translateY(100%);
-  transition: transform 0.25s ease;
-}
-.pm-mask-show .pm-sheet { transform: translateY(0); }
-
-.pm-handle {
-  width: 72rpx;
-  height: 8rpx;
-  background: var(--divider);
-  border-radius: 4rpx;
-  margin: 8rpx auto 24rpx;
-}
-.pm-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24rpx;
-}
-.pm-title { flex: 1; font-size: calc(34rpx * var(--fs, 1)); color: var(--text); }
-.pm-close {
-  flex-shrink: 0;
-  width: 88rpx;
-  height: 88rpx;
-  margin: -16rpx -16rpx -16rpx 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text3);
-  border-radius: 50%;
-}
-.pm-close:active { background: var(--cell-active); color: var(--text2); }
+/* ====== 晋级测试弹窗：内容与按钮（外壳 / 抓手 / 头部见 components/half-sheet） ====== */
 
 .pm-stage-info {
   background: var(--card2);
@@ -656,17 +553,5 @@
 .pm-btn-ok { background: var(--brand); color: #fff; }
 .pm-btn-ok:active { opacity: 0.88; }
 
-/* 详情页字体基准：常规路径 34rpx 起算（子节点 calc(Nrpx*var(--fs)) 已同步；此处供 input 继承） */
-.sheet-mask,
-.pm-mask { font-size: calc(34rpx * var(--fs, 1)); }
-
-/* ===== 深色蒙层（与 app.wxss 的 .dm-dark .weui-mask 同值） =====
-   蒙层根节点同时挂 dm-* 与该页的显示修饰类，故选择器要写成同元素复合
-   （`.dm-dark .sheet-mask` 会要求 dm-dark 是祖先，匹配不到） */
-.sheet-mask.dm-dark.sheet-mask-show,
-.pm-mask.dm-dark.pm-mask-show { background: rgba(0, 0, 0, 0.8); }
-
-@media (prefers-color-scheme: dark) {
-  .sheet-mask.dm-auto.sheet-mask-show,
-  .pm-mask.dm-auto.pm-mask-show { background: rgba(0, 0, 0, 0.8); }
-}
+/* 弹层的字体基准（供 input 继承）与深色蒙层都在 components/half-sheet 内（.hsc-mask / .hsc-show），
+   本页最后一个弹层迁完后不再需要覆盖 */

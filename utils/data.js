@@ -503,7 +503,15 @@ function parseTargetHours(text) {
 // 【保留的累计分支】下面两段正则为将来新增阶段留口：若某阶段的 promotion_standard 明确写了
 //   「…累计投入…不低于 XH」，会返回 type='accumulated'，调用方（route / stage / home）随即
 //   改用 getAccumulatedMinutes() 统计跨阶段累计时长。当前全部阶段都不会命中这两段。
-function getRequiredHours(stage) {
+//
+// 【目标档位 / 逐阶段覆盖】opt = { mode: 'lower' | 'upper', custom: number }
+//   - mode 缺省按 'upper'（建议区间上限）：60-80H 取 80、80-100H 取 100
+//   - custom 为该阶段单独设置的目标小时数，优先级高于 mode（只对 type='stage' 生效 ——
+//     accumulated 的 hours 是跨阶段累计量，拿它当「本阶段目标」覆盖语义不通）
+//   - 取值由 utils/checkin 的 getTargetOption(stageId) 从本地设置读出后传入；
+//     不传 opt 时行为 = 'upper'，与设置页的默认档位一致
+function getRequiredHours(stage, opt) {
+  const o = opt || {}
   const standard = stage.promotion_standard || ''
 
   // 常规6 / 准桥梁：进度按“当前阶段自身时长”评估，不按跨阶段累计投入（见上方口径说明）
@@ -520,10 +528,15 @@ function getRequiredHours(stage) {
     }
   }
 
-  // 普通时间要求，回退到 time_investment（当前阶段自身时长）
+  // 阶段自身的时长目标：逐阶段自定义 > 档位（下限 / 上限）
+  // ⚠️ 不能用 `o.custom || ...` 兜底：0 是非法值而非缺省值，会被误判成缺省（同 effectiveMinutes 的 factor 坑）
+  const custom = Number(o.custom)
+  if (isFinite(custom) && custom > 0) {
+    return { type: 'stage', hours: custom }
+  }
   const target = parseTargetHours(stage.time_investment)
   if (target) {
-    return { type: 'stage', hours: target.min }
+    return { type: 'stage', hours: o.mode === 'lower' ? target.min : target.max }
   }
   return { type: 'stage', hours: 0 }
 }

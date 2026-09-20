@@ -72,7 +72,7 @@ Page({
     if (currentIndex >= 0) {
       const s = routeData.stages[currentIndex]
       // 进度与 stage 详情页完全同口径：按 required.type 决定取阶段自身还是累计时长
-      const required = getRequiredHours(s)
+      const required = getRequiredHours(s, checkin.getTargetOption(s.stage_id))
       const minutes = required.type === 'accumulated'
         ? checkin.getAccumulatedMinutes(s.stage_id)
         : checkin.getStageMinutes(s.stage_id)
@@ -82,7 +82,10 @@ Page({
         : 0
       currentCard = {
         name: s.stage_name,
-        progress
+        progress,
+        // 当前生效的分母（默认档位取建议区间上限，可为该阶段单独覆盖），
+        // 与上方百分比同源；官方建议区间原文仍显示在下方路线行里，避免「写着 60-80H 却要攒到 80」的困惑
+        targetText: required.hours > 0 ? `${required.hours}H` : ''
       }
     }
 

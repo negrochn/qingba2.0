@@ -13,6 +13,16 @@
         <text class="iconfont icon-right"></text>
       </view>
     </view>
+    <view class="weui-cell weui-cell_access" bindtap="goTargetSetting">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text">阶段目标时长</view>
+        <view class="weui-cell__desc">决定进度百分比与晋级判定，可逐阶段自定义</view>
+      </view>
+      <view class="weui-cell__ft">
+        <text class="weui-cell__ft_value">{{targetSummary}}</text>
+        <text class="iconfont icon-right"></text>
+      </view>
+    </view>
     <view class="weui-cell weui-cell_access" bindtap="goMyResources">
       <view class="weui-cell__bd">
         <view class="weui-cell__bd_text">我的资源</view>

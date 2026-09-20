@@ -1,0 +1,89 @@
+<view class="container {{fontClass}} {{darkClass}}">
+
+  <!-- 默认档位：一个值管所有「未单独设置」的阶段 -->
+  <view class="weui-cells__title">默认档位</view>
+  <c-radio-list items="{{modeItems}}" value="{{mode}}" bindchange="onModeChange" />
+  <view class="ts-tips">常规4-6 的建议是「60H」，没有区间，两档计算结果相同。</view>
+
+  <!-- 各阶段自定义：填了就压过默认档，清空即回落 -->
+  <view class="weui-cells__title">各阶段自定义</view>
+  <view class="weui-cells">
+    <view
+      class="weui-cell weui-cell_access"
+      wx:for="{{stages}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      data-name="{{item.name}}"
+      bindtap="onStageTap"
+    >
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text">{{item.name}}</view>
+        <view class="weui-cell__desc">官方建议 {{item.suggestion}}</view>
+      </view>
+      <view class="weui-cell__ft">
+        <text class="weui-cell__ft_value">{{item.hoursText}}</text>
+        <text class="weui-tag weui-tag_default ts-cell-tag" wx:if="{{item.custom}}">已自定义</text>
+        <text class="iconfont icon-right"></text>
+      </view>
+    </view>
+  </view>
+  <view class="ts-tips">未单独设置的阶段跟随上方默认档；已自定义的阶段不受档位影响。</view>
+
+  <!-- 目标时长编辑弹层（half-sheet 外壳 + 表单 / seg 原语） -->
+  <half-sheet
+    show="{{showSheet}}"
+    title="{{editingName}} 目标时长"
+    font-class="{{fontClass}}"
+    dark-class="{{darkClass}}"
+    footer="{{true}}"
+    bind:close="closeSheet"
+  >
+    <!-- 三个小节同处一张卡片（官方建议 / 目标时长 / 快捷值），结构与打卡弹窗一致：
+         官方建议是只读参考，整行降一级；「目标时长」才是要填的值，保持主色 -->
+    <view class="form-card">
+      <view class="form-row form-row-static">
+        <view class="form-label form-label-muted">官方建议</view>
+        <view class="form-right">
+          <text class="form-static">{{editingSuggestion}}</text>
+        </view>
+      </view>
+      <view class="weui-divider"></view>
+      <view class="form-row">
+        <view class="form-label">目标时长</view>
+        <view class="form-right">
+          <input
+            class="form-field"
+            type="number"
+            placeholder="请输入"
+            value="{{hoursInput}}"
+            bindinput="onHoursInput"
+          />
+          <text class="form-unit">H</text>
+        </view>
+      </view>
+      <!-- 快捷值 = 该阶段官方区间两端（分段控件，命中当前值时显示选中态） -->
+      <block wx:if="{{quickHours.length}}">
+        <view class="weui-divider"></view>
+        <view class="form-row">
+          <view class="seg-control">
+            <view
+              class="seg-item {{hoursInput === item.str ? 'seg-active' : ''}}"
+              wx:for="{{quickHours}}"
+              wx:key="str"
+              data-val="{{item.str}}"
+              bindtap="quickHours"
+            >{{item.label}}</view>
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <view class="ts-restore" wx:if="{{editingCustom}}" bindtap="onRestore">恢复默认</view>
+
+    <view slot="footer" class="weui-btn-area_inline">
+      <button class="weui-btn weui-btn_default" bindtap="closeSheet">取消</button>
+      <button class="weui-btn weui-btn_primary" bindtap="submitSheet">确定</button>
+    </view>
+  </half-sheet>
+
+</view>

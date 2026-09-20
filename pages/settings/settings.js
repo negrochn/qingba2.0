@@ -40,6 +40,7 @@ Page({
     currentStageDisplay: '',
     youquEnabled: true,
     listeningEnabled: false,
+    targetSummary: '',
     myResourceCount: 0,
     _importMode: 'overwrite',
     // 字号 / 深色 class（跟随微信设置，由 app.applyFontLevel 下发）
@@ -71,6 +72,7 @@ Page({
     this.loadCurrentStage();
     this.loadYouquPlan();
     this.loadListening();
+    this.loadTargetSummary();
     this.loadMyResources();
   },
 
@@ -86,6 +88,23 @@ Page({
   // 跳转「我的资源」管理页
   goMyResources() {
     wx.navigateTo({ url: '/pages/myResources/myResources' });
+  },
+
+  // 读取阶段目标口径（默认档位 + 自定义阶段数），供入口行右侧展示
+  loadTargetSummary() {
+    try {
+      const modeText = checkin.getTargetMode() === 'lower' ? '下限' : '上限';
+      const count = Object.keys(checkin.getCustomTargets()).length;
+      // 有覆盖时补一句，否则用户会疑惑「为什么各阶段进度口径不一致」
+      this.setData({ targetSummary: count ? `${modeText} · ${count} 项自定义` : modeText });
+    } catch (e) {
+      console.error('读取阶段目标口径失败', e);
+    }
+  },
+
+  // 跳转「阶段目标时长」设置页
+  goTargetSetting() {
+    wx.navigateTo({ url: '/pages/targetSetting/targetSetting' });
   },
 
   // 读取小小优趣成长计划开关
@@ -214,6 +233,13 @@ Page({
 
       // 熏听分组开关
       data.listening_enabled = checkin.isListeningEnabled();
+
+      // 阶段目标口径（默认档位 + 逐阶段自定义；无覆盖时不写 target_custom）
+      data.target_mode = checkin.getTargetMode();
+      const customTargets = checkin.getCustomTargets();
+      if (Object.keys(customTargets).length) {
+        data.target_custom = customTargets;
+      }
 
       // 字体大小档位
       data.font_level = theme.getFontLevel();
@@ -545,6 +571,14 @@ Page({
       // 恢复熏听分组开关（同上，缺字段不覆盖）
       if (typeof data.listening_enabled === 'boolean') {
         checkin.setListeningEnabled(data.listening_enabled);
+      }
+
+      // 恢复阶段目标口径（同上，缺字段不覆盖；自定义表整体替换，非法项由 replaceCustomTargets 丢弃）
+      if (data.target_mode === 'lower' || data.target_mode === 'upper') {
+        checkin.setTargetMode(data.target_mode);
+      }
+      if (data.target_custom && typeof data.target_custom === 'object') {
+        checkin.replaceCustomTargets(data.target_custom);
       }
 
       // 字体大小档位：已改为跟随微信设置，旧备份里的 fontLevel 有意忽略（写进存储也不再生效）

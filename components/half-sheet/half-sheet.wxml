@@ -1,0 +1,26 @@
+<!-- 通用半屏弹层：抓手 + 头部（标题左 / 关闭右）+ 内容 slot + 操作区 slot
+     蒙层根节点自带主题 class（浮层在 .container 之外，拿不到 dm-* / fs-* 变量） -->
+<view
+  class="hsc-mask {{fontClass}} {{darkClass}} {{show ? 'hsc-show' : ''}}"
+  bindtap="onMaskTap"
+  catchtouchmove="noop"
+>
+  <view class="hsc-sheet {{sheetClass}}" catchtap="noop" catchtouchmove="noop">
+
+    <view class="hsc-handle"></view>
+
+    <view class="hsc-head">
+      <view class="hsc-title">{{title}}</view>
+      <view class="hsc-close iconfont icon-close" wx:if="{{showClose}}" catchtap="onClose"></view>
+    </view>
+
+    <!-- 内容区（样式由使用方页面 / 全局原语提供） -->
+    <slot></slot>
+
+    <!-- 操作区：容器只管与内容区的间距、安全区由面板 padding 承担 -->
+    <view class="hsc-footer" wx:if="{{footer}}">
+      <slot name="footer"></slot>
+    </view>
+
+  </view>
+</view>

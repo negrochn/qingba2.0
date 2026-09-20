@@ -120,6 +120,7 @@
 
   <!-- 完成阶段按钮（仅当前常规阶段展示）：填色展示进度，复用 WeUI 按钮令牌 -->
   <view wx:if="{{canPromote}}" class="promote-btn-area">
+    <view class="promote-target" wx:if="{{requiredHours > 0}}">已投入 {{investedHoursText}}h / 目标 {{requiredHours}}h</view>
     <button
       class="weui-btn weui-btn_block {{promoteEnabled ? 'weui-btn_primary' : 'weui-btn_default'}}"
       style="{{promoteFillStyle}}"
@@ -131,112 +132,108 @@
   </view>
 </view>
 
-<!-- 小小优趣测试结果弹窗 -->
-<view class="pm-mask {{fontClass}} {{darkClass}} {{showPromoteModal ? 'pm-mask-show' : ''}}" bindtap="closePromoteModal" catchtouchmove="noop">
-  <view class="pm-sheet" catchtap="noop" catchtouchmove="noop">
-    <view class="pm-handle"></view>
+<!-- 晋级测试弹窗（half-sheet 外壳；按钮沿用本页 .pm-btn，保视觉不变） -->
+<half-sheet
+  show="{{showPromoteModal}}"
+  title="晋级测试校验"
+  font-class="{{fontClass}}"
+  dark-class="{{darkClass}}"
+  footer="{{true}}"
+  bind:close="closePromoteModal"
+>
+  <view class="pm-stage-info">
+    <view class="pm-stage-name">{{stage.stage_name}}</view>
+    <view class="pm-stage-tip">开启小小优趣成长计划后，晋级需测试结果达标</view>
+  </view>
 
-    <view class="pm-head">
-      <view class="pm-title">晋级测试校验</view>
-      <view class="pm-close iconfont icon-close" catchtap="closePromoteModal"></view>
+  <view class="pm-form">
+    <view class="pm-form-item">
+      <text class="pm-form-label">晋级要求</text>
+      <view class="pm-form-value">稳定 {{promoteTargetPhaseText}}</view>
     </view>
-
-    <view class="pm-stage-info">
-      <view class="pm-stage-name">{{stage.stage_name}}</view>
-      <view class="pm-stage-tip">开启小小优趣成长计划后，晋级需测试结果达标</view>
-    </view>
-
-    <view class="pm-form">
-      <view class="pm-form-item">
-        <text class="pm-form-label">晋级要求</text>
-        <view class="pm-form-value">稳定 {{promoteTargetPhaseText}}</view>
+    <view class="pm-form-item">
+      <text class="pm-form-label">测试结果</text>
+      <view class="pm-form-control">
+        <input
+          class="pm-num-input"
+          type="number"
+          placeholder="请输入 phase 数字"
+          value="{{youquTestInput}}"
+          bindinput="onYouquTestInput"
+        />
+        <text class="pm-form-unit">phase</text>
       </view>
-      <view class="pm-form-item">
-        <text class="pm-form-label">测试结果</text>
-        <view class="pm-form-control">
-          <input
-            class="pm-num-input"
-            type="number"
-            placeholder="请输入 phase 数字"
-            value="{{youquTestInput}}"
-            bindinput="onYouquTestInput"
-          />
-          <text class="pm-form-unit">phase</text>
-        </view>
-      </view>
-    </view>
-
-    <view class="pm-quick-row">
-      <view class="pm-quick-btn" data-val="{{promoteTargetPhase}}" bindtap="quickYouquPhase">{{promoteTargetPhaseText}}</view>
-    </view>
-
-    <view class="pm-actions">
-      <button class="pm-btn pm-btn-cancel" bindtap="closePromoteModal">取消</button>
-      <button class="pm-btn pm-btn-ok" bindtap="submitPromote">确认晋级</button>
     </view>
   </view>
-</view>
 
-<!-- 打卡弹窗（skill 原语组合：原语 4 action-sheet + 原语 13/15 form-page/form-input + 原语 14 seg-control） -->
-<view class="sheet-mask {{fontClass}} {{darkClass}} {{showCheckin ? 'sheet-mask-show' : ''}}" bindtap="closeCheckin" catchtouchmove="noop">
-  <view class="action-sheet" catchtap="noop" catchtouchmove="noop">
-    <view class="sheet-handle"></view>
+  <view class="pm-quick-row">
+    <view class="pm-quick-btn" data-val="{{promoteTargetPhase}}" bindtap="quickYouquPhase">{{promoteTargetPhaseText}}</view>
+  </view>
 
-    <view class="sheet-head">
-      <view class="sheet-head-title">{{currentResource}}</view>
-      <view class="sheet-close iconfont icon-close" catchtap="closeCheckin"></view>
-    </view>
+  <view slot="footer" class="pm-actions">
+    <button class="pm-btn pm-btn-cancel" bindtap="closePromoteModal">取消</button>
+    <button class="pm-btn pm-btn-ok" bindtap="submitPromote">确认晋级</button>
+  </view>
+</half-sheet>
 
-    <!-- 表单卡片 1：学习时长 + 快捷时长 -->
-    <view class="form-card">
-      <view class="form-row">
-        <view class="form-label">学习时长</view>
-        <view class="form-right">
-          <input
-            class="form-field"
-            type="number"
-            placeholder="请输入"
-            value="{{durationInput}}"
-            bindinput="onDurationInput"
-          />
-          <text class="form-unit">分钟</text>
-          <!-- 熏听折算系数就地显示（贴着输入单位，视线不用下移到卡片底部）：
-               只给系数，具体换算交给下方 .listen-tip；×0 阶段不写「×0」而写「不计入」，
-               避免让家长以为「乘 0」是某种正常规则 -->
-          <text class="form-factor" wx:if="{{listeningFactor !== 1}}">{{listeningFactor > 0 ? '×' + listeningFactor : '不计入'}}</text>
-        </view>
-      </view>
-      <view class="weui-divider"></view>
-      <view class="form-row">
-        <view class="seg-control seg-control-grid">
-          <view class="seg-item {{durationInput==='10' ? 'seg-active' : ''}}" data-val="10" bindtap="quickDuration">10</view>
-          <view class="seg-item {{durationInput==='15' ? 'seg-active' : ''}}" data-val="15" bindtap="quickDuration">15</view>
-          <view class="seg-item {{durationInput==='20' ? 'seg-active' : ''}}" data-val="20" bindtap="quickDuration">20</view>
-          <view class="seg-item {{durationInput==='25' ? 'seg-active' : ''}}" data-val="25" bindtap="quickDuration">25</view>
-          <view class="seg-item {{durationInput==='30' ? 'seg-active' : ''}}" data-val="30" bindtap="quickDuration">30</view>
-        </view>
-      </view>
-      <!-- 熏听分组：按阶段折算的说明（含「X 分钟计 Y 分钟」实时换算） -->
-      <view class="listen-tip" wx:if="{{listeningTip}}">{{listeningTip}}</view>
-    </view>
-
-    <!-- 表单卡片 2：备注 -->
-    <view class="form-card">
-      <view class="form-row">
-        <view class="form-label">备注</view>
+<!-- 打卡弹窗（half-sheet 外壳 + 表单原语 + seg-control） -->
+<half-sheet
+  show="{{showCheckin}}"
+  title="{{currentResource}}"
+  font-class="{{fontClass}}"
+  dark-class="{{darkClass}}"
+  footer="{{true}}"
+  bind:close="closeCheckin"
+>
+  <!-- 表单卡片 1：学习时长 + 快捷时长 -->
+  <view class="form-card">
+    <view class="form-row">
+      <view class="form-label">学习时长</view>
+      <view class="form-right">
         <input
           class="form-field"
-          placeholder="如：第1-2册（下次自动填充）"
-          value="{{remarkInput}}"
-          bindinput="onRemarkInput"
-          maxlength="50"
+          type="number"
+          placeholder="请输入"
+          value="{{durationInput}}"
+          bindinput="onDurationInput"
         />
+        <text class="form-unit">分钟</text>
+        <!-- 熏听折算系数就地显示（贴着输入单位，视线不用下移到卡片底部）：
+             只给系数，具体换算交给下方 .listen-tip；×0 阶段不写「×0」而写「不计入」，
+             避免让家长以为「乘 0」是某种正常规则 -->
+        <text class="form-factor" wx:if="{{listeningFactor !== 1}}">{{listeningFactor > 0 ? '×' + listeningFactor : '不计入'}}</text>
       </view>
     </view>
+    <view class="weui-divider"></view>
+    <view class="form-row">
+      <view class="seg-control seg-control-grid">
+        <view class="seg-item {{durationInput==='10' ? 'seg-active' : ''}}" data-val="10" bindtap="quickDuration">10</view>
+        <view class="seg-item {{durationInput==='15' ? 'seg-active' : ''}}" data-val="15" bindtap="quickDuration">15</view>
+        <view class="seg-item {{durationInput==='20' ? 'seg-active' : ''}}" data-val="20" bindtap="quickDuration">20</view>
+        <view class="seg-item {{durationInput==='25' ? 'seg-active' : ''}}" data-val="25" bindtap="quickDuration">25</view>
+        <view class="seg-item {{durationInput==='30' ? 'seg-active' : ''}}" data-val="30" bindtap="quickDuration">30</view>
+      </view>
+    </view>
+    <!-- 熏听分组：按阶段折算的说明（含「X 分钟计 Y 分钟」实时换算） -->
+    <view class="listen-tip" wx:if="{{listeningTip}}">{{listeningTip}}</view>
+  </view>
 
-    <view class="weui-btn-area_inline">
-      <button class="weui-btn weui-btn_default" bindtap="closeCheckin">取消</button>
-      <button class="weui-btn weui-btn_primary" bindtap="submitCheckin">打卡</button>
+  <!-- 表单卡片 2：备注 -->
+  <view class="form-card">
+    <view class="form-row">
+      <view class="form-label">备注</view>
+      <input
+        class="form-field"
+        placeholder="如：第1-2册（下次自动填充）"
+        value="{{remarkInput}}"
+        bindinput="onRemarkInput"
+        maxlength="50"
+      />
     </view>
   </view>
-</view>
+
+  <view slot="footer" class="weui-btn-area_inline">
+    <button class="weui-btn weui-btn_default" bindtap="closeCheckin">取消</button>
+    <button class="weui-btn weui-btn_primary" bindtap="submitCheckin">打卡</button>
+  </view>
+</half-sheet>

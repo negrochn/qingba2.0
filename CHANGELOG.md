@@ -4,7 +4,7 @@
 
 ## [Unreleased]
 
-> 「我的资源」弹窗的「归属」由整页选择页改为弹窗内的**「阶段 + 分组」两行原生 picker（联动）**；随之失去唯一入口的 `pages/resourcePicker` 一并清理。另给分享路径统一追加 `isShowSplashAd=false`，新用户从分享进入不再先看封面广告。
+> 「我的资源」弹窗的「归属」由整页选择页改为弹窗内的**「阶段 + 分组」两行原生 picker（联动）**；随之失去唯一入口的 `pages/resourcePicker` 一并清理。另给分享路径统一追加 `isShowSplashAd=false`，新用户从分享进入不再先看封面广告。**阶段进度的分母改为可配置**：默认取建议区间**上限**（不再是下限），并新增「阶段目标时长」设置页支持逐阶段自定义。
 
 ### 变更
 
@@ -15,6 +15,21 @@
 - **打卡记录页的月份选择器改用原生 picker（`pages/records`）**：原为自绘两列 `picker-view` 弹层（遮罩 + 标题 + 取消 / 确定 + 一整套 `.mp-*` 样式），现改为 `<picker mode="date" fields="month">`，可选范围由 `start` / `end` 锁在「今年 -3 年 1 月」~「当前月」（不可选未来）。删掉弹层 DOM、四个弹层方法、已无引用的 `noop()` 与 `.mp-*` / `.overview-arrow.up` 样式（约 2100 字符）。代价与其他原生选择器一致：系统弹层不吃 `dm-*` / `--fs`
   - 顺带修掉一个既有 bug：`applyBackfill` 的正则多写了结尾锚点（`/^(\d{4})-(\d{2})$/`），对补录页传来的 `YYYY-MM-DD` 永远匹配不上 —— 除了「补录当月」，补录后都不会自动切到补录月份
 - **数据统计页的阶段选择器改用原生 picker（`pages/stats`）**：自绘半屏滚轮弹层（`.mp-*`）改为 `<picker mode="selector">`。**连带删掉一整套 canvas 规避逻辑** —— canvas 是原生组件、层级恒在普通视图之上，原实现必须「打开弹层前 `dispose` 图表 → `wx:if` 摘掉 canvas → 用 CSS 骨架（`buildRadarClips` / `estimateRingBox` / `.chart-skel` / `.skel-*`）顶替」；系统弹层天然盖在 canvas 之上，这套办法全部不再需要，图表也不会再因开一次弹层而重建。共删约 190 行（js 三个几何函数与调用、wxml 两处骨架、wxss 骨架与弹层样式）
+- **阶段进度的分母改为可配置，新增「阶段目标时长」设置页（`pages/targetSetting`）**：分母原先是 `time_investment` 区间的**下限**（60-80H 取 60），现改为两层结构 ——
+  - **默认档位**（`lower` / `upper`）：一个值管所有「未单独设置」的阶段，默认取**上限**（60-80H 按 80H、80-100H 按 100H），与「关于」页「每阶段时间投入需按 80H 来算」的建议对齐
+  - **各阶段自定义**：某阶段单独填了小时数就压过默认档。**覆盖值是绝对值、不与档位联动** —— 调默认档不会改变已自定义的阶段；弹层里「恢复默认」清除覆盖后重新跟随默认档
+  - 存储：`qingba_target_mode` + `qingba_target_custom`（`{ [stageId]: hours }`，逐项过滤非正数，脏数据静默丢弃）；读取侧 `checkin.getTargetOption(stageId)` 透传给 `getRequiredHours(stage, opt)`，`route` / `stage` / `home` 三处进度仍走同一处口径。**常规6 / 准桥梁按当前阶段自身时长评估的口径不变**（覆盖只对 `type='stage'` 生效，`accumulated` 分支不受影响）
+  - ⚠️ **默认档位由下限改为上限是行为变更**：常规1/2/3 与准桥梁的进度百分比会当场下降，已攒够旧下限但未晋级的用户会从「可晋级」退回「未达标」（常规4/5/6 的 `"60H"` 无区间，两档同值，不受影响）。已标记完成的阶段不会回退（`getCompletedStages` 独立存储）；设置页随时可切回「下限」恢复旧口径
+  - 入口在「设置 → 学习设置 → 阶段目标时长」，右侧显示当前档位与自定义阶段数（如「上限 · 2 项自定义」）；导出 / 导入备份带上 `target_mode` 与 `target_custom`（沿用「缺字段不覆盖」惯例）
+- **进度相关的展示补上生效目标**：路线页「当前阶段」行在阶段名下方补一行「目标 80H」，阶段详情页晋级按钮上方补「已投入 12.5h / 目标 80h」—— 分母不再恒等于官方区间下限，只留官方区间原文会让用户困惑「写着 60-80H 却要攒到 80」。官方建议区间（`time_investment`）仍原样显示在路线行与阶段页标题里；「关于」页的建议文案保持原样
+
+- **半屏弹层抽成公共组件（`components/half-sheet`）**：打卡 / 晋级测试 / 目标时长 / 添加编辑资源 / 今日明细 / 资源选择六处弹层的外壳完全同构 —— 蒙层 + 面板 + 抓手 + 头部（标题左 / 关闭右）+ 可选操作区，此前每处各写一份，重复约 300 行。现收敛为一个组件，只封装外壳，内容与操作区分别走默认 slot 与 `footer` slot（slot 内容由页面编译，其样式本就不归组件管，故组件不提供任何内容级样式）
+  - 属性 `show` / `title` / `showClose` / `maskClosable` / `fontClass` / `darkClass` / `sheetClass` / `footer`；事件 `bind:close`（点蒙层与关闭按钮都触发）
+  - `styleIsolation: 'apply-shared'`：使用方需要通过 `sheetClass` 定制面板 —— `resource-picker` 的高度三档（`.h8` / `.h9`）与「左右内边距归零」正是靠它（默认 `isolated` 下这些类不生效）
+  - 隐藏态由「透明 + `pointer-events: none`」改为 `visibility: hidden`（原实现只把面板透明化，它仍渲染在屏幕下方），`visibility` 参与 transition，滑出动画结束才真正隐藏
+  - 迁完 `pages/stage`（打卡 + 晋级）、`pages/targetSetting`、`pages/myResources`、`pages/home`、`components/resource-picker` 共 6 个弹层；各页删掉重复的外壳样式合计约 380 行，并顺带清掉三处冗余的 `.xxx .weui-btn { flex: 1 }`（全局 `.weui-btn-area_inline .weui-btn` 早已覆盖）与四个页面里已无引用的 `noop()`
+  - 组件化顺带统一了两处此前不一致的取值：标题下间距一律 24rpx（打卡弹窗原为 28rpx）、标题字重一律 600
+  - `resource-picker` 的面板固定占高由 172rpx 调整为 168rpx（头部下间距统一为 24rpx 后重新推导），高度档公式与注释同步更新
 
 ### 修复
 
