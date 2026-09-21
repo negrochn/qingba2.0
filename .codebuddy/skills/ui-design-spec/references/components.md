@@ -281,6 +281,9 @@ WeUI 开关用小程序原生组件，勾选态跟随 `color` 品牌绿：
 > 项目实现：全局 `.weui-tag`（`app.wxss`）为 `padding:4rpx 16rpx; border-radius:8rpx; line-height:1.4`，**不带 margin**——标签间距由父级 flex `gap` 控制（如 records 页 `.record-tags { gap:8rpx }`）。禁止在页面内重复定义 `.weui-tag`，新增标签直接复用。
 >
 > **同一行并列多个标签时，尺寸在父级集中收紧一次**：字号 / 内边距 / 圆角统一写在父级选择器上（如 `.record-tags .weui-tag { padding:2rpx 10rpx; border-radius:6rpx; }`），**不要**再在每个标签类（`.tag-stage` / `.tag-group-*` / `.record-backfill` / `.record-remark`）里各写一份覆盖——曾因此出现「补录 / 备注大一号、分类标签块偏大」的行内不一致（现已回归基类 `24rpx` 与统一内边距）。
+>
+> **彩色标签的浅 / 深两档必须写在同一个文件里（`app.wxss`「记录标签配色」一节）**：记录列表的标签（`.tag-stage` 阶段 / `.tag-group-*` 9 个分类 / `.record-remark` 备注 / `.record-backfill` 补录）**浅色档与深色档上下相邻书写**（深色档为 `.dm-dark .*` + `@media (prefers-color-scheme: dark) { .dm-auto .* }` 两套），页面 wxss（`pages/records`）只保留上面那条「父级集中收紧尺寸」。**根因**：此前浅色留在页面、深色留在全局，两边分开维护 —— `.tag-group-*` 与 `.record-remark` 都有深色档，**唯独漏了 `.tag-stage`**，深色下「常规N」仍是 `#7a5200` / `#fff7e6` 的浅金底，落在 `#191919` 卡片上亮成一块，看起来像被高亮选中。新增彩色标签时，**浅 / 深两行一起写**。
+> **相邻语义的标签在深色档要刻意错开一档**：浅色档里 `.tag-stage`（`#7a5200` / `#fff7e6`）与 `.tag-group-science_extensions`（`#ad6800` / `#fffbe6`）本就近乎同色，深色档因此把阶段压到**金棕 `#e6a23c`**、科普拓展保持**浅琥珀 `#ffd666`**（均配 16% 同色透明底），两者同排出现时可分辨。
 
 ---
 
@@ -595,7 +598,7 @@ onTouchMove(e) {
 
 ## 原语 21：文章页排版（项目 `pages/about`，WeUI `.weui-article`）
 
-用于说明 / 关于 / 协议这类「文章型」页面：整页一篇文章，靠**字号、字重与间距**建立层级，**无卡片框、无彩色块、无底色**。项目现状：`pages/about`（关于庆爸2.0）。
+用于说明 / 关于 / 协议这类「文章型」页面：整页一篇文章，靠**字号差与留白**建立层级（**不是**字重，更不是竖条 / 细线 / 卡片这类边界元素），**无卡片框、无彩色块、无底色**。数值逐条照 WeUI 官方 `weui-article.less`。项目现状：`pages/about`（关于庆爸2.0）。
 
 ```html
 <view class="container {{fontClass}} {{darkClass}}">
@@ -621,38 +624,70 @@ onTouchMove(e) {
 ```
 
 ```css
-/* 层级：h1 44rpx / h2·h3·h4 34rpx / p 34rpx / note 24rpx，正文取 FG-0 */
-.weui-article { padding: 48rpx 32rpx 40rpx; font-size: calc(34rpx * var(--fs, 1));
-  color: var(--text); line-height: 1.65; }
-.weui-article__section { margin-bottom: 96rpx; }        /* WeUI 官方 48px，嵌套逐级收窄 */
-.weui-article__section .weui-article__section { margin-bottom: 64rpx; }
-.weui-article__section .weui-article__section .weui-article__section { margin-bottom: 48rpx; }
-.weui-article__h1 { font-size: calc(44rpx * var(--fs, 1)); font-weight: 600; margin: 0 0 16rpx; }
-.weui-article__h2, .weui-article__h3, .weui-article__h4 {
-  font-size: calc(34rpx * var(--fs, 1)); font-weight: 600; color: var(--text); }
-.weui-article__p    { font-size: calc(34rpx * var(--fs, 1)); line-height: 1.65; color: var(--text); }
-.weui-article__note { font-size: calc(24rpx * var(--fs, 1)); color: var(--text3); text-align: justify; }
-.weui-article__strong { color: var(--text); font-weight: 600; }          /* 唯一强调档：主色加粗 */
+/* ① 档位 token：字号 / 行高 / 字重三件套绑在一起（借 TDesign Typography 的做法，数值仍是 WeUI 阅读档） */
+.weui-article {
+  --art-h1: 44rpx;   --art-h1-lh: 60rpx;  --art-h1-w: 500;   /* 22px / 30px */
+  --art-h2: 40rpx;   --art-h2-lh: 56rpx;  --art-h2-w: 500;   /* 20px / 28px */
+  --art-h3: 34rpx;   --art-h3-lh: 48rpx;  --art-h3-w: 500;   /* 17px / 24px */
+  --art-h4: 34rpx;   --art-h4-lh: 48rpx;  --art-h4-w: 400;   /* 官方 h4 不加粗 */
+  --art-body: 34rpx; --art-body-lh: 54rpx;                   /* 17px / 27px */
+  --art-note: 24rpx; --art-note-lh: 40rpx;                   /* 12px / 20px */
+  --art-gap-para: 48rpx; --art-gap-block: 64rpx; --art-gap-section: 96rpx;   /* 间距阶梯 */
+  padding: 96rpx 48rpx;                                      /* 官方 48px 24px */
+  font-size: calc(var(--art-body) * var(--fs, 1));
+  color: var(--text);
+  line-height: calc(var(--art-body-lh) * var(--fs, 1));      /* 行高与字号成对写死，不写倍率 */
+}
+.weui-article__section { margin-bottom: var(--art-gap-section); }   /* 官方 48px，嵌套 64 / 48rpx */
+.weui-article__section .weui-article__section { margin-bottom: var(--art-gap-block); }
+.weui-article__section .weui-article__section .weui-article__section { margin-bottom: var(--art-gap-para); }
 
-/* 列表：借 Markdown 的结构语义，视觉仍是微信文章 */
-.about-list { margin: 0 0 16rpx; }
-.about-li { position: relative; padding-left: 32rpx; margin-bottom: 8rpx;
-  font-size: calc(34rpx * var(--fs, 1)); line-height: 1.65; color: var(--text); }
+/* ② 各元素只引 token */
+.weui-article__h1 { font-size: calc(var(--art-h1) * var(--fs, 1));
+  line-height: calc(var(--art-h1-lh) * var(--fs, 1)); font-weight: var(--art-h1-w);
+  text-align: center; margin: 0 0 var(--art-gap-section); }   /* 官方：500 / 居中 / 下距 48px */
+.weui-article__h2 { font-size: calc(var(--art-h2) * var(--fs, 1));
+  line-height: calc(var(--art-h2-lh) * var(--fs, 1)); font-weight: var(--art-h2-w);
+  margin: var(--art-gap-section) 0 32rpx; }                   /* 官方 20px，比正文大一档 */
+.weui-article__h3 { font-size: calc(var(--art-h3) * var(--fs, 1));
+  line-height: calc(var(--art-h3-lh) * var(--fs, 1)); font-weight: var(--art-h3-w);
+  margin: 0 0 16rpx; }                                        /* 官方 17px/500/下距 8px */
+.weui-article__h4 { font-size: calc(var(--art-h4) * var(--fs, 1));
+  line-height: calc(var(--art-h4-lh) * var(--fs, 1)); font-weight: var(--art-h4-w);
+  margin: 0 0 8rpx; }                                         /* 官方 17px/**400**/下距 4px */
+.weui-article__p    { font-size: calc(var(--art-body) * var(--fs, 1));
+  line-height: calc(var(--art-body-lh) * var(--fs, 1)); color: var(--text);
+  margin-bottom: var(--art-gap-para); }                       /* 官方段距 24px */
+.weui-article__note { font-size: calc(var(--art-note) * var(--fs, 1)); color: var(--text3); text-align: justify; }
+.weui-article__strong { color: var(--text); font-weight: 700; }          /* 唯一强调档：同色加粗（700） */
+/* 深色档提亮：@media (prefers-color-scheme: dark) { .dm-auto .weui-article__strong { color: #fff; } } */
+
+/* ③ 列表：借 Markdown 的结构语义，视觉仍是微信文章 */
+.about-list { margin: 0 0 var(--art-gap-para); }            /* 官方 ul/ol 下距 24px */
+.about-li { position: relative; padding-left: 40rpx; margin-bottom: 8rpx;    /* 官方缩进 1.2em */
+  font-size: calc(var(--art-body) * var(--fs, 1));
+  line-height: calc(var(--art-body-lh) * var(--fs, 1)); color: var(--text); }
 .about-li::before { content: '•'; position: absolute; left: 4rpx; top: 0; color: var(--text3); }
-.about-ol { margin: 0 0 16rpx; counter-reset: about-ol; }
+.about-ol { margin: 0 0 var(--art-gap-para); counter-reset: about-ol; }
 .about-oli { position: relative; padding-left: 40rpx; margin-bottom: 8rpx;
-  font-size: calc(34rpx * var(--fs, 1)); line-height: 1.65; color: var(--text);
+  font-size: calc(var(--art-body) * var(--fs, 1));
+  line-height: calc(var(--art-body-lh) * var(--fs, 1)); color: var(--text);
   counter-increment: about-ol; }                                        /* 序号自动生成 */
 .about-oli::before { content: counter(about-ol) '.'; position: absolute; left: 0; top: 0; color: var(--text3); }
 ```
 
-- **层级模型（借层级、不引组件）**：`h1` 文章标题 → `h2` 章节 → `h3`·`h4` 小节 → `p` 正文 → `note` 注脚 → `strong` 行内强调，数值按微信档位重定（22 / 17 / 14 / 12 pt → 44 / 34 / 28 / 24 rpx）。**文章正文占 17pt 档**（WeUI article 正文基准即 17px / FG-0）；`15pt` 的定位是「过渡次级字号」，不要拿它写文章正文
-- **`h2` 与 `h3`·`h4` 同为 34rpx**：层级靠**上下间距**（h2 上距 40rpx、h3 24rpx、h4 16rpx）与 `font-weight:600` 区分，**不做字号递降**——字号档只有 5 档，逐级递降会让小节标题掉到正文以下
-- **`__section` 分节必须给下边距**：WeUI 官方 48px(96rpx)，嵌套逐级 32px(64rpx) / 24px(48rpx)。项目把 `__h2` 写在 `__section` **之外**，故章节间距 = 上一层 `__section` 的 96rpx + 下一个 `__h2` 的 40rpx 上距
-- **列表借结构语义，不手写符号**：无序列表用 `::before` 出 `•` + `padding-left:32rpx` 悬挂缩进（**不要**「段落前面挂一个 `·` 字符」）；有序列表用 **CSS `counter`** 自动编号（增删条目不必手改 `1.`~`5.`）。列表项字号与正文同为 34rpx，仅靠符号 + 悬挂缩进区分
-- **强调只保留「主色加粗」一档**：行内 `__strong` 给 `--text` + `font-weight:600` 即可，**不引入彩色语义**（如 TDesign `mark` 硬编码黄底、`theme` 的蓝色 primary），与项目「扁平纯色、禁彩色字」一致；也不为单段引入带竖线的提示块
+- **层级模型（借层级、不引组件）**：`h1` 文章标题 → `h2` 章节 → `h3`·`h4` 小节 → `p` 正文 → `note` 注脚 → `strong` 行内强调。**数值照 WeUI 官方 article 原样**（22 / 20 / 17 / 17 px → 44 / 40 / 34 / 34 rpx），只做 px → rpx 与 `calc(× var(--fs))` 两处改动；`note` 的 12pt(24rpx) 是项目自加档（官方无此档）。**文章正文占 17px 档**（官方 article 正文基准即 17px / FG-0）；`15pt` 的定位是「过渡次级字号」，不要拿它写文章正文
+- **层级靠字号差，不靠字重 / 边界元素**：`h2` 官方就是 **20px**（`40rpx`，**比正文大一档**），这是章节能被一眼认出的根本 —— 把它压回正文档（曾用 34rpx）后只能靠「间距 + 字重」硬撑，深色下立刻崩。`h3`(17px/500) 与 `h4`(17px/**400**) 同字号，靠字重与间距分层；**官方 `h4` 是不加粗的**，别顺手提到 700（整页 700 会让「加粗」失去强调力）。**试过并否掉的路子**：h2 加品牌绿竖条、章节 / 阶块间加细线、阶段参考卡片化 —— 深色下 `--card`(#191919) 与 `--bg`(#111) 只差 8 个色阶、字重差又被白字光晕吃掉，靠新增边界元素补层级收益低、观感碎
+- **档位 token 化（借 TDesign Typography 的「做法」，不借它的数值）**：字号 / 行高 / 字重绑成 `--art-*` 三件套（`--art-h1…h4` / `--art-body` / `--art-note` 及各自的 `-lh` / `-w`），元素只引 token 名；**行高与字号成对写死**（不再写 `line-height: 1.6` 倍率）；间距走阶梯（`--art-gap-para/block/section` = 48 / 64 / 96rpx，取自 TDesign `--td-spacer` 的档位）。改一处即整页联动，也是将来出现第二处文章页时提升为全局原语的前提。**为什么不照搬 TDesign 的数值**：它的默认正文只有 14px（`--td-font-body-medium` 28rpx）、标题一律 `font-weight: 600`、`h4` 档（`title-large` 36rpx）与正文几乎贴平、`h6` 档（28rpx）比正文还小 —— 那是「App 界面层级」而不是「长文阅读层级」；照搬会让正文变小、段距从 48rpx 收到 32rpx，并让 `strong` 退回 600 而复发 Android 字重坑。补充事实：TDesign 小程序端**没有 `typography` 组件**，是 `title` / `paragraph` / `text` 三个组件共用 `.t-typography` 类名 + `--td-*` 变量（品牌色是蓝 `#0052d9`、`mark` 黄底 `#fcdf47` 且硬编码不可覆盖），引入即与项目 `--*` + `dm-auto` 体系并行两套变量
+- **`h1` 居中 + 下距 96rpx**：官方 `text-align: center` / `margin-bottom: 48px` —— 文章主标题居中是官方规定，别按项目其他页「标题左对齐」的习惯改掉
+- **`__section` 分节必须给下边距**：WeUI 官方 48px(96rpx)，嵌套逐级 32px(64rpx) / 24px(48rpx)。项目把 `__h2` 写在 `__section` **之外**（官方是 h2 在 section 内），故把等量的 96rpx 上边距补在 `h2` 上 —— 相邻的两个 96rpx 会合并（margin collapsing）成 96rpx = 官方章间距；**若某环境不合并、看到 192rpx 双倍间距，把 `h2` 的 `margin-top` 改成 `0` 即回到官方值**
+- **列表借结构语义，不手写符号**：无序列表用 `::before` 出 `•` + `padding-left:40rpx` 悬挂缩进（官方 `ul` 是 `margin-left: 1.2em` ≈ 20px；**不要**「段落前面挂一个 `·` 字符」）；有序列表用 **CSS `counter`** 自动编号（增删条目不必手改 `1.`~`5.`）。列表项字号与正文同为 34rpx，仅靠符号 + 悬挂缩进区分
+- **官方 article 是「纯 CSS + 语义标签」，小程序侧只能照搬数值**：官方 `.weui-article` 靠后代选择器命中 `h1` / `h2` / `p` / `section`，几乎没有任何 `__h1` / `__p` 类名（只有 `__list_inside` / `__list_none` 两个列表修饰符）；小程序 wxml 只有 `view` / `text` 等组件、没有语义标签，所以 `.weui-article__*` 这套类名是项目自建 —— 官方 CSS 直接抄进 wxss 不会生效，能照搬的只有数值。官方小程序组件库里也**没有** article 组件
+- **强调只保留一档：同色加粗 `700` + 深色档提亮到纯白**：行内 `__strong` 给 `--text` + `font-weight:700`，**不引入彩色语义**（如 TDesign `mark` 硬编码黄底、`theme` 的蓝色 primary），与项目「扁平纯色、禁彩色字」一致；也不为单段引入带竖线的提示块。两条硬约束：
+  - **字重必须 `700`，不能用 `600`** —— Android 系统字体（Roboto）只有 400 / 500 / 700 三档，`600` 会被就近映射、真机可能落到 500/medium，表现为「加粗几乎看不出」
+  - **深色档颜色要提亮到 `#fff`** —— 深色 `--text` 只有 80% 白，强调与正文同色时单靠字重区分不够（白字在暗底还有光晕扩散），故在 `.dm-auto` + `@media (prefers-color-scheme: dark)` 内把 `__strong` 提到纯白，与正文拉开明确的亮度台阶
 - **样式定义在页面内、未提升为全局原语**：目前只有这一处文章页，类名沿用 WeUI 的 `.weui-article__*` 体系，页面特有结构（阶段参考块 / 方法分区 / 列表）留在 `about.wxss`——**等出现第二处文章页再抽取**
-- **结尾动作区（分享）**：文章末尾如需按钮，用独立容器 `.about-share { padding: 24rpx 32rpx 8rpx; }` + `.weui-btn_block`，附一行 `24rpx` `--text3` 居中说明；`open-type="share"` 在单页模式下禁用，需按 `scene === 1154` 隐藏（见 `design-guidelines.md` §六）
+- **不设结尾动作区（分享）**：文章末尾**不放**页内分享按钮。早期用过 `.about-share` + `.weui-btn_block` + 一行 `24rpx` `--text3` 说明，现已移除 —— 右上角「···」菜单恒有「转发给朋友」，功能完全重复；而满宽品牌绿按钮是文章页里唯一的行动块，会把注意力从内容拉开。分享能力只依赖页面 js 的 `onShareAppMessage` + `onShareTimeline` 声明（详见 `design-guidelines.md` §六）
 
 ---
 

@@ -2,6 +2,37 @@
 
 本项目所有重要变更都会记录在此文件中，格式参照 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [3.7.2] - 2026-09-21
+
+> 修复深色模式下打卡记录列表「常规N」标签底色过亮（该标签漏补深色档）；「关于」页移除页内分享按钮、修掉深色下「加粗几乎看不出」的问题，并把整页排版改为照 WeUI 官方 article 数值。
+
+### 修复
+
+- **深色模式下「常规1」等阶段标签底色过亮（`app.wxss` / `pages/records`）**：记录标签的浅色档原先写在页面级 `pages/records/records.wxss`、深色档写在全局 `app.wxss`，两边分开维护 —— `.tag-group-*`（9 个分类）与 `.record-remark` 都有深色档，**唯独漏了 `.tag-stage`**，深色下它仍是 `#7a5200` / `#fff7e6` 的浅金底，落在 `#191919` 卡片上亮成一块，看起来像被高亮选中。
+  - 标签配色（`.tag-stage` / `.tag-group-*` / `.record-remark` / `.record-backfill`）整体收敛到 `app.wxss`「记录标签配色」一节，**浅色档与深色档上下相邻**；`pages/records/records.wxss` 只保留页面自己的尺寸收紧（`.record-tags .weui-tag`）与一条指路注释，消除「只改一边」的温床
+  - 阶段标签深色档取**金棕 `#e6a23c`** / `rgba(230,162,60,.16)`：**与「科普拓展」的浅琥珀 `#ffd666` 刻意错开一档**（两者浅色档本就近乎同色，深色档若取同值，同排出现时无法区分）
+  - 其余标签的浅色 / 深色取值未改动（纯搬迁，零视觉变化）；`.record-remark` 的单行截断（`overflow` / `white-space` / `text-overflow`）随颜色一并搬移，避免同一选择器被拆在两个文件里
+- **同步更新设计规范（`.codebuddy/skills/ui-design-spec`）**：`SKILL.md`「标签 / 徽标」条与「项目实现备注」、`references/components.md` 原语 10 补上「彩色标签的浅 / 深两档必须写在一起」「相邻语义的标签在深色档错开一档」两条约定
+
+### 变更
+
+- **「关于」页移除底部「分享给好友」按钮（`pages/about`）**：微信右上角「···」菜单里恒有「转发给朋友」，与页内按钮**功能完全重复**；且它是文章页里唯一的行动块，会把注意力从内容拉到「帮我传播」，与纯内容页的定位冲突。**分享能力不受影响** —— 被分享到朋友圈的前提是页面 js 同时声明 `onShareAppMessage` + `onShareTimeline`（二者保留），与页面上有没有按钮无关。
+  - 删 `<view class="about-share">` 整块（按钮 + `__tip` 说明行）与 `.about-share` / `.about-share__tip` 两条样式
+  - `about.js` 的 `singlePage` 状态与 `isSinglePage()`（`wx.getLaunchOptionsSync` 判定 `scene === 1154`）失去唯一用途，一并移除；两个分享声明原样保留
+- **深色模式下「加粗」几乎看不出（`pages/about`）**：`__strong` 与正文**颜色完全相同**（都是 `--text`，深色档 = 80% 白），唯一差别是 `font-weight: 600`，三点叠加导致强调失效 ——
+  - **字重 `600` → `700`**：Android 系统字体（Roboto）只有 400 / 500 / 700 三档，`600` 会被就近映射、真机可能落到 500/medium，等于没加粗；`700` 是两端都确定存在的 bold 档
+  - **深色档强调色提亮到纯白 `#fff`**（`.dm-auto` + `@media (prefers-color-scheme: dark)` 成对书写）：深色正文只有 80% 白，强调与正文同色时单靠字重区分本就不够，白字在暗底还有光晕扩散，必须靠亮度台阶拉开
+- **「关于」页排版改为照 WeUI 官方 article 数值（`pages/about`）**：此前 h2 被压回正文档（34rpx）、段距只有 16rpx，章节层级靠「间距 + 字重」硬撑，深色下整页糊成一片。现按官方 `weui-article.less` 逐条对齐 ——
+  - **`h2` 34rpx → `40rpx`(20px)/500**（官方 h2 就是 20px，**比正文大一档**），这是章节能被一眼认出的根本；**新增一个字号档**（`design-tokens.md` 已补，仅文章页用）
+  - **段落 `margin-bottom` 16rpx → `48rpx`**（官方 24px）；正文 `line-height` 1.65 → **1.6**
+  - **`h1` 改居中 + 下距 96rpx**（官方 `text-align:center` / `48px`）；`h4` **700 → 400**（官方不加粗，靠间距）、`h3` 与阶段名改 **500**（官方档，且 Roboto 有真实 Medium）
+  - 容器 padding `48rpx 32rpx 40rpx` → **`96rpx 48rpx`**（官方 48px 24px）；列表缩进 32 → 40rpx（官方 1.2em）、列表下距 16 → 48rpx；方式分区 40 → 64rpx（官方嵌套 section 32px）
+  - 章间距仍与官方一致（96rpx）：`__section` 的下距与 `h2` 的上距相邻时会合并（margin collapsing）；若某环境不合并、出现 192rpx 双倍间距，把 `h2` 的 `margin-top` 改 `0` 即可
+  - 说明：WeUI 官方 article 是**纯 CSS + 语义标签**（`h1`/`p`/`section`），小程序 wxml 没有这些标签，故只能照搬数值、沿用项目自建的 `.weui-article__*` 类名；官方小程序组件库里也没有 article 组件。**层级靠字号差 + 留白，不靠字重与边界元素** —— 中途试过「h2 品牌绿竖条 + 章间细线 + 阶段参考卡片化」，深色下收益低、观感碎，已全部回退
+- **文章页排版结构改为 token 驱动（`pages/about/about.wxss`）**：把「字号 / 行高 / 字重」收成 `--art-*` 三件套（`--art-h1…h4` / `--art-body` / `--art-note` 及各自的 `-lh`、`-w`），间距收敛为 `--art-gap-para/block/section`（48 / 64 / 96rpx），各元素只引 token 名；行高由 `line-height: 1.6` 倍率改为**与字号成对写死的 rpx**（仍乘 `--fs`，实测渲染差 < 2rpx）。**数值一律未变，纯结构重构**
+  - 做法借自 TDesign Typography（其小程序端没有 `typography` 组件，是 `title` / `paragraph` / `text` 三个组件共用 `.t-typography` 类名）—— **只借做法不借数值**：TDesign 默认正文仅 14px（`--td-font-body-medium` 28rpx）、标题一律 `font-weight: 600`、`h4` 档（`title-large` 36rpx）与正文几乎贴平、`h6` 档（28rpx）比正文还小，属「App 界面层级」而非「长文阅读层级」；照搬会让正文变小、段距从 48rpx 收到 32rpx，并让 `strong` 退回 `600` 而复发 Android 字重坑
+- **文档同步（`.codebuddy/skills/ui-design-spec`）**：`SKILL.md`（按钮条 / 文章页排版 / 分享入口）、`references/components.md` 原语 21（官方数值出处、层级靠字号差、h4 不加粗、已否掉的边界元素路子、强调档两条硬约束、结尾动作区改为「不设页内分享按钮」）、`references/design-tokens.md`（新增 `40rpx` 文章章节档 + 文章页取值说明）、`references/design-guidelines.md` §六与落地自检清单
+
 ## [3.7.1] - 2026-09-20
 
 > 修复半屏弹层（`half-sheet`）在真机上的隐藏态残留：弹层关闭后，输入框的 placeholder 仍留在屏幕底部（阶段页 / 目标时长页 / 我的资源页各一处）。
@@ -675,6 +706,7 @@
 
 | 版本 | 说明 |
 | ---- | ---- |
+| 3.7.2 | 打卡记录标签补齐深色档（修「常规N」浅底过亮）；「关于」页排版照官方 article 数值重构，并修掉深色下「加粗几乎看不出」、移除页内分享按钮。 |
 | 3.7.1 | 修复半屏弹层关闭后输入框 placeholder 残留在屏幕上（阶段页 / 目标时长页 / 我的资源页）；「我的资源」空态改按 sections 判定，避免有资源却整页空白。 |
 | 3.7.0 | 「我的资源」归属与记录 / 统计页选择器改用原生 picker；阶段进度分母可配置（默认建议区间上限，新增「阶段目标时长」页可逐阶段自定义）；分享进入不再先看封面广告。 |
 | 3.6.0 | 新增「熏听」分组：开关打开后阶段页可打卡音频素材，时长按阶段系数折算为有效时长（常规1/2 不计入、常规3 ×0.5、常规4 起 ×0.8）；记录/统计同步口径，雷达图按阶段分组动态出轴。 |

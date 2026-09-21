@@ -461,9 +461,43 @@ view, text {
 .weui-panel__bd { color: var(--text); }
 
 /* ============================================================
-   全局深色适配（微信小程序深色规范）
-   分类彩色标签：浅色为浅底深字，深色转为深底亮字（复用原配色语义）
+   记录标签配色（打卡记录列表：阶段 / 分类 / 备注 / 补录）
+   浅色「浅底深字」→ 深色「深底亮字」（同色相 16% 透明底）。
+   浅 / 深两档必须写在同一节：此前浅色留在 pages/records/records.wxss、
+   深色留在这里，两边分开维护，结果 .tag-stage 只补了浅色 ——
+   深色下「常规N」仍是 #fff7e6 浅底，在 #191919 卡片上亮成一块。
    ============================================================ */
+/* 阶段标签（常规N）：金棕，与「科普拓展」的琥珀刻意错开一档 */
+.tag-stage { color: #7a5200; background: #fff7e6; }
+
+/* 各分类标签颜色 */
+.tag-group-main_picture_books { color: #1a5fb0; background: #e8f1fb; }
+.tag-group-main_graded_readers { color: #4a26a8; background: #f0eafc; }
+.tag-group-main_animations { color: #c4390e; background: #fff1ea; }
+.tag-group-sub_graded_readers { color: #006d75; background: #e6fffb; }
+.tag-group-sub_animations { color: #b0156e; background: #fff0f6; }
+.tag-group-fun_extensions { color: #389e0d; background: #f0ffe0; }
+.tag-group-science_extensions { color: #ad6800; background: #fffbe6; }
+.tag-group-fusion_apps { color: #531dab; background: #f5f0ff; }
+.tag-group-listening_audio { color: #37474f; background: #eceff1; }
+.tag-group-default { color: var(--text3); background: var(--cell-active); }
+
+/* 备注：单行截断（颜色 / 底色见下方深色档配套） */
+.record-remark {
+  color: #52c41a;
+  background: #f0fff0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 补录标记（中性灰，弱于分类彩色标签；走变量、无需深色档） */
+.record-backfill {
+  color: var(--text2);
+  background: var(--cell-active);
+}
+
+/* ---- 深色档 ---- */
 .dm-dark .tag-group-main_picture_books { color: #7fb4f7; background: rgba(127, 180, 247, 0.16); }
 .dm-dark .tag-group-main_graded_readers { color: #b39df5; background: rgba(179, 157, 245, 0.16); }
 .dm-dark .tag-group-main_animations { color: #ff9c6e; background: rgba(255, 156, 110, 0.16); }
@@ -474,6 +508,7 @@ view, text {
 .dm-dark .tag-group-fusion_apps { color: #b37feb; background: rgba(179, 127, 235, 0.16); }
 .dm-dark .tag-group-listening_audio { color: #b0bec5; background: rgba(176, 190, 197, 0.16); }
 .dm-dark .record-remark { color: #95de64; background: rgba(149, 222, 100, 0.16); }
+.dm-dark .tag-stage { color: #e6a23c; background: rgba(230, 162, 60, 0.16); }
 
 @media (prefers-color-scheme: dark) {
   .dm-auto .tag-group-main_picture_books { color: #7fb4f7; background: rgba(127, 180, 247, 0.16); }
@@ -486,4 +521,5 @@ view, text {
   .dm-auto .tag-group-fusion_apps { color: #b37feb; background: rgba(179, 127, 235, 0.16); }
   .dm-auto .tag-group-listening_audio { color: #b0bec5; background: rgba(176, 190, 197, 0.16); }
   .dm-auto .record-remark { color: #95de64; background: rgba(149, 222, 100, 0.16); }
+  .dm-auto .tag-stage { color: #e6a23c; background: rgba(230, 162, 60, 0.16); }
 }

@@ -122,11 +122,4 @@
     </view>
 
   </view>
-
-  <!-- 分享入口：本页是纯内容页，适合作为「分享给好友」的入口；
-       单页模式（从朋友圈卡片打开）下 button open-type 被禁用，直接隐藏 -->
-  <view class="about-share" wx:if="{{!singlePage}}">
-    <button class="weui-btn weui-btn_block weui-btn_primary" open-type="share">分享给好友</button>
-    <view class="about-share__tip">好友点开即可看到路线介绍与使用方法</view>
-  </view>
 </view>

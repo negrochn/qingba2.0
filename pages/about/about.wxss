@@ -1,84 +1,109 @@
-/* ====== 关于庆爸2.0 - 纯文章写法（WeUI article） ======
-   整页 .weui-article：h1 文章标题 + h2 章节 + h3/h4 小节 + p 段落，无卡片框 / 列表框
-   去除所有彩色背景块与渐变；重点用主色加粗（WeUI 标准强调）
-   配色走全局 --* 令牌，深色模式自动跟随，无需 .dm-dark 重复规则
+/* ====== 关于庆爸2.0 - 文章写法（WeUI 官方数值 + TDesign 式 token 化） ======
+   数值：逐条照 WeUI 官方 article（weui/src/style/widget/weui-page/weui-article.less），
+        只做 px → rpx 与 calc(× var(--fs)) 两处改动。
+   结构：借 TDesign Typography 的**做法**（见 .codebuddy/skills/ui-design-spec 原语 21）：
+        ① 把「字号 + 行高 + 字重」绑成一组语义 token，各元素只引 token 名；
+        ② 行高与字号成对写死（不再写 line-height 倍率）；
+        ③ 间距走统一阶梯（取 TDesign --td-spacer 的 24 / 32 / 48 / 64 / 96rpx 档）。
+       注意：TDesign 的**字号数值**不适用于长文（其默认正文仅 14px、标题全是 600），
+        故只借做法不借数值 —— 正文仍是 WeUI 的 17px 阅读档。 */
 
-   字号对齐 WeUI article 规范（正文 17px / FG-0）与微信官方档位：22 / 17 / 14 / 12 pt
-   小程序 750rpx 对应 375pt 基准 → 44 / 34 / 28 / 24 rpx；var(--fs) 跟随全局字体缩放
-   （15pt 档留给 cell 描述等次级内容，本文正文不占用）
-
-   层级模型参考 TDesign Typography（h1 文章标题 → h2 章节 → h3/h4 小节），
-   数值按微信档位重定（TDesign 为固定 px 的 6 级，微信用 rpx 的 5 档以支持字号缩放）。
-   本页排版层级留在页面内、未提升为全局原语——目前只有这一处文章页，等出现第二处再抽取。 */
-
-/* ===== 文章排版层级 ===== */
+/* ===== 排版档位 token：改这里即可整页联动 ===== */
 .weui-article {
-  padding: 48rpx 32rpx 40rpx;
-  font-size: calc(34rpx * var(--fs, 1));   /* 17pt 正文基准（同 WeUI article 的 17px） */
-  color: var(--text);                      /* FG-0：正文用主文色，标题靠字号/字重区分 */
-  line-height: 1.65;
+  --art-h1: 44rpx;   --art-h1-lh: 60rpx;   --art-h1-w: 500;   /* 22px / 30px，官方 h1 */
+  --art-h2: 40rpx;   --art-h2-lh: 56rpx;   --art-h2-w: 500;   /* 20px / 28px，官方 h2 */
+  --art-h3: 34rpx;   --art-h3-lh: 48rpx;   --art-h3-w: 500;   /* 17px / 24px */
+  --art-h4: 34rpx;   --art-h4-lh: 48rpx;   --art-h4-w: 400;   /* 17px / 24px（官方 h4 不加粗） */
+  --art-body: 34rpx; --art-body-lh: 54rpx;                    /* 17px / 27px（≈ 官方 1.6 倍率） */
+  --art-note: 24rpx; --art-note-lh: 40rpx;                    /* 12px / 20px */
+  /* 间距阶梯：para = 段距，block = 同章块间，section = 章间距 */
+  --art-gap-para: 48rpx;
+  --art-gap-block: 64rpx;
+  --art-gap-section: 96rpx;
+
+  padding: 96rpx 48rpx;                    /* 官方 48px 24px */
+  font-size: calc(var(--art-body) * var(--fs, 1));
+  color: var(--text);                      /* FG-0 */
+  line-height: calc(var(--art-body-lh) * var(--fs, 1));
 }
-/* 分节容器：WeUI 规定 48px 下边距、嵌套逐级收窄（32px / 24px）。
-   注意本页把 __h2 写在 __section 之外（WeUI 是 h2-in-section 结构），
-   所以章节间距 = __section 的 96rpx + 下一个 __h2 的 40rpx 上边距。 */
-.weui-article__section { margin-bottom: 96rpx; }
-.weui-article__section .weui-article__section { margin-bottom: 64rpx; }
-.weui-article__section .weui-article__section .weui-article__section { margin-bottom: 48rpx; }
-.weui-article__h1 {                        /* 文章标题 22pt */
-  font-size: calc(44rpx * var(--fs, 1));
-  font-weight: 600;
+/* 分节容器：官方 section 下距 48px、嵌套逐级 32px / 24px。
+   官方章与章的间距全靠它（h2 自身没有上边距）——本页 h2 与 section 同级，
+   故把等量的 96rpx 上边距补在 h2 上，最终章间距与官方一致。 */
+.weui-article__section { margin-bottom: var(--art-gap-section); }
+.weui-article__section .weui-article__section { margin-bottom: var(--art-gap-block); }
+.weui-article__section .weui-article__section .weui-article__section { margin-bottom: var(--art-gap-para); }
+.weui-article__h1 {                        /* 官方 h1：22px / 500 / 居中 / 下距 48px */
+  font-size: calc(var(--art-h1) * var(--fs, 1));
+  line-height: calc(var(--art-h1-lh) * var(--fs, 1));
+  font-weight: var(--art-h1-w);
   color: var(--text);
-  line-height: 1.35;
+  text-align: center;
+  margin: 0 0 var(--art-gap-section);
+}
+/* 官方 h2 是 20px —— **比正文大一档**，字重 500、下距 16px。
+   「章节彼此分不清」的根因就是把 h2 压回正文档（34rpx）：官方层级靠字号差，字重只是辅助
+   （500 且 Roboto 有真实 Medium 档，不像 600 会被就近映射）。 */
+.weui-article__h2 {
+  font-size: calc(var(--art-h2) * var(--fs, 1));
+  line-height: calc(var(--art-h2-lh) * var(--fs, 1));
+  font-weight: var(--art-h2-w);
+  color: var(--text);
+  margin: var(--art-gap-section) 0 32rpx;
+}
+.weui-article__h3 {                        /* 官方 h3：17px / 500 / 下距 8px */
+  font-size: calc(var(--art-h3) * var(--fs, 1));
+  line-height: calc(var(--art-h3-lh) * var(--fs, 1));
+  font-weight: var(--art-h3-w);
+  color: var(--text);
   margin: 0 0 16rpx;
 }
-.weui-article__h2 {                        /* 章节标题 17pt */
-  font-size: calc(34rpx * var(--fs, 1));
-  font-weight: 600;
+.weui-article__h4 {                        /* 官方 h4：17px / 400 / 下距 4px（靠间距而非字重） */
+  font-size: calc(var(--art-h4) * var(--fs, 1));
+  line-height: calc(var(--art-h4-lh) * var(--fs, 1));
+  font-weight: var(--art-h4-w);
   color: var(--text);
-  margin: 40rpx 0 16rpx;
+  margin: 0 0 8rpx;
 }
-.weui-article__h3 {                        /* 小节标题 17pt（靠间距与 h2 区分层级） */
-  font-size: calc(34rpx * var(--fs, 1));
-  font-weight: 600;
+.weui-article__p {                         /* 官方段落：下距 24px */
+  font-size: calc(var(--art-body) * var(--fs, 1));
+  line-height: calc(var(--art-body-lh) * var(--fs, 1));
   color: var(--text);
-  margin: 24rpx 0 12rpx;
-}
-.weui-article__h4 {                        /* 四级标题 17pt 加粗（随正文提到 34rpx，否则会小于正文） */
-  font-size: calc(34rpx * var(--fs, 1));
-  font-weight: 600;
-  color: var(--text);
-  margin: 16rpx 0 8rpx;
-}
-.weui-article__p {                         /* 正文 17pt */
-  font-size: calc(34rpx * var(--fs, 1));
-  line-height: 1.65;
-  color: var(--text);
-  margin-bottom: 16rpx;
+  margin-bottom: var(--art-gap-para);
 }
 .weui-article__p:last-child { margin-bottom: 0; }
-.weui-article__desc {                      /* 次级说明 14pt */
+.weui-article__desc {                      /* 次级说明 14pt（本页暂未使用） */
   font-size: calc(28rpx * var(--fs, 1));
   color: var(--text3);
 }
 .weui-article__note {                      /* 注脚 / 免责说明 12pt */
-  font-size: calc(24rpx * var(--fs, 1));
+  font-size: calc(var(--art-note) * var(--fs, 1));
+  line-height: calc(var(--art-note-lh) * var(--fs, 1));
   color: var(--text3);
   text-align: justify;
 }
-.weui-article__strong {                    /* 行内强调：主色加粗 */
+/* 行内强调（官方 article 无此档，本页自加）：同色加粗 + 深色档提亮到纯白。
+   ① 字重用 700 而非 600 —— Android 系统字体（Roboto）只有 400/500/700 三档，600 会被就近映射、
+      真机可能落到 500/medium（表现为「加粗几乎看不出」）；700 是两端都确定存在的 bold 档。
+      （TDesign Typography 的 strong 正是 600，这也是本页不照搬它数值的原因之一。）
+   ② 深色 --text 只有 80% 白，强调与正文同色时单靠字重区分本就不够（白字在暗底还有光晕扩散），
+      故深色档提亮到 #fff，与正文拉开明确的亮度台阶。 */
+.weui-article__strong {
   color: var(--text);
-  font-weight: 600;
+  font-weight: 700;
+}
+@media (prefers-color-scheme: dark) {
+  .dm-auto .weui-article__strong { color: #ffffff; }
 }
 
 /* ===== 列表（借 Markdown 的结构语义，视觉保持微信文章的无框无底色） ===== */
-.about-list { margin: 0 0 16rpx; }
+.about-list { margin: 0 0 var(--art-gap-para); }   /* 官方 ul / ol 下距 24px */
 .about-li {
   position: relative;
-  padding-left: 32rpx;                     /* 悬挂缩进：符号落在左侧留白内 */
-  font-size: calc(34rpx * var(--fs, 1));
-  line-height: 1.65;
+  padding-left: 40rpx;                     /* 官方列表缩进 1.2em ≈ 20px(40rpx) */
+  font-size: calc(var(--art-body) * var(--fs, 1));
+  line-height: calc(var(--art-body-lh) * var(--fs, 1));
   color: var(--text);
-  margin-bottom: 8rpx;
+  margin-bottom: 8rpx;                     /* 官方 li 上下 0.5em(≈17rpx)；这里保持 8rpx —— 阶段参考一屏内 21 行，放大后过长 */
 }
 .about-li:last-child { margin-bottom: 0; }
 .about-li::before {
@@ -88,12 +113,12 @@
   color: var(--text3);
 }
 
-.about-ol { margin: 0 0 16rpx; counter-reset: about-ol; }
+.about-ol { margin: 0 0 var(--art-gap-para); counter-reset: about-ol; }
 .about-oli {
   position: relative;
-  padding-left: 40rpx;                     /* 悬挂缩进：序号占位比无序列表略宽 */
-  font-size: calc(34rpx * var(--fs, 1));
-  line-height: 1.65;
+  padding-left: 40rpx;                     /* 悬挂缩进：序号占位与无序列表对齐 */
+  font-size: calc(var(--art-body) * var(--fs, 1));
+  line-height: calc(var(--art-body-lh) * var(--fs, 1));
   color: var(--text);
   margin-bottom: 8rpx;
   counter-increment: about-ol;
@@ -106,27 +131,20 @@
   color: var(--text3);
 }
 
-/* ===== 阶段参考（文章内段落式，无 cell 框） ===== */
-.about-stage { margin-bottom: 20rpx; }
+/* ===== 阶段参考（文章内段落式，无卡片框：分层交给 h2 的字号与官方留白） ===== */
+.about-stage { margin-bottom: var(--art-gap-para); }     /* 块距取一个段距（官方嵌套 section） */
 .about-stage:last-child { margin-bottom: 0; }
-.about-stage__name {                       /* 阶段名 17pt 加粗 */
-  font-size: calc(34rpx * var(--fs, 1));
-  font-weight: 600;
+.about-stage__name {                       /* 阶段名：同 h3 档（17pt / 500） */
+  font-size: calc(var(--art-h3) * var(--fs, 1));
+  font-weight: var(--art-h3-w);
   color: var(--text);
 }
-/* 阶段内的条目直接复用全局列表样式，只收窄外边距（阶段块之间已有间距） */
+/* 阶段内的条目直接复用全局列表样式，只收窄外边距（阶段名与条目之间） */
 .about-stage .about-list { margin: 8rpx 0 0; }
 
-/* ===== 使用说明（方式分区，文章内间距分隔，无卡片框） ===== */
-.about-method { margin-bottom: 32rpx; }
+/* ===== 使用说明（方式分区 = 官方嵌套 section，下距 32px） ===== */
+.about-method { margin-bottom: var(--art-gap-block); }
 .about-method:last-child { margin-bottom: 0; }
 
-/* ===== 分享入口（文章末尾，无卡片框，沿用文章左右留白） ===== */
-.about-share { padding: 24rpx 32rpx 8rpx; }
-.about-share__tip {
-  margin-top: 16rpx;
-  font-size: calc(24rpx * var(--fs, 1));
-  line-height: 1.5;
-  color: var(--text3);
-  text-align: center;
-}
+/* 页内分享按钮已移除（右上角菜单「转发」即入口，与页内按钮功能完全重复）；
+   分享能力只依赖 about.js 的 onShareAppMessage / onShareTimeline 声明，不受影响 */

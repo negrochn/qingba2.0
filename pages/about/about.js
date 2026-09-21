@@ -1,27 +1,14 @@
 const share = require('../../utils/share.js')
 
-// 单页模式（scene 1154，即从朋友圈卡片打开）：无 tabBar、页面不能跳转，
-// button 的 open-type 也被禁用，故隐藏页内的分享按钮
-function isSinglePage() {
-  try {
-    const opt = wx.getLaunchOptionsSync()
-    return !!(opt && opt.scene === 1154)
-  } catch (e) {
-    return false
-  }
-}
-
 Page({
   data: {
     fontClass: '',
-    darkClass: '',
-    singlePage: false
+    darkClass: ''
   },
 
   onLoad() {
     const app = getApp()
     if (app && app.applyFontLevel) app.applyFontLevel(this)
-    this.setData({ singlePage: isSinglePage() })
   },
 
   onShow() {
@@ -29,7 +16,7 @@ Page({
     if (app && app.applyFontLevel) app.applyFontLevel(this)
   },
 
-  // 转发给好友（页内按钮 open-type="share" 与右上角菜单共用同一份配置）
+  // 转发给好友：只走右上角菜单「转发」（页内不再放 open-type="share" 按钮）
   onShareAppMessage() {
     return share.appMessage('about')
   },
