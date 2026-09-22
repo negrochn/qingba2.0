@@ -1,8 +1,0 @@
-feat(bigloop): 接入大循环路线，多路线架构落地
-
-- 数据层：utils/bigloop_route.js 官方存档拍平为 9 阶段格式化终稿（与 data.js 同构），经 ROUTES 注册表统一，页面经 checkin.getCurrentRoute() 取当前路线
-- 路线切换：settings 页路线卡片 + 新增 routePicker 路线选择页，未选路线的老用户默认常规、零感知
-- 打卡链路：晋级推进改沿 prev_stage_ids 找下一阶段（适配调整支线分叉），熏听折算两路线按牛N 档位合并一张表
-- 展示：路线页分叉视图（可选支线虚线节点与「可选」徽标）、阶段页关键要点行内高亮、首页欢迎卡起终点取真实阶段名
-- 资源层：资源合并按当前路线渲染，历史自定义资源旧中文分组 key 经 GROUP_KEY_ALIAS 迁移
-- 附官方原始资料存档 qingba_big_loop_route.json 与接入方案 docs
