@@ -1,11 +1,11 @@
-const { routeData, getRequiredHours } = require('../../utils/data.js')
+const { getRequiredHours } = require('../../utils/data.js')
 const checkin = require('../../utils/checkin.js')
 const share = require('../../utils/share.js')
 
 Page({
   data: {
-    stages: routeData.stages,
-    stageCount: routeData.stages.length,
+    stages: [],
+    stageCount: 0,
     currentStageId: '',
     currentStageIndex: -1,
     currentCard: null,
@@ -46,15 +46,16 @@ Page({
     return share.appMessage('route')
   },
 
-  // 加载当前阶段，预计算每阶段状态（unset / done / current / locked）
+  // 加载当前路线与当前阶段，预计算每阶段状态（unset / done / current / optional / locked）
   loadCurrentStage(cb) {
+    const route = checkin.getCurrentRoute()
     const current = checkin.getCurrentStage();
     let currentIndex = -1
-    routeData.stages.forEach((s, i) => {
+    route.stages.forEach((s, i) => {
       if (current && s.stage_id === current.id) currentIndex = i
     })
     const doneIds = checkin.getCompletedStages()
-    const stages = routeData.stages.map((s, i) => {
+    const stages = route.stages.map((s, i) => {
       let state
       if (currentIndex < 0) {
         state = 'unset'                    // 尚未选择起点：全部为待选，不置灰也不上锁
@@ -62,15 +63,22 @@ Page({
         state = 'done'
       } else if (i === currentIndex) {
         state = 'current'
+      } else if (s.optional) {
+        // 调整支线小段：可选补救路径，不上锁（没走过的用户也能看到并进入）
+        state = 'optional'
       } else {
         state = 'locked'
       }
-      return Object.assign({}, s, { _state: state })
+      // meta 行预拼接：大循环部分字段可为空（如调整小段无 target_phase），
+      // 硬拼接「a · b · c」会出现「· · 建议90小时」断裂
+      const metaText = [s.target_phase, s.vocabulary_target, s.time_investment]
+        .filter(v => !!v).join(' · ')
+      return Object.assign({}, s, { _state: state, _metaText: metaText })
     })
     // 顶部当前阶段：阶段名 + 进度百分比（与 stage 详情页同口径）
     let currentCard = null
     if (currentIndex >= 0) {
-      const s = routeData.stages[currentIndex]
+      const s = route.stages[currentIndex]
       // 进度与 stage 详情页完全同口径：按 required.type 决定取阶段自身还是累计时长
       const required = getRequiredHours(s, checkin.getTargetOption(s.stage_id))
       const minutes = required.type === 'accumulated'
@@ -91,6 +99,7 @@ Page({
 
     this.setData({
       stages,
+      stageCount: stages.length,
       currentStageId: current ? current.id : '',
       currentStageIndex: currentIndex,
       currentCard

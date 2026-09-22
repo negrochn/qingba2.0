@@ -71,7 +71,7 @@
   line-height: 1.6;
   color: var(--text2);
 }
-.kp-text-hi { color: var(--text); }
+.kp-text-hi { color: var(--text); font-weight: 600; }
 
 /* ====== 阶段资源分组（核心打卡，上半区） ====== */
 .res-wrap {

@@ -1,6 +1,10 @@
 // 听力训练路线数据，源自 qingba_listening_route.json
 // 注意：运行时只读取本文件（该 JSON 已被打包排除），
 // 若修改路线数据，请同步更新根目录的 qingba_listening_route.json，避免两份数据漂移
+//
+// 多路线结构：本文件 routeData = 常规路线（含 methods/timeCalculation 等全局方法论）；
+// 大循环路线在 ./bigloop_route.js（拍平后 9 阶段）。两者经下方 ROUTES 注册表统一，
+// 页面通过 checkin.getCurrentRoute() 取当前路线（存储读取收敛在 checkin，避免循环依赖）。
 const routeData = {
   "route_name": "庆爸听力线 常规路径（2.0版）",
   "age_group": "3-4岁",
@@ -388,22 +392,61 @@ const routeData = {
   ]
 }
 
+// ===== 路线注册表 =====
+// 「常规路线」= 上方 routeData；「大循环路线」= bigloop_route.js 拍平后的 9 个阶段。
+// routeData 上的 methods / timeCalculation / overview 属全局方法论，不随路线切换。
+const bigloopRoute = require('./bigloop_route.js')
+
+const ROUTES = {
+  // journeyText：首页欢迎卡文案，起终点取真实阶段名（与大循环同构）。常规路线是纯链、
+  // 末位即终点，直接取数组首末；大循环因支线排序混入数组，终点须按 id 显式定位
+  regular: {
+    id: 'regular',
+    name: '常规路线',
+    journeyText: (function () {
+      const stages = routeData.stages || []
+      const first = stages[0] ? stages[0].stage_name : ''
+      const last = stages[stages.length - 1]
+      return '记录每天的英语听力投入，陪孩子从' + first + '一路走到' + (last ? last.stage_name : '')
+    })(),
+    stages: routeData.stages
+  },
+  bigloop: bigloopRoute
+}
+
+// 纯函数：按路线 id 取路线对象，未知 id 兜底常规（老用户零感知）
+function getRoute(routeId) {
+  return ROUTES[routeId] || ROUTES.regular
+}
+
 // ===== 熏听分组与折算系数 =====
 // 「熏听」= about 页的方式三（听音频）。官方数据里不含任何素材，它只是个占位分组：
 // 家长在「我的资源」里挂自己的音频素材，打卡时按阶段系数折算为有效时长（见 LISTENING_FACTORS）。
-// 七个阶段统一补空数组（「是数组」即分组存在，这也是 getStageGroupKeys 的判定条件）。
-// 注：该分组属于程序占位、不属于路线内容，故无需同步根目录 qingba_listening_route.json。
+// 全路线阶段统一补空数组（「是数组」即分组存在，这也是 getStageGroupKeys 的判定条件）。
+// 注：该分组属于程序占位、不属于路线内容，故无需同步根目录 json。
 const LISTENING_GROUP_KEY = 'listening_audio'
 
-;(routeData.stages || []).forEach(stage => {
-  if (!stage.resources) stage.resources = {}
-  if (!Array.isArray(stage.resources[LISTENING_GROUP_KEY])) stage.resources[LISTENING_GROUP_KEY] = []
+// 常规路线补 prev_stage_ids（= 数组前序）。大循环的晋级链在 bigloop_route.js 内显式声明
+// （分叉结构：调整支线小段互相不构成链）。声明统一后，stagePicker 的链式标记逻辑
+// 全路线同一套代码，无「常规走数组、大循环走链」的分支。
+;(routeData.stages || []).forEach((stage, i, arr) => {
+  stage.prev_stage_ids = arr.slice(0, i).map(s => s.stage_id)
+})
+
+Object.keys(ROUTES).forEach(rid => {
+  ;(ROUTES[rid].stages || []).forEach(stage => {
+    if (!stage.resources) stage.resources = {}
+    if (!Array.isArray(stage.resources[LISTENING_GROUP_KEY])) stage.resources[LISTENING_GROUP_KEY] = []
+  })
 })
 
 // 熏听折算系数：按「打卡所属阶段」唯一确定，家长无需选难度。依据两处：
 //   1) about 页的时间计算：牛1-2 可听但不计入；牛3 ×0.5；牛4 及以后 ×0.8
 //   2) 各阶段主线里的牛津树素材（实测）：常规2 = L1-2、常规3 = L3、…、常规6 = L6、准桥梁 = L7
 //      → 常规N 对应牛N；常规1 无牛津树素材，落在「牛1-2」档
+// 大循环直接按小段牛N 对同一张档位表映射（牛N 是两条路线共享的难度度量），
+// 系数与调整/标准轨道无关。两路线 stage_id 命名空间不撞，合并一张表，无需感知路线。
+// ⚠️ factor 为打卡时固化快照：调整系数只影响新记录，历史记录口径不变。
 const LISTENING_FACTORS = {
   regular_1: 0,     // 牛1-2 档：可听，但不计入有效时长
   regular_2: 0,     // 牛1-2（主线素材为「牛津树L1-2」）
@@ -411,7 +454,17 @@ const LISTENING_FACTORS = {
   regular_4: 0.8,   // 牛4 及以后
   regular_5: 0.8,
   regular_6: 0.8,
-  pre_bridge: 0.8
+  pre_bridge: 0.8,
+  // 大循环：前置/一阶段依据 JSON 原文（「不计入时间」「可不听音频」，均已拍板为 0）
+  big_loop_pre: 0,                  // JSON 原文「听音频效率低，可尝试听，但不计入时间」
+  big_loop_1: 0,                    // JSON 原文「听音频能力较弱，所以可不听音频」
+  big_loop_2_adjust_niu1: 0,        // 牛1-2 档
+  big_loop_2_adjust_niu2: 0,        // 牛1-2 档
+  big_loop_2_adjust_niu3: 0.5,      // 牛3 档
+  big_loop_2_standard_niu4: 0.8,    // 牛4+ 档
+  big_loop_2_standard_niu5: 0.8,    // 牛4+ 档
+  big_loop_2_standard_niu6: 0.8,    // 牛4+ 档
+  big_loop_3: 0.8                   // 牛7-9，与常规准桥梁同档
 }
 
 // 记录的折算系数：仅熏听分组打折，其余分组恒为 1
@@ -428,7 +481,8 @@ function listeningTip(stageId, groupKey, minutes) {
   if (groupKey !== LISTENING_GROUP_KEY) return ''
   const f = LISTENING_FACTORS[stageId]
   if (typeof f !== 'number') return ''
-  if (f === 0) return '本阶段属于牛1-2 档：熏听可记录，但不计入有效时长'
+  // 通用表述：大循环前置/第一阶段没有牛N 档位，不能写「牛1-2 档」
+  if (f === 0) return '本阶段听音频可记录，但不计入有效时长'
   const pct = `×${f}`
   const m = Math.round(Number(minutes) || 0)
   return m > 0
@@ -543,6 +597,8 @@ function getRequiredHours(stage, opt) {
 
 module.exports = {
   routeData,
+  ROUTES,
+  getRoute,
   resourceLabels,
   LISTENING_GROUP_KEY,
   LISTENING_FACTORS,

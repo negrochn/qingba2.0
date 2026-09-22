@@ -45,7 +45,7 @@
   line-height: 1.4;
 }
 
-/* 欢迎卡：WeUI msg 范式（结果/引导页），无图标、单主操作 */
+/* 欢迎卡：WeUI msg 范式（结果/引导页）+ 配置 cell 分组（路线/阶段），无按钮 */
 .home-welcome {
   margin: 16rpx 32rpx 24rpx;
   padding: 64rpx 32rpx 48rpx;
@@ -69,8 +69,12 @@
   line-height: 1.6;
   color: var(--text2);
 }
-.home-welcome__opr-area {
-  margin-bottom: 48rpx;                    /* 卡片内收窄，不用 .weui-btn-area 的 96rpx */
+.home-welcome__cells {
+  margin-bottom: 40rpx;                    /* 卡内嵌配置列表：背景与卡片同为 --card，无缝 */
+  text-align: left;                        /* 外层 msg 范式的居中仅供标题/副文案/tips，cell 列表恢复左对齐，与设置页同构 */
+}
+.home-welcome__stage-hint {
+  color: var(--brand);                     /* 未设置 = 下一步动作，绿色值替代按钮引导 */
 }
 .home-welcome__tips {
   font-size: calc(28rpx * var(--fs, 1));   /* weui-msg__tips 14px */

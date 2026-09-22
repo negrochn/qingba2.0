@@ -7,7 +7,7 @@
 // 也免去原先「三组整页单选列表」依次展开的长表单。
 const resources = require('../../utils/resources.js')
 const checkin = require('../../utils/checkin.js')
-const { routeData, listeningFactor, listeningTip } = require('../../utils/data.js')
+const { listeningFactor, listeningTip } = require('../../utils/data.js')
 
 Page({
   data: {
@@ -40,7 +40,7 @@ Page({
     if (app && app.applyFontLevel) app.applyFontLevel(this)
 
     const today = checkin.todayStr()
-    const stages = (routeData.stages || []).map(s => ({ id: s.stage_id, name: s.stage_name }))
+    const stages = (checkin.getCurrentRoute().stages || []).map(s => ({ id: s.stage_id, name: s.stage_name }))
     this.setData({ todayStr: today, stages, stageNames: stages.map(s => s.name) })
 
     const id = (options && options.id) || ''

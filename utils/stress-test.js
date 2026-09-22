@@ -1,8 +1,8 @@
 // 压力测试数据生成
 // 按真实计划生成：每个阶段累计打卡约80-90小时，每日总时长15-60分钟，约12%的天数缺卡
 // 日期从今天往回推算
-const { routeData, resourceLabels } = require('./data.js')
-const { READ_COUNT_KEY, saveAll, setCurrentStage, setCompletedStages } = require('./checkin.js')
+const { resourceLabels } = require('./data.js')
+const { READ_COUNT_KEY, saveAll, setCurrentStage, setCompletedStages, getCurrentRoute } = require('./checkin.js')
 
 function genId() {
   return 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8)
@@ -66,7 +66,7 @@ function splitDuration(total) {
  * @returns {Object} 统计信息
  */
 function generateStressData(onProgress) {
-  const stages = routeData.stages // 7 stages
+  const stages = getCurrentRoute().stages // 当前路线的全部阶段（含大循环的 9 个）
 
   // 逐阶段"模拟"：按目标累计时长生成每日计划，null 表示缺卡
   const stagePlans = stages.map(stage => {
@@ -168,7 +168,8 @@ function generateStressData(onProgress) {
   saveAll(allCheckins)
   wx.setStorageSync(READ_COUNT_KEY, readCounts)
 
-  // 设置当前阶段为最后阶段（准桥梁），并把前序阶段标记完成（与首页引导一致）
+  // 设置当前阶段为最后阶段，并按晋级链标记前序完成（与 stagePicker 的链式写入一致：
+  // 大循环下调整支线与主线互不误标；常规路线 = 数组前序，行为不变）
   const lastIdx = stages.length - 1
   const lastStage = stages[lastIdx]
   if (lastStage) {
@@ -176,8 +177,15 @@ function generateStressData(onProgress) {
       id: lastStage.stage_id,
       name: lastStage.stage_name
     })
-    const done = stages.slice(0, lastIdx).map(s => s.stage_id)
-    setCompletedStages(done)
+    const chain = {}
+    ;(function walk(s) {
+      if (!s || chain[s.stage_id]) return
+      ;(s.prev_stage_ids || []).forEach(id => {
+        walk(stages.find(x => x.stage_id === id))
+      })
+      chain[s.stage_id] = true
+    })(lastStage)
+    setCompletedStages(Object.keys(chain))
   }
 
   // 各阶段统计

@@ -12,6 +12,7 @@
         <view class="weui-cell__bd_text">{{item.label}}</view>
         <view class="weui-cell__desc" wx:if="{{item.desc}}">{{item.desc}}</view>
       </view>
+      <text class="radio-list__meta" wx:if="{{item.meta}}">{{item.meta}}</text>
       <text class="weui-icon-checked iconfont icon-check" hidden="{{value !== item.key}}"></text>
     </view>
   </block>

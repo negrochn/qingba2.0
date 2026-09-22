@@ -1,0 +1,6 @@
+<view class="container {{fontClass}} {{darkClass}}">
+
+  <!-- 当前路线选择（整页单选列表，选中品牌绿对勾） -->
+  <c-radio-list items="{{items}}" value="{{selectedId}}" bindchange="onPick" />
+
+</view>

@@ -1,5 +1,5 @@
 const checkin = require('../../utils/checkin.js')
-const { routeData, getRequiredHours } = require('../../utils/data.js')
+const { getRequiredHours } = require('../../utils/data.js')
 const share = require('../../utils/share.js')
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -47,8 +47,7 @@ Page({
     sheetSummaryMain: '',
     sheetSummarySub: '',
     sheetItems: [],
-    firstStageName: routeData.stages[0].stage_name,
-    lastStageName: routeData.stages[routeData.stages.length - 1].stage_name
+    journeyText: ''
   },
 
   onLoad() {
@@ -81,6 +80,7 @@ Page({
 
     const cur = checkin.getCurrentStage()
     const stageId = cur ? cur.id : ''
+    const route = checkin.getCurrentRoute()
 
     // 本周一（周一为周起点）
     const daysSinceMonday = wd === 0 ? 6 : wd - 1
@@ -173,7 +173,7 @@ Page({
     // 阶段进度（与 route / stage 详情页完全同口径）
     let stagePercent = 0
     if (cur) {
-      const stageFull = routeData.stages.find(s => s.stage_id === cur.id)
+      const stageFull = route.stages.find(s => s.stage_id === cur.id)
       if (stageFull) {
         const required = getRequiredHours(stageFull, checkin.getTargetOption(cur.id))
         const minutes = required.type === 'accumulated'
@@ -198,13 +198,22 @@ Page({
       stagePercent,
       dayNumber,
       streakDays,
-      hasStage: !!cur
+      hasStage: !!cur,
+      journeyText: route.journeyText || '',
+      routeName: route.name || ''
     })
   },
 
   // 欢迎卡主操作：去选择当前阶段（stagePicker 选完 navigateBack 回首页）
   goStagePicker() {
     wx.navigateTo({ url: '/pages/stagePicker/stagePicker' })
+  },
+
+  // 欢迎卡次操作：去选择当前路线（routePicker 选完 navigateBack，
+  // onShow 自动刷新欢迎卡文案与路线名；阶段槽位按路线隔离，换路线后欢迎卡
+  // 会重新出现，引导为新路线选阶段）
+  goRoutePicker() {
+    wx.navigateTo({ url: '/pages/routePicker/routePicker' })
   },
 
   // 点「今日时长」/「今日打卡」打开今日明细弹窗（mode: minutes | count）

@@ -5,7 +5,7 @@
 //      老记录可能缺少 resourceId，此时按「阶段+分组+名称」回退匹配；
 //      factor 为时长折算系数（熏听分组按阶段取 0 / 0.5 / 0.8），缺省视为 1，故只在 ≠1 时写入
 
-const { routeData, listeningFactor } = require('./data.js')
+const { ROUTES, listeningFactor } = require('./data.js')
 
 const STORAGE_KEY = 'qingba_checkins'
 const CHUNK_PREFIX = 'qingba_checkins_' // 按月分片: qingba_checkins_2021-06
@@ -15,6 +15,7 @@ const TMP_CHUNK_PREFIX = CHUNK_PREFIX + 'tmp_'
 const DEFAULT_REMARK_KEY = 'qingba_default_remarks'
 const READ_COUNT_KEY = 'qingba_read_counts'
 const CURRENT_STAGE_KEY = 'qingba_current_stage'
+const CURRENT_ROUTE_KEY = 'qingba_current_route'   // 当前路线 id：'regular' | 'bigloop'
 const YOUQU_PLAN_KEY = 'qingba_youqu_plan'
 const LISTENING_ENABLED_KEY = 'qingba_listening_enabled'   // 熏听分组开关（控制分组显示与录入）
 const STAGE_DONE_KEY = 'qingba_stage_done'   // 已完成阶段 id 列表
@@ -842,6 +843,24 @@ function clearAllCheckins() {
   }
 }
 
+// 某阶段打卡记录条数（只读，不删任何数据；供清空范围页等展示「将清空多少条」）
+function countCheckinsByStage(stageId) {
+  try {
+    const all = getAll()
+    let count = 0
+    for (const day in all) {
+      const list = all[day]
+      if (!Array.isArray(list)) continue
+      list.forEach(c => {
+        if (c && c.stageId === stageId) count++
+      })
+    }
+    return count
+  } catch (e) {
+    return 0
+  }
+}
+
 // 清除某阶段的全部打卡记录（同时清除该阶段的已读次数与默认备注）
 // 保留其它阶段数据，返回被删除的记录条数
 function clearCheckinsByStage(stageId) {
@@ -1075,7 +1094,11 @@ let _officialIdMap = null
 function _getOfficialIdMap() {
   if (_officialIdMap) return _officialIdMap
   const map = {}
-  const stages = (routeData && routeData.stages) || []
+  // 全路线收集（两路线 stage_id 命名空间隔离，不会互撞）
+  const stages = []
+  Object.keys(ROUTES).forEach(rid => {
+    ;(ROUTES[rid].stages || []).forEach(st => stages.push(st))
+  })
   stages.forEach(st => {
     const stageMap = {}
     const res = st.resources || {}
@@ -1272,18 +1295,59 @@ function getResourceCheckinSummary(resourceId, resourceName, stageId, groupKey) 
   return { count, minutes }
 }
 
-// 当前阶段相关（无存储时返回 null，表示用户尚未设置）
+// ===== 当前路线 =====
+// 所有页面只服务当前路线（打卡记录/统计/资源均按路线隔离，见方案文档第四节）
+function getCurrentRouteId() {
+  try {
+    const id = wx.getStorageSync(CURRENT_ROUTE_KEY)
+    return ROUTES[id] ? id : 'regular'
+  } catch (e) {
+    return 'regular'
+  }
+}
+
+function setCurrentRouteId(id) {
+  try {
+    wx.setStorageSync(CURRENT_ROUTE_KEY, ROUTES[id] ? id : 'regular')
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
+// 当前路线完整对象 { id, name, stages }，页面用它替代写死的 routeData
+function getCurrentRoute() {
+  return ROUTES[getCurrentRouteId()] || ROUTES.regular
+}
+
+// ===== 当前阶段（按路线存槽位，切路线互不污染）=====
+// 键：qingba_current_stage_regular / qingba_current_stage_bigloop
+// 旧版本单键（qingba_current_stage）只在常规路线下读时兜底兼容，写入一律进新槽位
+function _currentStageStorageKey() {
+  return CURRENT_STAGE_KEY + '_' + getCurrentRouteId()
+}
+
 function getCurrentStage() {
   try {
-    const saved = wx.getStorageSync(CURRENT_STAGE_KEY)
+    const saved = wx.getStorageSync(_currentStageStorageKey())
     if (saved) return saved
+    if (getCurrentRouteId() === 'regular') {
+      const legacy = wx.getStorageSync(CURRENT_STAGE_KEY)
+      if (legacy) {
+        // 旧版本单键一次性迁移进新槽位并删除旧键：否则「清空路线数据」后
+        // clearCurrentStage 只清新槽位，legacy 键残留又被兜底读回，阶段清不掉
+        try { wx.setStorageSync(_currentStageStorageKey(), legacy) } catch (e2) {}
+        wx.removeStorageSync(CURRENT_STAGE_KEY)
+        return legacy
+      }
+    }
   } catch (e) {}
   return null
 }
 
 function setCurrentStage(stageData) {
   try {
-    wx.setStorageSync(CURRENT_STAGE_KEY, stageData)
+    wx.setStorageSync(_currentStageStorageKey(), stageData)
     return true
   } catch (e) {
     return false
@@ -1292,7 +1356,7 @@ function setCurrentStage(stageData) {
 
 function clearCurrentStage() {
   try {
-    wx.removeStorageSync(CURRENT_STAGE_KEY)
+    wx.removeStorageSync(_currentStageStorageKey())
     return true
   } catch (e) {
     return false
@@ -1350,6 +1414,7 @@ module.exports = {
   updateCheckin,
   deleteCheckin,
   clearAllCheckins,
+  countCheckinsByStage,
   clearCheckinsByStage,
   getAll,
   getByMonth,
@@ -1371,6 +1436,9 @@ module.exports = {
   getCurrentStage,
   setCurrentStage,
   clearCurrentStage,
+  getCurrentRouteId,
+  setCurrentRouteId,
+  getCurrentRoute,
   getCompletedStages,
   isStageDone,
   markStageDone,

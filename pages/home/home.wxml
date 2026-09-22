@@ -16,12 +16,29 @@
   <view class="home-welcome" wx:if="{{!hasStage}}">
     <view class="home-welcome__text-area">
       <view class="home-welcome__title">欢迎使用庆爸2.0</view>
-      <view class="home-welcome__desc">记录每天的英语听力投入，陪孩子从{{firstStageName}}一路走到{{lastStageName}}</view>
+      <view class="home-welcome__desc">{{journeyText}}</view>
     </view>
-    <view class="home-welcome__opr-area">
-      <button class="weui-btn weui-btn_primary weui-btn_block" bindtap="goStagePicker">选择当前阶段</button>
+    <view class="home-welcome__cells weui-cells">
+      <view class="weui-cell weui-cell_access" bindtap="goRoutePicker">
+        <view class="weui-cell__bd">
+          <view class="weui-cell__bd_text">当前路线</view>
+        </view>
+        <view class="weui-cell__ft">
+          <text class="weui-cell__ft_value">{{routeName}}</text>
+          <text class="iconfont icon-right"></text>
+        </view>
+      </view>
+      <view class="weui-cell weui-cell_access" bindtap="goStagePicker">
+        <view class="weui-cell__bd">
+          <view class="weui-cell__bd_text">当前阶段</view>
+        </view>
+        <view class="weui-cell__ft">
+          <text class="weui-cell__ft_value home-welcome__stage-hint">未设置</text>
+          <text class="iconfont icon-right"></text>
+        </view>
+      </view>
     </view>
-    <view class="home-welcome__tips">所有阶段均已开放，时间投入到位即可进入下一阶段</view>
+    <view class="home-welcome__tips">所有阶段均已开放，时间投入到位即可进入下一阶段；路线与阶段均可随时调整</view>
   </view>
 
   <block wx:else>

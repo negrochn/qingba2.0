@@ -3,7 +3,6 @@
 const customResources = require('../../utils/customResources.js')
 const resources = require('../../utils/resources.js')
 const checkin = require('../../utils/checkin.js')
-const { routeData } = require('../../utils/data.js')
 
 // 左滑删除按钮宽度（rpx），与样式 .swipe-bg / .swipe-del 保持一致（同打卡记录页）
 const DELETE_W = 150
@@ -57,7 +56,7 @@ Page({
     const sections = []
     let total = 0
 
-    ;(routeData.stages || []).forEach(stage => {
+    ;(checkin.getCurrentRoute().stages || []).forEach(stage => {
       const byGroup = all[stage.stage_id] || {}
       const groups = []
       // 渲染集合 = 该阶段「可见分组」∪「已挂有资源但当前不可见的分组」（典型：熏听开关被关掉）。
@@ -111,7 +110,7 @@ Page({
   // ===== 归属：阶段 + 分组两行原生 picker（联动） =====
   // 打开弹窗时初始化归属：阶段定位到目标阶段，分组定位到目标分组（找不到则取第一个）
   _initLocation(stageId, groupKey) {
-    const stageOptions = (routeData.stages || []).map(s => ({ id: s.stage_id, name: s.stage_name }))
+    const stageOptions = (checkin.getCurrentRoute().stages || []).map(s => ({ id: s.stage_id, name: s.stage_name }))
     let si = stageOptions.findIndex(s => s.id === stageId)
     if (si < 0) si = 0
     const id = stageOptions[si] ? stageOptions[si].id : ''
@@ -179,7 +178,7 @@ Page({
     const cur = checkin.getCurrentStage()
     const stageId = (cur && resources.getStageById(cur.id))
       ? cur.id
-      : ((routeData.stages[0] || {}).stage_id || '')
+      : (((checkin.getCurrentRoute().stages || [])[0] || {}).stage_id || '')
 
     this.setData({
       showSheet: true,

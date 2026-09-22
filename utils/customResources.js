@@ -10,7 +10,7 @@
 // 依赖方向：data.js ← checkin.js ← customResources.js
 
 const checkin = require('./checkin.js')
-const { routeData, resourceLabels } = require('./data.js')
+const { ROUTES, resourceLabels } = require('./data.js')
 
 const STORAGE_KEY = 'qingba_custom_resources'
 const MAX_NAME_LEN = 20
@@ -28,7 +28,15 @@ function _normalizeName(name) {
 }
 
 function _getStage(stageId) {
-  return (routeData.stages || []).find(s => s.stage_id === stageId) || null
+  // 全路线查找：自定义资源按 stage_id 隔离存储，历史数据可能属于另一条路线
+  // （编辑/迁移历史自定义资源时阶段必须可查），两路线命名空间隔离不会互撞
+  if (!stageId) return null
+  const rids = Object.keys(ROUTES)
+  for (let i = 0; i < rids.length; i++) {
+    const hit = (ROUTES[rids[i]].stages || []).find(s => s.stage_id === stageId)
+    if (hit) return hit
+  }
+  return null
 }
 
 // 该阶段官方数据里是否已存在该分组

@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "当前路线",
+  "usingComponents": {
+    "c-radio-list": "/components/radio-list/radio-list"
+  }
+}

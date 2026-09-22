@@ -59,7 +59,12 @@ Page({
     const y = ymParts[0]
     const m = ymParts[1]
 
-    const monthRecords = checkin.getByMonth(ym)
+    // 按当前路线过滤（记录页只展示当前路线的打卡，想看另一条路线去设置切换）。
+    // 记录不加路线字段，用路线的 stage_id 集合判断：两路线命名空间隔离，不会误伤，
+    // 已存记录零迁移。补录/编辑落库同理只写 stageId。
+    const routeStageIds = {}
+    ;(checkin.getCurrentRoute().stages || []).forEach(s => { routeStageIds[s.stage_id] = true })
+    const monthRecords = checkin.getByMonth(ym).filter(r => r && routeStageIds[r.stageId])
     monthRecords.sort((a, b) => b.timestamp - a.timestamp)
     const records = monthRecords.map(r => {
       // 熏听记录：主数值仍是原始时长，后面跟一个系数标记（×0.5 / ×0.8 / 不计入），

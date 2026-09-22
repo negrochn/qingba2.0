@@ -1,16 +1,10 @@
 // 设置页
 const checkin = require('../../utils/checkin.js');
 const customResources = require('../../utils/customResources.js');
-const { routeData } = require('../../utils/data.js');
+const { ROUTES } = require('../../utils/data.js');
 const { generateStressData } = require('../../utils/stress-test.js');
 const docx = require('../../utils/docx.js');
 const theme = require('../../utils/theme.js');
-
-// 构建阶段选项
-const stageOptions = routeData.stages.map(s => ({
-  id: s.stage_id,
-  name: s.stage_name
-}));
 
 // 获取「关于小程序」右侧显示文案：
 // 正式版读线上版本号；开发版 / 体验版读不到版本号，只显示环境（不做假版本号兜底）
@@ -31,7 +25,7 @@ function getAppVersionText() {
 Page({
   data: {
     totalCount: 0,
-    stageOptions,
+    currentRouteName: '',
     appVersionText: getAppVersionText(),
     // 开发者工具（压力测试）仅在开发版显示
     showDevTools: false,
@@ -68,6 +62,7 @@ Page({
     const app = getApp();
     if (app && app.applyFontLevel) app.applyFontLevel(this);
 
+    this.loadRoute();
     this.loadStats();
     this.loadCurrentStage();
     this.loadYouquPlan();
@@ -131,12 +126,25 @@ Page({
     this.setData({ listeningEnabled: enabled });
   },
 
-  // 加载当前阶段
+  // ===== 当前路线 =====
+  // 「当前路线」入口显示（具体选择在 routePicker 页进行，与「当前阶段」同款交互）。
+  // 切换发生在子页，返回时本页 onShow 自动刷新：loadCurrentStage 读的是新路线的槽位
+  loadRoute() {
+    const rid = checkin.getCurrentRouteId();
+    this.setData({ currentRouteName: ROUTES[rid] ? ROUTES[rid].name : '' });
+  },
+
+  goRoutePicker() {
+    wx.navigateTo({ url: '/pages/routePicker/routePicker' });
+  },
+
+  // 加载当前阶段（读当前路线的槽位，展示字段从当前路线数据补全）
   loadCurrentStage() {
     const saved = checkin.getCurrentStage();
+    const routeStages = checkin.getCurrentRoute().stages || [];
     if (saved) {
-      // 从 routeData 补全完整字段（兼容旧存储或默认值只有 id/name 的情况）
-      const routeStage = routeData.stages.find(s => s.stage_id === saved.id);
+      // 从当前路线补全完整字段（兼容旧存储或默认值只有 id/name 的情况）
+      const routeStage = routeStages.find(s => s.stage_id === saved.id);
       const fullData = routeStage ? {
         id: routeStage.stage_id,
         name: routeStage.stage_name,
@@ -145,7 +153,7 @@ Page({
         timeInvestment: routeStage.time_investment
       } : saved;
 
-      const index = stageOptions.findIndex(s => s.id === saved.id);
+      const index = routeStages.findIndex(s => s.stage_id === saved.id);
       this.setData({
         currentStageIndex: index >= 0 ? index : -1,
         currentStage: fullData,
@@ -547,7 +555,8 @@ Page({
 
       // 恢复当前阶段
       if (data.current_stage) {
-        wx.setStorageSync(checkin.CURRENT_STAGE_KEY, data.current_stage);
+        // 走槽位化接口写入（按当前路线存），不再直接写旧单键
+        checkin.setCurrentStage(data.current_stage);
       }
 
       // 恢复已完成阶段名单（合并模式：取并集）
@@ -610,8 +619,8 @@ Page({
   startClear(opt) {
     if (!opt) return;
 
-    const content = (!opt.key || opt.key === 'all')
-      ? '将清空全部打卡记录、已读次数与自定义资源，此操作不可恢复，是否继续？'
+    const content = opt.key === 'route'
+      ? `将清空${opt.label}：当前路线的打卡记录与自定义资源（另一条路线不受影响），并重置该路线的阶段进度，此操作不可恢复，是否继续？`
       : `将清空「${opt.label}」的所有打卡记录与该阶段的自定义资源，此操作不可恢复，是否继续？`;
 
     wx.showModal({
@@ -633,16 +642,26 @@ Page({
 
     setTimeout(() => {
       try {
-        if (!scope || scope === 'all') {
-          // 使用 clearAllCheckins 清除主 key + 所有分片 key
-          checkin.clearAllCheckins();
-          wx.removeStorageSync(checkin.DEFAULT_REMARK_KEY);
-          wx.removeStorageSync(checkin.READ_COUNT_KEY);
-          // 清空后回到初始未设置态：移除当前阶段与已完成名单（与首启引导一致）
+        if (scope === 'route') {
+          // 当前路线全部数据：逐阶段清记录/次数/备注与该阶段自定义资源，重置当前阶段
+          // 与完成标记；另一条路线不受影响（stage_id 命名空间隔离）；清完回到未设置态
+          const stages = checkin.getCurrentRoute().stages || [];
+          let removedTotal = 0;
+          stages.forEach(s => {
+            removedTotal += checkin.clearCheckinsByStage(s.stage_id);
+            customResources.clearByStage(s.stage_id);
+          });
           checkin.clearCurrentStage();
-          checkin.setCompletedStages([]);
-          // 连带清除全部自定义资源
-          customResources.clearAll();
+          const ids = {};
+          stages.forEach(s => { ids[s.stage_id] = true });
+          checkin.setCompletedStages(
+            checkin.getCompletedStages().filter(id => !ids[id])
+          );
+          if (!removedTotal) {
+            wx.hideLoading();
+            wx.showToast({ title: '该范围暂无数据', icon: 'none' });
+            return;
+          }
         } else {
           // 按阶段清除：仅删除该阶段的记录、已读次数与自定义资源
           const hasCustom = customResources.countByStage(scope) > 0;

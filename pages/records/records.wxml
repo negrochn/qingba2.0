@@ -73,7 +73,7 @@
 
   <view class="empty-wrap" wx:else>
     <view class="empty-icon">📖</view>
-    <view class="empty-text">本月暂无打卡记录</view>
-    <view class="empty-hint">在「路线」中点击资源即可开始打卡，或点上方「补录」补记</view>
+    <view class="empty-text">当前路线本月暂无打卡记录</view>
+    <view class="empty-hint">打卡与记录跟随当前路线展示，切换路线请到「我的」设置</view>
   </view>
 </view>

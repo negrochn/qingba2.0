@@ -1,7 +1,7 @@
 // 阶段目标时长设置页
 // 两层结构：默认档位（一个值管所有未单独设置的阶段）+ 各阶段自定义（填了就压过默认档）
 const checkin = require('../../utils/checkin.js')
-const { routeData, parseTargetHours, getRequiredHours } = require('../../utils/data.js')
+const { parseTargetHours, getRequiredHours } = require('../../utils/data.js')
 
 // 自定义目标的小时数范围（整数，与官方 time_investment 的 H 单位一致）
 const HOURS_MIN = 1
@@ -49,7 +49,7 @@ Page({
   refresh() {
     const mode = checkin.getTargetMode()
     const customMap = checkin.getCustomTargets()
-    const stages = routeData.stages.map(s => {
+    const stages = checkin.getCurrentRoute().stages.map(s => {
       const customHours = customMap[s.stage_id]
       const required = getRequiredHours(s, { mode, custom: customHours })
       return {
@@ -73,7 +73,7 @@ Page({
   // 点某阶段：打开目标时长弹层。快捷按钮取该阶段官方区间的两端（无区间时只有一个）
   onStageTap(e) {
     const { id, name } = e.currentTarget.dataset
-    const stage = routeData.stages.find(s => s.stage_id === id)
+    const stage = checkin.getCurrentRoute().stages.find(s => s.stage_id === id)
     const item = this.data.stages.find(s => s.id === id)
     if (!stage || !item) return
 

@@ -52,8 +52,11 @@
       bindtap="toStage"
     >
       <view class="weui-cell__bd">
-        <view class="weui-cell__bd_text route-name">{{item.stage_name}}</view>
-        <view class="route-meta">{{item.target_phase}} · {{item.vocabulary_target}} · {{item.time_investment}}</view>
+        <view class="weui-cell__bd_text route-name">
+          {{item.stage_name}}
+          <text wx:if="{{item.optional}}" class="route-badge">可选</text>
+        </view>
+        <view class="route-meta">{{item._metaText}}</view>
         <view class="route-req">
           <view class="route-req-row">
             <text class="route-req-label">进入</text>
@@ -73,6 +76,7 @@
             <text wx:if="{{item._state === 'current'}}" class="iconfont icon-right"></text>
             <text wx:elif="{{item._state === 'done'}}" class="iconfont icon-check"></text>
             <text wx:elif="{{item._state === 'locked'}}" class="iconfont icon-lock"></text>
+            <!-- optional（调整支线）：中性虚线节点，不显示锁 -->
           </view>
           <view class="route-node-line" wx:if="{{index < stageCount - 1}}"></view>
         </view>

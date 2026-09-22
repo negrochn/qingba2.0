@@ -3,6 +3,16 @@
   <!-- 学习设置 -->
   <view class="weui-cells__title">学习设置</view>
   <view class="weui-cells">
+    <view class="weui-cell weui-cell_access" bindtap="goRoutePicker">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text">当前路线</view>
+        <view class="weui-cell__desc">打卡、记录与统计均跟随当前路线</view>
+      </view>
+      <view class="weui-cell__ft">
+        <text class="weui-cell__ft_value">{{currentRouteName}}</text>
+        <text class="iconfont icon-right"></text>
+      </view>
+    </view>
     <view class="weui-cell weui-cell_access" bindtap="goStagePicker">
       <view class="weui-cell__bd">
         <view class="weui-cell__bd_text">当前阶段</view>

@@ -4,3 +4,12 @@
    因此深色三态与字号档位自动跟随，此处不需要任何重复定义。 */
 @import "../../styles/weui-cells.wxss";
 @import "../../styles/iconfont.wxss";
+
+/* 右侧 meta 小字（清空范围页的条数等），位于对勾左侧；不传不占位 */
+.radio-list__meta {
+  flex-shrink: 0;
+  margin-right: 16rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1.4;
+}

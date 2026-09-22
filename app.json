@@ -9,6 +9,7 @@
     "pages/settings/settings",
     "pages/stats/stats",
     "pages/stagePicker/stagePicker",
+    "pages/routePicker/routePicker",
     "pages/targetSetting/targetSetting",
     "pages/importPicker/importPicker",
     "pages/clearPicker/clearPicker",

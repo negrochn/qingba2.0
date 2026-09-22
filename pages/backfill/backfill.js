@@ -8,7 +8,7 @@
 // 单条记录的编辑在 pages/editRecord，两页职责分离
 const resources = require('../../utils/resources.js')
 const checkin = require('../../utils/checkin.js')
-const { routeData, LISTENING_GROUP_KEY, listeningFactor, listeningTip } = require('../../utils/data.js')
+const { LISTENING_GROUP_KEY, listeningFactor, listeningTip } = require('../../utils/data.js')
 
 const MAX_ROWS = 10 // 单天上限
 
@@ -69,7 +69,7 @@ Page({
     if (app && app.applyFontLevel) app.applyFontLevel(this)
 
     const today = checkin.todayStr()
-    const stages = (routeData.stages || []).map(s => ({ id: s.stage_id, name: s.stage_name }))
+    const stages = (checkin.getCurrentRoute().stages || []).map(s => ({ id: s.stage_id, name: s.stage_name }))
 
     // 默认阶段：当前阶段优先，否则第一个
     const cur = checkin.getCurrentStage()

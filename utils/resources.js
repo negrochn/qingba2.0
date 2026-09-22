@@ -3,7 +3,8 @@
 //
 // 依赖方向：data.js ← checkin.js ← customResources.js ← resources.js
 
-const { routeData, resourceLabels, LISTENING_GROUP_KEY } = require('./data.js')
+const { ROUTES, resourceLabels, LISTENING_GROUP_KEY } = require('./data.js')
+const { GROUP_KEY_ALIAS } = require('./bigloop_route.js')
 const customResources = require('./customResources.js')
 const checkin = require('./checkin.js')
 
@@ -21,8 +22,16 @@ const GROUP_ORDER = [
   'listening_audio'       // 熏听
 ]
 
+// 全路线查找（两路线 stage_id 命名空间隔离，不会互撞）；
+// 入参只带 stageId，按当前路线优先语义等价于精确命中
 function getStageById(stageId) {
-  return (routeData.stages || []).find(s => s.stage_id === stageId) || null
+  if (!stageId) return null
+  const rids = Object.keys(ROUTES)
+  for (let i = 0; i < rids.length; i++) {
+    const hit = (ROUTES[rids[i]].stages || []).find(s => s.stage_id === stageId)
+    if (hit) return hit
+  }
+  return null
 }
 
 // 熏听分组是否可见（设置页开关；读不到时按关闭处理）
@@ -35,15 +44,21 @@ function isListeningVisible() {
   }
 }
 
-// 该阶段官方数据里实际存在的分组（按 GROUP_ORDER 顺序）
+// 该阶段官方数据里实际存在的分组
+// 标准英文分组按 GROUP_ORDER 排序；非标准 key（大循环的官方中文分组，如「优选分级」）
+// 按数据原序殿后——不能只按 GROUP_ORDER 过滤，否则大循环分组会被整体滤掉
 // 熏听开关关闭时把该分组摘掉：不展示、不可打卡、资源归属里也不可选
 function getStageGroupKeys(stageId) {
   const stage = getStageById(stageId)
   if (!stage) return []
   const res = stage.resources || {}
-  const keys = GROUP_ORDER.filter(k => Array.isArray(res[k]))
-  if (isListeningVisible()) return keys
-  return keys.filter(k => k !== LISTENING_GROUP_KEY)
+  const present = Object.keys(res).filter(k => Array.isArray(res[k]))
+  const ordered = GROUP_ORDER.filter(k => present.indexOf(k) >= 0)
+  present.forEach(k => {
+    if (ordered.indexOf(k) < 0) ordered.push(k)
+  })
+  if (isListeningVisible()) return ordered
+  return ordered.filter(k => k !== LISTENING_GROUP_KEY)
 }
 
 function getGroupLabel(groupKey) {
@@ -62,15 +77,22 @@ function getStageResources(stageId) {
     out[k] = (res[k] || []).map(it => ({ id: it.id, name: it.name, custom: false }))
   })
 
-  // 自定义资源若其分组在该阶段官方数据里不存在，直接跳过不渲染
+  // 自定义资源若其分组在该阶段官方数据里不存在，直接跳过不渲染。
+  // 历史 key 归一：GROUP_KEY_ALIAS 是「中文标准名→标准 key」固定字典，历史存储里
+  // 挂旧同义变体 key（如「优选分级」「入门绘本」）的素材已不在表中、不再迁移
   const custom = customResources.getByStage(stageId) || {}
   for (const groupKey in custom) {
-    if (!out[groupKey]) continue
+    let gk = groupKey
+    if (!out[gk]) {
+      const aliased = GROUP_KEY_ALIAS[groupKey]
+      if (aliased && out[aliased]) gk = aliased
+    }
+    if (!out[gk]) continue
     const list = custom[groupKey]
     if (!Array.isArray(list)) continue
     list.forEach(it => {
       if (!it || !it.id || !it.name) return
-      out[groupKey].push({ id: it.id, name: it.name, custom: true })
+      out[gk].push({ id: it.id, name: it.name, custom: true })
     })
   }
   return out

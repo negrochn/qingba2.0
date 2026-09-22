@@ -1,0 +1,4 @@
+/* 当前路线选择页 - 原语：picker-page 整页单选列表，组件原语见全局 app.wxss */
+page {
+  background: var(--bg);
+}

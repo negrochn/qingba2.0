@@ -2,7 +2,7 @@
   <!-- 阶段资源（核心：打卡）放在上半区，突出入口 -->
   <view wx:if="{{resourceGroups.length}}">
     <view class="weui-cells__title">
-      {{stage.stage_name + '：积累' + stage.vocabulary_target + '（' + stage.time_investment + ' | ' + stage.target_phase + '）'}}
+      {{subtitle}}
     </view>
     <view class="res-wrap">
     <view class="res-list" wx:for="{{resourceGroups}}" wx:for-item="g" wx:key="key">
@@ -112,7 +112,7 @@
     <view class="weui-cells">
       <view class="weui-cell" wx:for="{{stage.key_points}}" wx:key="text">
         <view class="weui-cell__bd">
-          <text class="kp-text {{item.highlighted ? 'kp-text-hi' : ''}}">{{item.text}}</text>
+          <text class="kp-text"><block wx:for="{{item.segs}}" wx:for-item="seg" wx:key="t"><text class="{{seg.hi ? 'kp-text-hi' : ''}}">{{seg.t}}</text></block></text>
         </view>
       </view>
     </view>

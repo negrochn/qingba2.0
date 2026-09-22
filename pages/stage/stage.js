@@ -1,4 +1,4 @@
-const { routeData, getRequiredHours, listeningFactor, listeningTip } = require('../../utils/data.js')
+const { getRequiredHours, listeningFactor, listeningTip } = require('../../utils/data.js')
 const resources = require('../../utils/resources.js')
 const checkin = require('../../utils/checkin.js')
 const theme = require('../../utils/theme.js')
@@ -14,6 +14,29 @@ function parsePhaseNumber(text) {
 // 是否为常规阶段（含准桥梁，均支持晋级/达成目标）
 function isRegularStage(stageId) {
   return /^regular_\d+$/.test(stageId) || stageId === 'pre_bridge'
+}
+
+// 按晋级链找下一阶段：prev_stage_ids 含当前阶段的第一个（数组序主线优先）。
+// 大循环分叉结构下统一正确：
+//   一阶段 → 牛4（主线直达优先，而非调整支线）；牛4→5→6→三阶段；调整牛1→牛2→牛3；
+//   调整牛3 与三阶段找不到下一阶段 → 由调用方按「完成阶段」处理（牛3 走完后测试达标，
+//   由家长在阶段选择页切回主线牛4，符合官方「汇合」语义）
+function findNextStage(stages, curId) {
+  return (stages || []).find(s => (s.prev_stage_ids || []).indexOf(curId) >= 0) || null
+}
+
+// 关键要点统一为片段结构：大循环条目自带 segments（数据层「**」标记已解析为行内高亮片段），
+// 常规路线 {text, highlighted} 单段化，整条高亮折算到唯一片段——视图层单一通道渲染
+function withKpSegs(stage) {
+  if (!stage || !Array.isArray(stage.key_points)) return stage
+  return Object.assign({}, stage, {
+    key_points: stage.key_points.map(kp => ({
+      text: kp.text,
+      segs: (kp.segments && kp.segments.length)
+        ? kp.segments
+        : [{ t: kp.text, hi: !!kp.highlighted }]
+    }))
+  })
 }
 
 // 资源行左滑露出的操作区宽度（rpx）：读完 / 撤销 各 150rpx，与 .swipe-bg 样式保持一致
@@ -92,14 +115,15 @@ Page({
     this._syncDark()
 
     const index = Number(options.index)
+    const routeStages = checkin.getCurrentRoute().stages || []
     // 索引非法时提示并返回，避免停在空白页无法退出
-    if (isNaN(index) || index < 0 || index >= routeData.stages.length) {
+    if (isNaN(index) || index < 0 || index >= routeStages.length) {
       wx.showToast({ title: '阶段不存在', icon: 'none' })
       setTimeout(() => { wx.navigateBack() }, 800)
       return
     }
 
-    const stage = routeData.stages[index]
+    const stage = routeStages[index]
     if (!stage) {
       wx.showToast({ title: '阶段不存在', icon: 'none' })
       setTimeout(() => { wx.navigateBack() }, 800)
@@ -109,7 +133,7 @@ Page({
     // 计算当前阶段索引，判断状态
     const currentStage = checkin.getCurrentStage()
     let currentIndex = -1
-    routeData.stages.forEach((s, i) => {
+    routeStages.forEach((s, i) => {
       if (currentStage && s.stage_id === currentStage.id) currentIndex = i
     })
     const stageStatus = currentIndex < 0 ? 'locked' :
@@ -129,8 +153,18 @@ Page({
       })
     })
 
+    // 标题行按存在性组装：大循环调整小段官方即无 target/time_investment（切入级别
+    // 看测试结果，与 TARGET_PHASE 缺省空的注释同源），空值直接跳过对应片段，
+    // 不再拼出「积累undefined（undefined | ）」
+    let subtitle = stage.stage_name
+    const metaTail = []
+    if (stage.time_investment) metaTail.push(stage.time_investment)
+    if (stage.target_phase) metaTail.push(stage.target_phase)
+    if (stage.vocabulary_target) subtitle += '：积累' + stage.vocabulary_target
+    if (metaTail.length) subtitle += '（' + metaTail.join(' | ') + '）'
+
     wx.setNavigationBarTitle({ title: stage.stage_name })
-    this.setData({ stage, stageIndex: index, stageLocked, stageStatus, resourceGroups: groups })
+    this.setData({ stage: withKpSegs(stage), subtitle, stageIndex: index, stageLocked, stageStatus, resourceGroups: groups })
     this._refreshResTotals()
     this._refreshReadCounts()
     this._refreshPromoteInfo()
@@ -145,7 +179,7 @@ Page({
       // 重新计算状态（当前阶段可能在设置页改变）
       const currentStage = checkin.getCurrentStage()
       let currentIndex = -1
-      routeData.stages.forEach((s, i) => {
+      ;(checkin.getCurrentRoute().stages || []).forEach((s, i) => {
         if (currentStage && s.stage_id === currentStage.id) currentIndex = i
       })
       const idx = this.data.stageIndex
@@ -167,9 +201,10 @@ Page({
     const stage = this.data.stage
     if (!stage) return
 
-    const isRegular = isRegularStage(stage.stage_id)
+    // 晋级/达成目标对所有阶段开放（常规 + 大循环主线 + 调整支线小段均可；
+    // 支线小段无固定 phase 目标，target_phase 为空时走直接确认分支）
     const isCurrent = this.data.stageStatus === 'current'
-    const isLastStage = this.data.stageIndex >= routeData.stages.length - 1
+    const isLastStage = !findNextStage(checkin.getCurrentRoute().stages, stage.stage_id)
     const alreadyDone = checkin.isStageDone(stage.stage_id)
     const required = getRequiredHours(stage, checkin.getTargetOption(stage.stage_id))
 
@@ -192,8 +227,8 @@ Page({
 
     // isLastStage / alreadyDone 只参与上面的文案与准入判断，无需下发到视图
     this.setData({
-      canPromote: isRegular && isCurrent && !alreadyDone,
-      promoteEnabled: isRegular && isCurrent && timeMet && !alreadyDone,
+      canPromote: isCurrent && !alreadyDone,
+      promoteEnabled: isCurrent && timeMet && !alreadyDone,
       requiredHours: required.hours,
       investedHoursText: `${(+hours).toFixed(1)}`.replace(/\.0$/, ''),
       timeMet,
@@ -231,7 +266,7 @@ Page({
       })
     } else {
       // 未开启：直接确认（晋级或达成目标）
-      const isLast = this.data.stageIndex >= routeData.stages.length - 1
+      const isLast = !findNextStage(checkin.getCurrentRoute().stages, stage.stage_id)
       wx.showModal({
         title: isLast ? '确认完成阶段' : '确认晋级',
         content: isLast
@@ -303,8 +338,9 @@ Page({
   // 执行晋级
   doPromote() {
     const stage = this.data.stage
-    // 最后阶段（准桥梁）：不推进，显式记录为已完成（达成目标）
-    if (this.data.stageIndex >= routeData.stages.length - 1) {
+    const routeStages = checkin.getCurrentRoute().stages || []
+    // 终点阶段（常规准桥梁 / 大循环第三阶段 / 调整牛3）：不推进，显式记录为已完成（达成目标）
+    if (!findNextStage(routeStages, stage.stage_id)) {
       checkin.markStageDone(stage.stage_id)
       wx.showToast({
         // 文案压到 6 个汉字以内：带 icon 的 toast 标题超过约 7 个汉字会被截断
@@ -316,8 +352,14 @@ Page({
       return
     }
 
-    const nextIndex = this.data.stageIndex + 1
-    const nextStage = routeData.stages[nextIndex]
+    // 按晋级链推进（大循环分叉结构下主线优先：一阶段 → 标准牛4，而非调整支线）
+    const nextStage = findNextStage(routeStages, stage.stage_id)
+    if (!nextStage) {
+      checkin.markStageDone(stage.stage_id)
+      wx.showToast({ title: `已达成：${stage.stage_name}`, icon: 'success' })
+      this._backToRoute()
+      return
+    }
 
     this._applyPromote(nextStage)
   },

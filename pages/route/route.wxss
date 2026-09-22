@@ -49,6 +49,9 @@
 .route-node.done    { border-color: var(--brand); color: var(--brand); }   /* 已完成：品牌绿描边 + 绿图标 */
 .route-node.locked  { border: 0; }   /* 未解锁：去描边，仅靠灰底 + 锁图标表达 */
 /* unset（未设置当前阶段）：不额外设规则，沿用中性描边空圈，表达"待选择"而非"未解锁" */
+/* optional（大循环调整支线小段）：中性虚线空圈 + 微降不透明度——
+   「可选补救路径」而非「未解锁」；「可跳过」语义由名称旁文字徽标传达 */
+.route-node.optional { border-style: dashed; opacity: 0.75; }
 
 /* 连接线：无节点时贯穿整行高度（末行无线） */
 .route-node-line {
@@ -63,6 +66,21 @@
 .route-name {
   font-size: calc(34rpx * var(--fs, 1));   /* 17px 主文，字重同全局 .weui-cell__bd_text（400） */
   color: var(--text);
+}
+/* 「可选」徽标（大循环调整支线）：低调小 tag——支线是极少数用户才碰的路径，
+   不能抢主线时间线视觉；颜色走变量，深色自动适配 */
+.route-badge {
+  display: inline-block;
+  margin-left: 12rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+  font-size: calc(20rpx * var(--fs, 1));
+  font-weight: 400;
+  line-height: 1.4;
+  vertical-align: middle;
+  color: var(--text3);
+  background: var(--card2);
+  border: 1rpx solid var(--divider);
 }
 .route-meta {
   font-size: calc(28rpx * var(--fs, 1));   /* 14px 次级 */

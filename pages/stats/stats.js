@@ -1,7 +1,6 @@
 // 数据统计（累计视图）：顶部阶段选择器 + 核心时长 / 打卡时长分布 / 分组对比 / 排行榜
 // 原「阶段统计详情」页已合并到本页，用顶部选择器切换阶段（参考打卡记录页的月份选择器）
 const checkin = require('../../utils/checkin.js')
-const { routeData } = require('../../utils/data.js')
 const resources = require('../../utils/resources.js')
 const theme = require('../../utils/theme.js')
 const echarts = require('../../utils/echarts')
@@ -370,8 +369,13 @@ Page({
     const app = getApp()
     if (app && app.applyFontLevel) app.applyFontLevel(this)
     this.setData({ darkClass: theme.getDarkClass() })
+    this._initStageOptions()
+  },
 
-    const stageOptions = (routeData.stages || []).map(s => ({
+  // 阶段选择器初始化：数据源 = 当前路线的 stages（聚合逻辑按 stageId，天然路线无关）
+  _initStageOptions() {
+    this._loadedRouteId = checkin.getCurrentRouteId()
+    const stageOptions = (checkin.getCurrentRoute().stages || []).map(s => ({
       stage_id: s.stage_id,
       stage_name: s.stage_name
     }))
@@ -388,6 +392,11 @@ Page({
     const app = getApp()
     if (app && app.applyFontLevel) app.applyFontLevel(this)
     this.setData({ darkClass: theme.getDarkClass() })
+    // 路线可能在设置页被切换：路线变了整体重建选择器与选中态
+    if (this._loadedRouteId !== checkin.getCurrentRouteId()) {
+      this._initStageOptions()
+      return
+    }
     // 数据可能在其它页变更，每次展示重算
     if (this.data.stage) this._recompute()
   },
@@ -423,7 +432,7 @@ Page({
   _applyStageIndex(idx) {
     const opt = this.data.stageOptions[idx]
     if (!opt) return
-    const stage = (routeData.stages || []).find(s => s.stage_id === opt.stage_id) || null
+    const stage = (checkin.getCurrentRoute().stages || []).find(s => s.stage_id === opt.stage_id) || null
     if (!stage) return
     this.setData({
       stage,
