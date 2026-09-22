@@ -6,6 +6,7 @@
     "pages/records/records",
     "pages/stage/stage",
     "pages/about/about",
+    "pages/about-bigloop/about-bigloop",
     "pages/settings/settings",
     "pages/stats/stats",
     "pages/stagePicker/stagePicker",

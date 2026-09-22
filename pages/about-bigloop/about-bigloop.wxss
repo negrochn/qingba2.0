@@ -1,0 +1,14 @@
+/* ====== 大循环路线介绍 - 文章写法 ======
+   排版 token / 列表 / 阶段参考 / 方式分区样式全部复用 about.wxss（@import 单一维护点，
+   两页文章体系天然一致）；本页仅补「可选支线」文字徽标一个原语。 */
+@import "../about/about.wxss";
+
+/* 「可选支线」徽标（route / stagePicker 同款「可选」语义）：纯文字低调呈现，
+   字号取文章注脚档，颜色 text3 —— 是属性提示，不抢阶段名层级 */
+.about-tag {
+  margin-left: 12rpx;
+  font-size: calc(var(--art-note) * var(--fs, 1));
+  line-height: calc(var(--art-note-lh) * var(--fs, 1));
+  font-weight: 400;
+  color: var(--text3);
+}

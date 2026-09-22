@@ -34,6 +34,9 @@ Page({
   goAbout() {
     wx.navigateTo({ url: '/pages/about/about' });
   },
+  goAboutBigloop() {
+    wx.navigateTo({ url: '/pages/about-bigloop/about-bigloop' });
+  },
   goSettings() {
     wx.navigateTo({ url: '/pages/settings/settings' });
   },

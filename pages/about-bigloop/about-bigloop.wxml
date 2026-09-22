@@ -1,0 +1,122 @@
+<view class="container {{fontClass}} {{darkClass}}">
+  <view class="weui-article">
+
+    <view class="weui-article__h1">大循环路线 · 虚构类</view>
+    <view class="weui-article__note">说明：本小程序仅作英语启蒙路线、资源与经验的信息展示，以及个人学习时长的打卡记录，不含课程教学、付费内容及师生互动功能。</view>
+
+    <!-- 路线介绍（静态成文，内容均取自官方素材表述） -->
+    <view class="weui-article__h2">路线介绍</view>
+    <view class="weui-article__p">大循环是区别于常规路径的另一条英语听力启蒙路线，整体结构为：前置阶段 → 第一阶段 → 第二阶段 → 第三阶段，终点标志是<text class="weui-article__strong">小猪佩奇可裸听</text>。其中第二阶段按第一阶段结束后的小小优趣测试结果分双轨推进：</view>
+    <view class="about-list">
+      <view class="about-li">测试达标（稳定新版phase12+）：直接进入标准主线，牛4 → 牛5 → 牛6</view>
+      <view class="about-li">测试不达标：切入可选的调整支线（牛1 → 牛2 → 牛3），按公式补足时间差后汇合回标准主线</view>
+    </view>
+    <view class="weui-article__p"><text class="weui-article__strong">大循环第一阶段只需一套核心素材——牛津树校园拓展版牛1-6，需整体亲子共读3遍，这个是第一阶段的绝对核心。</text>如果买不到毛毛虫版本的牛津树，可以考虑用典范英语替代（剔除里面的家庭版和DD部分）。</view>
+    <view class="weui-article__p">调整策略并非所有孩子都需用到——恰恰相反，如果前置阶段基础很扎实，95%的孩子是用不到这个阶段的，或者只需要用牛3小段进行短时微调整。若已补足120小时测试结果依旧没有进步，庆爸建议转常规路线。</view>
+    <view class="weui-article__p">全路线共 9 个阶段：前置阶段、第一阶段、调整支线牛1-3、标准主线牛4-6、第三阶段。各阶段的投入时间、准入与晋级标准见下方阶段参考；目标与达标判断、逐阶段素材与要点随后列出。</view>
+
+    <!-- 阶段参考（数据驱动：官方格式化终稿直出） -->
+    <view class="weui-article__h2">阶段参考</view>
+    <view class="weui-article__section about-stages">
+      <view class="about-stage" wx:for="{{stages}}" wx:key="stage_name" wx:for-item="st">
+        <view class="about-stage__name">{{st.stage_name}}<text class="about-tag" wx:if="{{st.optional}}">可选支线</text></view>
+        <view class="about-list">
+          <view class="about-li" wx:if="{{st.time_investment}}">时间投入建议：<text class="weui-article__strong">{{st.time_investment}}</text></view>
+          <view class="about-li">准入标准：<text class="weui-article__strong">{{st.entry_requirement}}</text></view>
+          <view class="about-li">晋级参考：<text class="weui-article__strong">{{st.promotion_standard}}</text></view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 目标与达标判断（静态成文，取自官方文档前置/第一阶段的目标与达标判断及调整策略判据） -->
+    <view class="weui-article__h2">目标与达标判断</view>
+    <view class="weui-article__p">判断达标与否，<text class="weui-article__strong">启蒙时间是最核心的判定指标，时间必须得花够</text>。时间花够的前提下，可以用小小优趣飞行测试辅助判断。时间没有花够，<text class="weui-article__strong">即使测试结果满足要求，也尽量补全时间投入</text>，因为测试可能存在<text class="weui-article__strong">误差或伴有随机性</text>。</view>
+    <view class="weui-article__section about-stages">
+      <view class="about-stage">
+        <view class="about-stage__name">前置阶段</view>
+        <view class="about-list">
+          <view class="about-li">阶段目标：积累<text class="weui-article__strong">200-300 听力词汇量</text></view>
+          <view class="about-li">达标判断：小小优趣<text class="weui-article__strong">旧版P3及以上 / 新版Phase5及以上</text></view>
+        </view>
+      </view>
+      <view class="about-stage">
+        <view class="about-stage__name">第一阶段</view>
+        <view class="about-list">
+          <view class="about-li">阶段目标：听力词汇量稳定在<text class="weui-article__strong">800+</text></view>
+          <view class="about-li">达标判断：<text class="weui-article__strong">牛1-6三遍亲子共读全程比较专注甚至一直有互动、且累计时间投入60-80小时</text>，大概率没问题</view>
+          <view class="about-li">测试辅助：三遍结束后最好用小小优趣飞行测试辅助判断：<text class="weui-article__strong">旧版P8及以上 / 新版Phase12及以上</text></view>
+        </view>
+      </view>
+    </view>
+    <view class="weui-article__h4">三遍完成但测试不达标</view>
+    <view class="weui-article__p">统计前置阶段+第一阶段的启蒙时间，用「<text class="weui-article__strong">120小时 − 两者之和</text>」以调整策略补全时间差，调整策略具体切入级别看测试结果。</view>
+    <view class="weui-article__h4">路径的二次选择</view>
+    <view class="weui-article__p">如果家长们发现在前置阶段，孩子对整体素材的接受度比较高，<text class="weui-article__strong">并没有中文强势</text>，虽然一开始选择了大循环，但大循环一阶段开始前，仍可调整到常规路径。常规路径成功率<text class="weui-article__strong">几乎100%</text>，但大循环一阶段横跨6个难度，即使有200词前置，<text class="weui-article__strong">也会有5%失败率</text>。</view>
+
+    <!-- 逐阶段素材与要点（静态成文：按官方《大循环素材汇总2.0》整理，数据在页面 js 的
+         DOC_STAGES，与路线数据层解耦；「**」标记解析为行内加粗，渲染通道同阶段页） -->
+    <view class="weui-article__h2">逐阶段素材与要点</view>
+    <view class="weui-article__section about-stages">
+      <view class="about-stage" wx:for="{{docStages}}" wx:key="name" wx:for-item="st">
+        <view class="about-stage__name">{{st.name}}<text class="about-tag" wx:if="{{st.tag}}">{{st.tag}}</text></view>
+        <view class="about-list" wx:if="{{st.intro}}"><view class="about-li">{{st.intro}}</view></view>
+        <view class="about-list" wx:if="{{st.groups.length}}">
+          <view class="about-li" wx:for="{{st.groups}}" wx:for-item="g" wx:key="label">{{g.label}}：{{g.items}}</view>
+        </view>
+        <block wx:if="{{st.points.length}}">
+          <view class="weui-article__h4" wx:if="{{st.pointsTitle}}">{{st.pointsTitle}}</view>
+          <view class="about-list">
+            <view class="about-li" wx:for="{{st.points}}" wx:for-item="kp" wx:key="key"><block wx:for="{{kp.segs}}" wx:for-item="seg" wx:key="t"><text class="{{seg.hi ? 'weui-article__strong' : ''}}">{{seg.t}}</text></block></view>
+          </view>
+        </block>
+      </view>
+    </view>
+
+    <!-- 使用说明（与常规页同源三方式，差异处为大循环口径） -->
+    <view class="weui-article__h2">使用说明</view>
+    <view class="weui-article__section about-methods">
+
+      <view class="about-method">
+        <view class="weui-article__h3">方式一：亲子共读</view>
+        <view class="weui-article__p">· 参考方式：<text class="weui-article__strong">孩子专注的看图和听，家长读英文（也可用点读笔点英文）</text></view>
+        <view class="weui-article__h4">注意事项</view>
+        <view class="about-ol">
+          <view class="about-oli">不能让孩子跟读，不要给孩子指读，不能让孩子复述，也不要问孩子问题。</view>
+          <view class="about-oli">如果孩子已经认字，<text class="weui-article__strong">一定要把文字遮住</text>，不然孩子看字时，是无法同时理解声音的。</view>
+          <view class="about-oli">亲子共读时，尽量选放松场景，并时刻关注孩子的状态，<text class="weui-article__strong">「无压+高兴趣+高专注度」对内化至关重要！</text></view>
+          <view class="about-oli">若家长非常担心孩子不懂或纯英文共读时，孩子专注度不够，可考虑用<text class="weui-article__strong">汪培珽亲子共读法</text>（搜：亲子共读法），然后逐步撤掉。但每阶段时间投入需按<text class="weui-article__strong">80H</text>来算。</view>
+          <view class="about-oli">大循环第一阶段例外：<text class="weui-article__strong">牛津树牛1-6需整体亲子共读3遍</text>，是绝对核心；除此之外不做统一遍数要求，只要孩子喜欢，就可多重复，不设上限，若孩子重复腻了，则可横向换同级别其他素材。</view>
+        </view>
+      </view>
+
+      <view class="about-method">
+        <view class="weui-article__h3">方式二：看动画</view>
+        <view class="weui-article__p">· 参考方式：选择和孩子难度贴近的动画，<text class="weui-article__strong">每天20-30分钟！牛4之前，动画可只看不听或少量听，如果孩子接受重复看，可多看多听，不用限制孩子喜欢素材的重复遍数！</text></view>
+        <view class="weui-article__h4">注意事项</view>
+        <view class="about-ol">
+          <view class="about-oli">如果孩子已对文字敏感，<text class="weui-article__strong">看动画时一定要选无字幕版本</text>，如果找不到无字幕版本，一定要物理遮挡字幕。</view>
+          <view class="about-oli">在孩子看动画时，<text class="weui-article__strong">尽量不要打断孩子，也不要逐句翻译</text>，更不要询问或考察孩子是否懂（比如让孩子复述）。只要选择的动画难度和孩子水平符合，内化就不会有问题。若孩子听音频时表示听不太懂，可考虑过一下<text class="weui-article__strong">动画台词本</text>，有静态画面支撑，再去联想动态画面，会更轻松一些。</view>
+        </view>
+        <view class="weui-article__h4">小小优趣成长计划</view>
+        <view class="weui-article__p">有不少家长办理了小小优趣Svip的会员，里面有一个成长计划，可以看动画，然后玩一玩里面自带的几个游戏，可用来加强和巩固！</view>
+        <view class="weui-article__p">目前在<text class="weui-article__strong">phase13及之前</text>的成长计划（小猪佩奇之前），推荐的动画都还比较合理，<text class="weui-article__strong">phase13以后</text>的成长计划不少动画难度突然拔高太多。所以如果家长想跟成长计划的话，<text class="weui-article__strong">phase13及以前的可以参考下文素材篇中推荐的级别去对应使用。</text></view>
+      </view>
+
+      <view class="about-method">
+        <view class="weui-article__h3">方式三：听音频</view>
+        <view class="weui-article__p">· 参考方式：<text class="weui-article__strong">读过的分级，看过的动画，如果孩子不排斥，都可让孩子听一听（动画音频的切入成功率会更高一些）！</text></view>
+        <view class="weui-article__h4">注意事项</view>
+        <view class="about-ol">
+          <view class="about-oli">听音频需要脱离画面，仅靠声音去回忆画面，在<text class="weui-article__strong">牛4以前</text>，孩子的语法结构尚未打通，所以难度是存在的，甚至有些孩子会排斥听，可慢慢引导，不要操之过急。</view>
+          <view class="about-oli">大部分孩子做不到坐那完全专注听音频，一般只需确保<text class="weui-article__strong">听音频环境相对安静</text>，然后没有频繁合并其他动脑事件，就可算有效听力输入时间。不过孩子水平越低，听音频内化效果越差，不同阶段，有效时间要打折。</view>
+        </view>
+        <view class="weui-article__h4">时间计算</view>
+        <view class="weui-article__p"><text class="weui-article__strong">亲子共读×1 + 动画×1 + 音频×(0.5或0.8)</text></view>
+        <view class="weui-article__p">亲子共读和看动画（或用融合app）时间可按1:1计算，听音频时间需在有效时间基础上进一步打折，<text class="weui-article__strong">牛1-2阶段，可听音频但不计入；牛3阶段，×0.5；牛4阶段及以后，×0.8</text>。当素材难度级别超出孩子水平2个级别+，直接无效，不计入！</view>
+        <view class="weui-article__p">大循环特有：前置阶段、第一阶段没有对应牛N档位，孩子听音频能力较弱，<text class="weui-article__strong">可尝试听但不计入有效时长</text>（若一定要听，建议听动画音频）。调整策略的用时按官方公式计算：调整策略用时 = 120小时 − 前置阶段用时 − 大循环一阶段用时。</view>
+      </view>
+
+    </view>
+
+  </view>
+</view>

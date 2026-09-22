@@ -1,10 +1,15 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- 关于 -->
+  <!-- 路线介绍（两路线独立页面、独立入口） -->
   <view class="weui-cells mb-16">
     <view class="weui-cell weui-cell_access" bindtap="goAbout">
       <view class="weui-cell__hd"><text class="iconfont icon-info"></text></view>
-      <view class="weui-cell__bd">关于庆爸2.0</view>
+      <view class="weui-cell__bd">常规路线介绍</view>
+      <view class="weui-cell__ft"><text class="iconfont icon-right"></text></view>
+    </view>
+    <view class="weui-cell weui-cell_access" bindtap="goAboutBigloop">
+      <view class="weui-cell__hd"><text class="iconfont icon-info"></text></view>
+      <view class="weui-cell__bd">大循环路线介绍</view>
       <view class="weui-cell__ft"><text class="iconfont icon-right"></text></view>
     </view>
   </view>

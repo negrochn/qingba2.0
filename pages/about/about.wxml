@@ -7,13 +7,13 @@
     <!-- 路线介绍 -->
     <view class="weui-article__h2">路线介绍</view>
     <view class="weui-article__p">3-4岁的孩子，一般来说，只能走常规路径，因为大循环第一阶段横跨了6个难度，年龄越小的孩子，越容易出现卡认知的情况，表现为：到了牛5-6级别，专注度明显下滑或情节理解困难等等。</view>
-    <view class="weui-article__p"><text class="weui-article__strong">所以，对于3-4岁的孩子，常规路线才是更优选择。这个阶段的孩子，往往能普遍接受低级别素材，对低级别素材能保持较好的兴趣度和较高的专注度。家长们只需关注以下三个要点，基本可保证顺利推进。</text></view>
+    <view class="weui-article__p"><text class="weui-article__strong">所以，对于3-4岁的孩子，常规路线才是更优选择。这个阶段的孩子，往往能普遍接受低级别素材，对低级别素材能保持较好的兴趣度和较高的专注度。家长们只需把握好以下三个核心要点，几乎可确保100%的成功率。</text></view>
     <view class="about-list">
       <view class="about-li">把握住孩子的听力水平</view>
       <view class="about-li">匹配好符合孩子水平的素材</view>
       <view class="about-li">方法用对的前提下，将时间投入到位</view>
     </view>
-    <view class="weui-article__p">常规路径共分7个阶段，分为常规1-6阶段+准桥梁阶段，每个阶段庆爸都给出了对应的投入时间和晋级参考。</view>
+    <view class="weui-article__p">常规路径共分7个阶段，分为常规1-6阶段+准桥梁阶段，每个阶段的时间投入、准入标准与晋级标准见下一章。</view>
 
     <!-- 阶段参考 -->
     <view class="weui-article__h2">阶段参考</view>
@@ -76,6 +76,26 @@
       </view>
     </view>
 
+    <view class="weui-article__p">其中，<text class="weui-article__strong">时间投入是最核心的标准，甚至可以当作唯一的晋级标准</text>。当时间投入不够时，孩子的听力水平大概率是到不了对应水平的。<text class="weui-article__strong">若时间投入不够，哪怕测试结果达标，晋级也需谨慎，因为时间投入是实打实的，但测试结果可能存在误差。</text>如果时间投入到位，且测试结果也达标，则可放心晋级。</view>
+
+    <!-- 逐阶段素材与要点（数据驱动：与阶段详情页同源，分组按官方 GROUP_ORDER 排序，
+         熏听等空占位分组不出现；要点行内高亮与阶段页同一渲染通道） -->
+    <view class="weui-article__h2">逐阶段素材与要点</view>
+    <view class="weui-article__section about-stages">
+      <view class="about-stage" wx:for="{{stages}}" wx:key="stage_name" wx:for-item="st">
+        <view class="about-stage__name">{{st.stage_name}}</view>
+        <view class="about-list" wx:if="{{st.groups.length}}">
+          <view class="about-li" wx:for="{{st.groups}}" wx:for-item="g" wx:key="key">{{g.label}}：{{g.itemsText}}</view>
+        </view>
+        <block wx:if="{{st.keyPoints.length}}">
+          <view class="weui-article__h4">要点</view>
+          <view class="about-list">
+            <view class="about-li" wx:for="{{st.keyPoints}}" wx:for-item="kp" wx:key="text"><block wx:for="{{kp.segs}}" wx:for-item="seg" wx:key="t"><text class="{{seg.hi ? 'weui-article__strong' : ''}}">{{seg.t}}</text></block></view>
+          </view>
+        </block>
+      </view>
+    </view>
+
     <!-- 使用说明 -->
     <view class="weui-article__h2">使用说明</view>
     <view class="weui-article__section about-methods">
@@ -89,7 +109,7 @@
           <view class="about-oli">如果孩子已经认字，<text class="weui-article__strong">一定要把文字遮住</text>，不然孩子看字时，是无法同时理解声音的。</view>
           <view class="about-oli">亲子共读时，尽量选放松场景，并时刻关注孩子的状态，<text class="weui-article__strong">「无压+高兴趣+高专注度」对内化至关重要！</text></view>
           <view class="about-oli">若家长非常担心孩子不懂或纯英文共读时，孩子专注度不够，可考虑用<text class="weui-article__strong">汪培珽亲子共读法</text>（搜：亲子共读法），然后逐步撤掉。但每阶段时间投入需按<text class="weui-article__strong">80H</text>来算。</view>
-          <view class="about-oli">不同于常规路线1.0版，2.0版<text class="weui-article__strong">不再要求某一个素材一定重复3遍</text>，而是只要孩子喜欢，就可多重复，不设上限，若孩子重复腻了，则可横向级别其他素材。</view>
+          <view class="about-oli">不同于常规路线1.0版，2.0版<text class="weui-article__strong">不再要求某一个素材一定重复3遍</text>，而是只要孩子喜欢，就可多重复，不设上限，若孩子重复腻了，则可横向换同级别其他素材。</view>
         </view>
       </view>
 
@@ -102,7 +122,7 @@
           <view class="about-oli">在孩子看动画时，<text class="weui-article__strong">尽量不要打断孩子，也不要逐句翻译</text>，更不要询问或考察孩子是否懂（比如让孩子复述）。只要选择的动画难度和孩子水平符合，内化就不会有问题。若孩子听音频时表示听不太懂，可考虑过一下<text class="weui-article__strong">动画台词本</text>，有静态画面支撑，再去联想动态画面，会更轻松一些。</view>
         </view>
         <view class="weui-article__h4">小小优趣成长计划</view>
-        <view class="weui-article__p">有不少家长办理了小小优趣Svip的会员，里面有一个成长计划，可以看动画，然后玩一玩里面自带的游戏，可用来加强和巩固！</view>
+        <view class="weui-article__p">有不少家长办理了小小优趣Svip的会员，里面有一个成长计划，可以看动画，然后玩一玩里面自带的几个游戏，可用来加强和巩固！</view>
         <view class="weui-article__p">目前在<text class="weui-article__strong">phase13及之前</text>的成长计划（小猪佩奇之前），推荐的动画都还比较合理，<text class="weui-article__strong">phase13以后</text>的成长计划不少动画难度突然拔高太多。所以如果家长想跟成长计划的话，<text class="weui-article__strong">phase13及以前的可以参考下文素材篇中推荐的级别去对应使用。</text></view>
       </view>
 
