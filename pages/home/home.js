@@ -1,8 +1,14 @@
 const checkin = require('../../utils/checkin.js')
-const { getRequiredHours } = require('../../utils/data.js')
+const { getRequiredHours, isRouteCompleted } = require('../../utils/data.js')
 const share = require('../../utils/share.js')
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+// 毕业卡文案：按路线区分（key = ROUTES.id，未知路线兜底常规）
+const GRAD_TEXTS = {
+  bigloop: { title: '大循环路线圆满收官', subtitle: '从慢半拍的孩子，变成并肩的同伴' },
+  regular: { title: '常规路线圆满完成', subtitle: '从听故事的人，变成读故事的人' }
+}
 const MONTH_EN = ['January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December']
 
@@ -47,7 +53,14 @@ Page({
     sheetSummaryMain: '',
     sheetSummarySub: '',
     sheetItems: [],
-    journeyText: ''
+    journeyText: '',
+    // 毕业态（主链终点已完成）：庆祝卡 + 全程口径，无统计与操作入口
+    graduated: false,
+    gradTitle: '',
+    gradSubtitle: '',
+    companionDays: 0,
+    allHours: '0',
+    allDays: 0
   },
 
   onLoad() {
@@ -168,10 +181,45 @@ Page({
 
     // 欢迎语：时段问候 + Day N（当前阶段尚无记录时不显示）
     const greet = greetByHour(h)
-    const greetText = dayNumber > 0 ? `${greet}, ` : `${greet}, start today`
+    let greetText = dayNumber > 0 ? `${greet}, ` : `${greet}, start today`
 
-    // 阶段进度（与 route / stage 详情页完全同口径）
+    // ===== 毕业态：主链终点已被显式标记完成 → 口径整体切「全程」 =====
+    // 判定是纯运行时计算：老用户零迁移，切走复习自动失效
+    const graduated = cur
+      ? isRouteCompleted(route.stages, cur, checkin.getCompletedStages())
+      : false
+    let companionDays = 0
+    let allHoursText = '0'
+    let allDaysCount = 0
+    if (graduated) {
+      let allMinutes = 0
+      const allDaysSet = new Set()
+      let allFirstDay = ''
+      for (const day in all) {
+        const list = all[day] || []
+        for (const r of list) {
+          if (!r || !r.stageId) continue
+          allMinutes += checkin.effectiveMinutes(r)
+          allDaysSet.add(day)
+          if (!allFirstDay || day < allFirstDay) allFirstDay = day
+        }
+      }
+      allHoursText = fmtHours(allMinutes)
+      allDaysCount = allDaysSet.size
+      if (allFirstDay) {
+        companionDays = Math.max(1, Math.round(
+          (checkin.dayToTimestamp(todayStr) - checkin.dayToTimestamp(allFirstDay)) / 86400000
+        ) + 1)
+      }
+      // 毕业是状态而非时刻：祝贺语固定，Day 切全程陪伴天数
+      dayNumber = companionDays
+      greetText = 'Congratulations, '
+    }
+    const gradTexts = GRAD_TEXTS[route.id] || GRAD_TEXTS.regular
+
+    // 阶段进度（与 route / stage 详情页完全同口径）；无时长目标的支线不显示百分比（显示 —）
     let stagePercent = 0
+    let stageNoTarget = false
     if (cur) {
       const stageFull = route.stages.find(s => s.stage_id === cur.id)
       if (stageFull) {
@@ -179,9 +227,10 @@ Page({
         const minutes = required.type === 'accumulated'
           ? checkin.getAccumulatedMinutes(cur.id)
           : totalMinutes
-        stagePercent = required.hours > 0
-          ? Math.min(100, Math.floor((minutes / 60) / required.hours * 100))
-          : 0
+        stageNoTarget = !(required.hours > 0)
+        stagePercent = stageNoTarget
+          ? 0
+          : Math.min(100, Math.floor((minutes / 60) / required.hours * 100))
       }
     }
 
@@ -196,11 +245,18 @@ Page({
       todayCount,
       totalHours: fmtHours(totalMinutes),   // 当前阶段累计，非全阶段
       stagePercent,
+      stageNoTarget,
       dayNumber,
       streakDays,
       hasStage: !!cur,
       journeyText: route.journeyText || '',
-      routeName: route.name || ''
+      routeName: route.name || '',
+      graduated,
+      gradTitle: gradTexts.title,
+      gradSubtitle: gradTexts.subtitle,
+      companionDays,
+      allHours: allHoursText,
+      allDays: allDaysCount
     })
   },
 

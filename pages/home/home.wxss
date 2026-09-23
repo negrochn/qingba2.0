@@ -82,6 +82,84 @@
   color: var(--text3);
 }
 
+/* 毕业卡：WeUI msg 范式（标题居中）+ 看板大数字（原语 17）。
+   庆祝元素全为纯色（项目禁渐变/外发光）：品牌绿徽章白勾 + 三色 confetti 散点。
+   卡片背景/文字走主题变量，confetti 固定高饱和色深浅通用 → 深色模式零额外规则 */
+.home-grad {
+  margin: 16rpx 32rpx 24rpx;
+  padding: 80rpx 32rpx 64rpx;
+  border-radius: 20rpx;
+  background: var(--card);
+  text-align: center;
+}
+.home-grad__badge-wrap {
+  position: relative;
+  width: 136rpx;
+  height: 136rpx;
+  margin: 0 auto;
+}
+.home-grad__badge {
+  width: 136rpx;
+  height: 136rpx;
+  border-radius: 50%;
+  background: var(--brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.home-grad__check {
+  color: #fff;                             /* 覆盖 icon-check 默认 var(--brand)：绿底上要白勾 */
+  font-size: calc(72rpx * var(--fs, 1));
+}
+.home-grad__dot {
+  position: absolute;
+  border-radius: 50%;
+}
+.home-grad__dot--1 { width: 18rpx; height: 18rpx; background: #ffc300; left: -52rpx; top: 4rpx; }
+.home-grad__dot--2 { width: 12rpx; height: 12rpx; background: #10aeff; left: -80rpx; top: 68rpx; }
+.home-grad__dot--3 { width: 14rpx; height: 14rpx; background: #fa9d3b; left: -36rpx; top: 116rpx; }
+.home-grad__dot--4 { width: 16rpx; height: 16rpx; background: #10aeff; right: -60rpx; top: 16rpx; }
+.home-grad__dot--5 { width: 12rpx; height: 12rpx; background: #fa9d3b; right: -88rpx; top: 80rpx; }
+.home-grad__dot--6 { width: 18rpx; height: 18rpx; background: #ffc300; right: -40rpx; top: 128rpx; }
+.home-grad__dot--7 { width: 10rpx; height: 10rpx; background: #10aeff; left: 40rpx; top: -28rpx; }
+.home-grad__dot--8 { width: 12rpx; height: 12rpx; background: #ffc300; right: 48rpx; top: -24rpx; }
+.home-grad__title {
+  margin-top: 44rpx;
+  font-size: calc(44rpx * var(--fs, 1));   /* weui-msg__title 22px */
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text);
+}
+.home-grad__subtitle {
+  margin-top: 16rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  line-height: 1.6;
+  color: var(--text2);
+}
+.home-grad__stats {
+  display: flex;
+  justify-content: center;
+  gap: 68rpx;
+  margin-top: 60rpx;
+}
+.home-grad__num {
+  font-size: calc(64rpx * var(--fs, 1));   /* 看板大数字档 */
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--text);
+}
+.home-grad__unit {
+  margin-top: 4rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text2);
+}
+.home-grad__tips {
+  margin-top: 60rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  line-height: 1.4;
+  color: var(--text3);
+}
+
 /* ② Hero 卡：白底卡片 + 7 日柱状图（扁平纯色，无阴影） */
 .home-hero {
   margin: 16rpx 32rpx 24rpx;

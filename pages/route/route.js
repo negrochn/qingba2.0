@@ -1,4 +1,4 @@
-const { getRequiredHours } = require('../../utils/data.js')
+const { getRequiredHours, isUpstreamStage } = require('../../utils/data.js')
 const checkin = require('../../utils/checkin.js')
 const share = require('../../utils/share.js')
 
@@ -59,7 +59,8 @@ Page({
       let state
       if (currentIndex < 0) {
         state = 'unset'                    // 尚未选择起点：全部为待选，不置灰也不上锁
-      } else if (doneIds.indexOf(s.stage_id) >= 0 || i < currentIndex) {
+      } else if (doneIds.indexOf(s.stage_id) >= 0 ||
+                 isUpstreamStage(route.stages, current.id, s.stage_id)) {
         state = 'done'
       } else if (i === currentIndex) {
         state = 'current'
@@ -85,12 +86,13 @@ Page({
         ? checkin.getAccumulatedMinutes(s.stage_id)
         : checkin.getStageMinutes(s.stage_id)
       const hours = minutes / 60
-      const progress = required.hours > 0
-        ? Math.min(100, Math.floor(hours / required.hours * 100))
-        : 0
+      // 无时长目标的支线（调整小段）：不显示 0% 假进度，wxml 以「—」占位
+      const noTarget = !(required.hours > 0)
+      const progress = noTarget ? 0 : Math.min(100, Math.floor(hours / required.hours * 100))
       currentCard = {
         name: s.stage_name,
         progress,
+        noTarget,
         // 当前生效的分母（默认档位取建议区间上限，可为该阶段单独覆盖），
         // 与上方百分比同源；官方建议区间原文仍显示在下方路线行里，避免「写着 60-80H 却要攒到 80」的困惑
         targetText: required.hours > 0 ? `${required.hours}H` : ''

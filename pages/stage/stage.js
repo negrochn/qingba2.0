@@ -1,4 +1,4 @@
-const { getRequiredHours, listeningFactor, listeningTip } = require('../../utils/data.js')
+const { getRequiredHours, listeningFactor, listeningTip, isUpstreamStage } = require('../../utils/data.js')
 const resources = require('../../utils/resources.js')
 const checkin = require('../../utils/checkin.js')
 const theme = require('../../utils/theme.js')
@@ -16,13 +16,14 @@ function isRegularStage(stageId) {
   return /^regular_\d+$/.test(stageId) || stageId === 'pre_bridge'
 }
 
-// 按晋级链找下一阶段：prev_stage_ids 含当前阶段的第一个（数组序主线优先）。
+// 按晋级链找下一阶段：prev_stage_ids 含当前阶段的后继中，主线优先（跳过可选支线）。
 // 大循环分叉结构下统一正确：
-//   一阶段 → 牛4（主线直达优先，而非调整支线）；牛4→5→6→三阶段；调整牛1→牛2→牛3；
-//   调整牛3 与三阶段找不到下一阶段 → 由调用方按「完成阶段」处理（牛3 走完后测试达标，
-//   由家长在阶段选择页切回主线牛4，符合官方「汇合」语义）
+//   一阶段 → 牛4（主线直达，而非调整支线——支线在数组序里靠前，靠 optional 过滤保证不误入）；
+//   牛4→5→6→三阶段；调整牛1/2/3 均为叶子（无后继、互相不成链，切入级别看测试结果）。
+//   若后继全是可选支线（当前数据无此情形），宁可返回 null 走「完成阶段」也不自动误入
 function findNextStage(stages, curId) {
-  return (stages || []).find(s => (s.prev_stage_ids || []).indexOf(curId) >= 0) || null
+  const cands = (stages || []).filter(s => (s.prev_stage_ids || []).indexOf(curId) >= 0)
+  return cands.find(s => !s.optional) || null
 }
 
 // 关键要点统一为片段结构：大循环条目自带 segments（数据层「**」标记已解析为行内高亮片段），
@@ -42,12 +43,17 @@ function withKpSegs(stage) {
 // 资源行左滑露出的操作区宽度（rpx）：读完 / 撤销 各 150rpx，与 .swipe-bg 样式保持一致
 const SWIPE_W = 300
 
+// 关键要点折叠阈值：≤ KP_FOLD_LIMIT 条全展开；更多时默认只显前 KP_PREVIEW 条，
+// 底部渐隐 + 「展开全部」按钮——避免大循环前置阶段这类 8 条长要点把打卡主流程挤到很深
+const KP_FOLD_LIMIT = 3
+const KP_PREVIEW = 2
+
 Page({
   data: {
     stage: null,
     stageIndex: -1,
     stageLocked: false,
-    stageStatus: 'locked', // 'current' | 'completed' | 'locked'
+    stageStatus: 'locked', // 'current' | 'completed' | 'optional'(未走过的调整支线,可打卡) | 'locked'
     resourceGroups: [],
     // 分组展开状态：默认全部展开
     expandedGroups: {
@@ -76,6 +82,11 @@ Page({
     resTotals: {},       // 原始投入（徽标与「今日已打卡 X 分钟」）
     resEffective: {},    // 有效时长（熏听行补「有效 X 分钟」，与统计 / 进度同口径）
     readCounts: {},
+    // 关键要点折叠状态（onLoad 按要点条数初始化）
+    keyPointsTotal: 0,
+    keyPointsFoldable: false,   // 是否需要折叠（> KP_FOLD_LIMIT 条）
+    keyPointsExpanded: true,    // 展开态（不可折叠的阶段恒为 true）
+    keyPointsPreview: 2,        // 折叠态预览条数
     // 晋级信息
     canPromote: false,
     promoteEnabled: false,
@@ -130,16 +141,8 @@ Page({
       return
     }
 
-    // 计算当前阶段索引，判断状态
-    const currentStage = checkin.getCurrentStage()
-    let currentIndex = -1
-    routeStages.forEach((s, i) => {
-      if (currentStage && s.stage_id === currentStage.id) currentIndex = i
-    })
-    const stageStatus = currentIndex < 0 ? 'locked' :
-      (index === currentIndex ? 'current' :
-        (index < currentIndex ? 'completed' : 'locked'))
-    const stageLocked = stageStatus !== 'current'
+    // 阶段状态判定（onLoad/onShow 共用，见 _calcStageStatus）
+    const { stageStatus, stageLocked } = this._calcStageStatus(index)
 
     // 官方 + 自定义资源合并渲染（8 类均可打卡）
     const groups = resources.getStageGroups(stage.stage_id)
@@ -164,7 +167,21 @@ Page({
     if (metaTail.length) subtitle += '（' + metaTail.join(' | ') + '）'
 
     wx.setNavigationBarTitle({ title: stage.stage_name })
-    this.setData({ stage: withKpSegs(stage), subtitle, stageIndex: index, stageLocked, stageStatus, resourceGroups: groups })
+    // 关键要点折叠初始化：仅 > KP_FOLD_LIMIT 条的阶段可折叠（如大循环前置阶段 8 条）
+    const kpCount = Array.isArray(stage.key_points) ? stage.key_points.length : 0
+    const keyPointsFoldable = kpCount > KP_FOLD_LIMIT
+    this.setData({
+      stage: withKpSegs(stage),
+      subtitle,
+      stageIndex: index,
+      stageLocked,
+      stageStatus,
+      resourceGroups: groups,
+      keyPointsTotal: kpCount,
+      keyPointsFoldable,
+      keyPointsExpanded: !keyPointsFoldable,
+      keyPointsPreview: KP_PREVIEW
+    })
     this._refreshResTotals()
     this._refreshReadCounts()
     this._refreshPromoteInfo()
@@ -177,16 +194,7 @@ Page({
 
     if (this.data.stage) {
       // 重新计算状态（当前阶段可能在设置页改变）
-      const currentStage = checkin.getCurrentStage()
-      let currentIndex = -1
-      ;(checkin.getCurrentRoute().stages || []).forEach((s, i) => {
-        if (currentStage && s.stage_id === currentStage.id) currentIndex = i
-      })
-      const idx = this.data.stageIndex
-      const stageStatus = currentIndex < 0 ? 'locked' :
-        (idx === currentIndex ? 'current' :
-          (idx < currentIndex ? 'completed' : 'locked'))
-      const stageLocked = stageStatus !== 'current'
+      const { stageStatus, stageLocked } = this._calcStageStatus(this.data.stageIndex)
       this.setData({ stageLocked, stageStatus })
       // 从其他页返回时收起展开中的左滑操作区
       this._closeSwipe()
@@ -196,14 +204,41 @@ Page({
     }
   },
 
+  // 阶段状态判定（onLoad/onShow 共用，收敛原先两处重复的索引三元）：
+  //   current    当前进行中，可打卡
+  //   completed  已完成：显式标记（阶段选择页选起点/完成按钮写入 doneIds），
+  //              或当前阶段沿 prev 链可达的前序（推断完成）——不再按「数组序在前」推断，
+  //              大循环分叉下调整支线序在主线前但从未走过，不应显示为已完成
+  //   optional   可选调整支线（未走过的 adjust 小段）：不上锁，可打卡、可点「完成阶段」，
+  //              家长发现 phase 不达标时回补调整策略的入口
+  //   locked     未解锁，仅可查看
+  _calcStageStatus(idx) {
+    const routeStages = checkin.getCurrentRoute().stages || []
+    const currentStage = checkin.getCurrentStage()
+    let currentIndex = -1
+    routeStages.forEach((s, i) => {
+      if (currentStage && s.stage_id === currentStage.id) currentIndex = i
+    })
+    if (currentIndex < 0) return { stageStatus: 'locked', stageLocked: true }
+    if (idx === currentIndex) return { stageStatus: 'current', stageLocked: false }
+    const stage = routeStages[idx]
+    if (stage && (checkin.isStageDone(stage.stage_id) ||
+        isUpstreamStage(routeStages, currentStage.id, stage.stage_id))) {
+      return { stageStatus: 'completed', stageLocked: true }
+    }
+    if (stage && stage.optional) return { stageStatus: 'optional', stageLocked: false }
+    return { stageStatus: 'locked', stageLocked: true }
+  },
+
   // 刷新晋级信息：当前常规阶段展示进度与晋级入口
   _refreshPromoteInfo() {
     const stage = this.data.stage
     if (!stage) return
 
     // 晋级/达成目标对所有阶段开放（常规 + 大循环主线 + 调整支线小段均可；
-    // 支线小段无固定 phase 目标，target_phase 为空时走直接确认分支）
-    const isCurrent = this.data.stageStatus === 'current'
+    // 支线小段无固定 phase 目标，target_phase 为空时走直接确认分支）。
+    // optional（未走过的调整支线）同样放开：家长回补调整策略时可在支线页打卡并「完成阶段」
+    const isCurrent = this.data.stageStatus === 'current' || this.data.stageStatus === 'optional'
     const isLastStage = !findNextStage(checkin.getCurrentRoute().stages, stage.stage_id)
     const alreadyDone = checkin.isStageDone(stage.stage_id)
     const required = getRequiredHours(stage, checkin.getTargetOption(stage.stage_id))
@@ -215,7 +250,9 @@ Page({
       minutes = checkin.getStageMinutes(stage.stage_id)
     }
     const hours = minutes / 60
-    const timeMet = required.hours > 0 ? hours >= required.hours : false
+    // 无时长目标（大循环调整支线：官方按测试结果切入/切出，不给固定 H）不设门槛，
+    // 家长确认即完成；有目标时按时长达标判定（常规/大循环主线行为不变）
+    const timeMet = required.hours > 0 ? hours >= required.hours : true
     const progressPercent = required.hours > 0 ? Math.min(100, Math.floor(hours / required.hours * 100)) : 0
     const targetPhaseNum = parsePhaseNumber(stage.target_phase)
     const remainHours = required.hours > 0 ? Math.max(0, required.hours - hours) : 0
@@ -339,7 +376,8 @@ Page({
   doPromote() {
     const stage = this.data.stage
     const routeStages = checkin.getCurrentRoute().stages || []
-    // 终点阶段（常规准桥梁 / 大循环第三阶段 / 调整牛3）：不推进，显式记录为已完成（达成目标）
+    // 终点阶段（常规准桥梁 / 大循环第三阶段 / 调整牛1-3——支线三段均为叶子无后继）：
+    // 不推进，显式记录为已完成（达成目标）
     if (!findNextStage(routeStages, stage.stage_id)) {
       checkin.markStageDone(stage.stage_id)
       wx.showToast({
@@ -478,6 +516,11 @@ Page({
     this.setData({ expandedGroups })
     // 折叠会让行卸载，先收起展开中的左滑操作区，避免重新展开时行仍停在滑开态
     this._closeSwipe()
+  },
+
+  // 切换关键要点展开/收起（仅 > KP_FOLD_LIMIT 条的阶段出现入口）
+  onToggleKeyPoints() {
+    this.setData({ keyPointsExpanded: !this.data.keyPointsExpanded })
   },
 
   // ===== 资源行左滑：露出「读完 +1 / 撤销 −1」操作区 =====

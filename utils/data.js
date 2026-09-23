@@ -595,10 +595,56 @@ function getRequiredHours(stage, opt) {
   return { type: 'stage', hours: 0 }
 }
 
+// 【前序阶段判定 / 完成态的图语义推断】targetId 是否为 fromId 的前序阶段：
+// 沿 prev_stage_ids 反向回溯（frontier + seen 防御环状数据）。
+// - 链式路线（常规）：等价于「数组序在前」，老用户行为零变化
+// - 分叉路线（大循环）：调整支线（prev 全指向一阶段、无后继）不在主线回溯链上，
+//   走到标准牛4/5/6 时支线不再被「数组序在前」误判为已完成
+// 调用方：route 页 done 态、stage 页 completed 态（替代按数组索引推断的旧逻辑）
+function isUpstreamStage(stages, fromId, targetId) {
+  if (!fromId || !targetId || fromId === targetId) return false
+  const byId = {}
+  ;(stages || []).forEach(s => { byId[s.stage_id] = s })
+  const seen = {}
+  const frontier = [fromId]
+  while (frontier.length) {
+    const st = byId[frontier.pop()]
+    const prevs = (st && st.prev_stage_ids) || []
+    for (let i = 0; i < prevs.length; i++) {
+      const p = prevs[i]
+      if (p === targetId) return true
+      if (p && !seen[p]) { seen[p] = true; frontier.push(p) }
+    }
+  }
+  return false
+}
+
+// ===== 路线毕业判定 =====
+// 主链终点：数组中最后一个非 optional 阶段（常规=准桥梁，大循环=三阶段）。
+// 不用「无后继」判定——大循环三条调整支线同为叶子（无 prev 指向它们），
+// 走完支线不等于整条路线毕业，须按主链定位。
+function getFinalStage(stages) {
+  let last = null
+  ;(stages || []).forEach(s => { if (!s.optional) last = s })
+  return last
+}
+
+// 毕业态：当前阶段是主链终点、且已被显式标记完成（markStageDone）。
+// 纯运行时判定，零存储迁移——历史上点过「完成阶段」的老用户自动生效；
+// 家长经 stagePicker 切走后 currentStage 变化，判定自动失效回到普通形态。
+function isRouteCompleted(stages, currentStage, doneIds) {
+  if (!currentStage || !doneIds || !doneIds.length) return false
+  if (doneIds.indexOf(currentStage.id) < 0) return false
+  const finalStage = getFinalStage(stages)
+  return !!finalStage && finalStage.stage_id === currentStage.id
+}
+
 module.exports = {
   routeData,
   ROUTES,
   getRoute,
+  isUpstreamStage,
+  isRouteCompleted,
   resourceLabels,
   LISTENING_GROUP_KEY,
   LISTENING_FACTORS,

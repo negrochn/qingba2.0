@@ -698,7 +698,7 @@ Page({
   onStressTest() {
     wx.showModal({
       title: '压力测试',
-      content: '将生成模拟打卡数据（每阶段累计约80-90小时，每日15-60分钟，含缺卡日），会覆盖现有数据，是否继续？',
+      content: '将生成模拟打卡数据（各阶段按官方时长目标累计，调整支线按试走量，每日15-60分钟，含缺卡日），会覆盖现有数据，是否继续？',
       confirmText: '生成',
       cancelText: '取消',
       confirmColor: '#07C160',

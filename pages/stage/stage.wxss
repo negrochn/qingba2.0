@@ -64,14 +64,81 @@
   }
 }
 
-/* ====== 关键要点（复用全局 .weui-cell，文字走 token） ====== */
+/* 可选支线标识：进入未走过的调整小段时的轻提示，
+   视觉语言同路线页 .route-badge（浅底胶囊，--card2 底 + --text3 字） */
+.stage-optional-tag {
+  display: inline-block;
+  margin-left: 12rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+  font-size: calc(20rpx * var(--fs, 1));
+  font-weight: 400;
+  line-height: 1.4;
+  vertical-align: middle;
+  color: var(--text3);
+  background: var(--card2);
+}
+
+/* ====== 关键要点：连续段落卡 + 阈值折叠 ======
+   要点是纯阅读文本，不再逐条套 weui-cell：整块一张通栏卡（同资源区 .res-wrap 底色），
+   条间用轻量文字序号分条（不用方块底，避免与资源行序号撞层级）；
+   > KP_FOLD_LIMIT(3) 条时默认显前 KP_PREVIEW(2) 条，底部渐隐 + 展开按钮 */
+.kp-card {
+  position: relative;
+  background: var(--card);
+  padding: 12rpx 32rpx;
+  overflow: hidden;
+}
+.kp-item { display: flex; align-items: baseline; padding: 16rpx 0; }
+/* 轻量序号：次级灰、无底色，与正文首行基线对齐（字号差两档，行高凑不齐，靠 baseline） */
+.kp-no {
+  flex-shrink: 0;
+  margin-right: 14rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  line-height: 1.6;
+  color: var(--text3);
+}
+/* 正文走 WeUI 主文字档 17px(34rpx)，行高 1.6 同文章页正文 */
 .kp-text {
+  flex: 1;
   display: block;
   font-size: calc(34rpx * var(--fs, 1));
   line-height: 1.6;
   color: var(--text2);
 }
-.kp-text-hi { color: var(--text); font-weight: 600; }
+/* 行内强调：亮度台阶（--text2 → --text）+ 700——600 在 Android 被就近映射成 medium，
+   真机上加粗几乎看不出，必须用 700；亮度台阶同时兜底字重失真 */
+.kp-text-hi { color: var(--text); font-weight: 700; }
+
+/* 折叠态底部渐隐：透明渐入卡片底色（--card 深浅模式自动跟随），盖住第 3 条起的内容暗示 */
+.kp-fade {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 90rpx;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0), var(--card));
+  pointer-events: none;
+}
+
+/* 展开/收起按钮：品牌绿轻量文字按钮，叠在渐隐层之上 */
+.kp-toggle {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+  padding: 24rpx 0 16rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--brand);
+}
+/* 箭头用 iconfont icon-right 旋转到位（规范：箭头勿用裸字符），颜色随按钮走 --brand */
+.kp-toggle-arrow {
+  display: inline-block;
+  transform: rotate(90deg);
+  transition: transform 0.2s;
+  color: var(--brand);
+}
+.kp-toggle-arrow-up { transform: rotate(-90deg); }
 
 /* ====== 阶段资源分组（核心打卡，上半区） ====== */
 .res-wrap {

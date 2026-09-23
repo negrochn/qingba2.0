@@ -6,9 +6,10 @@
       <view class="home-date">{{dateText}}</view>
       <view class="home-greet-sub">{{greetText}}<text wx:if="{{dayNumber > 0}}" class="home-greet-day">Day {{dayNumber}}</text></view>
     </view>
-    <view class="home-stage">
+    <!-- 毕业态右侧整块隐藏：祝贺语 + 毕业卡已承担全部语义，不再暴露内部阶段口径 -->
+    <view class="home-stage" wx:if="{{!graduated}}">
       <view class="home-stage-name">{{stageName || '未设置阶段'}}</view>
-      <view class="home-stage-percent" wx:if="{{stageName}}">{{stagePercent}}%</view>
+      <view class="home-stage-percent" wx:if="{{stageName}}">{{stageNoTarget ? '—' : stagePercent + '%'}}</view>
     </view>
   </view>
 
@@ -39,6 +40,41 @@
       </view>
     </view>
     <view class="home-welcome__tips">所有阶段均已开放，时间投入到位即可进入下一阶段；路线与阶段均可随时调整</view>
+  </view>
+
+  <!-- 毕业卡：主链终点已完成时替代统计区（纯庆祝，无操作入口）。
+       成果数字为全程口径（天陪伴 / 小时累计 / 天打卡），进行态的统计卡片不渲染 -->
+  <view class="home-grad" wx:elif="{{graduated}}">
+    <view class="home-grad__badge-wrap">
+      <view class="home-grad__dot home-grad__dot--1"></view>
+      <view class="home-grad__dot home-grad__dot--2"></view>
+      <view class="home-grad__dot home-grad__dot--3"></view>
+      <view class="home-grad__dot home-grad__dot--4"></view>
+      <view class="home-grad__dot home-grad__dot--5"></view>
+      <view class="home-grad__dot home-grad__dot--6"></view>
+      <view class="home-grad__dot home-grad__dot--7"></view>
+      <view class="home-grad__dot home-grad__dot--8"></view>
+      <view class="home-grad__badge">
+        <text class="iconfont icon-check home-grad__check"></text>
+      </view>
+    </view>
+    <view class="home-grad__title">{{gradTitle}}</view>
+    <view class="home-grad__subtitle">{{gradSubtitle}}</view>
+    <view class="home-grad__stats">
+      <view class="home-grad__stat">
+        <view class="home-grad__num">{{companionDays}}</view>
+        <view class="home-grad__unit">天陪伴</view>
+      </view>
+      <view class="home-grad__stat">
+        <view class="home-grad__num">{{allHours}}</view>
+        <view class="home-grad__unit">小时累计</view>
+      </view>
+      <view class="home-grad__stat">
+        <view class="home-grad__num">{{allDays}}</view>
+        <view class="home-grad__unit">天打卡</view>
+      </view>
+    </view>
+    <view class="home-grad__tips">剩下的路，交给他自己</view>
   </view>
 
   <block wx:else>

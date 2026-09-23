@@ -15,7 +15,7 @@
           <view class="route-meta" wx:if="{{currentCard.targetText}}">目标 {{currentCard.targetText}}</view>
         </view>
         <view class="weui-cell__ft">
-          <text class="weui-cell__ft_value">{{currentCard.progress}}%</text>
+          <text class="weui-cell__ft_value">{{currentCard.noTarget ? '—' : currentCard.progress + '%'}}</text>
           <text class="iconfont icon-right"></text>
         </view>
       </view>

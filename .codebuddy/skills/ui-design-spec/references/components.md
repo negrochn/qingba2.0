@@ -598,7 +598,7 @@ onTouchMove(e) {
 
 ## 原语 21：文章页排版（项目 `pages/about`，WeUI `.weui-article`）
 
-用于说明 / 关于 / 协议这类「文章型」页面：整页一篇文章，靠**字号差与留白**建立层级（**不是**字重，更不是竖条 / 细线 / 卡片这类边界元素），**无卡片框、无彩色块、无底色**。数值逐条照 WeUI 官方 `weui-article.less`。项目现状：`pages/about`（关于庆爸2.0）。
+用于说明 / 关于 / 协议这类「文章型」页面：整页一篇文章，靠**字号差与留白**建立层级（**不是**字重，更不是竖条 / 细线 / 卡片这类边界元素），**无卡片框、无彩色块、无底色**。数值逐条照 WeUI 官方 `weui-article.less`。项目现状：`pages/about`（常规路线介绍）与 `pages/about-bigloop`（大循环路线介绍）两页——后者 `@import` 前者 wxss、只补页面特有样式，token 体系单点维护。
 
 ```html
 <view class="container {{fontClass}} {{darkClass}}">
@@ -686,7 +686,7 @@ onTouchMove(e) {
 - **强调只保留一档：同色加粗 `700` + 深色档提亮到纯白**：行内 `__strong` 给 `--text` + `font-weight:700`，**不引入彩色语义**（如 TDesign `mark` 硬编码黄底、`theme` 的蓝色 primary），与项目「扁平纯色、禁彩色字」一致；也不为单段引入带竖线的提示块。两条硬约束：
   - **字重必须 `700`，不能用 `600`** —— Android 系统字体（Roboto）只有 400 / 500 / 700 三档，`600` 会被就近映射、真机可能落到 500/medium，表现为「加粗几乎看不出」
   - **深色档颜色要提亮到 `#fff`** —— 深色 `--text` 只有 80% 白，强调与正文同色时单靠字重区分不够（白字在暗底还有光晕扩散），故在 `.dm-auto` + `@media (prefers-color-scheme: dark)` 内把 `__strong` 提到纯白，与正文拉开明确的亮度台阶
-- **样式定义在页面内、未提升为全局原语**：目前只有这一处文章页，类名沿用 WeUI 的 `.weui-article__*` 体系，页面特有结构（阶段参考块 / 方法分区 / 列表）留在 `about.wxss`——**等出现第二处文章页再抽取**
+- **样式留在 `about.wxss`、第二页 `@import` 复用**：第二处文章页（`about-bigloop`）出现后并未把 `.weui-article__*` 提升为全局——`about-bigloop.wxss` 第一行 `@import "../about/about.wxss"`，页面特有结构（如「可选支线」文字徽标）才写在自己的 wxss 里。**token 体系因此保持单点维护**（改 `--art-*` 两页同时生效）；只有当第三处及以上文章页出现、或跨页面共性结构变多时，再考虑抽全局
 - **不设结尾动作区（分享）**：文章末尾**不放**页内分享按钮。早期用过 `.about-share` + `.weui-btn_block` + 一行 `24rpx` `--text3` 说明，现已移除 —— 右上角「···」菜单恒有「转发给朋友」，功能完全重复；而满宽品牌绿按钮是文章页里唯一的行动块，会把注意力从内容拉开。分享能力只依赖页面 js 的 `onShareAppMessage` + `onShareTimeline` 声明（详见 `design-guidelines.md` §六）
 
 ---
@@ -813,6 +813,50 @@ onTouchMove(e) {
   - 因此组件内由内部状态 `shown`（滑入 + 蒙层）/ `hidden`（`display:none`）驱动 class，不再直接用 `show`；
   - 已填数据不受影响 —— `display:none` 只是不渲染，页面 data 仍在，重开弹层照常回填。
 - 现存 6 处：`pages/stage`（打卡 / 晋级测试）、`pages/targetSetting`、`pages/myResources`、`pages/home`（今日明细）、`components/resource-picker`。
+
+---
+
+## 原语 24：毕业 / 里程碑庆祝卡（项目 `pages/home` 的 `.home-grad`）
+
+路线走完主链终点这类**里程碑时刻**，用一张纯庆祝卡替代常规统计区。排版是 **WeUI msg 范式**（全居中：徽章 → 标题 → 副题 → 数字区 → tips）与**数据看板大数字**（原语 17）的组合；庆祝元素全为纯色，深浅两套主题零额外规则。
+
+```html
+<view class="home-grad">
+  <view class="home-grad__badge-wrap">          <!-- 徽章 + confetti 的定位父级 -->
+    <view class="home-grad__dot home-grad__dot--1"></view>
+    <!-- …共 8 颗散点，绝对定位散布在徽章左右与上方… -->
+    <view class="home-grad__badge">
+      <text class="iconfont icon-check home-grad__check"></text>
+    </view>
+  </view>
+  <view class="home-grad__title">大循环路线圆满收官</view>
+  <view class="home-grad__subtitle">从慢半拍的孩子，变成并肩的同伴</view>
+  <view class="home-grad__stats">               <!-- 三联数字：全程口径 -->
+    <view class="home-grad__stat"><view class="home-grad__num">928</view><view class="home-grad__unit">天陪伴</view></view>
+    <!-- …小时累计 / 天打卡… -->
+  </view>
+  <view class="home-grad__tips">剩下的路，交给他自己</view>
+</view>
+```
+
+```css
+.home-grad { margin: 16rpx 32rpx 24rpx; padding: 80rpx 32rpx 64rpx;
+             border-radius: 20rpx; background: var(--card); text-align: center; }
+.home-grad__badge  { width: 136rpx; height: 136rpx; border-radius: 50%;
+                     background: var(--brand); display: flex; align-items: center; justify-content: center; }
+.home-grad__check  { color: #fff; font-size: calc(72rpx * var(--fs, 1)); }  /* 覆盖 icon-check 默认 var(--brand)：绿底上要白勾 */
+.home-grad__dot--1 { width: 18rpx; height: 18rpx; background: #ffc300; position: absolute; left: -52rpx; top: 4rpx; border-radius: 50%; }
+.home-grad__title    { margin-top: 44rpx; font-size: calc(44rpx * var(--fs, 1)); font-weight: 500; line-height: 1.4; color: var(--text); }  /* weui-msg__title 22px */
+.home-grad__subtitle { margin-top: 16rpx; font-size: calc(28rpx * var(--fs, 1)); line-height: 1.6; color: var(--text2); }
+.home-grad__num      { font-size: calc(64rpx * var(--fs, 1)); font-weight: 400; line-height: 1.2; color: var(--text); }     /* 看板大数字档 */
+.home-grad__unit     { margin-top: 4rpx; font-size: calc(24rpx * var(--fs, 1)); color: var(--text2); }
+```
+
+- **confetti 散点用固定高饱和纯色（WeUI 官方橙/黄/蓝 `#fa9d3b` / `#ffc300` / `#10aeff`），不随主题**：庆祝色是情绪表达，浅深两底下都成立 → **深色模式零额外规则**（写主题变量反而要在深色档重新挑三个「暗底可读」色，收益为负）；尺寸 10–18rpx 错落、绝对定位在徽章周围（`left/right` 取负值溢出 badge-wrap），纯色圆点满足项目「禁渐变 / 外发光」约定——庆祝感靠**多颗错落 + 三色节奏**，不靠发光
+- **徽章内对勾要手动覆盖 `icon-check` 的默认色**：字形类默认走 `var(--brand)`（绿勾），绿底徽章上必须显式 `color:#fff`——「品牌绿圆 + 白勾」是庆祝卡的唯一强调点
+- **数字必须切「全程口径」，不能用毕业时的当前阶段**：毕业那一刻「阶段累计」失去意义（进度 100% 挂着没有信息量），情绪价值来自全程数字（928 天陪伴比 80 小时有冲击力得多）——去掉阶段过滤遍历全部记录得「天陪伴 / 小时累计 / 天打卡」三联
+- **纯庆祝、无操作入口**：不放「查看统计 / 回顾路线」按钮——操作留在原处（打卡入口照常），卡片只承担情绪价值；标题文案按业务对象区分（如按路线：常规「圆满完成」/ 大循环「圆满收官」）
+- **顶部同屏联动收口**：页头右侧的「阶段名 + 百分比」在庆祝态整块隐藏（`wx:if` 反相），避免「已完成的阶段还挂着百分比」的语义冲突；问候语同步切庆祝文案（如 `Congratulations, Day N`，N 换全程口径）
 
 ---
 

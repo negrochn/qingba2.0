@@ -2,7 +2,7 @@
   <!-- 阶段资源（核心：打卡）放在上半区，突出入口 -->
   <view wx:if="{{resourceGroups.length}}">
     <view class="weui-cells__title">
-      {{subtitle}}
+      {{subtitle}}<text wx:if="{{stageStatus === 'optional'}}" class="stage-optional-tag">可选支线</text>
     </view>
     <view class="res-wrap">
     <view class="res-list" wx:for="{{resourceGroups}}" wx:for-item="g" wx:key="key">
@@ -106,14 +106,26 @@
     </view>
   </view>
 
-  <!-- 关键要点（移动到底部） -->
+  <!-- 关键要点：连续段落卡 + 阈值折叠（≤3 条全展开无按钮；>3 条默认显前 2 条，
+       底部渐隐 + 「展开全部」，展开后可收起。要点是纯阅读文本，不再逐条套 weui-cell，
+       整块一张卡、轻量序号分条，视觉语言同上半区通栏卡片） -->
   <view wx:if="{{stage.key_points.length}}">
     <view class="weui-cells__title">关键要点</view>
-    <view class="weui-cells">
-      <view class="weui-cell" wx:for="{{stage.key_points}}" wx:key="text">
-        <view class="weui-cell__bd">
-          <text class="kp-text"><block wx:for="{{item.segs}}" wx:for-item="seg" wx:key="t"><text class="{{seg.hi ? 'kp-text-hi' : ''}}">{{seg.t}}</text></block></text>
+    <view class="kp-card">
+      <block wx:for="{{stage.key_points}}" wx:key="text" wx:for-item="kp" wx:for-index="idx">
+        <view class="kp-item" wx:if="{{keyPointsExpanded || idx < keyPointsPreview}}">
+          <text class="kp-no">{{idx + 1}}.</text>
+          <text class="kp-text"><block wx:for="{{kp.segs}}" wx:for-item="seg" wx:key="t"><text class="{{seg.hi ? 'kp-text-hi' : ''}}">{{seg.t}}</text></block></text>
         </view>
+      </block>
+      <view class="kp-fade" wx:if="{{keyPointsFoldable && !keyPointsExpanded}}"></view>
+      <view class="kp-toggle" wx:if="{{keyPointsFoldable && !keyPointsExpanded}}" bindtap="onToggleKeyPoints">
+        <text>展开全部 {{keyPointsTotal}} 条</text>
+        <text class="iconfont icon-right kp-toggle-arrow"></text>
+      </view>
+      <view class="kp-toggle" wx:if="{{keyPointsFoldable && keyPointsExpanded}}" bindtap="onToggleKeyPoints">
+        <text>收起</text>
+        <text class="iconfont icon-right kp-toggle-arrow kp-toggle-arrow-up"></text>
       </view>
     </view>
   </view>

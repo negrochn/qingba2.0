@@ -1,7 +1,8 @@
 // 压力测试数据生成
-// 按真实计划生成：每个阶段累计打卡约80-90小时，每日总时长15-60分钟，约12%的天数缺卡
-// 日期从今天往回推算
-const { resourceLabels } = require('./data.js')
+// 按真实计划生成：各阶段按官方时长目标（parseTargetHours）累计打卡；
+// 无官方目标的阶段（大循环调整支线）按「试走量」12-20小时生成，保持未完成语义
+// 每日总时长15-60分钟，约12%的天数缺卡；日期从今天往回推算
+const { resourceLabels, parseTargetHours } = require('./data.js')
 const { READ_COUNT_KEY, saveAll, setCurrentStage, setCompletedStages, getCurrentRoute } = require('./checkin.js')
 
 function genId() {
@@ -56,9 +57,25 @@ function splitDuration(total) {
   return splits
 }
 
+// 阶段累计目标时长（分钟）
+// - 有官方目标（time_investment）：区间内随机；单值（60H/90H）即固定；80H+ 取下限
+// - 无官方目标（大循环调整支线）：按试走量 12-20h，模拟「测试调整策略数日后回主线」，
+//   阶段保持 optional 未完成，打卡记录保留
+const BRANCH_HOURS = { min: 12, max: 20 }
+
+function getStageTargetMinutes(stage) {
+  const range = parseTargetHours(stage.time_investment)
+  if (!range) {
+    const h = BRANCH_HOURS.min + Math.floor(Math.random() * (BRANCH_HOURS.max - BRANCH_HOURS.min + 1))
+    return h * 60
+  }
+  const h = range.min + Math.floor(Math.random() * (range.max - range.min + 1))
+  return h * 60
+}
+
 /**
  * 生成压力测试数据
- * - 每个阶段累计打卡时长约 80-90 小时
+ * - 各阶段按官方时长目标累计打卡（支线按试走量 12-20 小时）
  * - 每日打卡总时长 15-60 分钟（拆成 1-3 条记录）
  * - 约 12% 的天数缺卡
  * - 日期从今天往回推算
@@ -70,7 +87,7 @@ function generateStressData(onProgress) {
 
   // 逐阶段"模拟"：按目标累计时长生成每日计划，null 表示缺卡
   const stagePlans = stages.map(stage => {
-    const targetMinutes = (80 + Math.floor(Math.random() * 11)) * 60 // 80-90 小时
+    const targetMinutes = getStageTargetMinutes(stage)
     const days = []
     let acc = 0
     while (acc < targetMinutes) {
@@ -185,6 +202,9 @@ function generateStressData(onProgress) {
       })
       chain[s.stage_id] = true
     })(lastStage)
+    // 与 stagePicker 的链式写入一致：名单不含当前阶段自身，
+    // 最后阶段保持 current（可打卡、可点「完成阶段」），只标前序
+    delete chain[lastStage.stage_id]
     setCompletedStages(Object.keys(chain))
   }
 

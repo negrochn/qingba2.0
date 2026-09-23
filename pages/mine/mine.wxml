@@ -1,13 +1,14 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- 路线介绍（两路线独立页面、独立入口） -->
+  <!-- 路线介绍：只显示当前路线的入口（与全 app「只服务当前路线」口径一致；
+       想了解另一条路线走路线选择页切换） -->
   <view class="weui-cells mb-16">
-    <view class="weui-cell weui-cell_access" bindtap="goAbout">
+    <view class="weui-cell weui-cell_access" wx:if="{{routeId === 'regular'}}" bindtap="goAbout">
       <view class="weui-cell__hd"><text class="iconfont icon-info"></text></view>
       <view class="weui-cell__bd">常规路线介绍</view>
       <view class="weui-cell__ft"><text class="iconfont icon-right"></text></view>
     </view>
-    <view class="weui-cell weui-cell_access" bindtap="goAboutBigloop">
+    <view class="weui-cell weui-cell_access" wx:if="{{routeId === 'bigloop'}}" bindtap="goAboutBigloop">
       <view class="weui-cell__hd"><text class="iconfont icon-info"></text></view>
       <view class="weui-cell__bd">大循环路线介绍</view>
       <view class="weui-cell__ft"><text class="iconfont icon-right"></text></view>
