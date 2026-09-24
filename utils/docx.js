@@ -249,14 +249,8 @@ function createDocx(text) {
 }
 
 // ===== DOCX 解析 =====
-// ArrayBuffer -> string（提取 document.xml 中的纯文本，段落以换行连接）
-function parseDocx(buffer) {
-  const files = unzipStore(buffer);
-  const docXml = files['word/document.xml'];
-  if (!docXml) {
-    throw new Error('DOCX 缺少 document.xml');
-  }
-  const xml = utf8Decode(docXml);
+// document.xml 的 XML 文本 -> 纯文本（提取 <w:t> 内容，段落以换行连接）
+function docxXmlToText(xml) {
   const paras = xml.split('</w:p>');
   const lines = [];
   const re = /<w:t[^>]*>([\s\S]*?)<\/w:t>/g;
@@ -274,8 +268,22 @@ function parseDocx(buffer) {
   return lines.join('\n');
 }
 
+// ArrayBuffer -> string（提取 document.xml 中的纯文本）
+// 注意：仅支持 STORE(0) 方式的 ZIP——本工具 createDocx 生成的文件是这种；
+// 经 Word/WPS/Pages 保存或微信/iOS 中转后重打包的 docx 多为 DEFLATE，
+// 本函数会抛错，调用方可降级走 wx.getFileSystemManager().unzip 官方解压兜底
+function parseDocx(buffer) {
+  const files = unzipStore(buffer);
+  const docXml = files['word/document.xml'];
+  if (!docXml) {
+    throw new Error('DOCX 缺少 document.xml（或条目非 STORE 存储）');
+  }
+  return docxXmlToText(utf8Decode(docXml));
+}
+
 module.exports = {
   createDocx,
   parseDocx,
+  docxXmlToText,
   isDocxName: (name) => /\.docx$/i.test(name || '')
 };

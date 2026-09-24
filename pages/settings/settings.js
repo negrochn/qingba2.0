@@ -413,17 +413,19 @@ Page({
         filePath,
         success: (res) => {
           wx.hideLoading();
+          let text = null;
           try {
-            const text = docx.parseDocx(res.data);
-            this._handleImportText(text);
+            text = docx.parseDocx(res.data);
           } catch (e) {
-            console.error('docx 解析失败', e);
-            wx.showModal({
-              title: '解析失败',
-              content: '备份文件解析失败，请使用本小程序导出的、未修改过的备份文件。',
-              showCancel: false
-            });
+            // 快路径仅支持 STORE 型 ZIP；经微信/iOS 中转或 Word 保存过的
+            // 文件会被重打包为 DEFLATE，降级走官方 unzip 解压兜底
+            console.error('docx 快速解析失败，尝试 unzip 兜底', e);
           }
+          if (text !== null) {
+            this._handleImportText(text);
+            return;
+          }
+          this._parseDocxViaUnzip(filePath);
         },
         fail: (err) => {
           wx.hideLoading();
@@ -453,6 +455,41 @@ Page({
         }
       });
     }
+  },
+
+  // docx 兜底解析：官方 unzip 支持 DEFLATE（覆盖被微信/iOS/Word 重打包过的文件），
+  // 解压后直接读 word/document.xml 提取文本
+  _parseDocxViaUnzip(filePath) {
+    const fs = wx.getFileSystemManager();
+    const dir = `${wx.env.USER_DATA_PATH}/backup_unzip`;
+    try { fs.rmdirSync(dir, true); } catch (e) { /* 目录不存在，忽略 */ }
+    fs.unzip({
+      zipFilePath: filePath,
+      targetPath: dir,
+      success: () => {
+        try {
+          const xml = fs.readFileSync(`${dir}/word/document.xml`, 'utf8');
+          this._handleImportText(docx.docxXmlToText(xml));
+        } catch (e) {
+          console.error('unzip 兜底解析失败', e);
+          this._showDocxParseError();
+        } finally {
+          try { fs.rmdirSync(dir, true); } catch (e2) { /* 清理失败，忽略 */ }
+        }
+      },
+      fail: (err) => {
+        console.error('unzip 失败', err);
+        this._showDocxParseError();
+      }
+    });
+  },
+
+  _showDocxParseError() {
+    wx.showModal({
+      title: '解析失败',
+      content: '备份文件解析失败，请使用本小程序导出的、未修改过的备份文件。',
+      showCancel: false
+    });
   },
 
   // 解析备份文本：v3 多孩格式整体恢复；v2 单孩格式先选目标孩子
