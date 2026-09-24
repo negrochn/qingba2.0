@@ -905,47 +905,6 @@ function updateCheckin(id, opts) {
   }
 }
 
-// 清除所有打卡数据（包括分片）——仅当前孩子（多孩语义，见方案文档 §5）
-function clearAllCheckins() {
-  try {
-    let allKeys = []
-    try {
-      const info = wx.getStorageInfoSync()
-      allKeys = info.keys || []
-    } catch(e) {}
-
-    const toRemove = []
-    const chunkPrefix = _chunkPrefix()
-
-    // 收集当前孩子的相关 key（⚠️ 不能用 CHUNK_PREFIX，会误删其他孩子的分片）
-    allKeys.forEach(k => {
-      if (k === _mainKey() || k.startsWith(chunkPrefix)) {
-        toRemove.push(k)
-      }
-    })
-
-    // 清空完成阶段名单（回到初始状态，当前孩子）
-    toRemove.push(STAGE_DONE_KEY + _childSeg())
-
-    // 主孩子：顺带清 legacy 旧键，避免「清空后兜底迁移复活」
-    if (_isPrimaryChild()) {
-      toRemove.push(STORAGE_KEY, STAGE_DONE_KEY)
-      allKeys.forEach(k => {
-        if (String(k).startsWith(CHUNK_PREFIX)) toRemove.push(k)
-      })
-    }
-
-    // 批量删除（去重后执行）
-    Array.from(new Set(toRemove)).forEach(k => {
-      try { wx.removeStorageSync(k) } catch (e) {}
-    })
-
-    return toRemove.length
-  } catch (e) {
-    return 0
-  }
-}
-
 // 某阶段打卡记录条数（只读，不删任何数据；供清空范围页等展示「将清空多少条」）
 function countCheckinsByStage(stageId) {
   try {
@@ -1604,7 +1563,6 @@ module.exports = {
   getCheckinById,
   updateCheckin,
   deleteCheckin,
-  clearAllCheckins,
   countCheckinsByStage,
   clearCheckinsByStage,
   getAll,
