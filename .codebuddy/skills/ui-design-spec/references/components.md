@@ -818,6 +818,7 @@ onTouchMove(e) {
   3. 提交时校验兜底（`children._validateName` / `customResources._validateName`），防其他入口写脏数据。
   输入中不打断拼音，损失只在失焦瞬间。（注：资源名 `customResources` 是纯码点上限 20，与昵称宽度口径是两套体系，各自内部一致即可。）
 - **单输入行弹层：说明收进 placeholder**：只有一行输入的弹层（添加 / 改名 / 删除确认），限制说明别单开说明行或分节（卡片里孤零零一行小字偏重），直接写进 placeholder（「最多8个汉字或16个字母」「输入「xx」确认」），校验 toast 做兜底。
+- **tabBar 页弹层必须 `onHide` 兜底收起（`home`/`route` 实测）**：原生 tabBar 层级高于页面蒙层——弹窗开着时用户能直接点另一个 tab 切走；切 tab 只 hide 不销毁页面，弹层状态（含 `shown`/`hidden` 两态）原样残留，切回来蒙层还挂着，且蒙层挡住的内容可能在别的 tab 已被改动（如去「我的」增删孩子后孩子列表过期）。页面 `onHide` 里把弹层 `visible` 一律置 `false` 即可，滑出动画在页面隐藏期间照常走完，回来已是干净状态；不要像早期那样在 `onShow` 里「发现弹层开着就重建内容」打补丁——`onHide` 收起后该分支永不为真，是死代码。非 tabBar 页无此问题（蒙层盖得住整页，navigateTo 前弹层必已关）。
 - 现存 9 个弹层实例：`pages/stage`（打卡 / 晋级测试）、`pages/targetSetting`、`pages/myResources`、`pages/home`（今日明细）、`components/resource-picker`、`pages/childManage`（添加/改名、删除确认）、`components/child-picker`（切换孩子）。
 
 ---
