@@ -26,6 +26,14 @@ Page({
     this.loadCurrentStage();
   },
 
+  // tab 切走时关闭孩子切换弹层（同 home）：原生 tabBar 盖不住蒙层，切 tab 不销毁页面，
+  // 弹层状态会残留（回来还挂着蒙层，孩子列表也可能在「我的」里被增删后过期）
+  onHide() {
+    if (this.data.childSheetVisible) {
+      this.setData({ childSheetVisible: false })
+    }
+  },
+
   onShow() {
     const app = getApp()
     if (app && app.applyFontLevel) app.applyFontLevel(this)

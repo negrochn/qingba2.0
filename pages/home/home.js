@@ -79,8 +79,15 @@ Page({
     if (app && app.applyFontLevel) app.applyFontLevel(this)
     this._refreshChild()
     this._refresh()
-    // 弹窗处于打开态时同步重建，避免展示上一次的内容
-    if (this.data.sheetVisible) this._buildSheet(this.data.sheetMode)
+  },
+
+  // tab 切走时关闭弹层：原生 tabBar 层级高于页面蒙层，弹窗开着也能直接点「路线/我的」切走；
+  // 切 tab 只 hide 不销毁页面，弹层状态会残留（回来还挂着蒙层，孩子列表也可能过期）。
+  // 页面隐藏期间滑出动画照常走完，回来时已是干净状态
+  onHide() {
+    if (this.data.childSheetVisible || this.data.sheetVisible) {
+      this.setData({ childSheetVisible: false, sheetVisible: false })
+    }
   },
 
   // 孩子切换器状态：仅多孩时显示（单孩零感知）
