@@ -1,0 +1,120 @@
+<view class="container {{fontClass}} {{darkClass}}">
+
+  <!-- 孩子列表：radio 语义（点行切换，当前项绿勾）+ 左滑改名/删除 -->
+  <view class="weui-cells__title">我的孩子</view>
+  <view class="weui-cells weui-cells_radio">
+    <view
+      class="swipe-wrap"
+      wx:for="{{items}}"
+      wx:key="id"
+      data-path="{{item._path}}"
+      bindtouchstart="onTouchStart"
+      bindtouchmove="onTouchMove"
+      bindtouchend="onTouchEnd"
+    >
+      <!-- 左滑操作层：非破坏在左（改名 灰）、破坏性在右（删除 红）；唯一孩子不露删除 -->
+      <view class="swipe-bg {{item.canDelete ? 'swipe-bg-two' : ''}}">
+        <view class="swipe-act swipe-act-edit" catchtap="onSwipeRename" data-id="{{item.id}}">改名</view>
+        <view
+          class="swipe-act swipe-act-del"
+          wx:if="{{item.canDelete}}"
+          catchtap="onSwipeDelete"
+          data-id="{{item.id}}"
+        >删除</view>
+      </view>
+      <view
+        class="weui-cell weui-cell_access swipe-fg"
+        style="transform: translateX({{item._dx}}rpx); transition: {{item._anim ? 'transform 0.25s ease' : 'none'}};"
+        data-id="{{item.id}}"
+        bindtap="onPickChild"
+      >
+        <view class="cp-av cp-av--{{item.color}}">{{item.initial}}</view>
+        <view class="weui-cell__bd cm-bd">
+          <view class="weui-cell__bd_text">{{item.name}}</view>
+          <view class="weui-cell__desc">{{item.descText}}</view>
+        </view>
+        <view class="weui-cell__ft">
+          <text class="weui-icon-checked iconfont icon-check" hidden="{{!item.active}}"></text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 列表说明：解释 radio 语义（紧跟列表，与按钮解耦；WeUI cells__tips 规格） -->
+  <view class="weui-cells__tips">每个孩子的打卡记录、资源清单与阶段进度相互独立</view>
+
+  <!-- 添加按钮：达到上限时置灰（weui-btn_disabled 类切换，与删除弹层按钮同模式） -->
+  <view class="weui-btn-area">
+    <button
+      class="weui-btn {{isFull ? 'weui-btn_disabled' : 'weui-btn_primary'}}"
+      bindtap="openAdd"
+    >添加孩子</button>
+    <view class="cm-tips" wx:if="{{isFull}}">已达上限 {{maxChildren}} 个孩子</view>
+  </view>
+
+</view>
+
+<!-- 添加 / 改名弹层：输入昵称（显示宽度 ≤8：汉字计 1、字母计 0.5；
+     maxlength 放开规避拼音组合期截断，超长由失焦截断 + 提交校验兜底） -->
+<half-sheet
+  show="{{sheetVisible}}"
+  title="{{sheetTitle}}"
+  font-class="{{fontClass}}"
+  dark-class="{{darkClass}}"
+  footer="{{true}}"
+  bind:close="closeSheet"
+>
+  <view class="form-card">
+    <view class="form-row">
+      <view class="form-label">昵称</view>
+      <input
+        class="form-field"
+        type="text"
+        value="{{nameInput}}"
+        maxlength="-1"
+        placeholder="最多8个汉字或16个字母"
+        placeholder-class="cm-input-ph"
+        bindinput="onNameInput"
+        bindblur="onNameBlur"
+      />
+    </view>
+  </view>
+  <view slot="footer" class="weui-btn-area_inline">
+    <button class="weui-btn weui-btn_default" bindtap="closeSheet">取消</button>
+    <button class="weui-btn weui-btn_primary" bindtap="submitSheet">{{sheetMode === 'add' ? '添加' : '保存'}}</button>
+  </view>
+</half-sheet>
+
+<!-- 删除强确认：输入孩子昵称，一致时删除按钮才可用（原型④屏） -->
+<half-sheet
+  show="{{deleteVisible}}"
+  title="删除孩子"
+  font-class="{{fontClass}}"
+  dark-class="{{darkClass}}"
+  footer="{{true}}"
+  bind:close="closeDelete"
+>
+  <view class="form-card">
+    <view class="cm-del-desc">将删除「{{deleteName}}」的全部打卡记录、自定义资源与阶段进度，删除后不可恢复。</view>
+    <view class="weui-divider"></view>
+    <view class="form-row">
+      <view class="form-label">昵称</view>
+      <input
+        class="form-field"
+        type="text"
+        value="{{deleteInput}}"
+        maxlength="-1"
+        placeholder="输入「{{deleteName}}」确认"
+        placeholder-class="cm-input-ph"
+        bindinput="onDeleteInput"
+      />
+    </view>
+  </view>
+  <view slot="footer" class="weui-btn-area_inline">
+    <button class="weui-btn weui-btn_default" bindtap="closeDelete">取消</button>
+    <button
+      class="weui-btn {{deleteReady ? 'weui-btn_warn' : 'weui-btn_disabled'}}"
+      bindtap="confirmDelete"
+    >删除</button>
+  </view>
+</half-sheet>

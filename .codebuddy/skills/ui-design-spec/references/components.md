@@ -812,7 +812,13 @@ onTouchMove(e) {
   - **挂 / 摘该态要控时序**（在 js 的 `show` observer 里），否则会把过渡动画吞掉：**打开** → 先摘掉 `display:none`、隔一帧（20ms）再挂显示态；**关闭** → 先播 250ms 滑出动画、走完（260ms）再挂上；`detached` 清定时器；
   - 因此组件内由内部状态 `shown`（滑入 + 蒙层）/ `hidden`（`display:none`）驱动 class，不再直接用 `show`；
   - 已填数据不受影响 —— `display:none` 只是不渲染，页面 data 仍在，重开弹层照常回填。
-- 现存 6 处：`pages/stage`（打卡 / 晋级测试）、`pages/targetSetting`、`pages/myResources`、`pages/home`（今日明细）、`components/resource-picker`。
+- **弹层输入框一律不设 `maxlength`（拼音坑，`childManage` 实测）**：小程序 `input` 的 `maxlength` 在拼音输入法**组合期间也把拼音字母计入长度**——昵称限「8 个汉字或 16 个字母」时，全拼 `xiaoerzi` 打满 8 个字母就被硬截，汉字根本没机会上屏（表现为「还没输完就不让打了」）。解法三件套：
+  1. `maxlength="-1"` 放开，输入全程不受限；
+  2. `bindblur` 截断——blur 时组合必已结束，按**显示宽度**截（项目 `children.clipName`：码点遍历，`codePointAt(0) > 0xFF` 计 1、其余计 0.5，截断后 toast 提示）；**截断与提交校验必须同一函数 / 同一口径**，别一处码点计数、一处宽度计数；
+  3. 提交时校验兜底（`children._validateName` / `customResources._validateName`），防其他入口写脏数据。
+  输入中不打断拼音，损失只在失焦瞬间。（注：资源名 `customResources` 是纯码点上限 20，与昵称宽度口径是两套体系，各自内部一致即可。）
+- **单输入行弹层：说明收进 placeholder**：只有一行输入的弹层（添加 / 改名 / 删除确认），限制说明别单开说明行或分节（卡片里孤零零一行小字偏重），直接写进 placeholder（「最多8个汉字或16个字母」「输入「xx」确认」），校验 toast 做兜底。
+- 现存 9 个弹层实例：`pages/stage`（打卡 / 晋级测试）、`pages/targetSetting`、`pages/myResources`、`pages/home`（今日明细）、`components/resource-picker`、`pages/childManage`（添加/改名、删除确认）、`components/child-picker`（切换孩子）。
 
 ---
 

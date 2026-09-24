@@ -1,8 +1,21 @@
 const theme = require('./utils/theme.js')
 const checkin = require('./utils/checkin.js')
+const children = require('./utils/children.js')
 
 App({
   onLaunch() {
+    // 多孩初始化：保证孩子列表与当前孩子 id 恒有效（无列表时创建主孩子「宝宝」）
+    try {
+      children.ensureInit()
+    } catch (e) {
+      console.error('孩子列表初始化失败', e)
+    }
+    // 多孩迁移：旧单孩数据一次性落入主孩子槽位（幂等；读路径另有兜底双保险）
+    try {
+      checkin.migrateLegacyData()
+    } catch (e) {
+      console.error('多孩数据迁移失败', e)
+    }
     // 官方资源 id 化：把老的「资源名」key 一次性迁移为「资源 id」key（幂等，重复调用无副作用）
     try {
       checkin.migrateResourceKeysToId()

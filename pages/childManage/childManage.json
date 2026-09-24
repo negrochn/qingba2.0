@@ -2,5 +2,5 @@
   "usingComponents": {
     "half-sheet": "/components/half-sheet/half-sheet"
   },
-  "navigationBarTitleText": "设置"
+  "navigationBarTitleText": "孩子管理"
 }

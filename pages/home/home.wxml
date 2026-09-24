@@ -1,15 +1,14 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- ① 欢迎条：英文日期 + 欢迎语（左），当前阶段（右） -->
+  <!-- ① 欢迎条：英文日期 + 欢迎语（左），孩子切换器（右，仅多孩显示） -->
   <view class="home-header">
     <view class="home-greet">
       <view class="home-date">{{dateText}}</view>
       <view class="home-greet-sub">{{greetText}}<text wx:if="{{dayNumber > 0}}" class="home-greet-day">Day {{dayNumber}}</text></view>
     </view>
-    <!-- 毕业态右侧整块隐藏：祝贺语 + 毕业卡已承担全部语义，不再暴露内部阶段口径 -->
-    <view class="home-stage" wx:if="{{!graduated}}">
-      <view class="home-stage-name">{{stageName || '未设置阶段'}}</view>
-      <view class="home-stage-percent" wx:if="{{stageName}}">{{stageNoTarget ? '—' : stagePercent + '%'}}</view>
+    <!-- 孩子切换器：仅多孩时显示，纯头像（点按弹切换弹层，名字/对勾在弹层内核对）；阶段进度已并入下方统计卡 -->
+    <view class="home-child-av" wx:if="{{isMultiChild}}" bindtap="openChildSheet" hover-class="home-child-av-hover">
+      <view class="cp-av cp-av--{{activeChildColor}}">{{activeChildInitial}}</view>
     </view>
   </view>
 
@@ -78,10 +77,11 @@
   </view>
 
   <block wx:else>
-  <!-- ② Hero 卡：本周时长 + 周一~周日柱状图 -->
+  <!-- ② Hero 卡：本周时长 + 周一~周日柱状图（头部右侧承接原 header 的阶段进度） -->
   <view class="home-hero">
     <view class="home-hero-head">
       <view class="home-hero-title">本周时长</view>
+      <view class="home-hero-stage" wx:if="{{stageName}}">{{stageName}}<text wx:if="{{!stageNoTarget}}"> · {{stagePercent}}%</text></view>
     </view>
     <view class="home-hero-num">
       <text class="home-hero-val">{{weekHours}}</text>
@@ -150,3 +150,12 @@
 
   <view class="hs-empty" wx:else>今天还没有打卡记录</view>
 </half-sheet>
+
+<!-- 切换孩子弹层（纯切换）：切换后 onShow 重读 per-child 键即为新孩子视图 -->
+<child-picker
+  show="{{childSheetVisible}}"
+  font-class="{{fontClass}}"
+  dark-class="{{darkClass}}"
+  bind:close="closeChildSheet"
+  bind:changed="onChildChanged"
+/>

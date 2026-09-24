@@ -1,8 +1,25 @@
-<view class="container {{fontClass}} {{darkClass}}">
+<view class="container route-page {{fontClass}} {{darkClass}}">
 
-  <!-- 当前阶段：分组标题 + cell，右侧为当前阶段进度；未设置时改为引导去选择 -->
-  <view class="weui-cells__title">当前阶段</view>
+  <!-- 顶部：当前孩子（仅多孩显示）+ 当前阶段；分组标题已移除，
+       留白由容器 padding-top 补齐（层级语义：为谁学 → 学到哪 → 怎么走） -->
   <view class="weui-cells">
+    <!-- 当前孩子 cell：点击弹切换弹层（纯切换）；标准 access 结构（无头像/CTA，箭头表意） -->
+    <view
+      class="weui-cell weui-cell_access"
+      wx:if="{{isMultiChild}}"
+      bindtap="openChildSheet"
+      hover-class="current-cell-hover"
+    >
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text">{{activeChildName}}</view>
+        <view class="weui-cell__desc">{{activeChildSummaryText}}</view>
+      </view>
+      <view class="weui-cell__ft">
+        <text class="iconfont icon-right"></text>
+      </view>
+    </view>
+
+    <!-- 当前阶段 cell：右侧为当前阶段进度；未设置时引导去选择 -->
     <block wx:if="{{currentCard}}">
       <view
         class="weui-cell weui-cell_access current-cell"
@@ -40,7 +57,7 @@
     </block>
   </view>
 
-  <!-- 路线时间线 -->
+  <!-- 路线时间线（标题保留：下面是多行列表，标题有分组语义） -->
   <view class="weui-cells__title">学习路线</view>
   <view class="weui-cells">
     <view
@@ -85,3 +102,12 @@
   </view>
 
 </view>
+
+<!-- 切换孩子弹层（纯切换）：切换后 loadCurrentStage 整体重建 -->
+<child-picker
+  show="{{childSheetVisible}}"
+  font-class="{{fontClass}}"
+  dark-class="{{darkClass}}"
+  bind:close="closeChildSheet"
+  bind:changed="onChildChanged"
+/>

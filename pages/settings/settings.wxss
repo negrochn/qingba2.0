@@ -2,3 +2,46 @@
 page {
   background: var(--bg);
 }
+
+/* ===== 导入备份 · 选孩子弹层（v2 单孩格式） ===== */
+.imp-list {
+  padding: 0 32rpx 8rpx;
+}
+
+.imp-row {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 16rpx;
+  border-radius: 12rpx;
+  transition: background-color 0.15s ease;
+}
+
+.imp-row-hover {
+  background: var(--cell-active);
+}
+
+.imp-name {
+  flex: 1;
+  min-width: 0;
+  padding-left: 24rpx;
+  font-size: calc(32rpx * var(--fs, 1));
+  color: var(--text);
+  line-height: 1.4;
+}
+
+/* 对勾：对齐 .weui-cells_radio .weui-icon-checked 的品牌绿样式
+   （本弹层不在 cells_radio 容器内，拿不到那条全局规则） */
+.imp-row .weui-icon-checked {
+  font-size: calc(44rpx * var(--fs, 1));
+  color: var(--brand);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.imp-note {
+  padding: 8rpx 48rpx 24rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1.5;
+}
+

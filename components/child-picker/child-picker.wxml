@@ -1,0 +1,29 @@
+<!-- 切换孩子弹层：视觉对齐「目标时长弹窗」的卡片质感
+     （form-card 卡片 + weui-divider 分节），交互保持点选即切 -->
+<half-sheet
+  show="{{show}}"
+  title="切换孩子"
+  font-class="{{fontClass}}"
+  dark-class="{{darkClass}}"
+  bind:close="onClose"
+>
+  <view class="form-card">
+    <block wx:for="{{items}}" wx:key="id">
+      <view class="weui-divider" wx:if="{{index > 0}}"></view>
+      <view
+        class="cps-row"
+        hover-class="cps-row-hover"
+        hover-stay-time="80"
+        data-id="{{item.id}}"
+        bindtap="onPick"
+      >
+        <view class="cp-av cp-av--{{item.color}}">{{item.initial}}</view>
+        <view class="cps-bd">
+          <view class="cps-name">{{item.name}}</view>
+          <view class="cps-desc">{{item.summaryText}}</view>
+        </view>
+        <text wx:if="{{item.active}}" class="iconfont icon-check cps-check"></text>
+      </view>
+    </block>
+  </view>
+</half-sheet>

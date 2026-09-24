@@ -1,0 +1,44 @@
+/* 切换孩子弹层：form-card 卡片内的行列表（cps- 前缀）
+   卡片与分隔线用全局原语（.form-card / .weui-divider，与「目标时长弹窗」同款；
+   头像原语 .cp-av 亦来自 app.wxss），此处只写行内部布局。
+   依赖 js 里的 styleIsolation: 'apply-shared' 从页面侧拿到 app.wxss
+   （连同其 @import 的 styles/weui-cells.wxss 等）—— 勿改为 isolated */
+
+/* 行：上下留白对齐 form-row 节奏（112rpx 为单行行高，此处名字+摘要双行自适应） */
+.cps-row {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 0;
+}
+
+/* 按压反馈用 --divider：与 .form-row:active 同一档色值（卡片底为 --card2，
+   --cell-active 的对比只剩 11 个色阶，按住几乎看不出来） */
+.cps-row-hover {
+  background: var(--divider);
+}
+
+.cps-bd {
+  flex: 1;
+  min-width: 0;
+  padding-left: 24rpx;
+  padding-right: 16rpx;
+}
+
+.cps-name {
+  font-size: calc(32rpx * var(--fs, 1));
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.cps-desc {
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1.4;
+  margin-top: 4rpx;
+}
+
+.cps-check {
+  font-size: calc(44rpx * var(--fs, 1));
+  color: var(--brand);
+  flex-shrink: 0;
+}

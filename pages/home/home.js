@@ -1,4 +1,5 @@
 const checkin = require('../../utils/checkin.js')
+const children = require('../../utils/children.js')
 const { getRequiredHours, isRouteCompleted } = require('../../utils/data.js')
 const share = require('../../utils/share.js')
 
@@ -60,7 +61,12 @@ Page({
     gradSubtitle: '',
     companionDays: 0,
     allHours: '0',
-    allDays: 0
+    allDays: 0,
+    // 孩子切换器（仅多孩显示）：纯头像 + 切换弹层
+    isMultiChild: false,
+    activeChildInitial: '',
+    activeChildColor: 'green',
+    childSheetVisible: false
   },
 
   onLoad() {
@@ -71,9 +77,20 @@ Page({
   onShow() {
     const app = getApp()
     if (app && app.applyFontLevel) app.applyFontLevel(this)
+    this._refreshChild()
     this._refresh()
     // 弹窗处于打开态时同步重建，避免展示上一次的内容
     if (this.data.sheetVisible) this._buildSheet(this.data.sheetMode)
+  },
+
+  // 孩子切换器状态：仅多孩时显示（单孩零感知）
+  _refreshChild() {
+    const active = children.getActiveChild() || {}
+    this.setData({
+      isMultiChild: children.isMultiChild(),
+      activeChildInitial: String(active.name || '').trim().charAt(0) || '·',
+      activeChildColor: active.color || 'green'
+    })
   },
 
   // 分享给好友：标题带上当前累计时长（比纯口号更有说服力），落地页统一首页
@@ -281,6 +298,21 @@ Page({
 
   closeSheet() {
     this.setData({ sheetVisible: false })
+  },
+
+  // ===== 孩子切换 =====
+  openChildSheet() {
+    this.setData({ childSheetVisible: true })
+  },
+
+  closeChildSheet() {
+    this.setData({ childSheetVisible: false })
+  },
+
+  // 切换成功：统计卡 / 欢迎卡 / 毕业卡整体按新孩子口径重建（onShow 同款刷新）
+  onChildChanged() {
+    this._refreshChild()
+    this._refresh()
   },
 
   // 构建今日明细：口径与卡片完全一致（仅当前阶段、仅今天）

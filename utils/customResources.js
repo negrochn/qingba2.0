@@ -11,11 +11,22 @@
 
 const checkin = require('./checkin.js')
 const { ROUTES, resourceLabels } = require('./data.js')
+const { getActiveChildId, getPrimaryChildId } = require('./children.js')
 
 const STORAGE_KEY = 'qingba_custom_resources'
 const MAX_NAME_LEN = 20
 const MAX_PER_STAGE = 50
 const FORBIDDEN_CHAR = '|'
+
+// per-child 键：qingba_custom_resources_<childId>
+function _storageKey() {
+  return STORAGE_KEY + '_' + (getActiveChildId() || '')
+}
+
+function _isPrimary() {
+  const pid = getPrimaryChildId()
+  return !!pid && pid === getActiveChildId()
+}
 
 // 'u_' + 时间戳36进制 + 随机5位
 function genId() {
@@ -55,7 +66,16 @@ function _stageName(stageId) {
 
 function getAll() {
   try {
-    const v = wx.getStorageSync(STORAGE_KEY)
+    let v = wx.getStorageSync(_storageKey())
+    // 主孩子兜底：旧单孩键一次性迁移进孩子槽位并删除（读到即迁，幂等）
+    if ((v === '' || v == null) && _isPrimary()) {
+      const legacy = wx.getStorageSync(STORAGE_KEY)
+      if (legacy && typeof legacy === 'object' && !Array.isArray(legacy)) {
+        try { wx.setStorageSync(_storageKey(), legacy) } catch (e2) {}
+        try { wx.removeStorageSync(STORAGE_KEY) } catch (e3) {}
+        v = legacy
+      }
+    }
     return (v && typeof v === 'object' && !Array.isArray(v)) ? v : {}
   } catch (e) {
     return {}
@@ -64,11 +84,22 @@ function getAll() {
 
 function _saveAll(data) {
   try {
-    wx.setStorageSync(STORAGE_KEY, data || {})
+    wx.setStorageSync(_storageKey(), data || {})
     return true
   } catch (e) {
     return false
   }
+}
+
+// 主动触发 legacy 迁移（app.js onLaunch 调用；读路径兜底的双保险主路径）
+function migrateLegacyData() {
+  getAll()
+}
+
+// 删除某孩子的全部自定义资源（供 children.removeChild 级联调用）
+function removeChildData(childId) {
+  if (!childId) return
+  try { wx.removeStorageSync(STORAGE_KEY + '_' + childId) } catch (e) {}
 }
 
 function getByStage(stageId) {
@@ -116,7 +147,8 @@ function findById(id) {
 // 名称校验（新增与改名共用）
 function _validateName(nm) {
   if (!nm) return '请输入资源名称'
-  if (nm.length > MAX_NAME_LEN) return `名称不超过 ${MAX_NAME_LEN} 字`
+  // 按「字」= 码点计数（与失焦截断口径一致）
+  if ([...nm].length > MAX_NAME_LEN) return `名称不超过 ${MAX_NAME_LEN} 字`
   if (nm.indexOf(FORBIDDEN_CHAR) >= 0) return `名称不能包含 ${FORBIDDEN_CHAR} 符号`
   return ''
 }
@@ -242,10 +274,13 @@ function clearByStage(stageId) {
   }
 }
 
+// 清空当前孩子的自定义资源（多孩语义：不碰其他孩子）
+// 主孩子时顺带清 legacy 旧键，避免「清空后兜底迁移复活」
 function clearAll() {
-  try {
-    wx.removeStorageSync(STORAGE_KEY)
-  } catch (e) {}
+  try { wx.removeStorageSync(_storageKey()) } catch (e) {}
+  if (_isPrimary()) {
+    try { wx.removeStorageSync(STORAGE_KEY) } catch (e) {}
+  }
 }
 
 // 覆盖式导入
@@ -307,5 +342,7 @@ module.exports = {
   clearByStage,
   clearAll,
   replaceAll,
-  mergeAll
+  mergeAll,
+  migrateLegacyData,
+  removeChildData
 }

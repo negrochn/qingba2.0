@@ -1,4 +1,6 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "child-picker": "/components/child-picker/child-picker"
+  },
   "navigationBarTitleText": "路线"
 }

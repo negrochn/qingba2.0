@@ -1,5 +1,6 @@
 // 设置页
 const checkin = require('../../utils/checkin.js');
+const children = require('../../utils/children.js');
 const customResources = require('../../utils/customResources.js');
 const { ROUTES } = require('../../utils/data.js');
 const { generateStressData } = require('../../utils/stress-test.js');
@@ -26,6 +27,7 @@ Page({
   data: {
     totalCount: 0,
     currentRouteName: '',
+    childCountText: '',
     appVersionText: getAppVersionText(),
     // 开发者工具（压力测试）仅在开发版显示
     showDevTools: false,
@@ -37,6 +39,10 @@ Page({
     targetSummary: '',
     myResourceCount: 0,
     _importMode: 'overwrite',
+    // 导入备份 · 选孩子弹层（v2 单孩格式专用）
+    importPickVisible: false,
+    importPickItems: [],
+    importPickSelectedId: '',
     // 字号 / 深色 class（跟随微信设置，由 app.applyFontLevel 下发）
     fontClass: 'fs-normal',
     darkClass: 'dm-auto',
@@ -63,6 +69,7 @@ Page({
     if (app && app.applyFontLevel) app.applyFontLevel(this);
 
     this.loadRoute();
+    this.loadChildCount();
     this.loadStats();
     this.loadCurrentStage();
     this.loadYouquPlan();
@@ -83,6 +90,21 @@ Page({
   // 跳转「我的资源」管理页
   goMyResources() {
     wx.navigateTo({ url: '/pages/myResources/myResources' });
+  },
+
+  // 孩子数（「孩子管理」入口右侧展示；单孩也显示「1 个」）
+  loadChildCount() {
+    try {
+      const n = children.getChildren().length;
+      this.setData({ childCountText: `${n} 个` });
+    } catch (e) {
+      console.error('读取孩子数失败', e);
+    }
+  },
+
+  // 跳转「孩子管理」页（多孩功能唯一管理入口）
+  goChildManage() {
+    wx.navigateTo({ url: '/pages/childManage/childManage' });
   },
 
   // 读取阶段目标口径（默认档位 + 自定义阶段数），供入口行右侧展示
@@ -196,68 +218,82 @@ Page({
     wx.showLoading({ title: '生成中...', mask: true });
 
     try {
-      // 收集所有数据
+      // 收集所有数据（v3 多孩格式：含全部孩子；全局设置在顶层）
       const data = {};
 
-      // 打卡记录（扁平化处理，方便导入）
-      const all = checkin.getAll();
-      const records = [];
-      for (const day in all) {
-        for (const c of all[day]) {
-          records.push(c);
-        }
-      }
-      data.checkin_records = records;
+      // ===== 各孩子数据：临时切换收集，finally 恢复原当前孩子 =====
+      // 收集过程同步执行，中间不会有 onShow 打断；任一步异常也保证切回
+      const prevActiveId = children.getActiveChildId();
+      const childrenOut = [];
+      try {
+        children.getChildren().forEach((c) => {
+          children.switchChild(c.id);
+          const one = { name: c.name, color: c.color };
 
+          // 打卡记录（扁平化处理，方便导入）
+          const all = checkin.getAll();
+          const records = [];
+          for (const day in all) {
+            for (const rec of all[day]) {
+              records.push(rec);
+            }
+          }
+          if (records.length) one.checkin_records = records;
+
+          // 已读次数
+          const readCounts = checkin.getReadCounts();
+          if (readCounts && Object.keys(readCounts).length) {
+            one.read_count_data = readCounts;
+          }
+
+          // 自定义资源
+          const customResourcesData = customResources.getAll();
+          if (customResourcesData && Object.keys(customResourcesData).length > 0) {
+            one.custom_resources = customResourcesData;
+          }
+
+          // 阶段进度：两路线槽位整组 + 已完成名单 + 当前路线
+          const stagesMap = checkin.getCurrentStagesMap();
+          if (stagesMap.regular || stagesMap.bigloop) {
+            one.current_stage_map = stagesMap;
+          }
+          const stageDone = checkin.getCompletedStages();
+          if (stageDone.length) one.stage_done = stageDone;
+          one.current_route = checkin.getCurrentRouteId();
+
+          // 目标口径与有趣计划（per-child）
+          if (checkin.isYouquPlanEnabled() === false) one.youqu_plan = false;
+          one.target_mode = checkin.getTargetMode();
+          const customTargets = checkin.getCustomTargets();
+          if (Object.keys(customTargets).length) one.target_custom = customTargets;
+
+          childrenOut.push(one);
+        });
+      } finally {
+        children.switchChild(prevActiveId);
+      }
+      data.children = childrenOut;
+
+      // ===== 全局（家庭级）设置 =====
       // 默认备注
       const remarks = wx.getStorageSync(checkin.DEFAULT_REMARK_KEY);
       if (remarks) {
         data.checkin_default_remark = remarks;
       }
 
-      // 已读次数
-      const readCounts = wx.getStorageSync(checkin.READ_COUNT_KEY);
-      if (readCounts) {
-        data.read_count_data = readCounts;
-      }
-
-      // 自定义资源
-      const customResourcesData = customResources.getAll();
-      if (customResourcesData && Object.keys(customResourcesData).length > 0) {
-        data.custom_resources = customResourcesData;
-      }
-
-      // 当前阶段
-      const currentStage = checkin.getCurrentStage();
-      if (currentStage) {
-        data.current_stage = currentStage;
-      }
-
-      // 已完成阶段名单（与首启引导一致）
-      data.stage_done = checkin.getCompletedStages();
-
-      // 小小优趣成长计划开关
-      data.youqu_plan = checkin.isYouquPlanEnabled();
-
       // 熏听分组开关
       data.listening_enabled = checkin.isListeningEnabled();
-
-      // 阶段目标口径（默认档位 + 逐阶段自定义；无覆盖时不写 target_custom）
-      data.target_mode = checkin.getTargetMode();
-      const customTargets = checkin.getCustomTargets();
-      if (Object.keys(customTargets).length) {
-        data.target_custom = customTargets;
-      }
 
       // 字体大小档位
       data.font_level = theme.getFontLevel();
 
       // 添加版本信息
       data.__backup_meta = {
-        version: '2.0',
+        version: '3.0',
         timestamp: Date.now(),
         date: new Date().toLocaleString('zh-CN'),
-        storageFormat: 'flat'  // 标识数据格式
+        storageFormat: 'multi_child',  // 标识数据格式（含全部孩子）
+        child_count: childrenOut.length
       };
 
       const json = JSON.stringify(data, null, 2);
@@ -419,178 +455,154 @@ Page({
     }
   },
 
-  // 解析备份文本并确认导入
+  // 解析备份文本：v3 多孩格式整体恢复；v2 单孩格式先选目标孩子
   _handleImportText(text) {
+    let data;
     try {
-      const data = JSON.parse(text);
-
-      // 验证必要的 key
-      if (!data.checkin_records || !Array.isArray(data.checkin_records)) {
-        wx.showToast({
-          title: '备份格式无效',
-          icon: 'none'
-        });
-        return;
-      }
-
-      const recordCount = data.checkin_records.length;
-      const modeText = this.data._importMode === 'merge' ? '合并式导入' : '覆盖式导入';
-      wx.showModal({
-        title: '确认导入',
-        content: `备份包含 ${recordCount} 条打卡记录，导入方式：${modeText}，是否继续？`,
-        confirmText: '导入',
-        cancelText: '取消',
-        confirmColor: '#07C160',
-        success: (modalRes) => {
-          if (modalRes.confirm) {
-            this.doImport(data, this.data._importMode);
-          }
-        }
-      });
+      data = JSON.parse(text);
     } catch (e) {
       wx.showModal({
         title: '解析失败',
         content: 'JSON格式错误，请检查文件内容是否正确',
         showCancel: false
       });
+      return;
     }
+
+    const modeText = this.data._importMode === 'merge' ? '合并式导入' : '覆盖式导入';
+
+    // v3 多孩格式：整体恢复（每个孩子按名字与本机合并/新建），不弹选孩子
+    if (Array.isArray(data.children) && data.children.length > 0) {
+      const childCount = data.children.length;
+      const recordCount = data.children.reduce(
+        (n, c) => n + (Array.isArray(c.checkin_records) ? c.checkin_records.length : 0), 0
+      );
+      wx.showModal({
+        title: '确认导入',
+        content: `备份包含 ${childCount} 个孩子、${recordCount} 条打卡记录，${modeText}，是否继续？`,
+        confirmText: '导入',
+        cancelText: '取消',
+        confirmColor: '#07C160',
+        success: (modalRes) => {
+          if (modalRes.confirm) {
+            this.doImportChildren(data.children, this.data._importMode, data);
+          }
+        }
+      });
+      return;
+    }
+
+    // v2 单孩格式：验证后先选目标孩子，再导入到所选孩子名下
+    if (!data.checkin_records || !Array.isArray(data.checkin_records)) {
+      wx.showToast({
+        title: '备份格式无效',
+        icon: 'none'
+      });
+      return;
+    }
+
+    this._pendingImport = data;
+    const list = children.getChildren();
+    const activeId = children.getActiveChildId();
+    this.setData({
+      importPickVisible: true,
+      importPickSelectedId: activeId,
+      importPickItems: list.map(c => ({
+        id: c.id,
+        name: c.name,
+        initial: String(c.name || '').trim().charAt(0) || '·',
+        color: c.color,
+        active: c.id === activeId
+      }))
+    });
+  },
+
+  // ===== 导入备份 · 选孩子弹层（v2 单孩格式专用；v3 整体恢复不经过此处） =====
+  onImportPickChild(e) {
+    const id = e.currentTarget.dataset.id;
+    this.setData({
+      importPickSelectedId: id,
+      importPickItems: this.data.importPickItems.map(it => ({
+        ...it,
+        active: it.id === id
+      }))
+    });
+  },
+
+  closeImportPick() {
+    this.setData({ importPickVisible: false });
+    this._pendingImport = null;
+  },
+
+  // 「导入到「xx」」：临时切换到所选孩子执行导入，完成后切回原当前孩子
+  confirmImportPick() {
+    const targetId = this.data.importPickSelectedId;
+    const data = this._pendingImport;
+    if (!data || !targetId) return;
+
+    const prevActiveId = children.getActiveChildId();
+    children.switchChild(targetId);
+    try {
+      this._applyChildData(data, this.data._importMode);
+      this._applyGlobalData(data);
+    } finally {
+      if (prevActiveId !== targetId) children.switchChild(prevActiveId);
+    }
+
+    this.setData({ importPickVisible: false });
+    this._pendingImport = null;
+    this.loadStats();
+    this.loadMyResources();
+    this.loadChildCount();
+    const hit = children.getChildren().find(c => c.id === targetId);
+    wx.showToast({
+      title: `已导入到${hit ? hit.name : '所选孩子'}`,
+      icon: 'success'
+    });
+  },
+
+  // v3 整体恢复：逐个孩子按名字匹配（无则新建），临时切换导入，finally 恢复原当前孩子
+  doImportChildren(childrenArr, mode, rawData) {
+    wx.showLoading({ title: '导入中...' });
+    const prevActiveId = children.getActiveChildId();
+    let skipped = 0;
+    try {
+      childrenArr.forEach((c) => {
+        if (!c || !c.name) { skipped++; return; }
+        let hit = children.getChildren().find(x => x.name === c.name);
+        if (!hit) {
+          const res = children.addChild(c.name);
+          if (!res.ok) { skipped++; return; }   // 名字非法/已达上限：跳过该孩子
+          hit = res.child;
+        }
+        children.switchChild(hit.id);
+        this._applyChildData(c, mode);
+      });
+
+      // 全局（家庭级）设置只恢复一次
+      if (rawData) this._applyGlobalData(rawData);
+    } finally {
+      if (prevActiveId && children.getChildren().some(x => x.id === prevActiveId)) {
+        children.switchChild(prevActiveId);
+      }
+    }
+
+    wx.hideLoading();
+    this.loadStats();
+    this.loadMyResources();
+    this.loadChildCount();
+    wx.showToast({
+      title: skipped > 0 ? `导入成功（${skipped} 个孩子跳过）` : '导入成功',
+      icon: skipped > 0 ? 'none' : 'success'
+    });
   },
 
   doImport(data, mode = 'overwrite') {
     wx.showLoading({ title: '导入中...' });
 
     try {
-      // 将扁平数组转换为按日期分组的对象
-      // 过滤无效记录：无合法 day 且 timestamp 无法解析的脏数据直接丢弃
-      const grouped = {};
-      if (data.checkin_records) {
-        for (const record of data.checkin_records) {
-          if (!record || typeof record !== 'object') continue;
-          let day = '';
-          if (typeof record.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(record.day)) {
-            day = record.day;
-          } else {
-            const ts = Number(record.timestamp);
-            if (ts > 0) {
-              const d = new Date(ts);
-              if (!isNaN(d.getTime())) day = checkin.todayStr(d);
-            }
-          }
-          if (!day) continue;
-          if (!grouped[day]) {
-            grouped[day] = [];
-          }
-          grouped[day].push(record);
-        }
-
-        // 合并模式：保留本地记录，按日期合并并按 id 去重（同 id 保留本地版本）
-        if (mode === 'merge') {
-          const local = checkin.getAll();
-          const mergedByDay = {};
-          for (const day in local) {
-            if (Array.isArray(local[day]) && local[day].length > 0) {
-              mergedByDay[day] = local[day].slice();
-            }
-          }
-          for (const day in grouped) {
-            if (!mergedByDay[day]) {
-              mergedByDay[day] = [];
-            }
-            for (const c of grouped[day]) {
-              mergedByDay[day].push(c);
-            }
-          }
-          for (const day in mergedByDay) {
-            const seen = new Set();
-            const deduped = [];
-            for (const c of mergedByDay[day]) {
-              const key = c && c.id ? c.id : (c ? `${c.day}_${c.timestamp}_${c.resourceName}` : '');
-              if (!key) {
-                deduped.push(c);
-                continue;
-              }
-              if (!seen.has(key)) {
-                seen.add(key);
-                deduped.push(c);
-              }
-            }
-            deduped.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-            mergedByDay[day] = deduped;
-          }
-          checkin.saveAll(mergedByDay);
-        } else {
-          checkin.saveAll(grouped);
-        }
-      }
-
-      // 保存默认备注
-      if (data.checkin_default_remark) {
-        wx.setStorageSync(checkin.DEFAULT_REMARK_KEY, data.checkin_default_remark);
-      }
-
-      // 保存已读次数（合并模式：本地与备份按资源累加）
-      if (data.read_count_data) {
-        if (mode === 'merge') {
-          const mergedCounts = Object.assign({}, wx.getStorageSync(checkin.READ_COUNT_KEY) || {});
-          for (const key in data.read_count_data) {
-            mergedCounts[key] = (mergedCounts[key] || 0) + (data.read_count_data[key] || 0);
-          }
-          wx.setStorageSync(checkin.READ_COUNT_KEY, mergedCounts);
-        } else {
-          wx.setStorageSync(checkin.READ_COUNT_KEY, data.read_count_data);
-        }
-      }
-
-      // 自定义资源：合并模式按「阶段 + 分组 + 名称」去重，覆盖模式直接替换
-      if (data.custom_resources) {
-        if (mode === 'merge') {
-          customResources.mergeAll(data.custom_resources);
-        } else {
-          customResources.replaceAll(data.custom_resources);
-        }
-      }
-
-      // 导入的旧备份 key 仍是资源名，需再迁移一次（force 忽略本会话已迁移标记）
-      checkin.migrateResourceKeysToId(true);
-
-      // 恢复当前阶段
-      if (data.current_stage) {
-        // 走槽位化接口写入（按当前路线存），不再直接写旧单键
-        checkin.setCurrentStage(data.current_stage);
-      }
-
-      // 恢复已完成阶段名单（合并模式：取并集）
-      if (Array.isArray(data.stage_done)) {
-        if (mode === 'merge') {
-          const merged = new Set([
-            ...(checkin.getCompletedStages() || []),
-            ...data.stage_done
-          ]);
-          checkin.setCompletedStages(Array.from(merged));
-        } else {
-          checkin.setCompletedStages(data.stage_done);
-        }
-      }
-
-      // 恢复小小优趣成长计划开关（备份缺该字段时不修改，保持当前设置）
-      if (typeof data.youqu_plan === 'boolean') {
-        checkin.setYouquPlanEnabled(data.youqu_plan);
-      }
-
-      // 恢复熏听分组开关（同上，缺字段不覆盖）
-      if (typeof data.listening_enabled === 'boolean') {
-        checkin.setListeningEnabled(data.listening_enabled);
-      }
-
-      // 恢复阶段目标口径（同上，缺字段不覆盖；自定义表整体替换，非法项由 replaceCustomTargets 丢弃）
-      if (data.target_mode === 'lower' || data.target_mode === 'upper') {
-        checkin.setTargetMode(data.target_mode);
-      }
-      if (data.target_custom && typeof data.target_custom === 'object') {
-        checkin.replaceCustomTargets(data.target_custom);
-      }
-
-      // 字体大小档位：已改为跟随微信设置，旧备份里的 fontLevel 有意忽略（写进存储也不再生效）
+      this._applyChildData(data, mode);
+      this._applyGlobalData(data);
 
       wx.hideLoading();
       this.loadStats();
@@ -607,6 +619,146 @@ Page({
         title: '导入失败',
         icon: 'none'
       });
+    }
+  },
+
+  // 将备份中「单个孩子」的数据落到当前孩子（v2 顶层字段 / v3 children[i] 同构复用）
+  _applyChildData(data, mode = 'overwrite') {
+    // 将扁平数组转换为按日期分组的对象
+    // 过滤无效记录：无合法 day 且 timestamp 无法解析的脏数据直接丢弃
+    const grouped = {};
+    if (data.checkin_records) {
+      for (const record of data.checkin_records) {
+        if (!record || typeof record !== 'object') continue;
+        let day = '';
+        if (typeof record.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(record.day)) {
+          day = record.day;
+        } else {
+          const ts = Number(record.timestamp);
+          if (ts > 0) {
+            const d = new Date(ts);
+            if (!isNaN(d.getTime())) day = checkin.todayStr(d);
+          }
+        }
+        if (!day) continue;
+        if (!grouped[day]) {
+          grouped[day] = [];
+        }
+        grouped[day].push(record);
+      }
+
+      // 合并模式：保留本地记录，按日期合并并按 id 去重（同 id 保留本地版本）
+      if (mode === 'merge') {
+        const local = checkin.getAll();
+        const mergedByDay = {};
+        for (const day in local) {
+          if (Array.isArray(local[day]) && local[day].length > 0) {
+            mergedByDay[day] = local[day].slice();
+          }
+        }
+        for (const day in grouped) {
+          if (!mergedByDay[day]) {
+            mergedByDay[day] = [];
+          }
+          for (const c of grouped[day]) {
+            mergedByDay[day].push(c);
+          }
+        }
+        for (const day in mergedByDay) {
+          const seen = new Set();
+          const deduped = [];
+          for (const c of mergedByDay[day]) {
+            const key = c && c.id ? c.id : (c ? `${c.day}_${c.timestamp}_${c.resourceName}` : '');
+            if (!key) {
+              deduped.push(c);
+              continue;
+            }
+            if (!seen.has(key)) {
+              seen.add(key);
+              deduped.push(c);
+            }
+          }
+          deduped.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+          mergedByDay[day] = deduped;
+        }
+        checkin.saveAll(mergedByDay);
+      } else {
+        checkin.saveAll(grouped);
+      }
+    }
+
+    // 保存已读次数（当前孩子；合并模式：本地与备份按资源累加）
+    if (data.read_count_data) {
+      if (mode === 'merge') {
+        const mergedCounts = Object.assign({}, checkin.getReadCounts());
+        for (const key in data.read_count_data) {
+          mergedCounts[key] = (mergedCounts[key] || 0) + (data.read_count_data[key] || 0);
+        }
+        checkin.replaceReadCounts(mergedCounts);
+      } else {
+        checkin.replaceReadCounts(data.read_count_data);
+      }
+    }
+
+    // 自定义资源：合并模式按「阶段 + 分组 + 名称」去重，覆盖模式直接替换
+    if (data.custom_resources) {
+      if (mode === 'merge') {
+        customResources.mergeAll(data.custom_resources);
+      } else {
+        customResources.replaceAll(data.custom_resources);
+      }
+    }
+
+    // 导入的旧备份 key 仍是资源名，需再迁移一次（force 忽略本会话已迁移标记）
+    checkin.migrateResourceKeysToId(true);
+
+    // 恢复阶段进度：v3 两路线槽位整组恢复；v2 单对象走当前路线槽位
+    if (data.current_stage_map) {
+      checkin.restoreCurrentStages(data.current_stage_map);
+    } else if (data.current_stage) {
+      // 走槽位化接口写入（按当前路线存），不再直接写旧单键
+      checkin.setCurrentStage(data.current_stage);
+    }
+
+    // 恢复当前路线（v3 每孩子备份里有）
+    if (data.current_route === 'regular' || data.current_route === 'bigloop') {
+      checkin.setCurrentRouteId(data.current_route);
+    }
+
+    // 恢复已完成阶段名单（合并模式：取并集）
+    if (Array.isArray(data.stage_done)) {
+      if (mode === 'merge') {
+        const merged = new Set([
+          ...(checkin.getCompletedStages() || []),
+          ...data.stage_done
+        ]);
+        checkin.setCompletedStages(Array.from(merged));
+      } else {
+        checkin.setCompletedStages(data.stage_done);
+      }
+    }
+
+    // 恢复小小优趣成长计划开关（备份缺该字段时不修改，保持当前设置）
+    if (typeof data.youqu_plan === 'boolean') {
+      checkin.setYouquPlanEnabled(data.youqu_plan);
+    }
+
+    // 恢复阶段目标口径（同上，缺字段不覆盖；自定义表整体替换，非法项由 replaceCustomTargets 丢弃）
+    if (data.target_mode === 'lower' || data.target_mode === 'upper') {
+      checkin.setTargetMode(data.target_mode);
+    }
+    if (data.target_custom && typeof data.target_custom === 'object') {
+      checkin.replaceCustomTargets(data.target_custom);
+    }
+  },
+
+  // 全局（家庭级）设置：默认备注 + 熏听开关；字体档位已跟随微信设置，旧字段有意忽略
+  _applyGlobalData(data) {
+    if (data.checkin_default_remark) {
+      wx.setStorageSync(checkin.DEFAULT_REMARK_KEY, data.checkin_default_remark);
+    }
+    if (typeof data.listening_enabled === 'boolean') {
+      checkin.setListeningEnabled(data.listening_enabled);
     }
   },
 

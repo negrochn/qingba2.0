@@ -1,12 +1,18 @@
-/* ===== 路线页（WeUI 风格：顶部当前阶段入口 + 时间线分组列表） ===== */
+/* ===== 路线页（WeUI 风格：顶部当前孩子 + 当前阶段入口 + 时间线分组列表） ===== */
 
-/* ① 当前阶段：高亮底色只作用于「当前」那一行（.current-cell）；
+/* 「当前阶段」分组标题移除后，顶部留白由容器 padding-top 补齐（不给 .weui-cells 加 margin） */
+.route-page {
+  padding-top: 32rpx;
+}
+
+/* ① 当前孩子 cell（仅多孩显示）：头像 + 摘要，右侧「切换」弹切换弹层 */
+/* ①-b 当前阶段：高亮底色只作用于「当前」那一行（.current-cell）；
       容器回归 .weui-cells 默认（白底 + 上下通栏线），与下方「学习路线」组外观一致 */
 .current-cell { background: rgba(7, 193, 96, 0.10); }
 .current-cell:active { background: rgba(7, 193, 96, 0.18); }
 .current-cell-hover  { background: rgba(7, 193, 96, 0.18); }
 
-/* ①-a 未设置当前阶段的引导行：占位主文弱化，右侧行动文字用品牌绿 */
+/* ①-c 未设置当前阶段的引导行：占位主文弱化，右侧行动文字用品牌绿 */
 .route-unset {
   color: var(--text2);                 /* 占位而非真值，用次级色 */
 }

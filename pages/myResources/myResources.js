@@ -222,6 +222,16 @@ Page({
     this.setData({ nameInput: e.detail.value })
   },
 
+  // 失焦截断：maxlength 会把拼音组合期的字母计入长度导致打不完拼音，
+  // 故放开 maxlength，blur 时按「字」截断（提交时 _validateName 再兜底）
+  onNameBlur(e) {
+    const chars = Array.from(String(e.detail.value || '').trim())
+    if (chars.length > customResources.MAX_NAME_LEN) {
+      this.setData({ nameInput: chars.slice(0, customResources.MAX_NAME_LEN).join('') })
+      wx.showToast({ title: `名称不超过 ${customResources.MAX_NAME_LEN} 字`, icon: 'none' })
+    }
+  },
+
   // 提交新增 / 保存编辑
   submitSheet() {
     // 防重复提交：连点会重复调用 add（第二次命中同名校验，用户看到无谓报错）

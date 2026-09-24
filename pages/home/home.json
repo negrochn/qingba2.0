@@ -1,6 +1,7 @@
 {
   "usingComponents": {
-    "half-sheet": "/components/half-sheet/half-sheet"
+    "half-sheet": "/components/half-sheet/half-sheet",
+    "child-picker": "/components/child-picker/child-picker"
   },
   "navigationBarTitleText": "庆爸2.0"
 }

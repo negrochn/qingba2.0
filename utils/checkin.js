@@ -6,12 +6,13 @@
 //      factor 为时长折算系数（熏听分组按阶段取 0 / 0.5 / 0.8），缺省视为 1，故只在 ≠1 时写入
 
 const { ROUTES, listeningFactor } = require('./data.js')
+const { getActiveChildId, getPrimaryChildId } = require('./children.js')
 
 const STORAGE_KEY = 'qingba_checkins'
-const CHUNK_PREFIX = 'qingba_checkins_' // 按月分片: qingba_checkins_2021-06
-// 分片写入的临时 key 前缀：先把全部分片写到临时 key，全部成功后再逐个改名为正式 key，
+const CHUNK_PREFIX = 'qingba_checkins_' // 按月分片: qingba_checkins_<childId>_2021-06
+// 分片写入的临时 key 子前缀：先把全部分片写到临时 key，全部成功后再逐个改名为正式 key，
 // 保证任何一步失败都不会破坏已存在的分片（见 saveAll）
-const TMP_CHUNK_PREFIX = CHUNK_PREFIX + 'tmp_'
+const TMP_CHUNK_SUB = 'tmp_'
 const DEFAULT_REMARK_KEY = 'qingba_default_remarks'
 const READ_COUNT_KEY = 'qingba_read_counts'
 const CURRENT_STAGE_KEY = 'qingba_current_stage'
@@ -21,6 +22,61 @@ const LISTENING_ENABLED_KEY = 'qingba_listening_enabled'   // 熏听分组开关
 const STAGE_DONE_KEY = 'qingba_stage_done'   // 已完成阶段 id 列表
 const TARGET_MODE_KEY = 'qingba_target_mode'       // 阶段目标档位：'lower' | 'upper'（默认 upper）
 const TARGET_CUSTOM_KEY = 'qingba_target_custom'   // 逐阶段自定义目标：{ [stageId]: hours }
+
+// ===== 多孩：per-child 键构造 =====
+// 会话级数据键在尾部叠加当前孩子 id 段（qingba_xxx_<childId>），
+// 切换孩子后各页面 onShow 重读 per-child 键即为新孩子视图，页面层零改动。
+// 例外：默认备注、熏听开关为家庭级设置，保持全局共享。
+
+function _childSeg() {
+  const id = getActiveChildId()
+  return id ? '_' + id : ''
+}
+
+// 是否主孩子（children[0]）：legacy 单孩数据的兜底迁移仅对主孩子生效，
+// 否则「升级首启后立刻添加孩子 #2 并切换」会把旧键数据兜底读到 #2 名下（§3.3）
+function _isPrimaryChild() {
+  const pid = getPrimaryChildId()
+  return !!pid && pid === getActiveChildId()
+}
+
+// 通用 per-child 读：新键优先；主孩子且新键无值时兜底读 legacy 键，读到即迁移并删除
+// 注意「无值」判定：wx.getStorageSync 对不存在的键返回 ''；false / 0 / {} 都是合法值
+function _pcGet(baseKey, extraSeg, defaultValue) {
+  const extra = extraSeg || ''
+  const key = baseKey + _childSeg() + extra
+  try {
+    const v = wx.getStorageSync(key)
+    if (v !== '' && v !== null && v !== undefined) return v
+    if (_isPrimaryChild()) {
+      const legacy = wx.getStorageSync(baseKey + extra)
+      if (legacy !== '' && legacy !== null && legacy !== undefined) {
+        try { wx.setStorageSync(key, legacy) } catch (e2) {}
+        try { wx.removeStorageSync(baseKey + extra) } catch (e3) {}
+        return legacy
+      }
+    }
+  } catch (e) {}
+  return defaultValue
+}
+
+function _pcSet(baseKey, extraSeg, value) {
+  try {
+    wx.setStorageSync(baseKey + _childSeg() + (extraSeg || ''), value)
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
+function _pcRemove(baseKey, extraSeg) {
+  try {
+    wx.removeStorageSync(baseKey + _childSeg() + (extraSeg || ''))
+    return true
+  } catch (e) {
+    return false
+  }
+}
 
 // 单条 storage 上限（字节），留余量
 const MAX_ITEM_BYTES = 900 * 1024 // 约 900KB，微信上限 1MB
@@ -93,22 +149,33 @@ function _dayToMonth(dayStr) {
   return dayStr.substring(0, 7) // "2021-06-01" -> "2021-06"
 }
 
+// 打卡数据主 key（per-child）：qingba_checkins_<childId>
+function _mainKey() {
+  return STORAGE_KEY + _childSeg()
+}
+
+// 当前孩子的分片 key 前缀：qingba_checkins_<childId>_
+// ⚠️ 分片遍历/清理必须用它而非 CHUNK_PREFIX，否则会跨孩子误读误删（串数据）
+function _chunkPrefix() {
+  return CHUNK_PREFIX + getActiveChildId() + '_'
+}
+
 function _chunkKey(ym) {
-  return CHUNK_PREFIX + ym
+  return _chunkPrefix() + ym
 }
 
 // 临时分片 key（写入中间态）
 function _tmpChunkKey(ym) {
-  return TMP_CHUNK_PREFIX + ym
+  return _chunkPrefix() + TMP_CHUNK_SUB + ym
 }
 
-// 清理所有分片 key（月度分片 + 极端单日分片），用于存储模式切换/重写时清理旧数据
+// 清理当前孩子的所有分片 key（月度分片 + 极端单日分片），用于存储模式切换/重写时清理旧数据
 // 否则 getAll 合并时旧分片会覆盖主 key，导致已删除/已修改的记录"复活"
 function _removeChunkKeys() {
   try {
     const info = wx.getStorageInfoSync()
     ;(info.keys || []).forEach(k => {
-      if (k.startsWith(CHUNK_PREFIX)) {
+      if (k.startsWith(_chunkPrefix())) {
         try { wx.removeStorageSync(k) } catch (e) {}
       }
     })
@@ -163,10 +230,11 @@ function _listChunkKeys() {
   try {
     const info = wx.getStorageInfoSync()
     if (info && Array.isArray(info.keys)) {
-      // 排除临时分片：它是写入中间态，若参与合并会读到"半成品"数据
+      // 只匹配当前孩子的分片前缀；排除临时分片：它是写入中间态，若参与合并会读到"半成品"数据
+      const prefix = _chunkPrefix()
       return info.keys.filter(k => {
         const s = String(k)
-        return s.startsWith(CHUNK_PREFIX) && !s.startsWith(TMP_CHUNK_PREFIX)
+        return s.startsWith(prefix) && !s.startsWith(prefix + TMP_CHUNK_SUB)
       })
     }
   } catch (e) {
@@ -192,9 +260,55 @@ function _isChunkMode() {
   return _listChunkKeys().length > 0
 }
 
+// 旧单孩打卡数据 → 主孩子槽位（主键 + 分片，含极端单日分片），一次性迁移
+// 幂等（迁移完旧键即删）；会话级标记保证仅首个读路径真正执行，也避免「清空后复活」
+let _legacyCheckinsDone = false
+function _migrateLegacyCheckins() {
+  if (_legacyCheckinsDone) return
+  _legacyCheckinsDone = true
+  if (!_isPrimaryChild()) return
+  try {
+    // 1) 旧主键 → 孩子主键（同日以孩子槽位已有数据优先，正常时序下不会共存）
+    const legacyMain = wx.getStorageSync(STORAGE_KEY)
+    if (legacyMain && typeof legacyMain === 'object') {
+      const cur = wx.getStorageSync(_mainKey())
+      const merged = (cur && typeof cur === 'object') ? { ...cur } : {}
+      for (const day in legacyMain) {
+        if (merged[day] === undefined) merged[day] = legacyMain[day]
+      }
+      try { wx.setStorageSync(_mainKey(), merged) } catch (e2) {}
+      try { wx.removeStorageSync(STORAGE_KEY) } catch (e3) {}
+    }
+
+    // 2) 旧分片改名为孩子分片；旧 tmp 中间态直接清理
+    //    旧分片后缀为 YYYY-MM 或 YYYY-MM_DD（childId 以 ch_ 开头，不会误匹配）
+    const info = wx.getStorageInfoSync()
+    ;(info.keys || []).forEach(k => {
+      const s = String(k)
+      if (!s.startsWith(CHUNK_PREFIX)) return
+      const rest = s.slice(CHUNK_PREFIX.length)
+      if (rest.startsWith(TMP_CHUNK_SUB)) {
+        try { wx.removeStorageSync(s) } catch (e2) {}
+        return
+      }
+      if (/^\d{4}-\d{2}(_\d{2})?$/.test(rest)) {
+        const v = wx.getStorageSync(s)
+        if (v && typeof v === 'object') {
+          try { wx.setStorageSync(_chunkPrefix() + rest, v) } catch (e2) {}
+        }
+        try { wx.removeStorageSync(s) } catch (e3) {}
+      }
+    })
+  } catch (e) {
+    console.error('_migrateLegacyCheckins failed:', e)
+  }
+}
+
 function getAll() {
   try {
-    const main = wx.getStorageSync(STORAGE_KEY) || {}
+    // 主孩子兜底迁移（正常路径在 onLaunch migrateLegacyData 已完成，此处为容灾双保险）
+    if (_isPrimaryChild()) _migrateLegacyCheckins()
+    const main = wx.getStorageSync(_mainKey()) || {}
     const chunkKeys = _listChunkKeys()
 
     // 无分片：直接返回主 key（空对象即表示确实没有数据）
@@ -237,7 +351,7 @@ function saveAll(data) {
     if (bytes <= MAX_ITEM_BYTES && itemCount < 500) {
       let ok = true
       try {
-        wx.setStorageSync(STORAGE_KEY, data)
+        wx.setStorageSync(_mainKey(), data)
       } catch (e) {
         ok = false
         _onSaveFail()
@@ -307,7 +421,7 @@ function saveAll(data) {
     }
 
     // 3) 全部改名成功后，再清理主 key 与不再使用的旧分片
-    try { wx.removeStorageSync(STORAGE_KEY) } catch(e) {}
+    try { wx.removeStorageSync(_mainKey()) } catch(e) {}
     oldKeys.forEach(k => {
       if (newKeys.indexOf(k) < 0) {
         try { wx.removeStorageSync(k) } catch (e) {}
@@ -482,21 +596,17 @@ function saveDefaultRemark(stageId, groupKey, resourceId, remark) {
 // ===== 小小优趣成长计划开关（feature flag） =====
 // 默认开启；用户可在设置页显式关闭，关闭后按存储的布尔值判断
 function isYouquPlanEnabled() {
-  try {
-    const v = wx.getStorageSync(YOUQU_PLAN_KEY)
-    // 从未设置过（取到的是空串等非布尔值）时默认开启；显式设置过则返回其布尔值
-    return typeof v === 'boolean' ? v : true
-  } catch (e) {
-    return true
-  }
+  // 从未设置过（非布尔值）时默认开启；显式设置过则返回其布尔值（per-child）
+  const v = _pcGet(YOUQU_PLAN_KEY, '', undefined)
+  return typeof v === 'boolean' ? v : true
 }
 
 function setYouquPlanEnabled(enabled) {
-  try {
-    wx.setStorageSync(YOUQU_PLAN_KEY, !!enabled)
-  } catch (e) {
-    console.error('setYouquPlanEnabled failed:', e)
+  if (!_pcSet(YOUQU_PLAN_KEY, '', !!enabled)) {
+    console.error('setYouquPlanEnabled failed')
+    return false
   }
+  return true
 }
 
 // ===== 熏听开关（feature flag） =====
@@ -531,13 +641,9 @@ function setListeningEnabled(enabled) {
 const TARGET_MODES = ['lower', 'upper']
 
 function getTargetMode() {
-  try {
-    const v = wx.getStorageSync(TARGET_MODE_KEY)
-    // 从未设置过 / 脏数据时默认上限
-    return TARGET_MODES.indexOf(v) >= 0 ? v : 'upper'
-  } catch (e) {
-    return 'upper'
-  }
+  // 从未设置过 / 脏数据时默认上限（per-child）
+  const v = _pcGet(TARGET_MODE_KEY, '', '')
+  return TARGET_MODES.indexOf(v) >= 0 ? v : 'upper'
 }
 
 function setTargetMode(mode) {
@@ -545,30 +651,23 @@ function setTargetMode(mode) {
     console.error('setTargetMode: invalid mode', mode)
     return false
   }
-  try {
-    wx.setStorageSync(TARGET_MODE_KEY, mode)
-    return true
-  } catch (e) {
-    console.error('setTargetMode failed:', e)
+  if (!_pcSet(TARGET_MODE_KEY, '', mode)) {
+    console.error('setTargetMode failed')
     return false
   }
+  return true
 }
 
 // 读取逐阶段自定义目标（逐项过滤：只保留正数，脏数据静默丢弃，不让它污染进度计算）
 function getCustomTargets() {
-  try {
-    const raw = wx.getStorageSync(TARGET_CUSTOM_KEY)
-    if (!raw || typeof raw !== 'object') return {}
-    const out = {}
-    for (const id in raw) {
-      const h = Number(raw[id])
-      if (id && isFinite(h) && h > 0) out[id] = h
-    }
-    return out
-  } catch (e) {
-    console.error('getCustomTargets failed:', e)
-    return {}
+  const raw = _pcGet(TARGET_CUSTOM_KEY, '', null)
+  if (!raw || typeof raw !== 'object') return {}
+  const out = {}
+  for (const id in raw) {
+    const h = Number(raw[id])
+    if (id && isFinite(h) && h > 0) out[id] = h
   }
+  return out
 }
 
 function getCustomTarget(stageId) {
@@ -585,13 +684,11 @@ function setCustomTarget(stageId, hours) {
   } else {
     delete all[stageId]
   }
-  try {
-    wx.setStorageSync(TARGET_CUSTOM_KEY, all)
-    return true
-  } catch (e) {
-    console.error('setCustomTarget failed:', e)
+  if (!_pcSet(TARGET_CUSTOM_KEY, '', all)) {
+    console.error('setCustomTarget failed')
     return false
   }
+  return true
 }
 
 function clearCustomTarget(stageId) {
@@ -607,13 +704,11 @@ function replaceCustomTargets(obj) {
       if (id && isFinite(h) && h > 0) clean[id] = h
     }
   }
-  try {
-    wx.setStorageSync(TARGET_CUSTOM_KEY, clean)
-    return true
-  } catch (e) {
-    console.error('replaceCustomTargets failed:', e)
+  if (!_pcSet(TARGET_CUSTOM_KEY, '', clean)) {
+    console.error('replaceCustomTargets failed')
     return false
   }
+  return true
 }
 
 // 供 getRequiredHours(stage, opt) 直接透传：{ mode, custom }
@@ -810,7 +905,7 @@ function updateCheckin(id, opts) {
   }
 }
 
-// 清除所有打卡数据（包括分片）
+// 清除所有打卡数据（包括分片）——仅当前孩子（多孩语义，见方案文档 §5）
 function clearAllCheckins() {
   try {
     let allKeys = []
@@ -820,20 +915,28 @@ function clearAllCheckins() {
     } catch(e) {}
 
     const toRemove = []
+    const chunkPrefix = _chunkPrefix()
 
-    // 收集所有相关的 key
+    // 收集当前孩子的相关 key（⚠️ 不能用 CHUNK_PREFIX，会误删其他孩子的分片）
     allKeys.forEach(k => {
-      if (k === STORAGE_KEY ||
-          k.startsWith(CHUNK_PREFIX)) {
+      if (k === _mainKey() || k.startsWith(chunkPrefix)) {
         toRemove.push(k)
       }
     })
 
-    // 清空完成阶段名单（回到初始状态）
-    toRemove.push(STAGE_DONE_KEY)
+    // 清空完成阶段名单（回到初始状态，当前孩子）
+    toRemove.push(STAGE_DONE_KEY + _childSeg())
 
-    // 批量删除
-    toRemove.forEach(k => {
+    // 主孩子：顺带清 legacy 旧键，避免「清空后兜底迁移复活」
+    if (_isPrimaryChild()) {
+      toRemove.push(STORAGE_KEY, STAGE_DONE_KEY)
+      allKeys.forEach(k => {
+        if (String(k).startsWith(CHUNK_PREFIX)) toRemove.push(k)
+      })
+    }
+
+    // 批量删除（去重后执行）
+    Array.from(new Set(toRemove)).forEach(k => {
       try { wx.removeStorageSync(k) } catch (e) {}
     })
 
@@ -908,7 +1011,7 @@ function clearCheckinsByStage(stageId) {
     const di = done.indexOf(stageId)
     if (di >= 0) {
       done.splice(di, 1)
-      try { wx.setStorageSync(STAGE_DONE_KEY, done) } catch (e) {}
+      _pcSet(STAGE_DONE_KEY, '', done)
     }
 
     if (removed > 0) saveAll(remain)
@@ -978,17 +1081,23 @@ function fmtMinutesCN(totalMin) {
 // （迁移前遗留的 name key 由 migrateResourceKeysToId() 一次性改写）
 
 function _getReadCounts() {
-  try {
-    return wx.getStorageSync(READ_COUNT_KEY) || {}
-  } catch (e) {
-    return {}
-  }
+  const v = _pcGet(READ_COUNT_KEY, '', null)
+  return (v && typeof v === 'object') ? v : {}
 }
 
 function _saveReadCounts(data) {
-  try {
-    wx.setStorageSync(READ_COUNT_KEY, data)
-  } catch (e) {}
+  _pcSet(READ_COUNT_KEY, '', data)
+}
+
+// 整份读次数（当前孩子）：导出备份用（页面不应直摸存储键）
+function getReadCounts() {
+  return _getReadCounts()
+}
+
+// 覆盖式写入整份读次数（当前孩子）：导入备份用
+function replaceReadCounts(data) {
+  const src = (data && typeof data === 'object') ? data : {}
+  return _pcSet(READ_COUNT_KEY, '', src)
 }
 
 function _readCountKey(stageId, groupKey, resourceId) {
@@ -1295,24 +1404,15 @@ function getResourceCheckinSummary(resourceId, resourceName, stageId, groupKey) 
   return { count, minutes }
 }
 
-// ===== 当前路线 =====
+// ===== 当前路线（per-child + 按路线）=====
 // 所有页面只服务当前路线（打卡记录/统计/资源均按路线隔离，见方案文档第四节）
 function getCurrentRouteId() {
-  try {
-    const id = wx.getStorageSync(CURRENT_ROUTE_KEY)
-    return ROUTES[id] ? id : 'regular'
-  } catch (e) {
-    return 'regular'
-  }
+  const id = _pcGet(CURRENT_ROUTE_KEY, '', '')
+  return ROUTES[id] ? id : 'regular'
 }
 
 function setCurrentRouteId(id) {
-  try {
-    wx.setStorageSync(CURRENT_ROUTE_KEY, ROUTES[id] ? id : 'regular')
-    return true
-  } catch (e) {
-    return false
-  }
+  return _pcSet(CURRENT_ROUTE_KEY, '', ROUTES[id] ? id : 'regular')
 }
 
 // 当前路线完整对象 { id, name, stages }，页面用它替代写死的 routeData
@@ -1320,57 +1420,60 @@ function getCurrentRoute() {
   return ROUTES[getCurrentRouteId()] || ROUTES.regular
 }
 
-// ===== 当前阶段（按路线存槽位，切路线互不污染）=====
-// 键：qingba_current_stage_regular / qingba_current_stage_bigloop
-// 旧版本单键（qingba_current_stage）只在常规路线下读时兜底兼容，写入一律进新槽位
-function _currentStageStorageKey() {
-  return CURRENT_STAGE_KEY + '_' + getCurrentRouteId()
+// ===== 当前阶段（per-child + 按路线存槽位，切孩子/切路线互不污染）=====
+// 键：qingba_current_stage_<childId>_<routeId>
+// 两级 legacy 兜底（均仅主孩子生效，读到即迁移并删除旧键）：
+//   v2 按路线槽位键 qingba_current_stage_<routeId>（由 _pcGet 统一处理）
+//   v1 单键 qingba_current_stage（仅在常规路线下兼容）
+function _currentStageSeg() {
+  return '_' + getCurrentRouteId()
 }
 
 function getCurrentStage() {
-  try {
-    const saved = wx.getStorageSync(_currentStageStorageKey())
-    if (saved) return saved
-    if (getCurrentRouteId() === 'regular') {
-      const legacy = wx.getStorageSync(CURRENT_STAGE_KEY)
-      if (legacy) {
-        // 旧版本单键一次性迁移进新槽位并删除旧键：否则「清空路线数据」后
-        // clearCurrentStage 只清新槽位，legacy 键残留又被兜底读回，阶段清不掉
-        try { wx.setStorageSync(_currentStageStorageKey(), legacy) } catch (e2) {}
+  const saved = _pcGet(CURRENT_STAGE_KEY, _currentStageSeg(), null)
+  if (saved) return saved
+  // v1 旧单键兜底（仅主孩子 + 常规路线）：迁移后删除，否则「清空路线数据」后又被兜底读回
+  if (_isPrimaryChild() && getCurrentRouteId() === 'regular') {
+    try {
+      const legacyV1 = wx.getStorageSync(CURRENT_STAGE_KEY)
+      if (legacyV1) {
+        _pcSet(CURRENT_STAGE_KEY, _currentStageSeg(), legacyV1)
         wx.removeStorageSync(CURRENT_STAGE_KEY)
-        return legacy
+        return legacyV1
       }
-    }
-  } catch (e) {}
+    } catch (e) {}
+  }
   return null
 }
 
 function setCurrentStage(stageData) {
-  try {
-    wx.setStorageSync(_currentStageStorageKey(), stageData)
-    return true
-  } catch (e) {
-    return false
-  }
+  return _pcSet(CURRENT_STAGE_KEY, _currentStageSeg(), stageData)
 }
 
 function clearCurrentStage() {
-  try {
-    wx.removeStorageSync(_currentStageStorageKey())
-    return true
-  } catch (e) {
-    return false
+  return _pcRemove(CURRENT_STAGE_KEY, _currentStageSeg())
+}
+
+// 当前孩子的两路线阶段槽位整组读（备份导出用；当前路线之外的槽位 getCurrentStage 读不到）
+function getCurrentStagesMap() {
+  return {
+    regular: _pcGet(CURRENT_STAGE_KEY, '_regular', null),
+    bigloop: _pcGet(CURRENT_STAGE_KEY, '_bigloop', null)
   }
 }
 
-// ===== 已完成阶段（含最后阶段，用于显式标记“达成目标”）=====
+// 整组恢复两路线阶段槽位（备份导入用，作用于当前孩子；缺字段/空值跳过不覆盖）
+function restoreCurrentStages(map) {
+  if (!map || typeof map !== 'object') return false
+  if (map.regular) _pcSet(CURRENT_STAGE_KEY, '_regular', map.regular)
+  if (map.bigloop) _pcSet(CURRENT_STAGE_KEY, '_bigloop', map.bigloop)
+  return true
+}
+
+// ===== 已完成阶段（含最后阶段，用于显式标记“达成目标”；per-child）=====
 function getCompletedStages() {
-  try {
-    const arr = wx.getStorageSync(STAGE_DONE_KEY)
-    return Array.isArray(arr) ? arr : []
-  } catch (e) {
-    return []
-  }
+  const arr = _pcGet(STAGE_DONE_KEY, '', null)
+  return Array.isArray(arr) ? arr : []
 }
 
 function isStageDone(stageId) {
@@ -1383,22 +1486,110 @@ function markStageDone(stageId) {
   const list = getCompletedStages()
   if (list.indexOf(stageId) >= 0) return true
   list.push(stageId)
-  try {
-    wx.setStorageSync(STAGE_DONE_KEY, list)
-    return true
-  } catch (e) {
-    return false
-  }
+  return _pcSet(STAGE_DONE_KEY, '', list)
 }
 
 // 批量覆盖已完成阶段名单（供选择阶段时标记前序阶段）
 function setCompletedStages(list) {
-  try {
-    wx.setStorageSync(STAGE_DONE_KEY, Array.isArray(list) ? list : [])
-    return true
-  } catch (e) {
-    return false
+  return _pcSet(STAGE_DONE_KEY, '', Array.isArray(list) ? list : [])
+}
+
+// ===== 多孩：级联删除与启动迁移 =====
+
+// 某孩子的数据摘要（切换弹层 / 管理页 / 路线页 cell 展示用）
+// 遍历该孩子的打卡主键与分片聚合：打卡条数、有效时长（分钟，按 factor 折算）、今日次数
+// 主键态与分片态不共存（saveAll 保证），两者都读亦无害
+// @returns {{ count: number, minutes: number, todayCount: number }}
+function getChildSummary(childId) {
+  const summary = { count: 0, minutes: 0, todayCount: 0 }
+  if (!childId) return summary
+  const today = todayStr()
+  const mainKey = STORAGE_KEY + '_' + childId
+  const chunkPrefix = CHUNK_PREFIX + childId + '_'
+  const fold = data => {
+    for (const day in data) {
+      const list = data[day]
+      if (!Array.isArray(list)) continue
+      for (const r of list) {
+        if (!r) continue
+        summary.count++
+        summary.minutes += effectiveMinutes(r)
+        if (day === today) summary.todayCount++
+      }
+    }
   }
+  try {
+    const main = wx.getStorageSync(mainKey)
+    if (main && typeof main === 'object') fold(main)
+    let keys = []
+    try {
+      const info = wx.getStorageInfoSync()
+      keys = (info.keys || []).filter(k => {
+        const s = String(k)
+        return s.startsWith(chunkPrefix) && !s.startsWith(chunkPrefix + TMP_CHUNK_SUB)
+      })
+    } catch (e2) {}
+    keys.forEach(k => {
+      try {
+        const chunk = wx.getStorageSync(k)
+        if (chunk && typeof chunk === 'object') fold(chunk)
+      } catch (e3) {}
+    })
+  } catch (e) {}
+  return summary
+}
+
+// 删除某孩子的全部打卡侧 per-child 数据（供 children.removeChild 级联调用）
+// 遍历 keys 按前缀删除；getStorageInfoSync 不可用时按已知组合键显式删除兜底
+function removeChildData(childId) {
+  if (!childId) return 0
+  const mainKey = STORAGE_KEY + '_' + childId
+  const chunkPrefix = CHUNK_PREFIX + childId + '_'
+  const stagePrefix = CURRENT_STAGE_KEY + '_' + childId + '_'
+  const exactKeys = [
+    mainKey,
+    READ_COUNT_KEY + '_' + childId,
+    STAGE_DONE_KEY + '_' + childId,
+    CURRENT_ROUTE_KEY + '_' + childId,
+    TARGET_MODE_KEY + '_' + childId,
+    TARGET_CUSTOM_KEY + '_' + childId,
+    YOUQU_PLAN_KEY + '_' + childId,
+    stagePrefix + 'regular',
+    stagePrefix + 'bigloop'
+  ]
+
+  let removed = 0
+  const tryRemove = k => {
+    try { wx.removeStorageSync(k); removed++ } catch (e) {}
+  }
+  try {
+    const info = wx.getStorageInfoSync()
+    ;(info.keys || []).forEach(k => {
+      const s = String(k)
+      if (s === mainKey || s.startsWith(chunkPrefix) || s.startsWith(stagePrefix)) {
+        tryRemove(s)
+      }
+    })
+  } catch (e) {}
+  exactKeys.forEach(tryRemove) // removeStorageSync 对不存在的键无副作用，重复删除无害
+  return removed
+}
+
+// 旧单孩数据 → 主孩子槽位的主动全量迁移（app.js onLaunch 调用）
+// 幂等：各键「读到旧值才迁移并删除」，读路径的兜底逻辑作容灾双保险（§3.3）
+function migrateLegacyData() {
+  if (!getActiveChildId()) return
+  _migrateLegacyCheckins()          // 打卡主键 + 分片
+  getCurrentRouteId()               // 当前路线（触发 _pcGet 兜底）
+  getCurrentStage()                 // 当前路线的阶段槽位
+  const other = getCurrentRouteId() === 'regular' ? 'bigloop' : 'regular'
+  _pcGet(CURRENT_STAGE_KEY, '_' + other, null)  // 另一条路线的阶段槽位
+  _pcGet(READ_COUNT_KEY, '', null)              // 读次数
+  _pcGet(STAGE_DONE_KEY, '', null)              // 已完成阶段
+  _pcGet(TARGET_MODE_KEY, '', null)             // 目标档位
+  _pcGet(TARGET_CUSTOM_KEY, '', null)           // 逐阶段自定义目标
+  _pcGet(YOUQU_PLAN_KEY, '', null)              // 有趣计划开关
+  try { require('./customResources.js').migrateLegacyData() } catch (e) {} // 自定义资源
 }
 
 module.exports = {
@@ -1430,8 +1621,15 @@ module.exports = {
   decrementReadCount,
   getReadCountByStage,
   getReadRankingByStage,
+  getReadCounts,
+  replaceReadCounts,
   migrateResourceKeysToId,
   migrateResourceRecords,
+  migrateLegacyData,
+  removeChildData,
+  getChildSummary,
+  getCurrentStagesMap,
+  restoreCurrentStages,
   getResourceCheckinSummary,
   getCurrentStage,
   setCurrentStage,

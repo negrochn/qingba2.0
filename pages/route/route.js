@@ -1,5 +1,6 @@
 const { getRequiredHours, isUpstreamStage } = require('../../utils/data.js')
 const checkin = require('../../utils/checkin.js')
+const children = require('../../utils/children.js')
 const share = require('../../utils/share.js')
 
 Page({
@@ -10,7 +11,12 @@ Page({
     currentStageIndex: -1,
     currentCard: null,
     fontClass: '',
-    darkClass: ''
+    darkClass: '',
+    // 当前孩子 cell（仅多孩显示）
+    isMultiChild: false,
+    activeChildName: '',
+    activeChildSummaryText: '',
+    childSheetVisible: false
   },
 
   onLoad() {
@@ -48,6 +54,7 @@ Page({
 
   // 加载当前路线与当前阶段，预计算每阶段状态（unset / done / current / optional / locked）
   loadCurrentStage(cb) {
+    this._refreshChild()
     const route = checkin.getCurrentRoute()
     const current = checkin.getCurrentStage();
     let currentIndex = -1
@@ -108,6 +115,35 @@ Page({
     }, () => {
       if (typeof cb === 'function') cb()
     })
+  },
+
+  // 当前孩子 cell：状态与摘要（累计 N 小时 · 今日 N 次），仅多孩时展示
+  _refreshChild() {
+    const multi = children.isMultiChild()
+    const patch = { isMultiChild: multi }
+    if (multi) {
+      const active = children.getActiveChild() || {}
+      const s = checkin.getChildSummary(active.id)
+      const hours = s.minutes / 60
+      const hoursText = hours > 0 ? (hours % 1 === 0 ? String(hours) : hours.toFixed(1)) : '0'
+      patch.activeChildName = active.name || ''
+      patch.activeChildSummaryText = `累计 ${hoursText} 小时 · 今日 ${s.todayCount} 次`
+    }
+    this.setData(patch)
+  },
+
+  // ===== 孩子切换 =====
+  openChildSheet() {
+    this.setData({ childSheetVisible: true })
+  },
+
+  closeChildSheet() {
+    this.setData({ childSheetVisible: false })
+  },
+
+  // 切换成功：孩子 cell / 当前阶段 / 时间线高亮与锁状态整体按新孩子重建
+  onChildChanged() {
+    this.loadCurrentStage()
   },
 
   // 卡片点击：进入阶段详情

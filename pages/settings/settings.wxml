@@ -3,6 +3,17 @@
   <!-- 当前进度：状态项（我现在学到哪），与下方「学习设置」（偏好配置）分开 -->
   <view class="weui-cells__title">当前进度</view>
   <view class="weui-cells">
+    <!-- 孩子管理：多孩功能的唯一管理入口（常驻，单孩也可进来改名/添加） -->
+    <view class="weui-cell weui-cell_access" bindtap="goChildManage">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text">孩子管理</view>
+        <view class="weui-cell__desc">多个孩子各自记录打卡与进度</view>
+      </view>
+      <view class="weui-cell__ft">
+        <text class="weui-cell__ft_value">{{childCountText}}</text>
+        <text class="iconfont icon-right"></text>
+      </view>
+    </view>
     <view class="weui-cell weui-cell_access" bindtap="goRoutePicker">
       <view class="weui-cell__bd">
         <view class="weui-cell__bd_text">当前路线</view>
@@ -81,6 +92,7 @@
         <text class="iconfont icon-right"></text>
       </view>
     </view>
+
     <view class="weui-cell weui-cell_access weui-cell_warn" bindtap="goClearPicker">
       <view class="weui-cell__bd">清空数据</view>
       <view class="weui-cell__ft">
@@ -120,3 +132,33 @@
   </view>
 
 </view>
+
+<!-- 导入备份 · 选孩子（v2 单孩格式：导入到所选孩子名下；v3 多孩格式整体恢复不经过此处） -->
+<half-sheet
+  show="{{importPickVisible}}"
+  title="导入到哪个孩子"
+  font-class="{{fontClass}}"
+  dark-class="{{darkClass}}"
+  footer="{{true}}"
+  bind:close="closeImportPick"
+>
+  <view class="imp-list">
+    <view
+      class="imp-row"
+      wx:for="{{importPickItems}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      bindtap="onImportPickChild"
+      hover-class="imp-row-hover"
+    >
+      <view class="cp-av cp-av--{{item.color}}">{{item.initial}}</view>
+      <view class="imp-name">{{item.name}}</view>
+      <text class="weui-icon-checked iconfont icon-check" hidden="{{!item.active}}"></text>
+    </view>
+  </view>
+  <view class="imp-note">备份数据将与所选孩子的现有数据合并，当前孩子的其他设置保持不变</view>
+  <view slot="footer" class="weui-btn-area_inline">
+    <button class="weui-btn weui-btn_default" bindtap="closeImportPick">取消</button>
+    <button class="weui-btn weui-btn_primary" bindtap="confirmImportPick">导入</button>
+  </view>
+</half-sheet>

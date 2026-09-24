@@ -10,6 +10,7 @@
     "pages/settings/settings",
     "pages/stats/stats",
     "pages/stagePicker/stagePicker",
+    "pages/childManage/childManage",
     "pages/routePicker/routePicker",
     "pages/targetSetting/targetSetting",
     "pages/importPicker/importPicker",

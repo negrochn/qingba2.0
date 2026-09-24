@@ -1,0 +1,89 @@
+/* ===== 孩子管理页 ===== */
+
+/* 行内容区与头像的间距（头像非标准 cell 结构，手动补） */
+.cm-bd {
+  min-width: 0;
+  padding-left: 20rpx;
+}
+
+/* 底部说明 */
+.cm-tips {
+  margin-top: 24rpx;
+  padding: 0 32rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* ===== 左滑操作层（原语 20：非破坏在左、破坏性在右） ===== */
+.swipe-wrap {
+  position: relative;
+  overflow: hidden;
+  background: var(--card);
+}
+
+/* 行间分隔线：与全局 .weui-cell 内线一致（left 32rpx，首行无） */
+.swipe-wrap::before {
+  content: ' ';
+  position: absolute;
+  left: 32rpx;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: var(--divider);
+  transform: scaleY(0.5);
+  transform-origin: top;
+  z-index: 2;
+}
+.swipe-wrap:first-child::before { display: none; }
+
+/* fg 内的 cell 不再画自己的顶线，避免与上面那条重复 */
+.swipe-fg::before { display: none; }
+
+/* 操作层：右对齐，宽度由按钮数决定（单按钮 150rpx / 双按钮 300rpx） */
+.swipe-bg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 150rpx;
+  display: flex;
+  align-items: stretch;
+}
+.swipe-bg-two { width: 300rpx; }
+
+.swipe-act {
+  width: 150rpx;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: calc(34rpx * var(--fs, 1));   /* 17px 主文，与 myResources 左滑按钮同档 */
+  font-weight: 500;
+}
+.swipe-act-edit { background: #C7C7CC; }   /* 非破坏操作：WeUI 中性灰 */
+.swipe-act-del { background: var(--danger); } /* 破坏性操作：RED */
+
+/* 前景行（必须不透明，否则会透出底下的操作层） */
+.swipe-fg {
+  position: relative;
+  background: var(--card);
+  z-index: 1;
+}
+
+/* ===== 弹层表单 =====
+   结构用全局原语（.form-card / .form-row / .form-label / .form-field /
+   .weui-divider，与打卡弹窗、目标时长弹窗同款），此处只补页内差异 */
+.cm-input-ph {
+  color: var(--text3);
+}
+
+/* 删除强确认：卡片顶部的危险说明块 */
+.cm-del-desc {
+  padding: 28rpx 0;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
+  line-height: 1.6;
+}
