@@ -67,6 +67,17 @@ page {
 }
 .res-list:last-child::after { display: none; }
 
+/* 分组头「排序」入口（右侧小按钮，catchtap 不触发折叠） */
+.rg-sort {
+  flex-shrink: 0;
+  margin-right: 8rpx;
+  padding: 6rpx 16rpx;
+  border: 1rpx solid var(--divider);
+  border-radius: 8rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text2);
+}
+
 /* 分组头（左：彩色圆点 + 标签 + 数量；右：折叠箭头） */
 .rg-head {
   display: flex;
@@ -325,6 +336,94 @@ page {
   font-size: calc(28rpx * var(--fs, 1));
   color: var(--brand);
   background: var(--cell-active);
+}
+
+/* ====== 分组内拖拽排序（全屏排序态） ======
+   行高固定 100rpx（与 myResources.js _rowH 的取位计算一致），纵向不留缝，
+   行间用内描边分隔；水平留白不影响纵向节距 */
+.sort-wrap {
+  position: fixed;
+  left: 0; right: 0; top: 0; bottom: 0;
+  z-index: 1000;
+}
+.sort-mask {
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+.sort-panel {
+  position: absolute;
+  left: 0; right: 0; bottom: 0; top: 12vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border-radius: 24rpx 24rpx 0 0;
+  overflow: hidden;
+}
+.sort-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 32rpx 8rpx;
+}
+.sort-title {
+  font-size: calc(32rpx * var(--fs, 1));
+  font-weight: 500;
+  color: var(--text);
+}
+.sort-head-ops { display: flex; align-items: center; }
+.sort-reset {
+  padding: 8rpx 20rpx;
+  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text2);
+}
+.sort-done {
+  margin-left: 8rpx;
+  padding: 10rpx 28rpx;
+  border-radius: 10rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: #fff;
+  background: var(--brand);
+}
+.sort-hint {
+  padding: 0 32rpx 16rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+}
+.sort-sv { flex: 1; min-height: 0; }
+
+.sort-row {
+  box-sizing: border-box;
+  height: 100rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 24rpx;
+  padding: 0 8rpx 0 32rpx;
+  background: var(--card);
+  border-bottom: 1rpx solid var(--divider);
+}
+.sort-row-drag {
+  border-bottom-color: transparent;
+  border-radius: 12rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.18);
+}
+.sort-row-main {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: calc(32rpx * var(--fs, 1));
+  color: var(--text);
+}
+.sort-handle {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  padding: 20rpx 24rpx;
+  font-size: calc(36rpx * var(--fs, 1));
+  line-height: 1;
+  color: var(--text3);
 }
 
 /* 添加 / 编辑 弹窗的外壳（蒙层 / 面板 / 抓手 / 头部 / 操作区容器）已迁到

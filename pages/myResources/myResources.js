@@ -45,7 +45,16 @@ Page({
     groupNames: [],     // 分组 picker 的 range
     groupIndex: 0,
     pickStageId: '',
-    pickGroupKey: ''
+    pickGroupKey: '',
+    // 分组内拖拽排序（全屏排序态）
+    sort: {
+      show: false,
+      stageId: '',
+      groupKey: '',
+      label: '',
+      items: [],   // [{ id, name, custom, _y(px位移), _drag, _anim }]
+      svTop: 0     // scroll-view scroll-top 绑定（边缘自动滚动用）
+    }
   },
 
   onLoad() {
@@ -58,6 +67,17 @@ Page({
     if (app && app.applyFontLevel) app.applyFontLevel(this)
     this.refresh()
   },
+
+  onHide() {
+    // 拖拽中切走：清计时器与拖拽态，避免后台空转
+    this._teardownDrag()
+  },
+
+  onUnload() {
+    this._teardownDrag()
+  },
+
+  noop() {},
 
   // 组装展示数据：全量资源树（官方 + 自定义，含被隐藏项——管理页必须看得到全部数据）。
   // 组内顺序走 resources.js 单点（顺序覆盖已应用），与阶段页所见一致
@@ -434,5 +454,216 @@ Page({
         wx.showToast({ title: '已删除', icon: 'success' })
       }
     })
+  },
+
+  // ===== 分组内拖拽排序 =====
+  // 交互：分组头「排序」进入全屏排序态；按住行右侧手柄即拖（振动反馈），
+  // 其余行让位动画；拖到列表上下边缘自动滚；松手即落盘顺序覆盖快照。
+  // 拖拽只认手柄：列表其余区域照常滚动，天然规避拖拽与滚动冲突，
+  // 也无需长按时延（比长按方案更快触发）。
+  openSort(e) {
+    const { stage, key, label } = e.currentTarget.dataset
+    const sec = this.data.sections.find(s => s.stageId === stage)
+    const grp = sec && sec.groups.find(g => g.key === key)
+    if (!grp || grp.items.length < 2) return
+
+    this._sortOrder = grp.items.map((_, i) => i)   // 内容序（元素为 items 下标）
+    this.setData({
+      sort: {
+        show: true,
+        stageId: stage,
+        groupKey: key,
+        label,
+        items: grp.items.map(it => ({ id: it.id, name: it.name, custom: !!it.custom, _y: 0, _drag: false, _anim: true })),
+        svTop: 0
+      }
+    })
+    this._svCurTop = 0
+    this._measureSortSv()
+  },
+
+  // 量出 scroll-view 的视口位置（坐标换算与边缘自动滚动的基准，每次打开量一次）
+  _measureSortSv() {
+    const tick = wx.nextTick ? wx.nextTick.bind(wx) : (fn) => setTimeout(fn, 50)
+    tick(() => {
+      wx.createSelectorQuery().in(this)
+        .select('.sort-sv')
+        .boundingClientRect(rect => {
+          if (rect) {
+            this._svRectTop = rect.top
+            this._svHeight = rect.height
+          }
+        })
+        .exec()
+    })
+  },
+
+  closeSort() {
+    this._teardownDrag()
+    this.setData({ 'sort.show': false })
+    // 重排后的 sections 在这里统一重建（阶段页等消费端读存储，无需额外通知）
+    this.refresh()
+  },
+
+  onSortScroll(e) {
+    // 用户在非拖拽状态滚列表时保持内容坐标基准新鲜
+    if (!this._dragging) this._svCurTop = e.detail.scrollTop
+  },
+
+  // 恢复默认：清除该组顺序覆盖，按默认序（官方在前、自定义在后）重载
+  onSortReset() {
+    const { stageId, groupKey } = this.data.sort
+    resourcePrefs.saveGroupOrder(stageId, groupKey, [])
+    const full = resources.getStageResources(stageId, { includeHidden: true })
+    // 历史变体分组合成的清单不在 resources 视图里，此时按当前顺序原样保留
+    const list = (full[groupKey] && full[groupKey].length)
+      ? full[groupKey]
+      : this.data.sort.items
+    this._sortOrder = list.map((_, i) => i)
+    this.setData({
+      'sort.items': list.map(it => ({ id: it.id, name: it.name, custom: !!it.custom, _y: 0, _drag: false, _anim: true })),
+      'sort.svTop': 0
+    })
+    this._svCurTop = 0
+    wx.showToast({ title: '已恢复默认顺序', icon: 'none' })
+  },
+
+  onSortHandleStart(e) {
+    const idx = Number(e.currentTarget.dataset.idx)
+    const t = e.touches[0]
+    this._dragIdx = idx
+    this._targetIdx = idx
+    this._startClientY = t.clientY
+    this._grabOffset = this._fingerContentY(t.clientY) - idx * this._rowH()
+    this._lastClientY = t.clientY
+    this._dragging = false   // 位移超阈值才算真正拖拽，轻点手柄无副作用
+  },
+
+  onSortHandleMove(e) {
+    const t = e.touches[0]
+    if (!this._dragging) {
+      if (Math.abs(t.clientY - this._startClientY) < 5) return
+      this._dragging = true
+      try { wx.vibrateShort() } catch (e2) {}
+      this.setData({ ['sort.items[' + this._dragIdx + ']._drag']: true })
+      this._startAutoScroll()
+    }
+    this._lastClientY = t.clientY
+    this._applyDrag()
+  },
+
+  onSortHandleEnd() {
+    if (!this._dragging) {
+      this._dragIdx = -1
+      return
+    }
+    this._settle()
+  },
+
+  // 视口坐标 → scroll-view 内容坐标（拖拽中列表可能被自动滚动）
+  _fingerContentY(clientY) {
+    return (this._svCurTop || 0) + (clientY - (this._svRectTop || 0))
+  },
+
+  // 行距：行高固定 100rpx（与 wxss .sort-row 一致），换算成 px 参与取位计算
+  _rowH() {
+    if (!this._rowHp) {
+      let ww = 375
+      try { ww = wx.getSystemInfoSync().windowWidth || 375 } catch (e) {}
+      this._rowHp = Math.round(ww / 750 * 100 * 100) / 100
+    }
+    return this._rowHp
+  },
+
+  // 拖拽主逻辑：算拖拽项内容坐标 → 更新自身位移 → 跨过邻行中线则换位并让位
+  _applyDrag() {
+    const H = this._rowH()
+    const items = this.data.sort.items
+    if (!items || !items.length || this._dragIdx < 0) return
+
+    const draggedTop = this._fingerContentY(this._lastClientY) - this._grabOffset
+    this._lastDraggedTop = draggedTop
+    const n = items.length
+    let target = Math.round(draggedTop / H)
+    if (target < 0) target = 0
+    if (target > n - 1) target = n - 1
+
+    const patch = { ['sort.items[' + this._dragIdx + ']._y']: Math.round(draggedTop - this._dragIdx * H) }
+    if (target !== this._targetIdx) {
+      const order = this._sortOrder.slice()
+      order.splice(order.indexOf(this._dragIdx), 1)
+      order.splice(target, 0, this._dragIdx)
+      this._sortOrder = order
+      this._targetIdx = target
+      order.forEach((itemIdx, slot) => {
+        if (itemIdx !== this._dragIdx) {
+          patch['sort.items[' + itemIdx + ']._y'] = (slot - itemIdx) * H
+        }
+      })
+    }
+    this.setData(patch)
+  },
+
+  // 松手落定：按最终内容序重建 items（拖拽项带残差位移，让它滑入新槽位）、落盘快照
+  _settle() {
+    this._stopAutoScroll()
+    const H = this._rowH()
+    const items = this.data.sort.items
+    const order = this._sortOrder
+    const next = order.map(itemIdx => {
+      const it = items[itemIdx]
+      return { id: it.id, name: it.name, custom: it.custom, _y: 0, _drag: false, _anim: true }
+    })
+    // 拖拽项残差：松手位置与目标槽位的差，交给 transition 滑进去
+    const residual = Math.round((this._lastDraggedTop || 0) - this._targetIdx * H)
+    if (next[this._targetIdx]) next[this._targetIdx]._y = residual
+
+    this._dragging = false
+    this._dragIdx = -1
+    this.setData({ 'sort.items': next })
+    setTimeout(() => {
+      this.setData({ ['sort.items[' + this._targetIdx + ']._y']: 0 })
+    }, 50)
+
+    const { stageId, groupKey } = this.data.sort
+    resourcePrefs.saveGroupOrder(stageId, groupKey, next.map(it => it.id))
+  },
+
+  // 边缘自动滚动：手指停在列表上下边缘时按贴近程度加速滚动，滚动后重算拖拽位置
+  _startAutoScroll() {
+    this._stopAutoScroll()
+    this._autoTimer = setInterval(() => {
+      if (!this._dragging) return
+      const EDGE = 56
+      const y = this._lastClientY
+      const top = this._svRectTop || 0
+      const h = this._svHeight || 0
+      if (!h) return
+      let delta = 0
+      if (y < top + EDGE) delta = -Math.ceil((top + EDGE - y) / 6)
+      else if (y > top + h - EDGE) delta = Math.ceil((y - (top + h - EDGE)) / 6)
+      if (!delta) return
+      const max = this.data.sort.items.length * this._rowH() - h
+      let nt = (this._svCurTop || 0) + delta
+      if (nt < 0) nt = 0
+      if (nt > max) nt = Math.max(0, max)
+      if (nt === this._svCurTop) return
+      this._svCurTop = nt
+      this.setData({ 'sort.svTop': nt })
+      this._applyDrag()
+    }, 60)
+  },
+
+  _stopAutoScroll() {
+    if (this._autoTimer) {
+      clearInterval(this._autoTimer)
+      this._autoTimer = null
+    }
+  },
+
+  _teardownDrag() {
+    this._stopAutoScroll()
+    this._dragging = false
+    this._dragIdx = -1
   }
 })

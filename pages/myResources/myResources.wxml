@@ -24,6 +24,15 @@
               <view class="rg-hidden" wx:if="{{grp.hidden}}">已隐藏</view>
             </view>
             <view class="rg-head-right">
+              <!-- 组内拖拽排序入口：≥2 项才有意义 -->
+              <view
+                class="rg-sort"
+                wx:if="{{grp.items.length > 1}}"
+                catchtap="openSort"
+                data-stage="{{sec.stageId}}"
+                data-key="{{grp.key}}"
+                data-label="{{grp.label}}"
+              >排序</view>
               <view class="rg-arrow {{expandedGroups[grp.uid] ? 'rg-arrow-open' : ''}}">›</view>
             </view>
           </view>
@@ -100,6 +109,50 @@
     <button class="weui-btn weui-btn_primary" bindtap="openAdd">+ 添加资源</button>
   </view>
 
+</view>
+
+<!-- 分组内拖拽排序（全屏排序态）。
+     滚动冲突处理：蒙层与头部各自 catchtouchmove 挡住页面滚动，
+     列表区交给 scroll-view 原生滚动；拖拽只发生在手柄上（catch 手势），
+     列表其余区域照常滚动；拖到上下边缘由 scroll-top 程序化补滚 -->
+<view class="sort-wrap" wx:if="{{sort.show}}">
+  <view class="sort-mask" catchtap="closeSort" catchtouchmove="noop"></view>
+  <view class="sort-panel">
+    <view class="sort-head" catchtouchmove="noop">
+      <view class="sort-title">调整顺序 · {{sort.label}}</view>
+      <view class="sort-head-ops">
+        <view class="sort-reset" catchtap="onSortReset">恢复默认</view>
+        <view class="sort-done" catchtap="closeSort">完成</view>
+      </view>
+    </view>
+    <view class="sort-hint">按住右侧手柄上下拖动，松手即保存</view>
+    <scroll-view
+      class="sort-sv"
+      scroll-y
+      scroll-top="{{sort.svTop}}"
+      bindscroll="onSortScroll"
+    >
+      <view
+        class="sort-row {{item._drag ? 'sort-row-drag' : ''}}"
+        wx:for="{{sort.items}}"
+        wx:key="id"
+        style="transform: translateY({{item._y}}px) {{item._drag ? 'scale(1.02)' : ''}}; transition: {{item._drag ? 'none' : 'transform 0.2s ease'}}; z-index: {{item._drag ? 10 : 1}};"
+      >
+        <view class="sort-row-main">
+          {{item.name}}
+          <text class="mr-badge" wx:if="{{item.custom}}">自定义</text>
+        </view>
+        <view
+          class="sort-handle"
+          data-idx="{{index}}"
+          catchtouchstart="onSortHandleStart"
+          catchtouchmove="onSortHandleMove"
+          catchtouchend="onSortHandleEnd"
+          catchtouchcancel="onSortHandleEnd"
+        >≡</view>
+      </view>
+    </scroll-view>
+  </view>
 </view>
 
 <!-- 添加 / 编辑 半屏弹窗（half-sheet 外壳 + form-card 令牌），仅自定义资源 -->
