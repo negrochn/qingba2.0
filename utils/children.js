@@ -154,6 +154,7 @@ function removeChild(id) {
   try {
     require('./checkin.js').removeChildData(id)
     require('./customResources.js').removeChildData(id)
+    require('./resourcePrefs.js').removeChildData(id)
   } catch (e) {
     console.error('removeChild cascade failed:', e)
     return { ok: false, error: '数据清理失败，请重试' }

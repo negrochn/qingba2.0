@@ -1,28 +1,37 @@
-// 「我的资源」：管理自定义资源（新增 / 改名 / 改归属 / 删除）
+// 「我的资源」：全量资源管理（官方 + 自定义）
+//   - 左滑隐藏（黑名单：不删数据，仅从打卡视图摘除；页底恢复区可还原）——官方与自定义均可
+//   - 左滑删除（仅自定义资源；历史记录与统计保留）
+//   - 点自定义资源改名 / 改归属；官方资源只读
 // 自定义资源会和官方资源一起参与打卡、统计与阶段进度
 const customResources = require('../../utils/customResources.js')
+const resourcePrefs = require('../../utils/resourcePrefs.js')
 const resources = require('../../utils/resources.js')
 const checkin = require('../../utils/checkin.js')
 
-// 左滑删除按钮宽度（rpx），与样式 .swipe-bg / .swipe-del 保持一致（同打卡记录页）
-const DELETE_W = 150
+// 左滑按钮宽度（rpx）：隐藏钮 150，自定义资源追加删除钮 150（同打卡记录页 150/钮口径）
+const HIDE_W = 150
+const DEL_W = 150
 
 Page({
   data: {
     fontClass: '',
     darkClass: '',
-    // [{ stageId, stageName, groups: [{ uid, key, label, items: [{ id, name }] }] }]
+    // [{ stageId, stageName, groups: [{ uid, key, label, hidden, items: [{ id, name, custom }] }] }]
     sections: [],
     totalCount: 0,
     isEmpty: true,
     // 分组展开 / 折叠状态 { [uid]: boolean }，uid = stageId|groupKey（默认全部展开）
     expandedGroups: {},
+    // 已隐藏资源（页底恢复区）：[{ id, name, stageName, groupLabel }]
+    hiddenItems: [],
+    hiddenCount: 0,
+    showHidden: false,
     maxNameLen: customResources.MAX_NAME_LEN,
-    // 左滑删除状态（与打卡记录页同一套实现）
+    // 左滑状态（与打卡记录页同一套实现）
     _curSwipePath: '',   // 当前正在拖动 / 展开的行路径
     _touchStartX: 0,
     _touchStartY: 0,
-    // 半屏弹窗（添加 / 编辑）
+    // 半屏弹窗（添加 / 编辑，仅自定义资源）
     showSheet: false,
     sheetTitle: '添加资源',
     isEdit: false,
@@ -50,28 +59,50 @@ Page({
     this.refresh()
   },
 
-  // 组装展示数据：按阶段分组，阶段内按官方分组顺序列出
+  // 组装展示数据：全量资源树（官方 + 自定义，含被隐藏项——管理页必须看得到全部数据）。
+  // 组内顺序走 resources.js 单点（顺序覆盖已应用），与阶段页所见一致
   refresh() {
-    const all = customResources.getAll()
+    const hidden = resourcePrefs.getHiddenMap()
     const sections = []
+    const hiddenItems = []
     let total = 0
 
     ;(checkin.getCurrentRoute().stages || []).forEach(stage => {
-      const byGroup = all[stage.stage_id] || {}
-      const groups = []
-      // 渲染集合 = 该阶段「可见分组」∪「已挂有资源但当前不可见的分组」（典型：熏听开关被关掉）。
-      // 这是管理页：必须能看到并管理自己的全部数据。若只按可见分组渲染，
-      // 会出现「设置页计数 N 项、这里却空空如也」，用户会以为资源丢了。
-      // 隐藏分组在模板里标「已隐藏」并给说明（阶段页仍按开关隐藏，属打卡视图，两处口径不同是有意的）
+      const full = resources.getStageResources(stage.stage_id, { includeHidden: true })
       const visible = resources.getStageGroupKeys(stage.stage_id)
       const keys = visible.slice()
+
+      // 并上「有自定义资源但不在官方分组集合里」的历史分组（变体 key）：
+      // resources.js 会跳过这类分组，管理页不能失管，合成进 full 一起渲染
+      const byGroup = customResources.getByStage(stage.stage_id) || {}
       Object.keys(byGroup).forEach(k => {
         const l = byGroup[k]
-        if (Array.isArray(l) && l.length && keys.indexOf(k) < 0) keys.push(k)
+        if (Array.isArray(l) && l.length && !full[k]) {
+          full[k] = l.map(it => ({ id: it.id, name: it.name, custom: true }))
+          keys.push(k)
+        }
       })
+
+      const groups = []
       keys.forEach(key => {
-        const list = Array.isArray(byGroup[key]) ? byGroup[key] : []
+        const list = Array.isArray(full[key]) ? full[key] : []
         if (!list.length) return
+        const vis = []
+        list.forEach(it => {
+          if (hidden[it.id]) {
+            hiddenItems.push({
+              id: it.id,
+              name: it.name,
+              stageName: stage.stage_name,
+              groupLabel: resources.getGroupLabel(key)
+            })
+          } else {
+            vis.push(it)
+          }
+        })
+        // 整组都被隐藏：不渲染空壳分组头，资源在页底恢复区可见可恢复
+        if (!vis.length) return
+
         const groupsBefore = groups.length
         const sectionsBefore = sections.length
         groups.push({
@@ -79,16 +110,19 @@ Page({
           key,
           label: resources.getGroupLabel(key),
           hidden: visible.indexOf(key) < 0,
-          items: list.map((it, ii) => ({
+          items: vis.map((it, ii) => ({
             id: it.id,
             name: it.name,
-            // 供左滑删除用 setData 精确定位到该行（每次 refresh 重建）
+            custom: !!it.custom,
+            // 左滑宽度：自定义 = 隐藏 + 删除 两钮；官方 = 仅隐藏
+            _w: it.custom ? HIDE_W + DEL_W : HIDE_W,
+            // 供左滑 setData 精确定位到该行（每次 refresh 重建）
             _path: `sections[${sectionsBefore}].groups[${groupsBefore}].items[${ii}]`,
             _dx: 0,
             _anim: true
           }))
         })
-        total += list.length
+        total += vis.length
       })
       if (groups.length) {
         sections.push({ stageId: stage.stage_id, stageName: stage.stage_name, groups })
@@ -103,8 +137,33 @@ Page({
       })
     })
 
-    // isEmpty 与模板同口径（按 sections 判断），避免「有资源却列出 0 个分组」时出现空白页
-    this.setData({ sections, totalCount: total, isEmpty: !sections.length, expandedGroups })
+    this.setData({
+      sections,
+      totalCount: total,
+      isEmpty: !sections.length,
+      expandedGroups,
+      hiddenItems,
+      hiddenCount: hiddenItems.length,
+      // 恢复区清空时顺手收起，避免留一个空折叠头
+      showHidden: hiddenItems.length ? this.data.showHidden : false
+    })
+  },
+
+  // ===== 已隐藏资源（页底恢复区） =====
+  toggleHiddenArea() {
+    this.setData({ showHidden: !this.data.showHidden })
+  },
+
+  // 恢复：非破坏性操作，直接生效不二次确认（隐藏回去也容易）
+  onRestoreItem(e) {
+    const id = e.currentTarget.dataset.id
+    const res = resourcePrefs.unhide(id)
+    if (!res || !res.ok) {
+      wx.showToast({ title: '操作失败', icon: 'none' })
+      return
+    }
+    this.refresh()
+    wx.showToast({ title: '已恢复', icon: 'success' })
   },
 
   // ===== 归属：阶段 + 分组两行原生 picker（联动） =====
@@ -192,6 +251,8 @@ Page({
   },
 
   openEdit(e) {
+    // 官方资源只读：无编辑入口（有左滑隐藏）
+    if (!e.currentTarget.dataset.custom) return
     // 刚发生过左滑：本次 tap 不当作点击，避免滑完误开弹窗
     if (this._moved) {
       this._moved = false
@@ -259,7 +320,7 @@ Page({
     wx.showToast({ title: isEdit ? '已保存' : '已添加', icon: 'success' })
   },
 
-  // ===== 左滑删除（与打卡记录页同一套交互） =====
+  // ===== 左滑操作（隐藏 / 删除，与打卡记录页同一套手势） =====
   // 行路径形如 sections[0].groups[1].items[2]，用于 setData 定位
   _findItem(path) {
     const m = /^sections\[(\d+)\]\.groups\[(\d+)\]\.items\[(\d+)\]$/.exec(path || '')
@@ -270,8 +331,8 @@ Page({
     return it || null
   },
 
-  _snapDx(dx) {
-    return dx <= -DELETE_W / 2 ? -DELETE_W : 0
+  _snapDx(dx, w) {
+    return dx <= -w / 2 ? -w : 0
   },
 
   onTouchStart(e) {
@@ -305,9 +366,11 @@ Page({
     const path = this.data._curSwipePath
     if (!path) return
     const t = e.touches[0]
+    const cur = this._findItem(path)
+    const w = cur ? cur._w : HIDE_W
     // px → rpx（约 2 倍，与打卡记录页同口径）
     let newDx = (t.clientX - this.data._touchStartX) * 2
-    if (newDx < -(DELETE_W + 20)) newDx = -(DELETE_W + 20)
+    if (newDx < -(w + 20)) newDx = -(w + 20)
     if (newDx > 10) newDx = 10
     if (Math.abs(newDx) > 10) this._moved = true
 
@@ -322,7 +385,8 @@ Page({
     const path = this.data._curSwipePath
     if (!path) return
     const cur = this._findItem(path)
-    const target = this._snapDx(cur ? (cur._dx || 0) : 0)
+    const w = cur ? cur._w : HIDE_W
+    const target = this._snapDx(cur ? (cur._dx || 0) : 0, w)
     this.setData({
       [path + '._dx']: target,
       [path + '._anim']: true,
@@ -330,7 +394,19 @@ Page({
     })
   },
 
-  // 左滑露出的删除按钮（二次确认；历史记录与统计保留）
+  // 左滑露出的隐藏按钮（黑名单：不删数据，仅从打卡视图摘除，页底可恢复）
+  onHideItem(e) {
+    const id = e.currentTarget.dataset.id
+    const res = resourcePrefs.hide(id)
+    if (!res || !res.ok) {
+      wx.showToast({ title: (res && res.error) || '操作失败', icon: 'none' })
+      return
+    }
+    this.refresh()
+    wx.showToast({ title: '已隐藏，页底可恢复', icon: 'none' })
+  },
+
+  // 左滑露出的删除按钮（仅自定义资源；二次确认；历史记录与统计保留）
   onDeleteItem(e) {
     const id = e.currentTarget.dataset.id
     const found = customResources.findById(id)
@@ -352,6 +428,8 @@ Page({
           wx.showToast({ title: (res && res.error) || '删除失败', icon: 'none' })
           return
         }
+        // 顺带清掉可能存在的隐藏标记，避免留下永不渲染的死键
+        resourcePrefs.unhide(id)
         this.refresh()
         wx.showToast({ title: '已删除', icon: 'success' })
       }

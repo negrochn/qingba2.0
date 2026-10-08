@@ -309,8 +309,9 @@ Page({
 })
 
 // 该阶段某分组的资源清单（官方 + 自定义）
+// includeHidden：编辑历史记录时记录可能挂在已隐藏资源上，必须仍能选到它
 function _loadItems(stageId, groupKey) {
-  const map = resources.getStageResources(stageId)
+  const map = resources.getStageResources(stageId, { includeHidden: true })
   const list = map[groupKey]
   if (!Array.isArray(list)) return []
   return list.map(it => ({ id: it.id, name: it.name, custom: !!it.custom }))

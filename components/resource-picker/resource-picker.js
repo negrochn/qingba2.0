@@ -69,7 +69,11 @@ Component({
       const map = resources.getStageResources(stageId) || {}
       const groupKeys = resources.getStageGroupKeys(stageId) || []
 
-      const groups = groupKeys.map(k => ({ key: k, label: resources.getGroupLabel(k) }))
+      // 左列只列出有资源的分组：资源被全部隐藏（或空占位）的分组没有可选项，
+      // 列出来只会点到空右列
+      const groups = groupKeys
+        .filter(k => (map[k] || []).length > 0)
+        .map(k => ({ key: k, label: resources.getGroupLabel(k) }))
 
       const all = []
       groups.forEach(g => {
@@ -92,10 +96,11 @@ Component({
         const hit = all.find(it => it.id === this.data.value)
         if (hit) activeGroupKey = hit.groupKey
       }
-      if (!activeGroupKey && this._lastGroupKey && groupKeys.indexOf(this._lastGroupKey) >= 0) {
-        activeGroupKey = this._lastGroupKey
+      if (!activeGroupKey && this._lastGroupKey) {
+        const hitG = groups.find(g => g.key === this._lastGroupKey)
+        if (hitG) activeGroupKey = hitG.key
       }
-      if (!activeGroupKey) activeGroupKey = groupKeys[0] || ''
+      if (!activeGroupKey) activeGroupKey = groups.length ? groups[0].key : ''
 
       this.setData({ groups, activeGroupKey })
       this._refreshItems()

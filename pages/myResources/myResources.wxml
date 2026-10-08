@@ -1,5 +1,8 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
+  <!-- 口径说明：官方 + 自定义全量清单，左滑隐藏 / 删除，页底可恢复 -->
+  <view class="mr-tip">左滑可隐藏不用的资源：仅从打卡视图移除，历史记录与统计保留，页底可恢复。自定义资源还可编辑或删除；官方资源为只读。</view>
+
   <!-- 以 sections 是否为空判断，而不是计数：两者一旦不一致（有资源但没有任何分组被列出），
        页面会两边都不渲染、整页空白。按 sections 判断至少能落到空态提示 -->
   <block wx:if="{{sections.length}}">
@@ -26,7 +29,7 @@
           </view>
 
           <view class="rg-body" wx:if="{{expandedGroups[grp.uid]}}">
-            <!-- 左滑删除：与打卡记录页同一套手势 -->
+            <!-- 左滑操作：官方 = 隐藏；自定义 = 隐藏 + 删除 -->
             <view
               class="swipe-wrap"
               wx:for="{{grp.items}}"
@@ -37,23 +40,28 @@
               bindtouchmove="onTouchMove"
               bindtouchend="onTouchEnd"
             >
-              <view class="swipe-bg">
-                <view class="swipe-del" catchtap="onDeleteItem" data-id="{{it.id}}">删除</view>
+              <view class="swipe-bg" style="width: {{it._w}}rpx;">
+                <view class="swipe-act swipe-act-hide" catchtap="onHideItem" data-id="{{it.id}}">隐藏</view>
+                <view class="swipe-act swipe-act-del" wx:if="{{it.custom}}" catchtap="onDeleteItem" data-id="{{it.id}}">删除</view>
               </view>
               <view
-                class="weui-cell weui-cell_access swipe-fg"
+                class="weui-cell swipe-fg {{it.custom ? 'weui-cell_access' : ''}}"
                 style="transform: translateX({{it._dx}}rpx); transition: {{it._anim ? 'transform 0.25s ease' : 'none'}};"
                 data-id="{{it.id}}"
+                data-custom="{{it.custom}}"
                 bindtap="openEdit"
               >
-                <view class="weui-cell__bd">{{it.name}}</view>
-                <view class="weui-cell__ft">
+                <view class="weui-cell__bd">
+                  {{it.name}}
+                  <text class="mr-badge" wx:if="{{it.custom}}">自定义</text>
+                </view>
+                <view class="weui-cell__ft" wx:if="{{it.custom}}">
                   <text class="iconfont icon-right"></text>
                 </view>
               </view>
             </view>
             <!-- 隐藏分组说明：讲清「资源还在、只是不参与打卡」，避免误以为数据丢了 -->
-            <view class="mr-hidden-tip" wx:if="{{grp.hidden}}">该分组当前已隐藏（「设置 → 熏听」开关关闭）：资源仍保留，可改名或改归属；开启开关后可在阶段页打卡</view>
+            <view class="mr-hidden-tip" wx:if="{{grp.hidden}}">该分组当前不参与打卡（如「设置 → 熏听」开关已关闭）：资源仍保留，可改名或改归属；开启开关后可在阶段页打卡</view>
           </view>
         </view>
       </view>
@@ -61,8 +69,31 @@
   </block>
 
   <view class="mr-empty" wx:else>
-    <view class="mr-empty-text">还没有自定义资源</view>
+    <view class="mr-empty-text">该路线暂无资源清单</view>
     <view class="mr-empty-tip">把自己买的书 / 动画加进来，归入对应分组即可和官方资源一起打卡、统计时长与阶段进度</view>
+  </view>
+
+  <!-- 已隐藏资源：黑名单可逆，点「恢复」即回到分组（回到官方序或自定义排序位置） -->
+  <view class="mr-hidden-sec" wx:if="{{hiddenCount}}">
+    <view class="mr-hidden-head" bindtap="toggleHiddenArea">
+      <view class="mr-hidden-title">已隐藏的资源（{{hiddenCount}}）</view>
+      <view class="rg-arrow {{showHidden ? 'rg-arrow-open' : ''}}">›</view>
+    </view>
+    <view wx:if="{{showHidden}}">
+      <view
+        class="mr-hidden-row"
+        wx:for="{{hiddenItems}}"
+        wx:key="id"
+        bindtap="onRestoreItem"
+        data-id="{{item.id}}"
+      >
+        <view class="mr-hidden-main">
+          <view class="mr-hidden-name">{{item.name}}</view>
+          <view class="mr-hidden-loc">{{item.stageName}} · {{item.groupLabel}}</view>
+        </view>
+        <view class="mr-hidden-restore">恢复</view>
+      </view>
+    </view>
   </view>
 
   <view class="mr-add-area">
@@ -71,7 +102,7 @@
 
 </view>
 
-<!-- 添加 / 编辑 半屏弹窗（half-sheet 外壳 + form-card 令牌） -->
+<!-- 添加 / 编辑 半屏弹窗（half-sheet 外壳 + form-card 令牌），仅自定义资源 -->
 <half-sheet
   show="{{showSheet}}"
   title="{{sheetTitle}}"

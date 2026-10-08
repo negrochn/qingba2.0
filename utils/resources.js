@@ -1,11 +1,12 @@
 // 统一资源视图：官方资源（data.js）+ 自定义资源（customResources.js）合并
 // 官方资源 id 形如 o_r1_mpb_01，自定义资源 id 形如 u_lz9k3a7x2
 //
-// 依赖方向：data.js ← checkin.js ← customResources.js ← resources.js
+// 依赖方向：data.js ← checkin.js ← customResources.js ← resourcePrefs.js ← resources.js
 
 const { ROUTES, resourceLabels, LISTENING_GROUP_KEY } = require('./data.js')
 const { GROUP_KEY_ALIAS } = require('./bigloop_route.js')
 const customResources = require('./customResources.js')
+const resourcePrefs = require('./resourcePrefs.js')
 const checkin = require('./checkin.js')
 
 // 分组顺序（与阶段页展示顺序一致）
@@ -65,9 +66,25 @@ function getGroupLabel(groupKey) {
   return resourceLabels[groupKey] || groupKey
 }
 
-// 阶段资源清单：官方在前、自定义在后
+// 顺序覆盖合并：快照序在前（按快照内位置），快照未覆盖的资源（官方升级新增 /
+// 后加的自定义）按默认序殿后——保证新资源不丢、被删资源自动跳过
+function _applyOrder(list, orderIds) {
+  const pos = {}
+  orderIds.forEach((id, i) => {
+    if (typeof id === 'string' && id && pos[id] === undefined) pos[id] = i
+  })
+  const known = list.filter(it => pos[it.id] !== undefined).sort((a, b) => pos[a.id] - pos[b.id])
+  const rest = list.filter(it => pos[it.id] === undefined)
+  return known.concat(rest)
+}
+
+// 阶段资源清单：官方在前、自定义在后；统一在此应用「隐藏过滤 + 组内顺序覆盖」，
+// 阶段页 / 补录选择弹层 / 资源名称解析等消费端全部自动一致
+// @param {Object} [opts] { includeHidden: boolean } 编辑历史记录等管理场景传 true：
+//   记录还挂在已隐藏资源上时，编辑页必须仍能选到它
 // @returns {Object} { [groupKey]: [{ id, name, custom }] }
-function getStageResources(stageId) {
+function getStageResources(stageId, opts) {
+  const includeHidden = !!(opts && opts.includeHidden)
   const stage = getStageById(stageId)
   if (!stage) return {}
 
@@ -95,23 +112,45 @@ function getStageResources(stageId) {
       out[gk].push({ id: it.id, name: it.name, custom: true })
     })
   }
+
+  // 单点收口：隐藏过滤 + 顺序覆盖。includeHidden 时跳过过滤但仍应用顺序
+  // （管理页与打卡视图所见顺序一致）
+  const hidden = includeHidden ? {} : resourcePrefs.getHiddenMap()
+  const orderMap = resourcePrefs.getOrderMap()[stageId] || {}
+  for (const gk in out) {
+    let list = out[gk]
+    if (!includeHidden && list.length) list = list.filter(it => !hidden[it.id])
+    const orderIds = orderMap[gk]
+    if (Array.isArray(orderIds) && orderIds.length) list = _applyOrder(list, orderIds)
+    out[gk] = list
+  }
   return out
 }
 
-// 阶段页渲染用
+// 阶段页渲染用。分组剔除规则：
+//   - 原本就空的分组（如熏听占位）保留 —— 维持既有占位行为
+//   - 因资源全部被隐藏而清空的分组剔除 —— 空壳分组头是噪音
 // @returns {Array} [{ key, label, items: [{ id, name, custom }], clickable }]
 function getStageGroups(stageId) {
-  const map = getStageResources(stageId)
-  return getStageGroupKeys(stageId).map(key => ({
-    key,
-    label: getGroupLabel(key),
-    items: map[key] || [],
-    clickable: true
-  }))
+  const full = getStageResources(stageId, { includeHidden: true })
+  const shown = getStageResources(stageId)
+  const out = []
+  getStageGroupKeys(stageId).forEach(key => {
+    const items = shown[key] || []
+    if (!items.length && (full[key] || []).length > 0) return
+    out.push({
+      key,
+      label: getGroupLabel(key),
+      items,
+      clickable: true
+    })
+  })
+  return out
 }
 
 function getResource(stageId, groupKey, resourceId) {
-  const map = getStageResources(stageId)
+  // 名称解析不过滤隐藏资源：历史记录的名称兜底不能因隐藏而失效
+  const map = getStageResources(stageId, { includeHidden: true })
   const list = map[groupKey]
   if (!Array.isArray(list)) return null
   return list.find(it => it.id === resourceId) || null

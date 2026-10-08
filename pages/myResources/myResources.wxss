@@ -166,7 +166,7 @@ page {
   pointer-events: none;
 }
 
-/* ====== 左滑删除（同打卡记录页原语） ====== */
+/* ====== 左滑操作（同打卡记录页原语；官方 = 隐藏钮，自定义 = 隐藏 + 删除） ====== */
 .swipe-wrap {
   position: relative;
   overflow: hidden;
@@ -191,7 +191,8 @@ page {
 /* fg 内的 cell 不再画自己的顶线，避免与上面那条重复 */
 .rg-body .swipe-fg::before { display: none; }
 
-/* 左滑露出的删除层（扁平纯色，颜色走 --danger = WeUI RED） */
+/* 左滑露出的操作层：宽度由行内 style 按 it._w 给（150 / 300rpx），
+   按钮色与 --danger 同口径取固定色、不随深浅变化（隐藏 = WeUI ORANGE，删除 = WeUI RED） */
 .swipe-bg {
   position: absolute;
   top: 0;
@@ -201,10 +202,9 @@ page {
   display: flex;
   align-items: stretch;
 }
-.swipe-del {
-  width: 100%;
+.swipe-act {
+  width: 150rpx;
   height: 100%;
-  background: var(--danger);
   color: #fff;
   display: flex;
   align-items: center;
@@ -212,12 +212,37 @@ page {
   font-size: calc(34rpx * var(--fs, 1));
   font-weight: 500;
 }
+.swipe-act-hide { background: #FA9D3B; }
+.swipe-act-del { background: var(--danger); }
 
-/* 前景行（必须不透明，否则会透出底下的删除层） */
+/* 前景行（必须不透明，否则会透出底下的操作层） */
 .swipe-fg {
   position: relative;
   background: var(--card);
   z-index: 1;
+}
+
+/* 「自定义」角标：官方资源无标记，靠差异区分可编辑性 */
+.mr-badge {
+  display: inline-block;
+  margin-left: 12rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
+  font-size: calc(22rpx * var(--fs, 1));
+  color: var(--text2);
+  background: var(--cell-active);
+  vertical-align: middle;
+}
+
+/* 口径说明条 */
+.mr-tip {
+  margin: 24rpx 32rpx 0;
+  padding: 20rpx 24rpx;
+  border-radius: 12rpx;
+  background: var(--cell-active);
+  font-size: calc(24rpx * var(--fs, 1));
+  line-height: 1.6;
+  color: var(--text2);
 }
 
 /* 空态 */
@@ -238,6 +263,68 @@ page {
 
 .mr-add-area {
   margin: 32rpx;
+}
+
+/* ====== 已隐藏资源恢复区（页底折叠卡片） ====== */
+.mr-hidden-sec {
+  margin: 32rpx 32rpx 0;
+  background: var(--card);
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+.mr-hidden-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 88rpx;
+  padding: 20rpx 32rpx;
+}
+.mr-hidden-head:active { background: var(--cell-active); }
+.mr-hidden-title {
+  font-size: calc(30rpx * var(--fs, 1));
+  color: var(--text2);
+}
+.mr-hidden-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22rpx 32rpx;
+  position: relative;
+}
+/* 行线：左侧对齐卡片内边距，首行无（与分组头之间的过渡由头部底色区分即可） */
+.mr-hidden-row::before {
+  content: ' ';
+  position: absolute;
+  left: 32rpx;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: var(--divider);
+  transform: scaleY(0.5);
+  transform-origin: top;
+}
+.mr-hidden-row:active { background: var(--cell-active); }
+.mr-hidden-main { flex: 1; min-width: 0; }
+.mr-hidden-name {
+  font-size: calc(32rpx * var(--fs, 1));
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mr-hidden-loc {
+  margin-top: 4rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+}
+.mr-hidden-restore {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  padding: 8rpx 28rpx;
+  border-radius: 10rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--brand);
+  background: var(--cell-active);
 }
 
 /* 添加 / 编辑 弹窗的外壳（蒙层 / 面板 / 抓手 / 头部 / 操作区容器）已迁到
