@@ -84,16 +84,31 @@
       <view class="home-hero-stage" wx:if="{{stageName}}">{{stageName}}<text wx:if="{{!stageNoTarget}}"> · {{stagePercent}}%</text></view>
     </view>
     <view class="home-hero-num">
-      <text class="home-hero-val">{{weekHours}}</text>
-      <text class="home-hero-unit">h</text>
+      <block wx:if="{{weekTime.h > 0}}">
+        <text class="home-hero-val">{{weekTime.h}}</text>
+        <text class="home-hero-unit">小时</text>
+      </block>
+      <block wx:if="{{weekTime.m > 0 || weekTime.h === 0}}">
+        <text class="home-hero-val {{weekTime.h > 0 ? 'home-hero-val--minor' : ''}}">{{weekTime.m}}</text>
+        <text class="home-hero-unit">分钟</text>
+      </block>
       <text class="home-hero-delta">{{weekDeltaText}}</text>
     </view>
-    <view class="home-hero-bars">
-      <view class="home-bar" wx:for="{{weekBars}}" wx:key="day">
-        <view class="home-bar-track">
-          <view class="home-bar-fill {{item.isToday ? 'is-today' : ''}}" style="height: {{item.percent}}%"></view>
+    <view class="home-bars-wrap">
+      <!-- 参考线层：顶线 = 满刻度（barScaleText），中线 = 半刻度，底线 = 0 基线 -->
+      <view class="home-bars-grid">
+        <view class="home-bars-line home-bars-line--top"></view>
+        <view class="home-bars-line home-bars-line--mid"></view>
+        <view class="home-bars-line home-bars-line--bottom"></view>
+        <text class="home-bars-scale">{{barScaleText}}</text>
+      </view>
+      <view class="home-hero-bars">
+        <view class="home-bar" wx:for="{{weekBars}}" wx:key="day">
+          <view class="home-bar-track">
+            <view class="home-bar-fill {{item.isToday ? 'is-today' : ''}}" style="height: {{item.percent}}%"></view>
+          </view>
+          <text class="home-bar-label {{item.isToday ? 'is-today' : ''}}">{{item.label}}</text>
         </view>
-        <text class="home-bar-label {{item.isToday ? 'is-today' : ''}}">{{item.label}}</text>
       </view>
     </view>
   </view>
@@ -102,7 +117,10 @@
   <view class="home-grid">
     <view class="home-stat" data-mode="minutes" bindtap="openTodaySheet">
       <text class="home-stat-arrow iconfont icon-right"></text>
-      <view class="home-stat-num">{{todayHours}}<text class="home-stat-unit">h</text></view>
+      <view class="home-stat-num">
+        <block wx:if="{{todayTime.h > 0}}"><text>{{todayTime.h}}</text><text class="home-stat-unit">小时</text></block>
+        <block wx:if="{{todayTime.m > 0 || todayTime.h === 0}}"><text>{{todayTime.m}}</text><text class="home-stat-unit">分钟</text></block>
+      </view>
       <view class="home-stat-label">今日时长</view>
     </view>
     <view class="home-stat" data-mode="count" bindtap="openTodaySheet">
@@ -112,7 +130,10 @@
     </view>
     <view class="home-stat">
       <text class="home-stat-arrow iconfont icon-right"></text>
-      <view class="home-stat-num">{{totalHours}}<text class="home-stat-unit">h</text></view>
+      <view class="home-stat-num">
+        <block wx:if="{{totalTime.h > 0}}"><text>{{totalTime.h}}</text><text class="home-stat-unit">小时</text></block>
+        <block wx:if="{{totalTime.m > 0 || totalTime.h === 0}}"><text>{{totalTime.m}}</text><text class="home-stat-unit">分钟</text></block>
+      </view>
       <view class="home-stat-label">阶段时长</view>
     </view>
     <view class="home-stat">

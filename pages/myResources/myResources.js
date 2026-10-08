@@ -1,7 +1,9 @@
 // 「我的资源」：全量资源管理（官方 + 自定义）
-//   - 左滑隐藏（黑名单：不删数据，仅从打卡视图摘除；页底恢复区可还原）——官方与自定义均可
+//   - 左滑隐藏（黑名单：不删数据，仅从打卡视图摘除）——官方与自定义均可；
+//     隐藏行原位淡化展示，左滑「恢复」就地还原
 //   - 左滑删除（仅自定义资源；历史记录与统计保留）
 //   - 点自定义资源改名 / 改归属；官方资源只读
+//   - 组内顺序在独立排序页调整（pages/resourceSort，分组头「排序」进入）
 // 自定义资源会和官方资源一起参与打卡、统计与阶段进度
 const customResources = require('../../utils/customResources.js')
 const resourcePrefs = require('../../utils/resourcePrefs.js')
@@ -12,6 +14,29 @@ const checkin = require('../../utils/checkin.js')
 const HIDE_W = 150
 const DEL_W = 150
 
+// 阶段索引条文案：条上单字符（IDX_CHAR）+ 按住气泡短名（IDX_TIP）。
+// 两条路线同表——stage_id 命名空间不撞；牛N 序号在整条大循环上全局唯一
+// （调整线牛1-3 / 标准线牛4-6 / 三阶段牛7-9，互不重叠），条上无需轨道前缀，
+// 轨道信息由气泡短名（调牛N / 标牛N）补足。映射缺项兜底取阶段名首字 / 全名
+const IDX_CHAR = {
+  regular_1: '1', regular_2: '2', regular_3: '3',
+  regular_4: '4', regular_5: '5', regular_6: '6',
+  pre_bridge: '准',
+  big_loop_pre: '前', big_loop_1: '一',
+  big_loop_2_adjust_niu1: '1', big_loop_2_adjust_niu2: '2', big_loop_2_adjust_niu3: '3',
+  big_loop_2_standard_niu4: '4', big_loop_2_standard_niu5: '5', big_loop_2_standard_niu6: '6',
+  big_loop_3: '三'
+}
+const IDX_TIP = {
+  regular_1: '常规1', regular_2: '常规2', regular_3: '常规3',
+  regular_4: '常规4', regular_5: '常规5', regular_6: '常规6',
+  pre_bridge: '准桥梁',
+  big_loop_pre: '前置', big_loop_1: '一阶',
+  big_loop_2_adjust_niu1: '调牛1', big_loop_2_adjust_niu2: '调牛2', big_loop_2_adjust_niu3: '调牛3',
+  big_loop_2_standard_niu4: '标牛4', big_loop_2_standard_niu5: '标牛5', big_loop_2_standard_niu6: '标牛6',
+  big_loop_3: '三阶'
+}
+
 Page({
   data: {
     fontClass: '',
@@ -20,15 +45,15 @@ Page({
     sections: [],
     totalCount: 0,
     isEmpty: true,
-    // 分组展开 / 折叠状态 { [uid]: boolean }，uid = stageId|groupKey（默认全部展开）
+    // 分组展开 / 折叠状态 { [uid]: boolean }，uid = stageId|groupKey
+    // 默认全部展开：索引条已解决长列表导航（此前靠折叠把页面压成分组目录），
+    // 全展开后索引可一步定位到行，行左滑等操作也省去先展开的步骤；
+    // 用户收起过的分组会话内照旧记忆
     expandedGroups: {},
-    // 已隐藏资源（页底恢复区）：[{ id, name, stageName, groupLabel }]
-    hiddenItems: [],
-    hiddenCount: 0,
-    showHidden: false,
     maxNameLen: customResources.MAX_NAME_LEN,
     // 左滑状态（与打卡记录页同一套实现）
     _curSwipePath: '',   // 当前正在拖动 / 展开的行路径
+    _idxHide: false,     // 左滑拖动 / 滑开保持时渐隐索引条（让开右侧操作按钮区）
     _touchStartX: 0,
     _touchStartY: 0,
     // 半屏弹窗（添加 / 编辑，仅自定义资源）
@@ -46,15 +71,11 @@ Page({
     groupIndex: 0,
     pickStageId: '',
     pickGroupKey: '',
-    // 分组内拖拽排序（全屏排序态）
-    sort: {
-      show: false,
-      stageId: '',
-      groupKey: '',
-      label: '',
-      items: [],   // [{ id, name, custom, _y(px位移), _drag, _anim }]
-      svTop: 0     // scroll-view scroll-top 绑定（边缘自动滚动用）
-    }
+    // 阶段索引条（右侧浮层）：[{ stageId, char, tip }]，sections < 3 时视图层不渲染
+    idxBar: [],
+    idxActive: -1,   // 触摸命中项下标（-1 = 未触摸）
+    idxTip: '',      // 按住气泡短名（空 = 不显示）
+    idxTipTop: 0     // 气泡垂直位置（px，跟随命中项）
   },
 
   onLoad() {
@@ -66,25 +87,15 @@ Page({
     const app = getApp()
     if (app && app.applyFontLevel) app.applyFontLevel(this)
     this.refresh()
+    // 进入 / 返回本页不产生滚动事件，高亮跟随不会被触发，主动同步一次
+    this._syncIdxSoon()
   },
 
-  onHide() {
-    // 拖拽中切走：清计时器与拖拽态，避免后台空转
-    this._teardownDrag()
-  },
-
-  onUnload() {
-    this._teardownDrag()
-  },
-
-  noop() {},
-
-  // 组装展示数据：全量资源树（官方 + 自定义，含被隐藏项——管理页必须看得到全部数据）。
-  // 组内顺序走 resources.js 单点（顺序覆盖已应用），与阶段页所见一致
+  // 组装展示数据：全量资源树（官方 + 自定义）。隐藏项不抽离——管理页 = 全量 + 状态：
+  // 隐藏行原位淡化、左滑「恢复」就地还原。组内顺序走 resources.js 单点（顺序覆盖已应用）
   refresh() {
     const hidden = resourcePrefs.getHiddenMap()
     const sections = []
-    const hiddenItems = []
     let total = 0
 
     ;(checkin.getCurrentRoute().stages || []).forEach(stage => {
@@ -107,49 +118,43 @@ Page({
       keys.forEach(key => {
         const list = Array.isArray(full[key]) ? full[key] : []
         if (!list.length) return
-        const vis = []
-        list.forEach(it => {
-          if (hidden[it.id]) {
-            hiddenItems.push({
-              id: it.id,
-              name: it.name,
-              stageName: stage.stage_name,
-              groupLabel: resources.getGroupLabel(key)
-            })
-          } else {
-            vis.push(it)
-          }
-        })
-        // 整组都被隐藏：不渲染空壳分组头，资源在页底恢复区可见可恢复
-        if (!vis.length) return
 
         const groupsBefore = groups.length
         const sectionsBefore = sections.length
-        groups.push({
-          uid: `${stage.stage_id}|${key}`,
-          key,
-          label: resources.getGroupLabel(key),
-          hidden: visible.indexOf(key) < 0,
-          items: vis.map((it, ii) => ({
+        let hidCount = 0
+        const items = list.map((it, ii) => {
+          const hid = !!hidden[it.id]
+          if (hid) hidCount++
+          return {
             id: it.id,
             name: it.name,
             custom: !!it.custom,
-            // 左滑宽度：自定义 = 隐藏 + 删除 两钮；官方 = 仅隐藏
+            // 隐藏行：原位淡化展示，左滑首钮为「恢复」
+            _hid: hid,
+            // 左滑宽度：自定义 = 恢复/隐藏 + 删除 两钮；官方 = 单钮（同 150/钮口径）
             _w: it.custom ? HIDE_W + DEL_W : HIDE_W,
             // 供左滑 setData 精确定位到该行（每次 refresh 重建）
             _path: `sections[${sectionsBefore}].groups[${groupsBefore}].items[${ii}]`,
             _dx: 0,
             _anim: true
-          }))
+          }
         })
-        total += vis.length
+        groups.push({
+          uid: `${stage.stage_id}|${key}`,
+          key,
+          label: resources.getGroupLabel(key),
+          hidden: visible.indexOf(key) < 0,
+          hidCount,
+          items
+        })
+        total += list.length
       })
       if (groups.length) {
         sections.push({ stageId: stage.stage_id, stageName: stage.stage_name, groups })
       }
     })
 
-    // 折叠状态：保留用户已折叠的分组，新增的分组默认展开
+    // 折叠状态：保留用户已展开 / 收起的分组，新增的分组默认展开
     const expandedGroups = { ...this.data.expandedGroups }
     sections.forEach(sec => {
       sec.groups.forEach(grp => {
@@ -157,33 +162,25 @@ Page({
       })
     })
 
+    // 索引条数据与 sections 同源同序（有资源的阶段才出现索引项）
+    const idxBar = sections.map(sec => ({
+      stageId: sec.stageId,
+      char: IDX_CHAR[sec.stageId] || (sec.stageName || '').charAt(0),
+      tip: IDX_TIP[sec.stageId] || sec.stageName
+    }))
+
+    this._secTops = null // 页面结构可能变化，滚动联动位置缓存失效
     this.setData({
       sections,
       totalCount: total,
       isEmpty: !sections.length,
       expandedGroups,
-      hiddenItems,
-      hiddenCount: hiddenItems.length,
-      // 恢复区清空时顺手收起，避免留一个空折叠头
-      showHidden: hiddenItems.length ? this.data.showHidden : false
+      idxBar,
+      _idxHide: false // 重建后所有行 _dx 归零，滑开态不复存在（如删除了滑开行），索引条恢复
     })
-  },
-
-  // ===== 已隐藏资源（页底恢复区） =====
-  toggleHiddenArea() {
-    this.setData({ showHidden: !this.data.showHidden })
-  },
-
-  // 恢复：非破坏性操作，直接生效不二次确认（隐藏回去也容易）
-  onRestoreItem(e) {
-    const id = e.currentTarget.dataset.id
-    const res = resourcePrefs.unhide(id)
-    if (!res || !res.ok) {
-      wx.showToast({ title: '操作失败', icon: 'none' })
-      return
-    }
-    this.refresh()
-    wx.showToast({ title: '已恢复', icon: 'success' })
+    // 隐藏 / 恢复 / 删除等触发的 refresh 不经 onShow 也无滚动事件，高亮若不
+    // 主动对齐会停在旧值（当前段被删空时甚至越界），直到下次滚动才纠正
+    this._syncIdxSoon()
   },
 
   // ===== 归属：阶段 + 分组两行原生 picker（联动） =====
@@ -249,7 +246,9 @@ Page({
     if (!uid) return
     const expandedGroups = { ...this.data.expandedGroups }
     expandedGroups[uid] = !expandedGroups[uid]
+    this._secTops = null // 页高变化，滚动联动位置缓存失效
     this.setData({ expandedGroups })
+    this._syncIdxSoon() // 展开 / 收起不产生滚动事件，主动对齐当前段
   },
 
   // ===== 弹窗 =====
@@ -392,7 +391,14 @@ Page({
     let newDx = (t.clientX - this.data._touchStartX) * 2
     if (newDx < -(w + 20)) newDx = -(w + 20)
     if (newDx > 10) newDx = 10
-    if (Math.abs(newDx) > 10) this._moved = true
+    if (Math.abs(newDx) > 10) {
+      this._moved = true
+      // 横向位移主导才隐索引：竖滑滚动 dx 常超阈值，宽判定会让索引频繁闪隐
+      if (!this.data._idxHide &&
+          Math.abs(t.clientX - this.data._touchStartX) > Math.abs(t.clientY - this.data._touchStartY)) {
+        this.setData({ _idxHide: true })
+      }
+    }
 
     // 节流：位移变化小于 2rpx 时跳过，避免高频 setData 掉帧
     if (this._swipePath === path && Math.abs(newDx - this._lastDx) < 2) return
@@ -410,11 +416,12 @@ Page({
     this.setData({
       [path + '._dx']: target,
       [path + '._anim']: true,
-      _curSwipePath: ''
+      _curSwipePath: '',
+      _idxHide: target !== 0 // 吸附为滑开保持则索引继续隐藏，合上即渐显
     })
   },
 
-  // 左滑露出的隐藏按钮（黑名单：不删数据，仅从打卡视图摘除，页底可恢复）
+  // 左滑露出的隐藏按钮（黑名单：不删数据，仅从打卡视图摘除；左滑「恢复」就地还原）
   onHideItem(e) {
     const id = e.currentTarget.dataset.id
     const res = resourcePrefs.hide(id)
@@ -423,7 +430,19 @@ Page({
       return
     }
     this.refresh()
-    wx.showToast({ title: '已隐藏，页底可恢复', icon: 'none' })
+    wx.showToast({ title: '已隐藏，左滑可恢复', icon: 'none' })
+  },
+
+  // 左滑露出的恢复按钮（隐藏行首钮）：就地还原，非破坏性不二次确认（再藏回去也容易）
+  onShowItem(e) {
+    const id = e.currentTarget.dataset.id
+    const res = resourcePrefs.unhide(id)
+    if (!res || !res.ok) {
+      wx.showToast({ title: '操作失败', icon: 'none' })
+      return
+    }
+    this.refresh()
+    wx.showToast({ title: '已恢复', icon: 'success' })
   },
 
   // 左滑露出的删除按钮（仅自定义资源；二次确认；历史记录与统计保留）
@@ -456,214 +475,178 @@ Page({
     })
   },
 
-  // ===== 分组内拖拽排序 =====
-  // 交互：分组头「排序」进入全屏排序态；按住行右侧手柄即拖（振动反馈），
-  // 其余行让位动画；拖到列表上下边缘自动滚；松手即落盘顺序覆盖快照。
-  // 拖拽只认手柄：列表其余区域照常滚动，天然规避拖拽与滚动冲突，
-  // 也无需长按时延（比长按方案更快触发）。
+  // ===== 分组内拖拽排序（独立页面 pages/resourceSort） =====
+  // 拖拽逻辑整体在排序页；这里只负责带参跳转。
+  // 顺序落盘即生效，返回时 onShow 的 refresh() 会按新顺序重建
   openSort(e) {
     const { stage, key, label } = e.currentTarget.dataset
-    const sec = this.data.sections.find(s => s.stageId === stage)
-    const grp = sec && sec.groups.find(g => g.key === key)
-    if (!grp || grp.items.length < 2) return
-
-    this._sortOrder = grp.items.map((_, i) => i)   // 内容序（元素为 items 下标）
-    this.setData({
-      sort: {
-        show: true,
-        stageId: stage,
-        groupKey: key,
-        label,
-        items: grp.items.map(it => ({ id: it.id, name: it.name, custom: !!it.custom, _y: 0, _drag: false, _anim: true })),
-        svTop: 0
-      }
+    wx.navigateTo({
+      url: `../resourceSort/resourceSort?stageId=${encodeURIComponent(stage || '')}&groupKey=${encodeURIComponent(key || '')}&label=${encodeURIComponent(label || '')}`
     })
-    this._svCurTop = 0
-    this._measureSortSv()
   },
 
-  // 量出 scroll-view 的视口位置（坐标换算与边缘自动滚动的基准，每次打开量一次）
-  _measureSortSv() {
-    const tick = wx.nextTick ? wx.nextTick.bind(wx) : (fn) => setTimeout(fn, 50)
-    tick(() => {
-      wx.createSelectorQuery().in(this)
-        .select('.sort-sv')
-        .boundingClientRect(rect => {
-          if (rect) {
-            this._svRectTop = rect.top
-            this._svHeight = rect.height
+  // ===== 阶段索引条（右侧浮层；TDesign Indexes 同款交互、自研实现） =====
+  // 点击跳转不缓存 offsetTop——折叠 / 展开随时改变页面高度，点按 / 滑动时实时实测
+  // 目标节点再 pageScrollTo，永不失准；滚动联动高亮用惰性缓存（滚动本身不改布局，
+  // 页高只在 refresh / 展开收起时变化，两处已置 _secTops 失效）
+  onPageScroll(e) {
+    // _jumping：索引跳转动画期间挂起联动——动画会扫过中间各段，不挂起则沿途索引闪亮
+    if (this._idxTouching || this._jumping || !this.data.idxBar.length) return
+    if (this._secTops) { this._syncIdxActive(e.scrollTop); return }
+    this._syncIdxSoon()
+  },
+
+  // 主动 / 惰性重建位置缓存并同步高亮（无滚动事件的场景也要对齐：进入、返回、
+  // 展开收起后）。nextTick 等 refresh 的 setData 渲染完成再实测，否则拿到旧布局；
+  // 测量中不重入
+  _syncIdxSoon() {
+    if (!this.data.idxBar.length || this._secMeasuring) return
+    this._secMeasuring = true
+    wx.nextTick(() => {
+      const q = wx.createSelectorQuery()
+      q.selectAll('.sec-anchor').boundingClientRect()
+      q.selectViewport().scrollOffset()
+      q.exec(res => {
+        this._secMeasuring = false
+        const rects = res && res[0]
+        const vp = res && res[1]
+        if (!rects || rects.length !== this.data.idxBar.length || !vp) return
+        this._secTops = rects.map(r => r.top + vp.scrollTop)
+        this._syncIdxActive(vp.scrollTop)
+      })
+    })
+  },
+
+  // 文档坐标判定当前段：取最后一个标题 docTop ≤ 视口顶 + 13px 的段（判定线与点击
+  // 定位的 12px 落点对齐，点完跳转高亮即停在所点字母）；滚到顶强制亮首段——首段
+  // 标题上方是页头留白，其 docTop 大于判定线、物理上滚不过线（scrollTop 已到 0），
+  // 「到顶 = 正处在第一阶段」才符合直觉，点索引「1」跳转后高亮也稳稳停住。
+  // 以 idxActive 去重，高频滚动回调里只有几次数组比较，命中不变零 setData，无需节流
+  _syncIdxActive(scrollTop) {
+    const tops = this._secTops
+    if (!tops || !tops.length) return
+    let i = -1
+    if (scrollTop <= 1) {
+      i = 0
+    } else {
+      const line = scrollTop + 13
+      for (let k = tops.length - 1; k >= 0; k--) {
+        if (tops[k] <= line) { i = k; break }
+      }
+    }
+    if (i === this.data.idxActive) return
+    this.setData({ idxActive: i })
+  },
+
+  onIdxTouchStart(e) {
+    this._idxTouching = true
+    // 实测每个索引项的位置：命中区间与气泡锚点都用真实 rect，对条内 padding /
+    // 项高不均等样式调整天然免疫（此前按条高均分估算，padding 摊进每一份，
+    // 两端项的中心偏差 3-4px，气泡与命中项错位）
+    wx.createSelectorQuery().selectAll('.idx-bar .idx-item').boundingClientRect(rects => {
+      this._idxRects = rects && rects.length ? rects : null
+      // 轻点场景：end 可能已先跑完，这里仍要命中一次（点一下即跳转的反馈）
+      if (this._idxRects) this._idxHit(e.touches[0].clientY)
+    }).exec()
+  },
+
+  onIdxTouchMove(e) {
+    if (!this._idxTouching) return
+    this._idxHit(e.touches[0].clientY)
+  },
+
+  onIdxTouchEnd() {
+    this._idxTouching = false
+    this._idxRects = null
+    // 延迟收尾：气泡消失；高亮不用 -1 熄灭，而是交还滚动联动——按当前位置重算
+    // （点「1」跳到顶后仍亮「1」，与到顶亮首段的语义闭环）
+    clearTimeout(this._idxTipTimer)
+    this._idxTipTimer = setTimeout(() => {
+      this.setData({ idxTip: '' })
+      this._syncIdxSoon()
+    }, 250)
+  },
+
+  // 按真实项矩形找命中项（[top, bottom) 区间，上下越界 clamp 到首/末项）；
+  // 命中变化才 setData（高频 move 不掉帧），气泡锚在命中项垂直中心——严格同轴
+  _idxHit(y) {
+    const rects = this._idxRects
+    const bar = this.data.idxBar
+    if (!rects || rects.length !== bar.length) return
+    let i = rects.length - 1
+    for (let k = 0; k < rects.length; k++) {
+      if (y < rects[k].bottom) { i = k; break }
+    }
+    if (i === this.data.idxActive) return
+    const item = bar[i]
+    this.setData({
+      idxActive: i,
+      idxTip: item.tip,
+      idxTipTop: rects[i].top + rects[i].height / 2
+    })
+    this._scrollToStage(item.stageId)
+  },
+
+  // 实时查询目标标题位置 + 当前滚动位，滚到「标题贴视口顶」（留 2px 防取整裁切）。
+  // 不留 12px 呼吸位——那会露出文档里标题上方的内容（上一阶段行尾 + 间距），
+  // 视觉上是一条白色空气；贴顶后上方内容全部滚出视口。
+  // 跳转全程挂起滚动联动（_jumping）：pageScrollTo 动画会扫过中间各段，联动若
+  // 不挂起，沿途索引依次闪亮（起点、途经段都亮过才算完）。落位后 _jumpRelease
+  // 交还联动并按最终位置对齐高亮。
+  // 落位校验补滚：pageScrollTo 动画偶发少滚 / 被系统钳制，实测标题未贴顶（偏差
+  // > 4px）时动画结束后无动画直落一次。只补一轮（_retry）防死循环；以
+  // _lastJumpStage 判新——连续滑动时旧跳转的校验不得拉扯新跳转。
+  // 动画中途重查的 rect.top / scrollTop 均为实时值，连续调用计算天然收敛
+  _scrollToStage(stageId, _retry) {
+    if (!stageId) return
+    this._lastJumpStage = stageId
+    if (!_retry) this._jumping = true
+    const q = wx.createSelectorQuery()
+    q.select(`#sec-${stageId}`).boundingClientRect()
+    q.selectViewport().scrollOffset()
+    q.exec(res => {
+      // 已被更新的跳转取代：本次滚动不执行（判新不能只靠 260ms 校验——快速连点时
+      // 旧跳转的查询回调晚归，仍会 pageScrollTo 一次旧目标，多一次滚动抖动）
+      if (this._lastJumpStage !== stageId) return
+      const rect = res && res[0]
+      const vp = res && res[1]
+      // 查询失败也必须交还联动，否则 _jumping 悬挂、滚动高亮永久失灵
+      if (!rect || !vp) { this._jumpRelease(); return }
+      wx.pageScrollTo({
+        scrollTop: Math.max(0, vp.scrollTop + rect.top - 2),
+        duration: _retry ? 0 : 200
+      })
+      if (_retry) {
+        // 瞬移刚发起尚未生效，稍候其落定再交还联动，交还时的对齐测量才准
+        setTimeout(() => this._jumpRelease(), 50)
+        return
+      }
+      setTimeout(() => {
+        // 目标已被新跳转取代：本次校验作废——挂起与收尾都由新跳转接管
+        if (this._lastJumpStage !== stageId) return
+        const q2 = wx.createSelectorQuery()
+        q2.select(`#sec-${stageId}`).boundingClientRect()
+        q2.selectViewport().scrollOffset()
+        q2.exec(r2 => {
+          const rc = r2 && r2[0]
+          const v2 = r2 && r2[1]
+          if (!rc || !v2) { this._jumpRelease(); return }
+          // 实际停在「标题距顶 2px」±4px 以外：补滚一次（无动画，瞬间贴合）
+          if (Math.abs(rc.top - 2) > 4) {
+            this._scrollToStage(stageId, true)
+          } else {
+            this._jumpRelease()
           }
         })
-        .exec()
+      }, 260)
     })
   },
 
-  closeSort() {
-    this._teardownDrag()
-    this.setData({ 'sort.show': false })
-    // 重排后的 sections 在这里统一重建（阶段页等消费端读存储，无需额外通知）
-    this.refresh()
+  // 跳转收尾：解除联动挂起，并按最终落位主动对齐一次高亮（终点在段首、判定线
+  // 内，所点字母稳稳亮住）
+  _jumpRelease() {
+    this._jumping = false
+    this._syncIdxSoon()
   },
 
-  onSortScroll(e) {
-    // 用户在非拖拽状态滚列表时保持内容坐标基准新鲜
-    if (!this._dragging) this._svCurTop = e.detail.scrollTop
-  },
-
-  // 恢复默认：清除该组顺序覆盖，按默认序（官方在前、自定义在后）重载
-  onSortReset() {
-    const { stageId, groupKey } = this.data.sort
-    resourcePrefs.saveGroupOrder(stageId, groupKey, [])
-    const full = resources.getStageResources(stageId, { includeHidden: true })
-    // 历史变体分组合成的清单不在 resources 视图里，此时按当前顺序原样保留
-    const list = (full[groupKey] && full[groupKey].length)
-      ? full[groupKey]
-      : this.data.sort.items
-    this._sortOrder = list.map((_, i) => i)
-    this.setData({
-      'sort.items': list.map(it => ({ id: it.id, name: it.name, custom: !!it.custom, _y: 0, _drag: false, _anim: true })),
-      'sort.svTop': 0
-    })
-    this._svCurTop = 0
-    wx.showToast({ title: '已恢复默认顺序', icon: 'none' })
-  },
-
-  onSortHandleStart(e) {
-    const idx = Number(e.currentTarget.dataset.idx)
-    const t = e.touches[0]
-    this._dragIdx = idx
-    this._targetIdx = idx
-    this._startClientY = t.clientY
-    this._grabOffset = this._fingerContentY(t.clientY) - idx * this._rowH()
-    this._lastClientY = t.clientY
-    this._dragging = false   // 位移超阈值才算真正拖拽，轻点手柄无副作用
-  },
-
-  onSortHandleMove(e) {
-    const t = e.touches[0]
-    if (!this._dragging) {
-      if (Math.abs(t.clientY - this._startClientY) < 5) return
-      this._dragging = true
-      try { wx.vibrateShort() } catch (e2) {}
-      this.setData({ ['sort.items[' + this._dragIdx + ']._drag']: true })
-      this._startAutoScroll()
-    }
-    this._lastClientY = t.clientY
-    this._applyDrag()
-  },
-
-  onSortHandleEnd() {
-    if (!this._dragging) {
-      this._dragIdx = -1
-      return
-    }
-    this._settle()
-  },
-
-  // 视口坐标 → scroll-view 内容坐标（拖拽中列表可能被自动滚动）
-  _fingerContentY(clientY) {
-    return (this._svCurTop || 0) + (clientY - (this._svRectTop || 0))
-  },
-
-  // 行距：行高固定 100rpx（与 wxss .sort-row 一致），换算成 px 参与取位计算
-  _rowH() {
-    if (!this._rowHp) {
-      let ww = 375
-      try { ww = wx.getSystemInfoSync().windowWidth || 375 } catch (e) {}
-      this._rowHp = Math.round(ww / 750 * 100 * 100) / 100
-    }
-    return this._rowHp
-  },
-
-  // 拖拽主逻辑：算拖拽项内容坐标 → 更新自身位移 → 跨过邻行中线则换位并让位
-  _applyDrag() {
-    const H = this._rowH()
-    const items = this.data.sort.items
-    if (!items || !items.length || this._dragIdx < 0) return
-
-    const draggedTop = this._fingerContentY(this._lastClientY) - this._grabOffset
-    this._lastDraggedTop = draggedTop
-    const n = items.length
-    let target = Math.round(draggedTop / H)
-    if (target < 0) target = 0
-    if (target > n - 1) target = n - 1
-
-    const patch = { ['sort.items[' + this._dragIdx + ']._y']: Math.round(draggedTop - this._dragIdx * H) }
-    if (target !== this._targetIdx) {
-      const order = this._sortOrder.slice()
-      order.splice(order.indexOf(this._dragIdx), 1)
-      order.splice(target, 0, this._dragIdx)
-      this._sortOrder = order
-      this._targetIdx = target
-      order.forEach((itemIdx, slot) => {
-        if (itemIdx !== this._dragIdx) {
-          patch['sort.items[' + itemIdx + ']._y'] = (slot - itemIdx) * H
-        }
-      })
-    }
-    this.setData(patch)
-  },
-
-  // 松手落定：按最终内容序重建 items（拖拽项带残差位移，让它滑入新槽位）、落盘快照
-  _settle() {
-    this._stopAutoScroll()
-    const H = this._rowH()
-    const items = this.data.sort.items
-    const order = this._sortOrder
-    const next = order.map(itemIdx => {
-      const it = items[itemIdx]
-      return { id: it.id, name: it.name, custom: it.custom, _y: 0, _drag: false, _anim: true }
-    })
-    // 拖拽项残差：松手位置与目标槽位的差，交给 transition 滑进去
-    const residual = Math.round((this._lastDraggedTop || 0) - this._targetIdx * H)
-    if (next[this._targetIdx]) next[this._targetIdx]._y = residual
-
-    this._dragging = false
-    this._dragIdx = -1
-    this.setData({ 'sort.items': next })
-    setTimeout(() => {
-      this.setData({ ['sort.items[' + this._targetIdx + ']._y']: 0 })
-    }, 50)
-
-    const { stageId, groupKey } = this.data.sort
-    resourcePrefs.saveGroupOrder(stageId, groupKey, next.map(it => it.id))
-  },
-
-  // 边缘自动滚动：手指停在列表上下边缘时按贴近程度加速滚动，滚动后重算拖拽位置
-  _startAutoScroll() {
-    this._stopAutoScroll()
-    this._autoTimer = setInterval(() => {
-      if (!this._dragging) return
-      const EDGE = 56
-      const y = this._lastClientY
-      const top = this._svRectTop || 0
-      const h = this._svHeight || 0
-      if (!h) return
-      let delta = 0
-      if (y < top + EDGE) delta = -Math.ceil((top + EDGE - y) / 6)
-      else if (y > top + h - EDGE) delta = Math.ceil((y - (top + h - EDGE)) / 6)
-      if (!delta) return
-      const max = this.data.sort.items.length * this._rowH() - h
-      let nt = (this._svCurTop || 0) + delta
-      if (nt < 0) nt = 0
-      if (nt > max) nt = Math.max(0, max)
-      if (nt === this._svCurTop) return
-      this._svCurTop = nt
-      this.setData({ 'sort.svTop': nt })
-      this._applyDrag()
-    }, 60)
-  },
-
-  _stopAutoScroll() {
-    if (this._autoTimer) {
-      clearInterval(this._autoTimer)
-      this._autoTimer = null
-    }
-  },
-
-  _teardownDrag() {
-    this._stopAutoScroll()
-    this._dragging = false
-    this._dragIdx = -1
-  }
 })

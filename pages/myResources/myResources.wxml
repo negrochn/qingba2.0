@@ -1,13 +1,11 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- 口径说明：官方 + 自定义全量清单，左滑隐藏 / 删除，页底可恢复 -->
-  <view class="mr-tip">左滑可隐藏不用的资源：仅从打卡视图移除，历史记录与统计保留，页底可恢复。自定义资源还可编辑或删除；官方资源为只读。</view>
-
   <!-- 以 sections 是否为空判断，而不是计数：两者一旦不一致（有资源但没有任何分组被列出），
        页面会两边都不渲染、整页空白。按 sections 判断至少能落到空态提示 -->
   <block wx:if="{{sections.length}}">
     <block wx:for="{{sections}}" wx:key="stageId" wx:for-item="sec">
-      <view class="weui-cells__title">{{sec.stageName}}</view>
+      <!-- sec-anchor = 索引锚点：点击跳转实测 #sec-<stageId>，滚动联动 selectAll('.sec-anchor') -->
+      <view class="weui-cells__title sec-anchor" id="sec-{{sec.stageId}}">{{sec.stageName}}</view>
       <view class="res-wrap">
         <view class="res-list" wx:for="{{sec.groups}}" wx:key="uid" wx:for-item="grp">
           <!-- 分组头（与阶段详情页同款：彩色圆点 + 名称 + 数量 + 折叠箭头） -->
@@ -19,28 +17,32 @@
             <view class="rg-head-left">
               <view class="rg-dot rg-dot-{{grp.key}}"></view>
               <view class="rg-label rg-label-{{grp.key}}">{{grp.label}}</view>
-              <view class="rg-count">{{grp.items.length}} 项</view>
+              <!-- 计数含隐藏项；有隐藏时追加「藏 N」（分组头空间紧，从简） -->
+              <view class="rg-count">{{grp.items.length}} 项{{grp.hidCount ? ' · 藏 ' + grp.hidCount : ''}}</view>
               <!-- 分组当前不可见（如熏听开关关闭）：资源仍在，只是不参与阶段页打卡 -->
               <view class="rg-hidden" wx:if="{{grp.hidden}}">已隐藏</view>
             </view>
             <view class="rg-head-right">
-              <!-- 组内拖拽排序入口：≥2 项才有意义 -->
+              <!-- 组内拖拽排序入口：≥2 项且展开态才显示（排序是内容级操作，折叠态无内容可排） -->
               <view
                 class="rg-sort"
-                wx:if="{{grp.items.length > 1}}"
+                wx:if="{{grp.items.length > 1 && expandedGroups[grp.uid]}}"
                 catchtap="openSort"
                 data-stage="{{sec.stageId}}"
                 data-key="{{grp.key}}"
                 data-label="{{grp.label}}"
               >排序</view>
-              <view class="rg-arrow {{expandedGroups[grp.uid] ? 'rg-arrow-open' : ''}}">›</view>
+              <text class="rg-arrow iconfont {{expandedGroups[grp.uid] ? 'icon-fold' : 'icon-unfold'}}"></text>
             </view>
           </view>
 
           <view class="rg-body" wx:if="{{expandedGroups[grp.uid]}}">
-            <!-- 左滑操作：官方 = 隐藏；自定义 = 隐藏 + 删除 -->
+            <!-- 左滑操作：隐藏行首钮 = 恢复（中性灰），普通行首钮 = 隐藏（橙）；非破坏左、破坏右不变 -->
+            <!-- 仅位移非零（拖动中 / 滑开保持）的行整行提升（.swipe-wrap-up）：
+                 右缘操作钮浮于索引条之上。按住不动不提升——否则按下态灰底会盖住索引条；
+                 拖动确认后 _idxHide 会渐隐索引，提升只负责衔接渐隐前的间隙 -->
             <view
-              class="swipe-wrap"
+              class="swipe-wrap {{it._dx ? 'swipe-wrap-up' : ''}}"
               wx:for="{{grp.items}}"
               wx:for-item="it"
               wx:key="id"
@@ -50,11 +52,12 @@
               bindtouchend="onTouchEnd"
             >
               <view class="swipe-bg" style="width: {{it._w}}rpx;">
-                <view class="swipe-act swipe-act-hide" catchtap="onHideItem" data-id="{{it.id}}">隐藏</view>
+                <view class="swipe-act swipe-act-restore" wx:if="{{it._hid}}" catchtap="onShowItem" data-id="{{it.id}}">恢复</view>
+                <view class="swipe-act swipe-act-hide" wx:else catchtap="onHideItem" data-id="{{it.id}}">隐藏</view>
                 <view class="swipe-act swipe-act-del" wx:if="{{it.custom}}" catchtap="onDeleteItem" data-id="{{it.id}}">删除</view>
               </view>
               <view
-                class="weui-cell swipe-fg {{it.custom ? 'weui-cell_access' : ''}}"
+                class="weui-cell swipe-fg {{it.custom ? 'weui-cell_access' : ''}} {{it._hid ? 'swipe-fg-hidden' : ''}}"
                 style="transform: translateX({{it._dx}}rpx); transition: {{it._anim ? 'transform 0.25s ease' : 'none'}};"
                 data-id="{{it.id}}"
                 data-custom="{{it.custom}}"
@@ -63,14 +66,15 @@
                 <view class="weui-cell__bd">
                   {{it.name}}
                   <text class="mr-badge" wx:if="{{it.custom}}">自定义</text>
+                  <text class="mr-badge" wx:if="{{it._hid}}">已隐藏</text>
                 </view>
                 <view class="weui-cell__ft" wx:if="{{it.custom}}">
                   <text class="iconfont icon-right"></text>
                 </view>
               </view>
             </view>
-            <!-- 隐藏分组说明：讲清「资源还在、只是不参与打卡」，避免误以为数据丢了 -->
-            <view class="mr-hidden-tip" wx:if="{{grp.hidden}}">该分组当前不参与打卡（如「设置 → 熏听」开关已关闭）：资源仍保留，可改名或改归属；开启开关后可在阶段页打卡</view>
+            <!-- 隐藏分组说明：一行讲清「资源还在、只是不参与打卡」 -->
+            <view class="mr-hidden-tip" wx:if="{{grp.hidden}}">该分组不参与打卡：资源仍保留，可在设置中开启后打卡</view>
           </view>
         </view>
       </view>
@@ -82,77 +86,34 @@
     <view class="mr-empty-tip">把自己买的书 / 动画加进来，归入对应分组即可和官方资源一起打卡、统计时长与阶段进度</view>
   </view>
 
-  <!-- 已隐藏资源：黑名单可逆，点「恢复」即回到分组（回到官方序或自定义排序位置） -->
-  <view class="mr-hidden-sec" wx:if="{{hiddenCount}}">
-    <view class="mr-hidden-head" bindtap="toggleHiddenArea">
-      <view class="mr-hidden-title">已隐藏的资源（{{hiddenCount}}）</view>
-      <view class="rg-arrow {{showHidden ? 'rg-arrow-open' : ''}}">›</view>
-    </view>
-    <view wx:if="{{showHidden}}">
-      <view
-        class="mr-hidden-row"
-        wx:for="{{hiddenItems}}"
-        wx:key="id"
-        bindtap="onRestoreItem"
-        data-id="{{item.id}}"
-      >
-        <view class="mr-hidden-main">
-          <view class="mr-hidden-name">{{item.name}}</view>
-          <view class="mr-hidden-loc">{{item.stageName}} · {{item.groupLabel}}</view>
-        </view>
-        <view class="mr-hidden-restore">恢复</view>
-      </view>
-    </view>
-  </view>
-
   <view class="mr-add-area">
     <button class="weui-btn weui-btn_primary" bindtap="openAdd">+ 添加资源</button>
   </view>
 
-</view>
-
-<!-- 分组内拖拽排序（全屏排序态）。
-     滚动冲突处理：蒙层与头部各自 catchtouchmove 挡住页面滚动，
-     列表区交给 scroll-view 原生滚动；拖拽只发生在手柄上（catch 手势），
-     列表其余区域照常滚动；拖到上下边缘由 scroll-top 程序化补滚 -->
-<view class="sort-wrap" wx:if="{{sort.show}}">
-  <view class="sort-mask" catchtap="closeSort" catchtouchmove="noop"></view>
-  <view class="sort-panel">
-    <view class="sort-head" catchtouchmove="noop">
-      <view class="sort-title">调整顺序 · {{sort.label}}</view>
-      <view class="sort-head-ops">
-        <view class="sort-reset" catchtap="onSortReset">恢复默认</view>
-        <view class="sort-done" catchtap="closeSort">完成</view>
-      </view>
-    </view>
-    <view class="sort-hint">按住右侧手柄上下拖动，松手即保存</view>
-    <scroll-view
-      class="sort-sv"
-      scroll-y
-      scroll-top="{{sort.svTop}}"
-      bindscroll="onSortScroll"
-    >
-      <view
-        class="sort-row {{item._drag ? 'sort-row-drag' : ''}}"
-        wx:for="{{sort.items}}"
-        wx:key="id"
-        style="transform: translateY({{item._y}}px) {{item._drag ? 'scale(1.02)' : ''}}; transition: {{item._drag ? 'none' : 'transform 0.2s ease'}}; z-index: {{item._drag ? 10 : 1}};"
-      >
-        <view class="sort-row-main">
-          {{item.name}}
-          <text class="mr-badge" wx:if="{{item.custom}}">自定义</text>
-        </view>
-        <view
-          class="sort-handle"
-          data-idx="{{index}}"
-          catchtouchstart="onSortHandleStart"
-          catchtouchmove="onSortHandleMove"
-          catchtouchend="onSortHandleEnd"
-          catchtouchcancel="onSortHandleEnd"
-        >≡</view>
-      </view>
-    </scroll-view>
+  <!-- ===== 阶段索引条（右侧浮层） =====
+       参考 TDesign Indexes 的交互形态、按项目「借做法不引包」口径自研：
+       条上单字符瞄准（常规 = 阶段序号 / 准；大循环 = 前 / 一 / 牛N 序号 / 三），
+       按住时气泡显短名（常规1 / 前置 / 调牛N / 标牛N / 三阶）。sections < 3 不渲染——
+       一屏内的页面挂索引条纯是噪音。层级：浮于普通行之上、低于滑开行（见 .idx-bar 注释）；
+       行左滑期间 / 滑开保持时 _idxHide 渐隐整条，右侧操作按钮区不与索引互扰；
+       catchtouchmove 防触摸时页面跟着滚 -->
+  <view
+    class="idx-bar {{_idxHide ? 'idx-bar-hide' : ''}}"
+    wx:if="{{idxBar.length >= 3}}"
+    bindtouchstart="onIdxTouchStart"
+    catchtouchmove="onIdxTouchMove"
+    bindtouchend="onIdxTouchEnd"
+    bindtouchcancel="onIdxTouchEnd"
+  >
+    <view
+      class="idx-item {{idxActive === index ? 'idx-item-active' : ''}}"
+      wx:for="{{idxBar}}"
+      wx:key="stageId"
+    >{{item.char}}</view>
   </view>
+  <!-- 按住气泡：top 跟随命中项（js 实测换算，px 口径），松手消失 -->
+  <view class="idx-tip" wx:if="{{idxTip}}" style="top: {{idxTipTop}}px;">{{idxTip}}</view>
+
 </view>
 
 <!-- 添加 / 编辑 半屏弹窗（half-sheet 外壳 + form-card 令牌），仅自定义资源 -->

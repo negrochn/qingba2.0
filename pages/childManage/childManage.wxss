@@ -1,5 +1,9 @@
 /* ===== 孩子管理页 ===== */
 
+/* 去掉分组标题后，页面顶部要自己顶上留白（原由 .weui-cells__title 的 padding-top 提供）。
+   按项目约定走父容器 padding，与 editRecord 同款 */
+.container { padding-top: 32rpx; }
+
 /* 行内容区与头像的间距（头像非标准 cell 结构，手动补） */
 .cm-bd {
   min-width: 0;

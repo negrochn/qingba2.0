@@ -16,6 +16,7 @@
     "pages/importPicker/importPicker",
     "pages/clearPicker/clearPicker",
     "pages/myResources/myResources",
+    "pages/resourceSort/resourceSort",
     "pages/backfill/backfill",
     "pages/editRecord/editRecord"
   ],

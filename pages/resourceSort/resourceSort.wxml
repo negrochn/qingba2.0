@@ -1,0 +1,47 @@
+<!-- 分组内拖拽排序（独立页面，从「我的资源」分组头「排序」进入）。
+     整页 flex 布局：页面本体不滚动，滚动只发生在列表区（scroll-view）；
+     两条拖拽通道：长按整行（系统 longpress，滑动会自动取消）或按住右侧手柄（catch 手势即时拖）；
+     长按激活时动态关掉 scroll-y 防滚动打架，激活前滑动照常滚动；
+     拖到上下边缘由 scroll-top 程序化补滚。顺序松手即落盘，返回即完成 -->
+<view class="container rs-page {{fontClass}} {{darkClass}}">
+  <scroll-view
+    class="sort-sv"
+    scroll-y="{{!svLocked}}"
+    scroll-top="{{svTop}}"
+    bindscroll="onSortScroll"
+  >
+    <view class="weui-cells">
+      <view
+        class="weui-cell sort-row {{item._drag ? 'sort-row-drag' : ''}} {{item._hid ? 'sort-row-hidden' : ''}}"
+        wx:for="{{items}}"
+        wx:key="id"
+        data-idx="{{index}}"
+        bindlongpress="onRowLongPress"
+        bindtouchmove="onRowTouchMove"
+        bindtouchend="onRowTouchEnd"
+        bindtouchcancel="onRowTouchEnd"
+        style="transform: translateY({{item._y}}px) {{item._drag ? 'scale(1.02)' : ''}}; transition: {{item._drag ? 'none' : 'transform 0.2s ease'}}; z-index: {{item._drag ? 10 : 1}};"
+      >
+        <view class="weui-cell__bd sort-row-bd">
+          {{item.name}}
+          <text class="rs-badge" wx:if="{{item.custom}}">自定义</text>
+          <text class="rs-badge" wx:if="{{item._hid}}">已隐藏</text>
+        </view>
+        <view class="weui-cell__ft">
+          <view
+            class="sort-handle iconfont icon-drag"
+            data-idx="{{index}}"
+            catchtouchstart="onSortHandleStart"
+            catchtouchmove="onSortHandleMove"
+            catchtouchend="onSortHandleEnd"
+            catchtouchcancel="onSortHandleEnd"
+          ></view>
+        </view>
+      </view>
+    </view>
+    <view class="weui-cells__tips">长按行或拖动右侧手柄调整顺序，松手即保存</view>
+  </scroll-view>
+  <view class="rs-footer">
+    <view class="weui-btn weui-btn_default" bindtap="onSortReset">恢复默认</view>
+  </view>
+</view>

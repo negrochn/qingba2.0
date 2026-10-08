@@ -181,8 +181,12 @@
 
 .home-hero-num {
   display: flex;
+  flex-wrap: wrap;                  /* 极端长文案时 delta 换行而非溢出 */
   align-items: baseline;
   margin: 16rpx 0 8rpx;
+}
+.home-hero-val--minor {
+  font-size: calc(44rpx * var(--fs, 1));   /* 有小时时，分钟数字降为次级 */
 }
 .home-hero-val {
   font-size: calc(72rpx * var(--fs, 1));
@@ -200,11 +204,42 @@
   margin-left: 16rpx;
   color: var(--text2);
 }
+/* 参考线层：高度与柱轨(192rpx)对齐，顶线 = 满刻度、中线 = 半刻度 */
+.home-bars-wrap {
+  position: relative;
+  margin-top: 24rpx;
+}
+.home-bars-grid {
+  position: absolute;               /* 叠在柱轨区域上，不占流内空间 */
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 192rpx;                   /* 与柱轨等高：顶线=100%、中线=50% */
+  pointer-events: none;
+}
+.home-bars-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--divider);
+  transform: scaleY(0.5);         /* hairline 同全项目分割线惯例 */
+}
+.home-bars-line--top { top: 0; }
+.home-bars-line--mid { top: 50%; }
+.home-bars-line--bottom { bottom: 0; }
+.home-bars-scale {
+  position: absolute;
+  top: -30rpx;                      /* 顶线上方，借 hero-num 与柱区间的空隙 */
+  right: 0;
+  font-size: calc(20rpx * var(--fs, 1));
+  line-height: 1;
+  color: var(--text3);
+}
 .home-hero-bars {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-top: 24rpx;
   height: auto;                     /* 由 track(192rpx) + 标签自然撑开 */
 }
 .home-bar {

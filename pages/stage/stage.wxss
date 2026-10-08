@@ -232,14 +232,11 @@
 .rg-progress-locked { color: var(--text3); background: var(--cell-active); }
 .rg-progress-val { color: var(--brand); }
 
-/* 展开/折叠箭头 */
+/* 展开/折叠图标：展开态 icon-fold（提示可收起）、折叠态 icon-unfold（提示可展开），直接切换不旋转 */
 .rg-arrow {
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text3);
-  font-weight: 300;
-  transition: transform 0.2s;
 }
-.rg-arrow-open { transform: rotate(90deg); }
 
 /* 展开内容区（扁平，顶部细分隔线） */
 .rg-body {

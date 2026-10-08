@@ -1,0 +1,67 @@
+/* 排序页：整页 flex 布局，覆盖 .container 的底部留白——
+   列表区（scroll-view）吃满剩余高度，页面本体不滚动，
+   滚动只发生在列表区，拖拽与滚动的手势因此天然分离 */
+.rs-page {
+  height: 100vh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 底部操作区：对应 WeUI「页面底部按钮区」模式（.weui-btn-bar 的位置语义），
+   safe-area 由 .rs-page 兜住；按钮保持 .weui-btn 原语默认（居中、限宽 560rpx），不做满宽覆盖 */
+.rs-footer {
+  flex-shrink: 0;
+  padding: 16rpx 32rpx;
+}
+
+/* 「自定义」角标（同「我的资源」页 mr-badge 口径） */
+.rs-badge {
+  display: inline-block;
+  margin-left: 12rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
+  font-size: calc(22rpx * var(--fs, 1));
+  color: var(--text2);
+  background: var(--cell-active);
+  vertical-align: middle;
+}
+
+/* ====== 拖拽列表（行直接用 WeUI cell 原语：styles/weui-cells.wxss 的 .weui-cell） ======
+   分组底 / 分隔线 / 深色 / 字号缩放全由 cell 自带；本文件只管拖拽需要覆盖的部分。
+   行高压到 88rpx（44pt，项目最小热区口径；覆盖 cell 的 min-height 112 与上下 padding），
+   resourceSort.js _rowH 的取位节距依赖它，故名称单行截断不换行——换行会撑高行、取位就错位 */
+.sort-sv {
+  flex: 1;
+  min-height: 0;
+}
+
+.sort-row {
+  box-sizing: border-box;
+  min-height: 88rpx;
+  padding-top: 20rpx;
+  padding-bottom: 20rpx;
+}
+/* 行可长按拖拽但无点按行为：关掉 cell 自带按压变色，拖拽浮起（阴影+放大）是唯一反馈 */
+.sort-row:active { background-color: var(--card); }
+/* 隐藏项淡化：与「我的资源」同口径（名称弱色 + 「已隐藏」角标），仍参与排序占位 */
+.sort-row-hidden .weui-cell__bd { color: var(--text3); }
+/* 名称单行截断：行高恒 88rpx 是拖拽取位的前提 */
+.sort-row-bd {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sort-row-drag {
+  border-radius: 16rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.18);
+}
+/* 拖拽行浮起后自带分隔线会显脏，隐藏 */
+.sort-row-drag::before { display: none; }
+.sort-handle {
+  padding: 20rpx 4rpx 20rpx 24rpx;
+  font-size: calc(36rpx * var(--fs, 1));
+  line-height: 1;
+  color: var(--text3);
+}

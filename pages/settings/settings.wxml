@@ -52,10 +52,9 @@
     <view class="weui-cell weui-cell_access" bindtap="goMyResources">
       <view class="weui-cell__bd">
         <view class="weui-cell__bd_text">我的资源</view>
-        <view class="weui-cell__desc">管理官方与自定义资源：左滑隐藏不用的、恢复误藏的，自定义资源可编辑删除</view>
+        <view class="weui-cell__desc">管理官方与自定义资源</view>
       </view>
       <view class="weui-cell__ft">
-        <text class="weui-cell__ft_value">{{myResourceCount}} 项</text>
         <text class="iconfont icon-right"></text>
       </view>
     </view>

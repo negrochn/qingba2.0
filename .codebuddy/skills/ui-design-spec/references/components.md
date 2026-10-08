@@ -867,6 +867,74 @@ onTouchMove(e) {
 
 ---
 
+## 原语 25：阶段索引条（项目 `pages/myResources` 的 `.idx-bar`）
+
+分段较多的长列表（如「我的资源」按阶段分 7-9 段）在**右侧竖排单字符条**上快速跳转——TDesign Indexes 的交互形态、按项目「借做法不引包」口径自研。**≥3 段才渲染**（`wx:if="{{idxBar.length >= 3}}"`）：一屏内能看全的页面挂索引条纯是噪音。
+
+```html
+<view class="idx-bar {{_idxHide ? 'idx-bar-hide' : ''}}" wx:if="{{idxBar.length >= 3}}"
+      bindtouchstart="onIdxTouchStart" catchtouchmove="onIdxTouchMove"
+      bindtouchend="onIdxTouchEnd" bindtouchcancel="onIdxTouchEnd">
+  <view class="idx-item {{idxActive === index ? 'idx-item-active' : ''}}"
+        wx:for="{{idxBar}}" wx:key="stageId">{{item.char}}</view>
+</view>
+<view class="idx-tip" wx:if="{{idxTip}}" style="top: {{idxTipTop}}px;">{{idxTip}}</view>
+```
+
+```css
+.idx-bar  { position: fixed; right: 6rpx; top: 50%; transform: translateY(-50%);
+            padding: 8rpx 4rpx; transition: opacity 0.15s ease; }  /* 无底色直接叠在 cell 上（通讯录同形态），颜色全走变量 */
+.idx-bar-hide { opacity: 0; pointer-events: none; }  /* 左滑让出右侧操作区；同步摘除事件，防隐后误触 */
+.idx-item { width: 44rpx; height: 44rpx; line-height: 44rpx; text-align: center; color: var(--text2); }
+.idx-item + .idx-item { margin-top: 4rpx; }  /* 相邻选择器让首项不空（TDesign 同款 2px 间隔） */
+.idx-item-active { background: var(--brand); color: #fff; border-radius: 50%; }  /* 定宽 44 方形 + 50% = 正圆，防字体放大撑成横胶囊 */
+.idx-tip  { position: fixed; right: 96rpx; transform: translateY(-50%); z-index: 20; }  /* 品牌绿底白字短名胶囊，top 由 js 实测换算（px） */
+```
+
+- **字符 = 瞄准键、气泡 = 确认键**：条上单字符（常规 = 阶段序号 / 准；大循环 = 前 / 一 / 牛N / 三）供瞄准，按住时气泡显短名（常规1 / 前置 / 调牛N / 标牛N / 三阶）确认「摸到哪项」；命中按真实项矩形 `[top, bottom)` 区间判定（上下越界 clamp 到首 / 末项），**命中变化才 setData**（高频 move 不掉帧），气泡锚在命中项垂直中心
+- **点击跳转不缓存 offsetTop**：折叠 / 展开随时改变页高，缓存的锚点位置会失准——点按时实时实测目标节点（`boundingClientRect` + viewport `scrollOffset`）再 `pageScrollTo`，永不失准；锚点即分组标题节点（`id="sec-<stageId>"` + `.sec-anchor`）
+- **滚动联动高亮用惰性缓存**：滚动本身不改布局，锚点位置只在 refresh / 展开收起时变化——两处置缓存失效；进入、返回、展开收起等**无滚动事件的场景**要主动对齐（否则高亮停在旧值，当前段被删空时甚至越界）；测量放 `wx.nextTick`（等 setData 渲染完成再实测，否则拿到旧布局）并防重入
+- **跳转动画期间挂起联动**（`_jumping` 标志）：`pageScrollTo` 动画会扫过中间各段，不挂起则沿途索引项依次闪亮
+- **与左滑操作的层级互让**：索引条 `z-index:1` 与行前景同级、DOM 靠后浮于普通行之上；行左滑期间 / 滑开保持时 `_idxHide` 渐隐整条（`pointer-events:none` 防隐后误触），**位移非零的行整行提升**（`z-index:3`）让右缘操作钮浮于索引之上；按住不动不提升（按下态灰底不得盖住索引条）
+- `catchtouchmove` 防触摸索引时页面跟着滚
+
+---
+
+## 原语 26：列表拖拽排序（独立页，项目 `pages/resourceSort`）
+
+组内顺序调整拆**独立整页**而非半屏弹层：拖拽需要整屏滚动空间与边缘补滚配合，弹层里两者都施展不开。入口在来源页分组头「排序」（≥2 项且**展开态**才显示——排序是内容级操作，折叠态无内容可排）。整页 flex：页面本体不滚动，滚动只发生在列表区 `scroll-view`。
+
+```html
+<scroll-view class="sort-sv" scroll-y="{{!svLocked}}" scroll-top="{{svTop}}" bindscroll="onSortScroll">
+  <view class="weui-cells">
+    <view class="weui-cell sort-row {{item._drag ? 'sort-row-drag' : ''}}" wx:for="{{items}}" wx:key="id"
+          data-idx="{{index}}" bindlongpress="onRowLongPress"
+          bindtouchmove="onRowTouchMove" bindtouchend="onRowTouchEnd" bindtouchcancel="onRowTouchEnd"
+          style="transform: translateY({{item._y}}px) {{item._drag ? 'scale(1.02)' : ''}}; transition: {{item._drag ? 'none' : 'transform 0.2s ease'}}; z-index: {{item._drag ? 10 : 1}};">
+      <view class="weui-cell__bd sort-row-bd">{{item.name}}</view>
+      <view class="weui-cell__ft">
+        <view class="sort-handle iconfont icon-drag" data-idx="{{index}}"
+              catchtouchstart="onSortHandleStart" catchtouchmove="onSortHandleMove"
+              catchtouchend="onSortHandleEnd" catchtouchcancel="onSortHandleEnd"></view>
+      </view>
+    </view>
+  </view>
+</scroll-view>
+```
+
+- **两条拖拽通道，各解各的滚动冲突**：
+  - **长按整行**（系统 `longpress`）：想滚动的用户手指滑动会被系统自动取消、不误触发；激活即视为拖拽开始（不要位移阈值）并**动态锁 `scroll-y`**（`scroll-y="{{!svLocked}}"`），此后手指完全接管
+  - **行尾手柄**（`icon-drag`）：`catch` 手势天然不冒泡，手柄上的 touchmove 不带滚列表，列表其余区域照常滚；手柄通道要 5px 位移阈值（轻点手柄无副作用）
+  - 两通道激活均有 `wx.vibrateShort()` 振动反馈
+- **取位计算三板斧**：① 行高恒定（wxss 锁 88rpx 最小热区口径、名称单行截断保证不撑高，`_rowH()` 按 `windowWidth / 750 × 88` 换算 px——取 `wx.getWindowInfo()` 并留旧基础库回退）；② 视口坐标 → scroll-view 内容坐标（`_fingerContentY = _svCurTop + clientY − _svRectTop`，拖拽中列表可能被自动滚动，视口基准进页量一次）；③ 抓取偏移 `_grabOffset`（手指内容坐标 − 行首槽位，两条通道进入时都记）
+- **换位与落定**：拖拽项跨过邻行中线即换位（`_sortOrder` 重排），其余行 `translateY` 让位动画；松手按最终序重建 items，拖拽项带**残差位移**（`_lastDraggedTop − targetIdx × H`）交给 transition 滑入新槽位，然后落盘顺序覆盖快照
+- **落盘即生效，无「取消」语义**：返回（导航栏 / 手势）即完成，来源页 `onShow` 的 refresh 按新顺序重建；「恢复默认」按钮清除该组顺序覆盖后重载
+- **边缘自动补滚**：`setInterval` 60ms 检查手指距 scroll-view 上下边缘的距离，按超出量阶梯加速（`Math.ceil(δ/6)`）、clamp 到 `[0, max]`；程序化改 `scroll-top` 后同步 `_svCurTop` 并立即重算一次拖位
+- **状态清理与兜底**：`onHide` / `onUnload` 停补滚计时器并复位拖拽态；`bindscroll` 在非拖拽期持续刷新 `_svCurTop`（坐标基准保鲜）；不足 2 项 toast 后 `navigateBack`（防直达 URL 空转）；长按回调取 `e.touches[0]` 前判空（长按触发瞬间手指已抬起的极端时序）
+- **隐藏项标淡参与排序**：排序视图与来源页所见一致（含隐藏项），隐藏行带「已隐藏」角标——排序口径与展示口径不一致时，家长排的顺序在列表里对不上
+
+---
+
 ## 设计原则速记
 1. 颜色、字号、间距一律引用 token（`--weui-*` 或项目 `--*`），禁止硬编码同质值。
 2. 深色模式只切变量，不写独立样式。

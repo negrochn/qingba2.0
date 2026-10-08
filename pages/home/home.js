@@ -30,6 +30,12 @@ function fmtHours(minutes) {
   return v % 1 === 0 ? String(v) : v.toFixed(1)
 }
 
+// 分钟 -> { h, m } 结构（首页「数字大 / 单位小」的分段排版用）
+function splitDuration(minutes) {
+  const m = Math.max(0, Math.round(Number(minutes) || 0))
+  return { h: Math.floor(m / 60), m: m % 60 }
+}
+
 Page({
   data: {
     fontClass: '',
@@ -38,11 +44,12 @@ Page({
     greetText: '',
     stageName: '',
     todayCount: 0,
-    weekHours: '0',
+    weekTime: { h: 0, m: 0 },          // 本周时长（分段：小时/分钟）
     weekDeltaText: '—',
     weekBars: [],
-    todayHours: '0',
-    totalHours: '0',
+    barScaleText: '1小时',
+    todayTime: { h: 0, m: 0 },         // 今日时长（分段）
+    totalTime: { h: 0, m: 0 },         // 阶段时长（分段）
     stagePercent: 0,
     dayNumber: 0,
     streakDays: 0,
@@ -159,7 +166,8 @@ Page({
       }
     }
 
-    // 柱状图：本周 7 天（周一~周日），按周内最大值归一
+    // 柱状图：本周 7 天（周一~周日）。满刻度 = 周内最大值向上取整到 0.5h（下限 1h），
+    // 柱高为对满刻度的绝对占比，配合顶部/中部/底部三条参考线与满刻度标签读数
     let maxVal = 0
     const bars = []
     for (let i = 0; i < 7; i++) {
@@ -169,12 +177,16 @@ Page({
       if (val > maxVal) maxVal = val
       bars.push({ day: ds, label: DAY_LABELS[i], isToday: ds === todayStr })
     }
-    const weekBars = bars.map(b => ({
-      day: b.day,
-      label: b.label,
-      isToday: b.isToday,
-      percent: maxVal > 0 ? Math.max(6, Math.round(weekDayMinutes[b.day] / maxVal * 100)) : 6
-    }))
+    const scaleMinutes = Math.max(60, Math.ceil(maxVal / 30) * 30)   // 满刻度（分钟）
+    const scaleH = Math.floor(scaleMinutes / 60), scaleM = scaleMinutes % 60
+    const barScaleText = scaleM ? `${scaleH}小时${scaleM}分` : `${scaleH}小时`   // 参考线标签
+    const weekBars = bars.map(b => {
+      const val = weekDayMinutes[b.day] || 0
+      // 零 = 无柱（透明轨道上零值画柱会误读成打过卡）；非零下限 2%（≈2px）：
+      // 保住「打过卡必可见」的区分，又把旧下限 6% 的读数虚高压到可忽略
+      const percent = val > 0 ? Math.max(2, Math.round(val / scaleMinutes * 100)) : 0
+      return { day: b.day, label: b.label, isToday: b.isToday, percent }
+    })
 
     // 周环比
     let weekDeltaText = '—'
@@ -262,12 +274,13 @@ Page({
       dateText,
       greetText,
       stageName: cur ? (cur.name || '') : '',
-      weekHours: fmtHours(thisWeek),
+      weekTime: splitDuration(thisWeek),
       weekDeltaText,
       weekBars,
-      todayHours: fmtHours(todayMinutes),
+      barScaleText,
+      todayTime: splitDuration(todayMinutes),
       todayCount,
-      totalHours: fmtHours(totalMinutes),   // 当前阶段累计，非全阶段
+      totalTime: splitDuration(totalMinutes),   // 当前阶段累计，非全阶段
       stagePercent,
       stageNoTarget,
       dayNumber,
@@ -380,7 +393,7 @@ Page({
     this.setData({
       sheetMode: mode,
       sheetTitle: byCount ? '今日打卡' : '今日时长',
-      sheetSummaryMain: byCount ? `${totalCount} 次` : `${fmtHours(totalMinutes)}h`,
+      sheetSummaryMain: byCount ? `${totalCount} 次` : checkin.fmtMinutesCN(totalMinutes),
       sheetSummarySub: `${items.length} 本`,
       sheetItems: items
     })

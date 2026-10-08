@@ -23,7 +23,7 @@
             <text wx:if="{{stageStatus === 'completed'}}">已完成</text>
             <text wx:else>未开始</text>
           </view>
-          <view class="rg-arrow {{expandedGroups[g.key] ? 'rg-arrow-open' : ''}}">›</view>
+          <text class="rg-arrow iconfont {{expandedGroups[g.key] ? 'icon-fold' : 'icon-unfold'}}"></text>
         </view>
       </view>
       <view class="rg-body" wx:if="{{expandedGroups[g.key]}}">

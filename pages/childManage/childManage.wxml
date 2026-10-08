@@ -1,7 +1,7 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- 孩子列表：radio 语义（点行切换，当前项绿勾）+ 左滑改名/删除 -->
-  <view class="weui-cells__title">我的孩子</view>
+  <!-- 孩子列表：radio 语义（点行切换，当前项绿勾）+ 左滑改名/删除。
+       整页只有一块 cells，不设分组标题（导航栏已是「孩子管理」，先例见 editRecord） -->
   <view class="weui-cells weui-cells_radio">
     <view
       class="swipe-wrap"

@@ -17,6 +17,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+.icon-drag:before { content: "\e61c"; }
 .icon-check:before { content: "\e645"; }
 .icon-close:before { content: "\e646"; }
 .icon-right:before { content: "\e6a3"; }
@@ -34,3 +35,5 @@
 .icon-home:before { content: "\e6b8"; }
 .icon-my:before { content: "\e78b"; }
 .icon-calendar:before { content: "\e74a"; }
+.icon-fold:before { content: "\e661"; }
+.icon-unfold:before { content: "\e6de"; }

@@ -37,7 +37,6 @@ Page({
     youquEnabled: true,
     listeningEnabled: false,
     targetSummary: '',
-    myResourceCount: 0,
     _importMode: 'overwrite',
     // 导入备份 · 选孩子弹层（v2 单孩格式专用）
     importPickVisible: false,
@@ -75,16 +74,6 @@ Page({
     this.loadYouquPlan();
     this.loadListening();
     this.loadTargetSummary();
-    this.loadMyResources();
-  },
-
-  // 读取自定义资源数量（「我的资源」入口右侧展示）
-  loadMyResources() {
-    try {
-      this.setData({ myResourceCount: customResources.countAll() });
-    } catch (e) {
-      console.error('读取自定义资源失败', e);
-    }
   },
 
   // 跳转「我的资源」管理页

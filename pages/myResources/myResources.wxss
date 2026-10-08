@@ -151,14 +151,11 @@ page {
   color: var(--text3);
 }
 
-/* 展开 / 折叠箭头 */
+/* 展开 / 折叠图标：展开态 icon-fold（提示可收起）、折叠态 icon-unfold（提示可展开），直接切换不旋转 */
 .rg-arrow {
   font-size: calc(34rpx * var(--fs, 1));
   color: var(--text3);
-  font-weight: 300;
-  transition: transform 0.2s;
 }
-.rg-arrow-open { transform: rotate(90deg); }
 
 /* 展开内容区（扁平，顶部细分隔线） */
 .rg-body {
@@ -224,6 +221,7 @@ page {
   font-weight: 500;
 }
 .swipe-act-hide { background: #FA9D3B; }
+.swipe-act-restore { background: #C7C7CC; }   /* 隐藏行的恢复钮：非破坏 = WeUI 中性灰（同孩子管理「改名」钮） */
 .swipe-act-del { background: var(--danger); }
 
 /* 前景行（必须不透明，否则会透出底下的操作层） */
@@ -233,7 +231,7 @@ page {
   z-index: 1;
 }
 
-/* 「自定义」角标：官方资源无标记，靠差异区分可编辑性 */
+/* 「自定义」角标：官方资源无标记，靠差异区分可编辑性（「已隐藏」角标复用同款） */
 .mr-badge {
   display: inline-block;
   margin-left: 12rpx;
@@ -245,16 +243,10 @@ page {
   vertical-align: middle;
 }
 
-/* 口径说明条 */
-.mr-tip {
-  margin: 24rpx 32rpx 0;
-  padding: 20rpx 24rpx;
-  border-radius: 12rpx;
-  background: var(--cell-active);
-  font-size: calc(24rpx * var(--fs, 1));
-  line-height: 1.6;
-  color: var(--text2);
-}
+/* 隐藏行：名称弱色（状态由「已隐藏」角标表达），左滑「恢复」就地还原 */
+.swipe-fg-hidden .weui-cell__bd { color: var(--text3); }
+
+/* 口径说明条已删：隐藏成功有 toast 即时告知「页底可恢复」，自定义可编辑由行箭头自明 */
 
 /* 空态 */
 .mr-empty {
@@ -272,159 +264,37 @@ page {
   line-height: 1.6;
 }
 
+/* ====== 主操作固定底部 ======
+   资源无上限、列表可很长（折叠只是缓解），流内按钮会被顶出屏幕：常驻底部才可达，
+   口径同 resourceSort 的「恢复默认」。但不照搬其 flex+scroll-view 方案——
+   行有左滑手势，原生页面滚动最稳，故用 position: fixed 浮层。
+   顶线划清与滚动内容的边界；safe-area 自兜；层级远低于 half-sheet（1000） */
 .mr-add-area {
-  margin: 32rpx;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  margin: 0;
+  padding: 16rpx 32rpx calc(16rpx + env(safe-area-inset-bottom));
+  background: var(--bg);
 }
-
-/* ====== 已隐藏资源恢复区（页底折叠卡片） ====== */
-.mr-hidden-sec {
-  margin: 32rpx 32rpx 0;
-  background: var(--card);
-  border-radius: 12rpx;
-  overflow: hidden;
-}
-.mr-hidden-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 88rpx;
-  padding: 20rpx 32rpx;
-}
-.mr-hidden-head:active { background: var(--cell-active); }
-.mr-hidden-title {
-  font-size: calc(30rpx * var(--fs, 1));
-  color: var(--text2);
-}
-.mr-hidden-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 22rpx 32rpx;
-  position: relative;
-}
-/* 行线：左侧对齐卡片内边距，首行无（与分组头之间的过渡由头部底色区分即可） */
-.mr-hidden-row::before {
+.mr-add-area::before {
   content: ' ';
   position: absolute;
-  left: 32rpx;
-  right: 0;
-  top: 0;
+  left: 0; right: 0; top: 0;
   height: 1px;
   background: var(--divider);
   transform: scaleY(0.5);
   transform-origin: top;
+  pointer-events: none;
 }
-.mr-hidden-row:active { background: var(--cell-active); }
-.mr-hidden-main { flex: 1; min-width: 0; }
-.mr-hidden-name {
-  font-size: calc(32rpx * var(--fs, 1));
-  color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.mr-hidden-loc {
-  margin-top: 4rpx;
-  font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text3);
-}
-.mr-hidden-restore {
-  flex-shrink: 0;
-  margin-left: 16rpx;
-  padding: 8rpx 28rpx;
-  border-radius: 10rpx;
-  font-size: calc(28rpx * var(--fs, 1));
-  color: var(--brand);
-  background: var(--cell-active);
-}
+/* 预留按钮条高度 + 呼吸位，防最后一行被浮层挡住（含 safe-area） */
+.container { padding-bottom: calc(200rpx + env(safe-area-inset-bottom)); }
 
-/* ====== 分组内拖拽排序（全屏排序态） ======
-   行高固定 100rpx（与 myResources.js _rowH 的取位计算一致），纵向不留缝，
-   行间用内描边分隔；水平留白不影响纵向节距 */
-.sort-wrap {
-  position: fixed;
-  left: 0; right: 0; top: 0; bottom: 0;
-  z-index: 1000;
-}
-.sort-mask {
-  position: absolute;
-  left: 0; right: 0; top: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.45);
-}
-.sort-panel {
-  position: absolute;
-  left: 0; right: 0; bottom: 0; top: 12vh;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-  border-radius: 24rpx 24rpx 0 0;
-  overflow: hidden;
-}
-.sort-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 28rpx 32rpx 8rpx;
-}
-.sort-title {
-  font-size: calc(32rpx * var(--fs, 1));
-  font-weight: 500;
-  color: var(--text);
-}
-.sort-head-ops { display: flex; align-items: center; }
-.sort-reset {
-  padding: 8rpx 20rpx;
-  font-size: calc(26rpx * var(--fs, 1));
-  color: var(--text2);
-}
-.sort-done {
-  margin-left: 8rpx;
-  padding: 10rpx 28rpx;
-  border-radius: 10rpx;
-  font-size: calc(28rpx * var(--fs, 1));
-  color: #fff;
-  background: var(--brand);
-}
-.sort-hint {
-  padding: 0 32rpx 16rpx;
-  font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text3);
-}
-.sort-sv { flex: 1; min-height: 0; }
+/* 已隐藏资源恢复区已下线：隐藏项原位淡化展示，左滑「恢复」就地还原（见 js refresh 注释） */
 
-.sort-row {
-  box-sizing: border-box;
-  height: 100rpx;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 0 24rpx;
-  padding: 0 8rpx 0 32rpx;
-  background: var(--card);
-  border-bottom: 1rpx solid var(--divider);
-}
-.sort-row-drag {
-  border-bottom-color: transparent;
-  border-radius: 12rpx;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.18);
-}
-.sort-row-main {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: calc(32rpx * var(--fs, 1));
-  color: var(--text);
-}
-.sort-handle {
-  flex-shrink: 0;
-  margin-left: 16rpx;
-  padding: 20rpx 24rpx;
-  font-size: calc(36rpx * var(--fs, 1));
-  line-height: 1;
-  color: var(--text3);
-}
+/* 组内拖拽排序样式已迁到 pages/resourceSort（独立排序页） */
 
 /* 添加 / 编辑 弹窗的外壳（蒙层 / 面板 / 抓手 / 头部 / 操作区容器）已迁到
    components/half-sheet，本页只保留弹层内的内容样式（form-card 一族） */
@@ -433,3 +303,61 @@ page {
    行内只读值原为 .form-value-text，与 .form-static 等价（右对齐由 .form-right 负责），已合并 */
 
 /* 弹窗按钮的等宽由全局 .weui-btn-area_inline 提供，间距由 half-sheet 的 .hsc-footer 承担 */
+
+/* ====== 阶段索引条（右侧浮层；TDesign Indexes 同款交互、按「借做法不引包」自研） ======
+   z-index 1 与行前景（.swipe-fg）同级、DOM 靠后故浮于普通行之上（通讯录同形态，
+   无底色直接叠在 cell 上）；滑开 / 拖动中的行整行提升（.swipe-wrap-up = 3），
+   右缘露出的隐藏 / 删除钮不会被条盖住。颜色全走变量，深浅色自动适配 */
+.idx-bar {
+  position: fixed;
+  right: 6rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8rpx 4rpx;
+  transition: opacity 0.15s ease;
+}
+/* 左滑拖动 / 滑开保持：整条渐隐让出右侧操作区；pointer-events 同步摘除，防隐后误触 */
+.idx-bar-hide {
+  opacity: 0;
+  pointer-events: none;
+}
+.idx-item {
+  width: 44rpx;
+  height: 44rpx;
+  line-height: 44rpx;
+  text-align: center;
+  font-size: calc(24rpx * var(--fs, 1));
+  /* FG-1 次级：比主文字轻一档（浮层不抢正文），比 FG-2 占位色清晰（真机可读） */
+  color: var(--text2);
+}
+/* 项间隔 2px（TDesign 同款）：相邻选择器让首项不空，圆点高亮不上下贴边 */
+.idx-item + .idx-item { margin-top: 4rpx; }
+/* 触摸命中项：品牌绿圆点白字（气泡同色系，确认「现在摸到哪项」）；
+   44×44 方形 + 50% = 正圆——定宽防字体放大把项撑成横胶囊 */
+.idx-item-active {
+  background: var(--brand);
+  color: #fff;
+  border-radius: 50%;
+}
+
+/* 位移非零（拖动中 / 滑开保持）的行整行提升：右缘操作层（.swipe-bg）浮在索引条
+   （z-index 1）之上。按住不动不提升（wxml 条件保证）——按下态不得盖住索引条 */
+.swipe-wrap-up { z-index: 3; }
+
+/* 按住气泡：条左侧的短名胶囊（常规1 / 前置 / 调牛N / 标牛N / 三阶），
+   top 由 js 按命中项实测换算（px 口径），品牌绿底白字，松手消失 */
+.idx-tip {
+  position: fixed;
+  right: 96rpx;
+  transform: translateY(-50%);
+  z-index: 20;
+  padding: 10rpx 24rpx;
+  border-radius: 10rpx;
+  background: var(--brand);
+  font-size: calc(28rpx * var(--fs, 1));
+  color: #fff;
+}
