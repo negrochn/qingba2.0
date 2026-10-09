@@ -243,10 +243,48 @@
   height: auto;                     /* 由 track(192rpx) + 标签自然撑开 */
 }
 .home-bar {
+  position: relative;                /* 气泡定位锚点 */
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+/* 点按气泡（echarts tooltip 效果）：随主题 --card/--text 换底色，浮于柱顶上方
+   （bottom 由 JS 预计算：192rpx 轨道×percent + 标签区/间隙 68rpx，见 home.js tipBottom） */
+.home-bar-tip {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  padding: 10rpx 18rpx;
+  background: var(--card);
+  color: var(--text);
+  font-size: calc(20rpx * var(--fs, 1));
+  line-height: 1;
+  border-radius: 10rpx;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
+  animation: barTipIn 0.16s ease-out;
+}
+/* 箭头独立于气泡、以列定位：恒指列中心，不受首尾气泡 clamp 影响 */
+.home-bar-tip-arrow {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  width: 0;
+  height: 0;
+  border: 8rpx solid transparent;
+  border-top-color: var(--card);
+  border-bottom: none;
+  pointer-events: none;
+  animation: barTipIn 0.16s ease-out;
+}
+.home-bar-tip--first { left: 0; transform: none; }    /* 首列居中会溢出卡片左缘 */
+.home-bar-tip--last { left: auto; right: 0; transform: none; }
+@keyframes barTipIn {
+  from { opacity: 0; }
 }
 .home-bar-track {
   width: 64rpx;
@@ -262,6 +300,9 @@
   background: rgba(7, 193, 96, .14);         /* 统一低透明品牌绿（今日/非今日一致） */
   border-radius: 28rpx;
 }
+.home-bar-fill.is-active {                     /* 选中柱加深，呼应气泡 */
+  background: rgba(7, 193, 96, .4);
+}
 .home-bar-label {
   font-size: calc(24rpx * var(--fs, 1));
   margin-top: 10rpx;
@@ -269,6 +310,10 @@
 }
 .home-bar-label.is-today {
   opacity: 1;
+}
+.home-bar-label.is-active {
+  opacity: 1;
+  font-weight: 600;
 }
 
 /* ③ 2×2 指标卡 */

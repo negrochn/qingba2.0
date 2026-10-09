@@ -102,12 +102,14 @@
         <view class="home-bars-line home-bars-line--bottom"></view>
         <text class="home-bars-scale">{{barScaleText}}</text>
       </view>
-      <view class="home-hero-bars">
-        <view class="home-bar" wx:for="{{weekBars}}" wx:key="day">
+      <view class="home-hero-bars" bindtouchstart="onBarsTouchStart" catchtouchmove="onBarsTouchMove" bindtouchend="onBarsTouchEnd" bindtouchcancel="onBarsTouchEnd">
+        <view class="home-bar" wx:for="{{weekBars}}" wx:key="day" data-idx="{{index}}" catchtap="onBarTap">
+          <view class="home-bar-tip {{index === 0 ? 'home-bar-tip--first' : ''}} {{index === 6 ? 'home-bar-tip--last' : ''}}" wx:if="{{activeBar === index}}" style="bottom: {{item.tipBottom}}">{{item.tipText}}</view>
+          <view class="home-bar-tip-arrow" wx:if="{{activeBar === index}}" style="bottom: {{item.tipArrowBottom}}"></view>
           <view class="home-bar-track">
-            <view class="home-bar-fill {{item.isToday ? 'is-today' : ''}}" style="height: {{item.percent}}%"></view>
+            <view class="home-bar-fill {{item.isToday ? 'is-today' : ''}} {{activeBar === index ? 'is-active' : ''}}" style="height: {{item.percent}}%"></view>
           </view>
-          <text class="home-bar-label {{item.isToday ? 'is-today' : ''}}">{{item.label}}</text>
+          <text class="home-bar-label {{item.isToday ? 'is-today' : ''}} {{activeBar === index ? 'is-active' : ''}}">{{item.label}}</text>
         </view>
       </view>
     </view>

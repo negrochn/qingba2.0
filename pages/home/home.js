@@ -47,6 +47,7 @@ Page({
     weekTime: { h: 0, m: 0 },          // 本周时长（分段：小时/分钟）
     weekDeltaText: '—',
     weekBars: [],
+    activeBar: -1,                     // 周柱状图选中柱（点按气泡），-1 = 无
     barScaleText: '1小时',
     todayTime: { h: 0, m: 0 },         // 今日时长（分段）
     totalTime: { h: 0, m: 0 },         // 阶段时长（分段）
@@ -95,6 +96,10 @@ Page({
     if (this.data.childSheetVisible || this.data.sheetVisible) {
       this.setData({ childSheetVisible: false, sheetVisible: false })
     }
+    // 柱状图气泡一并收起：定时器不清会在后台仍触发 setData
+    if (this._barTipTimer) { clearTimeout(this._barTipTimer); this._barTipTimer = null }
+    this._barTouching = false
+    if (this.data.activeBar !== -1) this.setData({ activeBar: -1 })
   },
 
   // 孩子切换器状态：仅多孩时显示（单孩零感知）
@@ -185,7 +190,19 @@ Page({
       // 零 = 无柱（透明轨道上零值画柱会误读成打过卡）；非零下限 2%（≈2px）：
       // 保住「打过卡必可见」的区分，又把旧下限 6% 的读数虚高压到可忽略
       const percent = val > 0 ? Math.max(2, Math.round(val / scaleMinutes * 100)) : 0
-      return { day: b.day, label: b.label, isToday: b.isToday, percent }
+      // 点按气泡文案（echarts tooltip 同款信息）：星期：时长（零值即 0分钟）
+      const bh = Math.floor(val / 60), bm = val % 60
+      const dur = bh ? (bm ? `${bh}小时${bm}分钟` : `${bh}小时`) : `${bm}分钟`
+      // 气泡锚定柱顶：柱高 = 192rpx 轨道×percent%，+ 标签区/间隙 68rpx。
+      // JS 直接拼好最终值，内联 style 只做字符串替换——规避真机 calc 乘法兼容坑。
+      // 箭头独立于气泡、以列定位（恒指列中心，不受首尾 clamp 影响），底边=气泡底-8rpx 三角高
+      const tipBase = Math.round(percent * 1.92 + 68)
+      return {
+        day: b.day, label: b.label, isToday: b.isToday, percent,
+        tipText: `${b.label}：${dur}`,
+        tipBottom: `${tipBase}rpx`,
+        tipArrowBottom: `${tipBase - 8}rpx`
+      }
     })
 
     // 周环比
@@ -277,6 +294,7 @@ Page({
       weekTime: splitDuration(thisWeek),
       weekDeltaText,
       weekBars,
+      activeBar: -1,                   // 数据重建后旧气泡失去意义，复位
       barScaleText,
       todayTime: splitDuration(todayMinutes),
       todayCount,
@@ -318,6 +336,78 @@ Page({
 
   closeSheet() {
     this.setData({ sheetVisible: false })
+  },
+
+  // ===== 周柱状图触摸气泡（echarts tooltip 效果） =====
+  // 触屏没有 hover：点按柱子或按住横向滑动，气泡跟随手指所在列；抬手保留，4s 自动消失
+  onBarTap(e) {
+    // 点按：幂等显示。不 toggle（touchstart 已显示同列，再 toggle 会「按一下闪没」），
+    // 关闭交给抬手后的 4s 自动收起与 onHide
+    this._showBarTip(Number(e.currentTarget.dataset.idx))
+  },
+
+  // 按下：立即定位显示，并量取柱区几何供 move 换列
+  onBarsTouchStart(e) {
+    const t = e.touches && e.touches[0]
+    this._barTouching = !!t
+    if (!t) return
+    this._lastTouchX = t.clientX
+    this._measureBars()
+    const idx = this._hitBar(t.clientX)
+    if (idx >= 0) this._showBarTip(idx, true)
+  },
+
+  // 滑动：经过哪列显示哪列（只在换列时 setData）。catchtouchmove 阻断页面滚动，
+  // 图表窄条区域内竖向滚动让位于横向浏览（同基金走势图惯例）
+  onBarsTouchMove(e) {
+    const t = e.touches && e.touches[0]
+    if (!t || !this._barTouching) return
+    this._lastTouchX = t.clientX
+    const idx = this._hitBar(t.clientX)
+    if (idx >= 0 && idx !== this.data.activeBar) this._showBarTip(idx, true)
+  },
+
+  // 抬手/系统打断：气泡保留在手最后所在列，4s 后自动收起
+  onBarsTouchEnd() {
+    this._barTouching = false
+    if (this.data.activeBar >= 0) this._armBarTipTimer()
+  },
+
+  // 量柱区矩形（px）。每次手势开始都重量：无缓存时序坑，也不怕布局变化；
+  // 异步回来时手指未抬则按最新触点补定位，保证首次触摸不缺帧
+  _measureBars() {
+    wx.createSelectorQuery().in(this)
+      .select('.home-hero-bars')
+      .boundingClientRect(rect => {
+        if (!rect || !rect.width) return
+        this._barsRect = rect
+        if (this._barTouching && this._lastTouchX != null) {
+          const idx = this._hitBar(this._lastTouchX)
+          if (idx >= 0 && idx !== this.data.activeBar) this.setData({ activeBar: idx })
+        }
+      }).exec()
+  },
+
+  // 触点 x → 柱下标：越界夹取到端点列，手指略滑出边界不丢气泡
+  _hitBar(clientX) {
+    const r = this._barsRect
+    if (!r || !r.width) return -1
+    return Math.max(0, Math.min(6, Math.floor((clientX - r.left) / (r.width / 7))))
+  },
+
+  // hold = 手指仍按着（start/move）：不启动自动收起，抬手时才计时
+  _showBarTip(idx, hold) {
+    if (this._barTipTimer) { clearTimeout(this._barTipTimer); this._barTipTimer = null }
+    this.setData({ activeBar: idx })
+    if (!hold && idx >= 0) this._armBarTipTimer()
+  },
+
+  _armBarTipTimer() {
+    if (this._barTipTimer) { clearTimeout(this._barTipTimer); this._barTipTimer = null }
+    this._barTipTimer = setTimeout(() => {
+      this._barTipTimer = null
+      this.setData({ activeBar: -1 })
+    }, 4000)
   },
 
   // ===== 孩子切换 =====
