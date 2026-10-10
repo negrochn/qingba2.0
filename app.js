@@ -4,6 +4,13 @@ const children = require('./utils/children.js')
 
 App({
   onLaunch() {
+    // 云开发初始化：云备份依赖。环境用控制台的「默认环境」，真实 envId 不入库；
+    // 低版本基础库 / 非微信宿主无 wx.cloud 时跳过，本地功能零影响
+    try {
+      if (wx.cloud) wx.cloud.init({ traceUser: false })
+    } catch (e) {
+      console.error('云开发初始化失败', e)
+    }
     // 多孩初始化：保证孩子列表与当前孩子 id 恒有效（无列表时创建主孩子「宝宝」）
     try {
       children.ensureInit()

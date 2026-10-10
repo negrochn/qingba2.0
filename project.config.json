@@ -76,6 +76,7 @@
     "condition": false
   },
   "compileType": "miniprogram",
+  "cloudfunctionRoot": "cloudfunctions/",
   "libVersion": "3.5.5",
   "appid": "touristappid",
   "projectname": "庆爸2.0",

@@ -1,0 +1,9 @@
+{
+  "name": "cloudBackup",
+  "version": "1.0.0",
+  "description": "庆爸2.0 免费云备份：每人 1 份覆盖式快照（get / put / delete）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

@@ -1,19 +1,53 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- 数据说明卡：风险提示 + 上次备份时间 -->
+  <!-- 数据说明卡：按有无云端快照自适应两态 -->
   <view class="db-intro">
-    <view class="db-intro__title">数据保存在本机</view>
-    <view class="db-intro__desc">打卡记录、孩子资料与自定义资源都保存在手机微信的本地存储中。移除小程序、清理微信存储空间或更换手机都会导致数据丢失且无法找回，请定期备份。</view>
+    <view class="db-intro__title">{{hasCloud ? '数据已有云端快照' : '数据保存在本机'}}</view>
+    <view class="db-intro__desc" wx:if="{{hasCloud}}">打卡记录、孩子资料与自定义资源已同步一份云端快照，换手机登录同一微信即可找回。云端仅保留最新 1 份，如需长期留存多个版本，请定期「备份到文件」。</view>
+    <view class="db-intro__desc" wx:else>打卡记录、孩子资料与自定义资源都保存在手机微信的本地存储中。移除小程序、清理微信存储空间或更换手机都会导致数据丢失且无法找回，建议开启「备份到云端」，或定期备份发送文件。</view>
     <view class="db-intro__meta">上次备份：{{lastBackupText || '从未备份'}}</view>
     <view class="db-intro__warn" wx:if="{{remindText}}">{{remindText}}</view>
   </view>
 
-  <view class="weui-cells__title">备份</view>
+  <!-- 云备份（主路径：云端快照的备份 / 恢复 / 删除） -->
+  <view class="weui-cells__title">云备份</view>
+  <view class="weui-cells">
+    <view class="weui-cell weui-cell_access" bindtap="onCloudBackup">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text">备份到云端<text class="db-badge">推荐</text></view>
+        <view class="weui-cell__desc">{{cloudStateText ? '云端快照：' + cloudStateText : '暂无快照 · 免费 1 份，每次备份覆盖上一份'}}</view>
+      </view>
+      <view class="weui-cell__ft">
+        <text class="iconfont icon-right"></text>
+      </view>
+    </view>
+    <view class="weui-cell weui-cell_access" bindtap="onCloudRestore">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text">从云端恢复</view>
+        <view class="weui-cell__desc">用云端快照覆盖本机数据（换手机、误删找回）</view>
+      </view>
+      <view class="weui-cell__ft">
+        <text class="iconfont icon-right"></text>
+      </view>
+    </view>
+    <view class="weui-cell weui-cell_access" wx:if="{{hasCloud}}" bindtap="onDeleteCloud">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text db-danger">删除云端备份</view>
+        <view class="weui-cell__desc">删除后无法找回，本机数据不受影响</view>
+      </view>
+      <view class="weui-cell__ft">
+        <text class="iconfont icon-right"></text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 文件备份（多版本留存） -->
+  <view class="weui-cells__title">文件备份</view>
   <view class="weui-cells">
     <view class="weui-cell weui-cell_access" bindtap="onBackup">
       <view class="weui-cell__bd">
-        <view class="weui-cell__bd_text">立即备份</view>
-        <view class="weui-cell__desc">生成备份文件，发送到「文件传输助手」或好友</view>
+        <view class="weui-cell__bd_text">备份到文件</view>
+        <view class="weui-cell__desc">发送到聊天，可长期留存多个版本</view>
       </view>
       <view class="weui-cell__ft">
         <text class="iconfont icon-right"></text>
@@ -21,7 +55,7 @@
     </view>
     <view class="weui-cell weui-cell_access" bindtap="goImportPicker">
       <view class="weui-cell__bd">
-        <view class="weui-cell__bd_text">从备份恢复</view>
+        <view class="weui-cell__bd_text">从文件恢复</view>
         <view class="weui-cell__desc">从聊天记录选择 txt / json / word 备份文件</view>
       </view>
       <view class="weui-cell__ft">
@@ -30,7 +64,7 @@
     </view>
   </view>
 
-  <view class="weui-cells__tips">备份包含全部孩子的数据；建议每月备份一次，发送到「文件传输助手」便于随时找回。</view>
+  <view class="weui-cells__tips">云备份免费保留 1 份最新快照，换手机登录同一微信即可恢复；发送到聊天的备份文件由自己留存，可长期保留多个版本，重要数据建议两者都用。</view>
 
 </view>
 

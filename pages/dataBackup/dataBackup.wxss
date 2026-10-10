@@ -41,6 +41,25 @@ page {
 
 /* 底部补充说明：走全局 .weui-cells__tips（styles/weui-cells.wxss），本页不再自定义 */
 
+/* ===== 云备份「推荐」徽标（品牌绿，贴合 cell 标题基线） ===== */
+.db-badge {
+  display: inline-block;
+  margin-left: 12rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+  background: var(--brand);
+  color: #fff;
+  font-size: calc(20rpx * var(--fs, 1));
+  font-weight: 400;
+  line-height: 1.4;
+  vertical-align: middle;
+}
+
+/* ===== 删除云端备份：危险操作标题红，desc 保持中性弱化 ===== */
+.db-danger {
+  color: var(--danger);
+}
+
 /* ===== 导入备份 · 选孩子弹层（v2 单孩格式） ===== */
 .imp-list {
   padding: 0 32rpx 8rpx;

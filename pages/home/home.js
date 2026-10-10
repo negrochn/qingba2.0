@@ -3,6 +3,7 @@ const children = require('../../utils/children.js')
 const { getRequiredHours, isRouteCompleted } = require('../../utils/data.js')
 const share = require('../../utils/share.js')
 const backup = require('../../utils/backup.js')
+const cloudBackup = require('../../utils/cloudBackup.js')
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -119,7 +120,17 @@ Page({
         this.setData({ guideVisible: true, backupTipVisible: false })
         return
       }
-      this.setData({ backupTipVisible: backup.shouldShowHomeTip() })
+      const tipVisible = backup.shouldShowHomeTip()
+      this.setData({ backupTipVisible: tipVisible })
+      // 换机回落真空期修正：本地时间戳与云端缓存都空（getLastBackupTime()===0）但云端
+      // 可能有快照，此时「数据仅存本机」轻条是误报——异步刷一次云端状态后复查。
+      // 会话级只刷一次：从未云备份的用户（回落恒为 0）不会每次进首页都调云函数
+      if (tipVisible && backup.getLastBackupTime() === 0 && !this._cloudStateRefreshed) {
+        this._cloudStateRefreshed = true
+        cloudBackup.refreshCloudState(() => {
+          this.setData({ backupTipVisible: backup.shouldShowHomeTip() })
+        })
+      }
     } catch (e) {}
   },
 

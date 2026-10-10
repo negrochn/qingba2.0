@@ -14,6 +14,7 @@ const children = require('./children.js')
 const customResources = require('./customResources.js')
 const theme = require('./theme.js')
 const docx = require('./docx.js')
+const timeText = require('./timeText.js')
 
 // ===== 存储 key（家庭级，不分孩：备份文件本身含全部孩子）=====
 const LAST_BACKUP_KEY = 'qingba_last_backup_time'            // 上次备份成功时间戳
@@ -37,7 +38,16 @@ function _set(key, value) {
 
 function getLastBackupTime() {
   const v = Number(_get(LAST_BACKUP_KEY))
-  return v > 0 ? v : 0
+  if (v > 0) return v
+  // 本地时间戳丢失（清缓存/换手机）时回落到云端快照时间：云端有备份就不能
+  // 报「从未备份」——否则与「云端快照」状态自相矛盾，还会诱导用户在空数据下
+  // 重新备份、覆盖掉云端唯一的有效快照。
+  // 延迟 require：cloudBackup.js 顶层依赖本文件，此处反向调用须避开模块加载环
+  try {
+    const s = require('./cloudBackup.js').getCachedState()
+    if (s && Number(s.updatedAt) > 0) return Number(s.updatedAt)
+  } catch (e) {}
+  return 0
 }
 
 // 备份成功落时间戳（shareFileMessage / openDocument 成功回调调用）
@@ -45,12 +55,11 @@ function markBackedUp() {
   _set(LAST_BACKUP_KEY, Date.now())
 }
 
-// 「xxxx年x月x日」（带年份：备份月级低频，跨年不歧义）；从未备份返回 ''
+// 「今天 14:11 / 昨天 22:30 / 10月8日 20:35 / 2025年12月3日」（智能格式，口径见 timeText.js）
+// 从未备份返回 ''
 function getLastBackupText() {
   const ts = getLastBackupTime()
-  if (!ts) return ''
-  const d = new Date(ts)
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
+  return ts ? timeText.formatSmart(ts) : ''
 }
 
 // 当前是否需要提醒（纯条件，不含冷却）：设置页红点直接用它（常驻直至备份）
@@ -175,13 +184,17 @@ function collectBackupJson() {
     child_count: childrenOut.length
   };
 
-  return JSON.stringify(data, null, 2);
+  // 紧凑序列化：云端快照受数据库单文档 512KB 限制，缩进空白约占 20-25% 体积，一律去除
+  // （旧备份文件为带缩进格式，导入侧 JSON.parse 两种通吃，无兼容问题）
+  return JSON.stringify(data);
 }
 
-// 生成备份文件并回调 (filePath, fileName)；内部含 loading 与失败提示
+// 生成备份文件并回调 (filePath, fileName)
+// 全程同步（writeFileSync）：wx.shareFileMessage 要求在用户点击手势链内同步调用，
+// 若经异步 writeFile 的 success 回调再调用会稳定报
+// 「can only be invoked by user TAP gesture」，真机上被降级成 openDocument 预览。
+// 本地写文件为毫秒级，同步不会造成可感知卡顿；失败走异常分支统一提示
 function generateBackupFile(callback) {
-  wx.showLoading({ title: '生成中...', mask: true });
-
   try {
     const json = collectBackupJson();
 
@@ -190,7 +203,6 @@ function generateBackupFile(callback) {
     const pad = (n) => String(n).padStart(2, '0');
     const fileName = `qingba_backup_${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.docx`;
 
-    // 写入临时文件
     const fs = wx.getFileSystemManager();
 
     // 清理历史备份临时文件，避免多次备份后在本地目录累积
@@ -204,28 +216,12 @@ function generateBackupFile(callback) {
     } catch (e) {}
 
     const filePath = `${wx.env.USER_DATA_PATH}/${fileName}`;
-    const docxBuffer = docx.createDocx(json);
+    fs.writeFileSync(filePath, docx.createDocx(json));
 
-    fs.writeFile({
-      filePath,
-      data: docxBuffer,
-      success: () => {
-        wx.hideLoading();
-        if (typeof callback === 'function') {
-          callback(filePath, fileName);
-        }
-      },
-      fail: (err) => {
-        wx.hideLoading();
-        console.error('写入文件失败', err);
-        wx.showToast({
-          title: '备份失败',
-          icon: 'none'
-        });
-      }
-    });
+    if (typeof callback === 'function') {
+      callback(filePath, fileName);
+    }
   } catch (e) {
-    wx.hideLoading();
     console.error('备份失败', e);
     wx.showToast({
       title: '备份失败',
@@ -235,6 +231,7 @@ function generateBackupFile(callback) {
 }
 
 // 手机端直接拉起转发面板（引导发给「文件传输助手」）；
+// 必须保持「点击 → generateBackupFile → 本函数」同步调用链（手势要求，见上）；
 // 用户取消不算备份；平台/环境不支持时降级 openDocument 预览
 function shareBackupFile(filePath, fileName) {
   if (typeof wx.shareFileMessage !== 'function') {
@@ -490,6 +487,11 @@ function _confirmAndImport(text, mode, hooks) {
   }
 }
 
+// 从备份文本导入（云恢复复用）：解析 → 确认弹窗 → 落库，与文件导入同一套流程
+function importFromText(text, mode, hooks) {
+  _confirmAndImport(text, mode, hooks)
+}
+
 // v2 单孩格式：页面弹层确认后调用，落到所选孩子名下
 function confirmImportToChild(pendingData, mode, targetId, hooks) {
   if (!pendingData || !targetId) return;
@@ -505,12 +507,26 @@ function confirmImportToChild(pendingData, mode, targetId, hooks) {
 // ===== 导入：落库（纯逻辑，无 UI） =====
 
 // v3 整体恢复：逐个孩子按名字匹配（无则新建），临时切换导入，finally 恢复原当前孩子。
+// 覆盖模式（overwrite）：孩子集合以快照为准——清空本机后恢复不能残留旧孩子
+//   （如清缓存后重建的默认孩子）。导入前后各清一轮多余孩子：第一轮受「至少保留
+//   一个」下限保护可能删不动，新建快照孩子后第二轮补删。
 // 返回跳过的孩子数
 function importAllChildren(childrenArr, mode, rawData) {
   wx.showLoading({ title: '导入中...' });
   const prevActiveId = children.getActiveChildId();
   let skipped = 0;
+  let imported = 0;
+  const keepNames = new Set(
+    childrenArr.filter(c => c && c.name).map(c => String(c.name))
+  );
+  const removeExtraChildren = () => {
+    if (mode !== 'overwrite' || keepNames.size === 0 || imported === 0) return;
+    children.getChildren()
+      .filter(x => !keepNames.has(x.name))
+      .forEach(x => children.removeChild(x.id)); // 下限保护触发时内部拒绝，忽略即可
+  };
   try {
+    removeExtraChildren();
     childrenArr.forEach((c) => {
       if (!c || !c.name) { skipped++; return; }
       let hit = children.getChildren().find(x => x.name === c.name);
@@ -521,7 +537,9 @@ function importAllChildren(childrenArr, mode, rawData) {
       }
       children.switchChild(hit.id);
       _applyChildData(c, mode);
+      imported++;
     });
+    removeExtraChildren();
 
     // 全局（家庭级）设置只恢复一次
     if (rawData) _applyGlobalData(rawData);
@@ -705,5 +723,7 @@ module.exports = {
   shareBackupFile,
   openBackupFile,
   startImportFlow,
+  importFromText,
+  collectBackupJson,
   confirmImportToChild
 }
