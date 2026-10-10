@@ -2,6 +2,7 @@ const checkin = require('../../utils/checkin.js')
 const children = require('../../utils/children.js')
 const { getRequiredHours, isRouteCompleted } = require('../../utils/data.js')
 const share = require('../../utils/share.js')
+const backup = require('../../utils/backup.js')
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -46,6 +47,8 @@ Page({
     todayCount: 0,
     weekTime: { h: 0, m: 0 },          // 本周时长（分段：小时/分钟）
     weekDeltaText: '—',
+    weekDeltaValue: '',                // 周环比数值（带符号）；'' = 无对比
+    weekDeltaState: '',                // 周环比方向：'up' 绿 / 'down' 红 / '' 中性（持平或无对比）
     weekBars: [],
     activeBar: -1,                     // 周柱状图选中柱（点按气泡），-1 = 无
     barScaleText: '1小时',
@@ -58,9 +61,9 @@ Page({
     // 今日明细弹窗（今日时长 / 今日打卡 共用一套面板，随入口切换度量）
     sheetVisible: false,
     sheetMode: 'minutes',
+    sheetTime: { h: 0, m: 0 },         // 弹窗汇总分段（仅 minutes 模式使用）
     sheetTitle: '',
     sheetSummaryMain: '',
-    sheetSummarySub: '',
     sheetItems: [],
     journeyText: '',
     // 毕业态（主链终点已完成）：庆祝卡 + 全程口径，无统计与操作入口
@@ -74,7 +77,10 @@ Page({
     isMultiChild: false,
     activeChildInitial: '',
     activeChildColor: 'green',
-    childSheetVisible: false
+    childSheetVisible: false,
+    // 备份提醒：一次性引导弹层优先，其次顶部轻条（两者不同时出现）
+    guideVisible: false,
+    backupTipVisible: false
   },
 
   onLoad() {
@@ -87,19 +93,50 @@ Page({
     if (app && app.applyFontLevel) app.applyFontLevel(this)
     this._refreshChild()
     this._refresh()
+    this._refreshBackupState()
   },
 
   // tab 切走时关闭弹层：原生 tabBar 层级高于页面蒙层，弹窗开着也能直接点「路线/我的」切走；
   // 切 tab 只 hide 不销毁页面，弹层状态会残留（回来还挂着蒙层，孩子列表也可能过期）。
   // 页面隐藏期间滑出动画照常走完，回来时已是干净状态
   onHide() {
-    if (this.data.childSheetVisible || this.data.sheetVisible) {
-      this.setData({ childSheetVisible: false, sheetVisible: false })
+    if (this.data.childSheetVisible || this.data.sheetVisible || this.data.guideVisible) {
+      this.setData({ childSheetVisible: false, sheetVisible: false, guideVisible: false })
     }
     // 柱状图气泡一并收起：定时器不清会在后台仍触发 setData
     if (this._barTipTimer) { clearTimeout(this._barTipTimer); this._barTipTimer = null }
     this._barTouching = false
     if (this.data.activeBar !== -1) this.setData({ activeBar: -1 })
+  },
+
+  // ===== 备份提醒 =====
+  // 一次性引导优先：累计满一周记录且未展示过 → 弹引导（弹出即标记，不再重复）；
+  // 否则按提醒条件（从未备份/超 30 天未备份）显示顶部轻条，关闭后 30 天冷却
+  _refreshBackupState() {
+    try {
+      if (backup.shouldShowGuide()) {
+        backup.markGuideShown()
+        this.setData({ guideVisible: true, backupTipVisible: false })
+        return
+      }
+      this.setData({ backupTipVisible: backup.shouldShowHomeTip() })
+    } catch (e) {}
+  },
+
+  // 轻条 / 引导的「去备份」：直达数据与备份页
+  goDataBackup() {
+    this.setData({ backupTipVisible: false, guideVisible: false })
+    wx.navigateTo({ url: '/pages/dataBackup/dataBackup' })
+  },
+
+  // 关闭轻条：记冷却时间戳
+  dismissBackupTip() {
+    backup.dismissReminder()
+    this.setData({ backupTipVisible: false })
+  },
+
+  closeGuide() {
+    this.setData({ guideVisible: false })
   },
 
   // 孩子切换器状态：仅多孩时显示（单孩零感知）
@@ -205,13 +242,17 @@ Page({
       }
     })
 
-    // 周环比
+    // 周环比（涨绿 / 跌红只作用于数值；「较上周」前缀保持中性灰）
     let weekDeltaText = '—'
+    let weekDeltaValue = ''
+    let weekDeltaState = ''
     if (thisWeek > 0 && lastWeek > 0) {
       const pct = Math.round((thisWeek - lastWeek) / lastWeek * 100)
-      weekDeltaText = pct >= 0 ? `较上周 +${pct}%` : `较上周 ${pct}%`
+      weekDeltaValue = pct >= 0 ? `+${pct}%` : `${pct}%`
+      weekDeltaState = pct > 0 ? 'up' : (pct < 0 ? 'down' : '')
     } else if (thisWeek > 0) {
-      weekDeltaText = '较上周 +100%'
+      weekDeltaValue = '+100%'
+      weekDeltaState = 'up'
     }
 
     // 连续打卡天数（当前阶段口径）：今天未打卡则从昨天起算，避免当天还没打就归零
@@ -293,6 +334,8 @@ Page({
       stageName: cur ? (cur.name || '') : '',
       weekTime: splitDuration(thisWeek),
       weekDeltaText,
+      weekDeltaValue,
+      weekDeltaState,
       weekBars,
       activeBar: -1,                   // 数据重建后旧气泡失去意义，复位
       barScaleText,
@@ -483,8 +526,10 @@ Page({
     this.setData({
       sheetMode: mode,
       sheetTitle: byCount ? '今日打卡' : '今日时长',
-      sheetSummaryMain: byCount ? `${totalCount} 次` : checkin.fmtMinutesCN(totalMinutes),
-      sheetSummarySub: `${items.length} 本`,
+      // minutes 模式：数字分段由 sheetTime 承载（wxml 分「小时/分钟」渲染，单位小字）；
+      // count 模式：main 只放数字，「次」由 wxml 补单位小字
+      sheetSummaryMain: byCount ? `${totalCount}` : '',
+      sheetTime: byCount ? { h: 0, m: 0 } : splitDuration(totalMinutes),
       sheetItems: items
     })
   }

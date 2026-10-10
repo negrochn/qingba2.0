@@ -15,6 +15,7 @@
     "pages/targetSetting/targetSetting",
     "pages/importPicker/importPicker",
     "pages/clearPicker/clearPicker",
+    "pages/dataBackup/dataBackup",
     "pages/myResources/myResources",
     "pages/resourceSort/resourceSort",
     "pages/backfill/backfill",

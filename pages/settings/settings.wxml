@@ -77,23 +77,20 @@
   <!-- 数据管理 -->
   <view class="weui-cells__title">数据管理</view>
   <view class="weui-cells">
-    <view class="weui-cell weui-cell_access" bindtap="onExport">
-      <view class="weui-cell__bd">导出备份</view>
+    <view class="weui-cell weui-cell_access" bindtap="goDataBackup">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text">数据与备份<text class="backup-dot" wx:if="{{backupRemind}}"></text></view>
+        <view class="weui-cell__desc">备份、恢复与数据存储说明</view>
+      </view>
       <view class="weui-cell__ft">
-        <text class="weui-cell__ft_value">word</text>
         <text class="iconfont icon-right"></text>
       </view>
     </view>
-    <view class="weui-cell weui-cell_access" bindtap="goImportPicker">
-      <view class="weui-cell__bd">导入备份</view>
-      <view class="weui-cell__ft">
-        <text class="weui-cell__ft_value">支持 txt/json/word</text>
-        <text class="iconfont icon-right"></text>
-      </view>
-    </view>
-
     <view class="weui-cell weui-cell_access weui-cell_warn" bindtap="goClearPicker">
-      <view class="weui-cell__bd">清空数据</view>
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text">清空数据</view>
+        <view class="weui-cell__desc">清空当前路线的全部或单个阶段打卡记录</view>
+      </view>
       <view class="weui-cell__ft">
         <text class="iconfont icon-right"></text>
       </view>
@@ -122,42 +119,7 @@
         <text class="weui-cell__ft_value">{{appVersionText}}</text>
       </view>
     </view>
-    <view class="weui-cell">
-      <view class="weui-cell__bd">数据存储</view>
-      <view class="weui-cell__ft">
-        <text class="weui-cell__ft_value">本地存储</text>
-      </view>
-    </view>
   </view>
 
 </view>
 
-<!-- 导入备份 · 选孩子（v2 单孩格式：导入到所选孩子名下；v3 多孩格式整体恢复不经过此处） -->
-<half-sheet
-  show="{{importPickVisible}}"
-  title="导入到哪个孩子"
-  font-class="{{fontClass}}"
-  dark-class="{{darkClass}}"
-  footer="{{true}}"
-  bind:close="closeImportPick"
->
-  <view class="imp-list">
-    <view
-      class="imp-row"
-      wx:for="{{importPickItems}}"
-      wx:key="id"
-      data-id="{{item.id}}"
-      bindtap="onImportPickChild"
-      hover-class="imp-row-hover"
-    >
-      <view class="cp-av cp-av--{{item.color}}">{{item.initial}}</view>
-      <view class="imp-name">{{item.name}}</view>
-      <text class="weui-icon-checked iconfont icon-check" hidden="{{!item.active}}"></text>
-    </view>
-  </view>
-  <view class="imp-note">备份数据将与所选孩子的现有数据合并，当前孩子的其他设置保持不变</view>
-  <view slot="footer" class="weui-btn-area_inline">
-    <button class="weui-btn weui-btn_default" bindtap="closeImportPick">取消</button>
-    <button class="weui-btn weui-btn_primary" bindtap="confirmImportPick">导入</button>
-  </view>
-</half-sheet>

@@ -1,6 +1,4 @@
 {
-  "usingComponents": {
-    "half-sheet": "/components/half-sheet/half-sheet"
-  },
+  "usingComponents": {},
   "navigationBarTitleText": "设置"
 }

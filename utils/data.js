@@ -382,9 +382,6 @@ const routeData = {
         ],
         "science_extensions": [
           { "id": "o_pb_se_01", "name": "神奇校车红蓝盒（20册）" }
-        ],
-        "fusion_apps": [
-          { "id": "o_pb_fa_01", "name": "本级别不推荐" }
         ]
       },
       "key_points": []

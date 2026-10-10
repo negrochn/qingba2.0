@@ -12,6 +12,15 @@
     </view>
   </view>
 
+  <!-- 备份提醒轻条：数据仅存本机且超期未备份时出现；「×」关闭后 30 天冷却 -->
+  <view class="home-backup-tip" wx:if="{{backupTipVisible}}">
+    <view class="home-backup-tip__text">数据仅存本机，建议备份防丢失</view>
+    <view class="home-backup-tip__actions">
+      <text class="home-backup-tip__btn" bindtap="goDataBackup">去备份</text>
+      <text class="home-backup-tip__close" bindtap="dismissBackupTip">×</text>
+    </view>
+  </view>
+
   <!-- 欢迎卡：未设置当前阶段时显示，替代全 0 的统计模块（WeUI msg 范式：无图标、单主操作） -->
   <view class="home-welcome" wx:if="{{!hasStage}}">
     <view class="home-welcome__text-area">
@@ -92,7 +101,8 @@
         <text class="home-hero-val {{weekTime.h > 0 ? 'home-hero-val--minor' : ''}}">{{weekTime.m}}</text>
         <text class="home-hero-unit">分钟</text>
       </block>
-      <text class="home-hero-delta">{{weekDeltaText}}</text>
+      <text class="home-hero-delta" wx:if="{{weekDeltaValue}}">较上周 <text class="{{weekDeltaState === 'up' ? 'home-hero-delta--up' : ''}} {{weekDeltaState === 'down' ? 'home-hero-delta--down' : ''}}">{{weekDeltaValue}}</text></text>
+      <text class="home-hero-delta" wx:else>{{weekDeltaText}}</text>
     </view>
     <view class="home-bars-wrap">
       <!-- 参考线层：顶线 = 满刻度（barScaleText），中线 = 半刻度，底线 = 0 基线 -->
@@ -158,8 +168,11 @@
   bind:close="closeSheet"
 >
   <view class="hs-summary" wx:if="{{sheetItems.length > 0}}">
-    <text class="hs-summary-main">{{sheetSummaryMain}}</text>
-    <text class="hs-summary-sub">{{sheetSummarySub}}</text>
+    <block wx:if="{{sheetMode === 'minutes'}}">
+      <text class="hs-summary-main" wx:if="{{sheetTime.h > 0}}">{{sheetTime.h}}<text class="hs-summary-unit">小时</text></text>
+      <text class="hs-summary-main" wx:if="{{sheetTime.m > 0 || sheetTime.h === 0}}">{{sheetTime.m}}<text class="hs-summary-unit">分钟</text></text>
+    </block>
+    <text class="hs-summary-main" wx:else>{{sheetSummaryMain}}<text class="hs-summary-unit">次</text></text>
   </view>
 
   <scroll-view class="hs-list" scroll-y wx:if="{{sheetItems.length > 0}}">
@@ -182,3 +195,19 @@
   bind:close="closeChildSheet"
   bind:changed="onChildChanged"
 />
+
+<!-- 一次性引导：打卡数据保存在本机（累计满一周记录时触发，弹出即不再重复） -->
+<half-sheet
+  show="{{guideVisible}}"
+  title="打卡数据保存在本机"
+  font-class="{{fontClass}}"
+  dark-class="{{darkClass}}"
+  footer="{{true}}"
+  bind:close="closeGuide"
+>
+  <view class="home-guide-text">打卡记录、孩子资料与自定义资源都保存在手机微信的本地存储中。移除小程序、清理微信存储空间或更换手机都会导致数据丢失且无法找回，建议定期备份。</view>
+  <view slot="footer" class="weui-btn-area_inline">
+    <button class="weui-btn weui-btn_default" bindtap="closeGuide">知道了</button>
+    <button class="weui-btn weui-btn_primary" bindtap="goDataBackup">去备份</button>
+  </view>
+</half-sheet>

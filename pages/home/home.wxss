@@ -1,5 +1,48 @@
 /* ===== 首页样式（WeUI 令牌化） ===== */
 
+/* ===== 备份提醒轻条：数据仅存本机且超期未备份时出现，「×」关闭后 30 天冷却 ===== */
+.home-backup-tip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 32rpx 16rpx;
+  padding: 16rpx 24rpx;
+  border-radius: 16rpx;
+  background: var(--card);
+}
+.home-backup-tip__text {
+  flex: 1;
+  min-width: 0;
+  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text2);
+  line-height: 1.4;
+}
+.home-backup-tip__actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+.home-backup-tip__btn {
+  padding: 8rpx 20rpx;
+  font-size: calc(26rpx * var(--fs, 1));
+  font-weight: 500;
+  color: var(--brand);
+}
+.home-backup-tip__close {
+  padding: 8rpx 8rpx 8rpx 12rpx;
+  font-size: calc(36rpx * var(--fs, 1));
+  line-height: 1;
+  color: var(--text3);
+}
+
+/* 一次性引导弹层正文 */
+.home-guide-text {
+  padding: 0 32rpx 24rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
+  line-height: 1.7;
+}
+
 /* ① 欢迎条：左「英文日期 + 欢迎语」/ 右「当前阶段」 */
 .home-header {
   display: flex;
@@ -204,6 +247,8 @@
   margin-left: 16rpx;
   color: var(--text2);
 }
+.home-hero-delta--up { color: var(--brand); }    /* 较上周上涨：品牌绿（进步） */
+.home-hero-delta--down { color: var(--danger); } /* 较上周回退：警示红 */
 /* 参考线层：高度与柱轨(192rpx)对齐，顶线 = 满刻度、中线 = 半刻度 */
 .home-bars-wrap {
   position: relative;
@@ -375,10 +420,10 @@
   color: var(--text);
   font-family: 'DIN Alternate', -apple-system, Helvetica, Arial, sans-serif;
 }
-.hs-summary-sub {
-  margin-left: 16rpx;
-  font-size: calc(28rpx * var(--fs, 1));
+.hs-summary-unit {
+  font-size: calc(28rpx * var(--fs, 1));   /* 单位字比数字低两档，对齐首页 2×2 卡「大数字 + 小单位」 */
   color: var(--text2);
+  margin-left: 4rpx;
 }
 
 /* 明细列表（滚动区，滚动自身不挂 catchtouchmove） */
