@@ -41,9 +41,15 @@ page {
 
 /* 底部补充说明：走全局 .weui-cells__tips（styles/weui-cells.wxss），本页不再自定义 */
 
-/* ===== 云备份「推荐」徽标（品牌绿，贴合 cell 标题基线） ===== */
+/* ===== 云备份「推荐」徽标（品牌绿） =====
+   标题行用 flex 居中：vertical-align: middle 对齐的是基线+x-height/2 而非行盒中点，
+   徽标与标题字号差异大时视觉必偏，flex 才是真居中 */
+.db-title-row {
+  display: flex;
+  align-items: center;
+}
+
 .db-badge {
-  display: inline-block;
   margin-left: 12rpx;
   padding: 2rpx 12rpx;
   border-radius: 8rpx;
@@ -52,7 +58,6 @@ page {
   font-size: calc(20rpx * var(--fs, 1));
   font-weight: 400;
   line-height: 1.4;
-  vertical-align: middle;
 }
 
 /* ===== 删除云端备份：危险操作标题红，desc 保持中性弱化 ===== */

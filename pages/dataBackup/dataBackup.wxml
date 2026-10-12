@@ -14,8 +14,8 @@
   <view class="weui-cells">
     <view class="weui-cell weui-cell_access" bindtap="onCloudBackup">
       <view class="weui-cell__bd">
-        <view class="weui-cell__bd_text">备份到云端<text class="db-badge">推荐</text></view>
-        <view class="weui-cell__desc">{{cloudStateText ? '云端快照：' + cloudStateText : '暂无快照 · 免费 1 份，每次备份覆盖上一份'}}</view>
+        <view class="weui-cell__bd_text db-title-row">备份到云端<text class="db-badge">推荐</text></view>
+        <view class="weui-cell__desc">{{cloudStateText ? '云端快照：' + cloudStateText : (cloudEntText || '暂无快照')}}</view>
       </view>
       <view class="weui-cell__ft">
         <text class="iconfont icon-right"></text>
@@ -64,7 +64,7 @@
     </view>
   </view>
 
-  <view class="weui-cells__tips">云备份免费保留 1 份最新快照，换手机登录同一微信即可恢复；发送到聊天的备份文件由自己留存，可长期保留多个版本，重要数据建议两者都用。</view>
+  <view class="weui-cells__tips">云端保留 1 份最新快照，换手机登录同一微信即可恢复；备份需开通会员或看短视频解锁（每日最多 5 次），恢复与删除永久免费。文件备份由自己留存，可保留多个版本，重要数据建议两者都用。</view>
 
 </view>
 

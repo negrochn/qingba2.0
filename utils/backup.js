@@ -37,22 +37,33 @@ function _set(key, value) {
 // ===== 提醒 / 引导状态 =====
 
 function getLastBackupTime() {
-  const v = Number(_get(LAST_BACKUP_KEY))
-  if (v > 0) return v
-  // 本地时间戳丢失（清缓存/换手机）时回落到云端快照时间：云端有备份就不能
-  // 报「从未备份」——否则与「云端快照」状态自相矛盾，还会诱导用户在空数据下
-  // 重新备份、覆盖掉云端唯一的有效快照。
-  // 延迟 require：cloudBackup.js 顶层依赖本文件，此处反向调用须避开模块加载环
+  // 「上次备份」= 已留存备份中最新的一份的时间。留存物有两类且并列：
+  //   文件备份（本地时间戳）与云端快照（cloudBackup 状态缓存）。
+  // 取两者较大者：删除云端快照后云端项自然消失，回落到文件备份时间或「从未备份」；
+  // 换手机后本地时间戳丢失，则只剩云端项（refreshCloudState 拉回 meta 后生效）
+  let cloudTs = 0
   try {
+    // 延迟 require：cloudBackup.js 顶层依赖本文件，此处反向调用须避开模块加载环
     const s = require('./cloudBackup.js').getCachedState()
-    if (s && Number(s.updatedAt) > 0) return Number(s.updatedAt)
+    if (s && Number(s.updatedAt) > 0) cloudTs = Number(s.updatedAt)
   } catch (e) {}
-  return 0
+  const local = Number(_get(LAST_BACKUP_KEY))
+  return Math.max(local > 0 ? local : 0, cloudTs)
 }
 
 // 备份成功落时间戳（shareFileMessage / openDocument 成功回调调用）
 function markBackedUp() {
   _set(LAST_BACKUP_KEY, Date.now())
+}
+
+// 存量兼容：旧版本云备份会把时间戳写入本 key（污染文件备份口径），导致删除云端
+// 快照后「上次备份」无法回落。删除云端时传入云端快照时间，相等即视为云备份写入
+// 的，一并清掉；不等则说明是文件备份时间，不能动
+function clearLastBackupIf(cloudTs) {
+  const last = Number(_get(LAST_BACKUP_KEY))
+  if (last > 0 && last === Number(cloudTs)) {
+    try { wx.removeStorageSync(LAST_BACKUP_KEY) } catch (e) {}
+  }
 }
 
 // 「今天 14:11 / 昨天 22:30 / 10月8日 20:35 / 2025年12月3日」（智能格式，口径见 timeText.js）
@@ -712,6 +723,7 @@ function _applyGlobalData(data) {
 module.exports = {
   getLastBackupTime,
   markBackedUp,
+  clearLastBackupIf,
   getLastBackupText,
   shouldRemind,
   getRemindText,

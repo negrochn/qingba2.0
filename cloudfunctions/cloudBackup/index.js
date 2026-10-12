@@ -1,8 +1,15 @@
-// 云函数 cloudBackup：免费云备份（每人 1 份覆盖式快照）
+// 云函数 cloudBackup：云备份（每人 1 份覆盖式快照）+ 备份权益闸门
 // action:
 //   get —— 按 openid 取当前快照（压缩串 payload_z 或旧明文 payload + meta）
-//   put —— 校验并覆盖写入快照（10 分钟频控防连点）
+//   put —— 校验并覆盖写入快照（10 分钟频控防连点）；需备份权益：会员或广告点数 ≥1
 //   delete —— 删除该用户全部快照文档（正常 1 份，历史重复一并清理）
+//   entitlement —— 查询当前权益状态（会员 / 剩余广告点数 / 今日已看次数）
+//   unlock —— 激励视频完整观看后登记，+1 备份点数（每日上限防刷）
+//
+// 权益模型（商业化定案）：
+//   备份设墙、恢复/删除不设墙——取回自己的数据永远免费；
+//   云端数据永不过期不删除；权益判定收口云函数，前端广告回调不可信。
+//   会员字段 membership 预留（type/expireAt），支付通道就绪后仅增购买写入入口。
 //
 // 数据存集合 cloud_backups（免费版不引入云存储）：
 //   新路径 { openid, payload_z(gzip+base64), size_z, size(原文), childCount, recordCount, updatedAt }
@@ -24,6 +31,9 @@ const MAX_BYTES = 500 * 1024        // 旧明文路径上限（贴文档 512KB �
 const MAX_RAW_BYTES = 2 * 1024 * 1024 // 压缩路径：解压后原文上限（防御压缩炸弹 + 防御性上限）
 const MAX_Z_B64 = 380 * 1024        // 压缩路径：base64 串上限（文档总大小留足 512KB 余量）
 const DEDUP_MS = 10 * 60 * 1000 // 同用户 10 分钟内重复上传直接去重返回
+// 权益集合与配置（商业化：备份需会员或广告点数）
+const ENT_COL = 'entitlements'
+const DAILY_AD_LIMIT = 5 // 每日最多通过广告获得的备份次数（防刷兜底，前端无感）
 
 function ok(data) {
   return Object.assign({ ok: true }, data || {})
@@ -42,6 +52,8 @@ exports.main = async (event) => {
     if (action === 'get') return await handleGet(OPENID)
     if (action === 'put') return await handlePut(OPENID, event)
     if (action === 'delete') return await handleDelete(OPENID)
+    if (action === 'entitlement') return await handleEntitlement(OPENID)
+    if (action === 'unlock') return await handleUnlock(OPENID)
     return fail('BAD_ACTION', '未知操作')
   } catch (e) {
     console.error('cloudBackup error', e)
@@ -147,16 +159,109 @@ async function handlePut(openid, event) {
       && prev.childCount === childCount
       && prev.recordCount === recordCount
     if (now - prev.updatedAt < DEDUP_MS && sameContent) {
-      return ok({ deduped: true, updatedAt: prev.updatedAt })
+      return ok({ deduped: true, updatedAt: prev.updatedAt }) // 内容未变不算新备份，不消耗权益
     }
+    const gate = await consumeBackupCredit(openid)
+    if (!gate.ok) return gate
     await db.collection(COL).doc(prev._id).update({ data: updateData })
     return ok({ updatedAt: now })
   }
 
-  // 首次备份：显式写 openid 字段（云函数写入不会自动注入 _openid）
+  // 首次备份：权益闸门 + 显式写 openid 字段（云函数写入不会自动注入 _openid）
+  const gate = await consumeBackupCredit(openid)
+  if (!gate.ok) return gate
   const addData = storeZ
     ? Object.assign({ openid, payload_z: storeZ, size_z: Buffer.byteLength(storeZ, 'utf8') }, baseData)
     : Object.assign({ openid, payload: legacy }, baseData)
   await db.collection(COL).add({ data: addData })
   return ok({ updatedAt: now })
+}
+
+// ===== 权益层：会员 / 广告点数（备份设墙，恢复与删除不设墙） =====
+
+// 北京时间日期串（云函数服务器为 UTC，按东八区归日）
+function _bjDate(now) {
+  return new Date(now + 8 * 3600 * 1000).toISOString().slice(0, 10)
+}
+
+// 会员是否有效（membership 预留结构 { type, expireAt }；expireAt 缺省视为永久）
+function _isMember(ent) {
+  return !!(ent && ent.membership
+    && (!ent.membership.expireAt || ent.membership.expireAt > Date.now()))
+}
+
+// 读取该用户权益文档，不存在则惰性创建（并发重复创建无害，读取恒取第一条）
+// 注意：wx-server-sdk 的 db 可能没有 createCollection（管理端能力），集合缺失时
+// 依赖手动在云开发控制台建 entitlements 集合；此处保留尝试并记录真实错误便于排查
+async function _loadEnt(openid) {
+  let q
+  try {
+    q = await db.collection(ENT_COL).where({ openid }).limit(1).get()
+  } catch (e) {
+    console.error(`[entitlements] 集合查询失败（检查云端是否已建 ${ENT_COL} 集合）`, e && e.message)
+    try {
+      if (typeof db.createCollection === 'function') await db.createCollection(ENT_COL)
+    } catch (e2) {
+      console.error('[entitlements] 自动创建集合失败', e2 && e2.message)
+    }
+    q = await db.collection(ENT_COL).where({ openid }).limit(1).get()
+  }
+  if (q.data.length) return q.data[0]
+  try {
+    await db.collection(ENT_COL).add({
+      data: { openid, credits: 0, dailyDate: '', dailyEarned: 0, membership: null, updatedAt: Date.now() }
+    })
+  } catch (e) { /* 并发下重复创建忽略 */ }
+  const q2 = await db.collection(ENT_COL).where({ openid }).limit(1).get()
+  return q2.data[0] || null
+}
+
+// 备份闸门：会员放行；否则原子扣 1 点（credits ≥1 条件更新，防并发双扣）
+// 放行返回 { ok: true }，无权益返回 NEED_ENTITLEMENT（前端据此引导看广告）
+async function consumeBackupCredit(openid) {
+  const ent = await _loadEnt(openid)
+  if (_isMember(ent)) return ok()
+  const res = await db.collection(ENT_COL)
+    .where({ openid, credits: _.gte(1) })
+    .update({ data: { credits: _.inc(-1), updatedAt: Date.now() } })
+  if (res.stats && res.stats.updated > 0) return ok()
+  return fail('NEED_ENTITLEMENT', '看一段视频或开通会员后可备份到云端')
+}
+
+// 查询权益状态（前端按钮态与「看视频解锁」入口的展示依据）
+async function handleEntitlement(openid) {
+  const ent = await _loadEnt(openid)
+  const today = _bjDate(Date.now())
+  const dailyEarned = ent && ent.dailyDate === today ? (ent.dailyEarned | 0) : 0
+  return ok({
+    member: _isMember(ent),
+    credits: ent ? Math.max(0, ent.credits | 0) : 0,
+    dailyEarned,
+    dailyLimit: DAILY_AD_LIMIT
+  })
+}
+
+// 激励视频完整观看后登记：+1 备份点数，每日上限 DAILY_AD_LIMIT 防刷
+// 前端只在此登记成功后才发起备份；伪造直调 put 无权益仍会被闸门拦下
+async function handleUnlock(openid) {
+  const today = _bjDate(Date.now())
+  await _loadEnt(openid)
+  // 跨日重置计数器（条件更新，天然幂等）
+  await db.collection(ENT_COL)
+    .where({ openid, dailyDate: _.neq(today) })
+    .update({ data: { dailyDate: today, dailyEarned: 0 } })
+  // 条件自增：今日已获次数 < 上限才生效，绕过上限的直调在此被拦
+  const res = await db.collection(ENT_COL)
+    .where({ openid, dailyDate: today, dailyEarned: _.lt(DAILY_AD_LIMIT) })
+    .update({ data: { dailyEarned: _.inc(1), credits: _.inc(1), updatedAt: Date.now() } })
+  if (!res.stats || res.stats.updated === 0) {
+    return fail('DAILY_LIMIT', `今日看视频获得的次数已达上限（${DAILY_AD_LIMIT} 次），明天再来`)
+  }
+  const ent = await _loadEnt(openid)
+  return ok({
+    member: _isMember(ent),
+    credits: ent ? Math.max(0, ent.credits | 0) : 1,
+    dailyEarned: ent && ent.dailyDate === today ? (ent.dailyEarned | 0) : 1,
+    dailyLimit: DAILY_AD_LIMIT
+  })
 }

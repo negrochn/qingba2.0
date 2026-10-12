@@ -11,6 +11,7 @@ Page({
     remindText: '',       // 提醒文案（空 = 暂无需提醒）
     cloudStateText: '',  // 云端快照概要「x月x日 HH:mm · N孩M条」；'' = 云端暂无
     hasCloud: false,     // 是否存在云端快照（说明卡自适应两态）
+    cloudEntText: '',    // 无云端快照时「备份到云端」副文案（跟随会员/点数状态；'' 回落「暂无快照」）
     // 导入备份 · 选孩子弹层（v2 单孩格式专用；v3 多孩格式整体恢复不经过此处）
     importPickVisible: false,
     importPickItems: [],
@@ -29,6 +30,7 @@ Page({
     if (app && app.applyFontLevel) app.applyFontLevel(this);
     this.refreshBackupState();
     this.refreshCloudState();
+    this.refreshCloudEntitlement();
   },
 
   // 刷新「上次备份」与提醒文案；转发面板 / 文档预览返回时 onShow 重查一次
@@ -47,7 +49,8 @@ Page({
     });
   },
 
-  // ===== 云备份（免费：每人 1 份覆盖式快照） =====
+  // ===== 云备份（每人 1 份覆盖式快照；备份需权益：会员或看视频解锁，
+  // 权益弹窗/激励视频/重试均收口在 utils/cloudBackup.js，页面只做胶水） =====
 
   // 先展示本地缓存，再静默刷新云端（换手机后本地无缓存也能对上）
   refreshCloudState() {
@@ -61,6 +64,20 @@ Page({
     cloudBackup.refreshCloudState(apply);
   },
 
+  // 「备份到云端」副文案跟随权益状态：会员不限次 / 还可免费备份 N 次 / 需看短视频解锁
+  // （查询失败或云不可用时保持 ''，副文案回落「暂无快照」，不阻塞页面）
+  refreshCloudEntitlement() {
+    cloudBackup.getEntitlement((ent) => {
+      let text = '';
+      if (ent && ent.ok) {
+        if (ent.member) text = '暂无快照 · 会员不限次备份';
+        else if (ent.credits > 0) text = '暂无快照 · 还可免费备份 ' + ent.credits + ' 次';
+        else text = '暂无快照 · 看短视频解锁备份，会员不限次';
+      }
+      this.setData({ cloudEntText: text });
+    });
+  },
+
   onCloudBackup() {
     if (this._cloudBusy) return;
     this._cloudBusy = true;
@@ -70,6 +87,7 @@ Page({
         const cloudStateText = cloudBackup.getStateText();
         this.setData({ cloudStateText, hasCloud: !!cloudStateText });
         this.refreshBackupState(); // 云备份计入「上次备份」口径，红点/提醒同步
+        this.refreshCloudEntitlement(); // 解锁/备份后点数已变化，副文案同步
       }
     });
   },

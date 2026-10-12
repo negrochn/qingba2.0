@@ -1,9 +1,11 @@
-// 云备份工具：免费云备份（微信云开发，每人 1 份覆盖式快照）
+// 云备份工具：云备份（微信云开发，每人 1 份覆盖式快照）
 // 职责：
 //  1. 云能力可用性判断（wx.cloud 缺失 / 初始化失败时降级，本地功能零感知）
 //  2. 云端快照状态展示（本地缓存 + 进页异步刷新）
 //  3. 备份到云端（复用 backup.collectBackupJson 的 v3 序列化）
 //  4. 从云端恢复（复用 backup.importFromText 的确认弹窗与落库流程）
+//  5. 备份权益流（商业化）：备份需会员或广告点数；put 返回 NEED_ENTITLEMENT
+//     时引导看激励视频 → unlock 登记 +1 点 → 自动重试备份。恢复/删除不设墙。
 // 页面层只做 UI 与流程胶水，数据与判断都收口在本文件。
 
 const backup = require('./backup.js')
@@ -11,6 +13,7 @@ const pako = require('./pako.min.js')
 const timeText = require('./timeText.js')
 
 const FUNC_NAME = 'cloudBackup'
+const AD_UNIT_ID = 'adunit-78cec41c9a325278' // 激励视频广告位（流量主后台创建）
 const STATE_KEY = 'qingba_cloud_backup_state' // 家庭级：{ updatedAt, childCount, recordCount }
 
 function _get(key) {
@@ -19,6 +22,14 @@ function _get(key) {
 
 function _set(key, value) {
   try { wx.setStorageSync(key, value) } catch (e) {}
+}
+
+// 真机上 hideLoading 紧接 showToast 会把提示吞掉（两者共用视图层），
+// 延迟一帧再弹提示；loading 本身仍需立即关闭避免残留
+function _toastAfterLoading(title, icon) {
+  setTimeout(() => {
+    wx.showToast({ title, icon: icon || 'none' })
+  }, 150)
 }
 
 // ===== base64（Uint8Array ↔ string）：小程序无 btoa/atob，自实现，不依赖已停维护的 wx 转换 API =====
@@ -160,7 +171,8 @@ function _isEmptySnapshot(json) {
 }
 
 // 压缩 + 上传 + 状态更新（首次上传与空数据二次确认后共用）
-function _doUpload(json, hooks) {
+// retried：广告解锁重试标记，0=首次（可能触发权益流），1=解锁后重试（不再二次引导）
+function _doUpload(json, hooks, retried) {
   // gzip 压缩 + base64：打卡记录 JSON 重复度高，压缩率 5-10 倍，
   // 云端存压缩串绕开云数据库单文档 512KB 硬限制（原文上限 2MB）
   let payloadZ = ''
@@ -168,13 +180,14 @@ function _doUpload(json, hooks) {
     payloadZ = _u8ToBase64(pako.gzip(json))
   } catch (e) {
     console.error('云端快照压缩失败', e)
-    wx.showToast({ title: '备份失败', icon: 'none' })
+    wx.hideLoading()
+    _toastAfterLoading('备份失败')
     if (hooks.onDone) hooks.onDone({ ok: false })
     return
   }
   console.log('[云备份] 压缩后', Math.round(payloadZ.length / 1024), 'KB（base64 口径）')
 
-  wx.showLoading({ title: '上传中...', mask: true })
+  wx.showLoading({ title: '备份上传中...', mask: true })
   wx.cloud.callFunction({
     name: FUNC_NAME,
     data: { action: 'put', payload_z: payloadZ },
@@ -183,19 +196,142 @@ function _doUpload(json, hooks) {
       const r = res && res.result
       if (r && r.ok) {
         _saveStateFromPayload(json, r.updatedAt || Date.now())
-        backup.markBackedUp() // 云端有快照即视为已备份，复用现有 30 天提醒口径
-        wx.showToast({ title: r.deduped ? '已是最新' : '已备份到云端', icon: 'success' })
+        // 云备份时间以 STATE_KEY 为事实源，不再写 backup.markBackedUp()：
+        // getLastBackupTime 取「文件备份时间 / 云端快照时间」较大者，写本地
+        // 时间戳会污染文件备份口径，且删除云端后「上次备份」无法正确回落
+        _toastAfterLoading(r.deduped ? '已是最新' : '已备份到云端', 'success')
         if (hooks.onDone) hooks.onDone({ ok: true })
-      } else {
-        wx.showToast({ title: (r && r.message) || '备份失败', icon: 'none' })
-        if (hooks.onDone) hooks.onDone({ ok: false })
+        return
       }
+      // 无备份权益（非会员且点数为 0）：引导看激励视频，解锁后自动重试
+      if (r && r.code === 'NEED_ENTITLEMENT' && !retried) {
+        _offerAdUnlock(json, hooks)
+        return
+      }
+      _toastAfterLoading((r && r.message) || '备份失败')
+      if (hooks.onDone) hooks.onDone({ ok: false })
     },
     fail: (err) => {
       wx.hideLoading()
       console.error('云端上传失败', err)
-      wx.showToast({ title: '网络异常，上传失败', icon: 'none' })
+      _toastAfterLoading('网络异常，上传失败')
       if (hooks.onDone) hooks.onDone({ ok: false })
+    }
+  })
+}
+
+// 无权益时的引导弹窗 → 拉起激励视频 → 完整观看登记成功 → 重试备份
+// 注意：showModal 的 confirmText 真机最多 4 个字符（iOS 超限直接 fail），
+// 文案不能超 4 字，且必须带 fail 兜底——否则弹窗失败会静默无反馈并卡住页面忙碌态
+function _offerAdUnlock(json, hooks) {
+  wx.showModal({
+    title: '解锁云备份',
+    content: '看一段短视频，即可免费备份一次。开通会员可无限制备份。',
+    confirmText: '看视频',
+    cancelText: '暂不',
+    success: (r) => {
+      if (!r.confirm) {
+        if (hooks.onDone) hooks.onDone({ ok: false, cancelled: true })
+        return
+      }
+      _runRewardedAd({
+        onRewarded: () => _doUpload(json, hooks, 1),
+        onBroken: () => {
+          if (hooks.onDone) hooks.onDone({ ok: false })
+        },
+        onError: () => {
+          if (hooks.onDone) hooks.onDone({ ok: false })
+        }
+      })
+    },
+    fail: (err) => {
+      console.error('解锁引导弹窗失败', err)
+      wx.showToast({ title: '弹窗调起失败，请重试', icon: 'none' })
+      if (hooks.onDone) hooks.onDone({ ok: false })
+    }
+  })
+}
+
+// 激励视频单例与观看流程：完整观看（isEnded !== false，部分机型不回该字段时
+// 按官方建议视为看完，防刷由云函数每日上限兜底）→ unlock 登记 → onRewarded。
+// loading 全程不断：「解锁中...」→「备份上传中...」→ 结果 toast，中途不闪断；
+// 因此本文件内所有 loading 生命周期路径都必须保证 hideLoading 恰好一次
+let _rewardedAd = null
+function _runRewardedAd(hooks) {
+  if (!isCloudAvailable() || typeof wx.createRewardedVideoAd !== 'function') {
+    wx.showToast({ title: '广告组件不可用', icon: 'none' })
+    if (hooks.onError) hooks.onError()
+    return
+  }
+  if (!_rewardedAd) {
+    _rewardedAd = wx.createRewardedVideoAd({ adUnitId: AD_UNIT_ID })
+    _rewardedAd.onError((err) => console.error('激励视频异常', err))
+  }
+  const ad = _rewardedAd
+  const onClose = (res) => {
+    ad.offClose(onClose)
+    if (res && res.isEnded === false) {
+      wx.showToast({ title: '需完整观看视频才能解锁', icon: 'none' })
+      if (hooks.onBroken) hooks.onBroken()
+      return
+    }
+    wx.showLoading({ title: '解锁中...', mask: true })
+    wx.cloud.callFunction({
+      name: FUNC_NAME,
+      data: { action: 'unlock' },
+      success: (ures) => {
+        const ur = ures && ures.result
+        if (ur && ur.ok) {
+          // 不关 loading：文案直接从「解锁中...」过渡为「备份上传中...」，
+          // 与紧随的重试备份无缝衔接（避免解锁/上传两次 loading 闪断）
+          wx.showLoading({ title: '备份上传中...', mask: true })
+          if (hooks.onRewarded) hooks.onRewarded(ur)
+        } else {
+          wx.hideLoading()
+          _toastAfterLoading((ur && ur.message) || '解锁失败')
+          if (hooks.onBroken) hooks.onBroken()
+        }
+      },
+      fail: (err) => {
+        wx.hideLoading()
+        console.error('解锁登记失败', err)
+        _toastAfterLoading('网络异常，解锁失败')
+        if (hooks.onBroken) hooks.onBroken()
+      }
+    })
+  }
+  ad.onClose(onClose)
+  ad.show().catch(() => {
+    // 首次 show 失败（广告未拉起）：load 后重试一次，仍失败才算不可用
+    ad.load().then(() => ad.show()).catch((err) => {
+      console.error('激励视频拉起失败', err)
+      ad.offClose(onClose)
+      wx.showToast({ title: '广告加载失败，请稍后再试', icon: 'none' })
+      if (hooks.onError) hooks.onError()
+    })
+  })
+}
+
+// 查询当前权益（会员 / 剩余点数 / 今日已看次数）：页面展示与静默兜底预留
+function getEntitlement(callback) {
+  if (!isCloudAvailable()) {
+    if (typeof callback === 'function') callback({ ok: false })
+    return
+  }
+  wx.cloud.callFunction({
+    name: FUNC_NAME,
+    data: { action: 'entitlement' },
+    success: (res) => {
+      const r = res && res.result
+      if (typeof callback === 'function') {
+        callback(r && r.ok
+          ? { ok: true, member: !!r.member, credits: r.credits | 0,
+              dailyEarned: r.dailyEarned | 0, dailyLimit: r.dailyLimit | 0 }
+          : { ok: false })
+      }
+    },
+    fail: () => {
+      if (typeof callback === 'function') callback({ ok: false })
     }
   })
 }
@@ -218,12 +354,12 @@ function restoreFromCloud(hooks) {
       wx.hideLoading()
       const r = res && res.result
       if (!r || !r.ok) {
-        wx.showToast({ title: (r && r.message) || '获取失败', icon: 'none' })
+        _toastAfterLoading((r && r.message) || '获取失败')
         if (hooks.onDone) hooks.onDone({ ok: false })
         return
       }
       if (r.empty) {
-        wx.showToast({ title: '云端还没有备份', icon: 'none' })
+        _toastAfterLoading('云端还没有备份')
         if (hooks.onDone) hooks.onDone({ ok: false })
         return
       }
@@ -235,14 +371,14 @@ function restoreFromCloud(hooks) {
           text = pako.ungzip(_base64ToU8(r.payload_z), { to: 'string' })
         } catch (e) {
           console.error('云端快照解压失败', e)
-          wx.showToast({ title: '云端数据异常', icon: 'none' })
+          _toastAfterLoading('云端数据异常')
           if (hooks.onDone) hooks.onDone({ ok: false })
           return
         }
       } else if (r.payload) {
         text = r.payload
       } else {
-        wx.showToast({ title: '云端数据异常', icon: 'none' })
+        _toastAfterLoading('云端数据异常')
         if (hooks.onDone) hooks.onDone({ ok: false })
         return
       }
@@ -297,24 +433,30 @@ function _doDelete(hooks) {
       const r = res && res.result
       if (r && r.ok) {
         _clearState()
+        _toastAfterLoading('已删除', 'success')
         if (hooks.onDone) hooks.onDone({ ok: true })
       } else {
-        wx.showToast({ title: (r && r.message) || '删除失败', icon: 'none' })
+        _toastAfterLoading((r && r.message) || '删除失败')
         if (hooks.onDone) hooks.onDone({ ok: false })
       }
     },
     fail: (err) => {
       wx.hideLoading()
       console.error('云端删除失败', err)
-      wx.showToast({ title: '网络异常，删除失败', icon: 'none' })
+      _toastAfterLoading('网络异常，删除失败')
       if (hooks.onDone) hooks.onDone({ ok: false })
     }
   })
 }
 
 // 清本地快照状态缓存：说明卡回「数据保存在本机」态，同时断开「上次备份」
-// 的云端回落链——只云备份过的用户回到「从未备份」并恢复 30 天提醒，属正确语义
+// 的云端回落链——只云备份过的用户回到「从未备份」并恢复 30 天提醒，属正确语义。
+// 存量兼容：旧版本云备份会把时间戳写入备份模块本地 key，等值时一并清掉
 function _clearState() {
+  try {
+    const s = wx.getStorageSync(STATE_KEY)
+    if (s && Number(s.updatedAt) > 0) backup.clearLastBackupIf(s.updatedAt)
+  } catch (e) {}
   try { wx.removeStorageSync(STATE_KEY) } catch (e) {}
 }
 
@@ -337,6 +479,7 @@ module.exports = {
   getCachedState,
   getStateText,
   refreshCloudState,
+  getEntitlement,
   uploadToCloud,
   restoreFromCloud,
   deleteFromCloud
