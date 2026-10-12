@@ -6,6 +6,8 @@
 //  4. 从云端恢复（复用 backup.importFromText 的确认弹窗与落库流程）
 //  5. 备份权益流（商业化）：备份需会员或广告点数；put 返回 NEED_ENTITLEMENT
 //     时引导看激励视频 → unlock 登记 +1 点 → 自动重试备份。恢复/删除不设墙。
+//     广告拉起失败（审核环境无填充 / 广告位冷启动）时弹窗告知免费放行，put 带
+//     free_fallback 标记走云函数免费通道（每日 ≤2 次限额），备份功能始终可用。
 // 页面层只做 UI 与流程胶水，数据与判断都收口在本文件。
 
 const backup = require('./backup.js')
@@ -171,8 +173,9 @@ function _isEmptySnapshot(json) {
 }
 
 // 压缩 + 上传 + 状态更新（首次上传与空数据二次确认后共用）
-// retried：广告解锁重试标记，0=首次（可能触发权益流），1=解锁后重试（不再二次引导）
-function _doUpload(json, hooks, retried) {
+// retried：权益流重试标记，0=首次（可能触发权益流），1=解锁/免费放行后重试（不再二次引导）
+// freeFallback：广告拉起失败的免费放行标记（仅作路由信号，放行与限额判定收口云函数）
+function _doUpload(json, hooks, retried, freeFallback) {
   // gzip 压缩 + base64：打卡记录 JSON 重复度高，压缩率 5-10 倍，
   // 云端存压缩串绕开云数据库单文档 512KB 硬限制（原文上限 2MB）
   let payloadZ = ''
@@ -190,7 +193,9 @@ function _doUpload(json, hooks, retried) {
   wx.showLoading({ title: '备份上传中...', mask: true })
   wx.cloud.callFunction({
     name: FUNC_NAME,
-    data: { action: 'put', payload_z: payloadZ },
+    data: freeFallback
+      ? { action: 'put', payload_z: payloadZ, free_fallback: true }
+      : { action: 'put', payload_z: payloadZ },
     success: (res) => {
       wx.hideLoading()
       const r = res && res.result
@@ -241,7 +246,8 @@ function _offerAdUnlock(json, hooks) {
         },
         onError: () => {
           if (hooks.onDone) hooks.onDone({ ok: false })
-        }
+        },
+        onUnavailable: () => _offerFreeFallback(json, hooks)
       })
     },
     fail: (err) => {
@@ -252,15 +258,37 @@ function _offerAdUnlock(json, hooks) {
   })
 }
 
+// 广告拉起失败（审核环境无填充 / 广告位冷启动）的免费兜底：告知后直接重试上传，
+// put 带 free_fallback 标记；放行与每日限额（≤2 次）判定收口云函数，前端标记不可信
+function _offerFreeFallback(json, hooks) {
+  wx.showModal({
+    title: '广告加载失败',
+    content: '广告暂时无法播放，本次备份免费放行，不影响正常使用。',
+    confirmText: '继续备份',
+    cancelText: '暂不',
+    success: (r) => {
+      if (r.confirm) _doUpload(json, hooks, 1, true)
+      else if (hooks.onDone) hooks.onDone({ ok: false, cancelled: true })
+    },
+    fail: (err) => {
+      console.error('免费放行弹窗失败', err)
+      wx.showToast({ title: '弹窗调起失败，请重试', icon: 'none' })
+      if (hooks.onDone) hooks.onDone({ ok: false })
+    }
+  })
+}
+
 // 激励视频单例与观看流程：完整观看（isEnded !== false，部分机型不回该字段时
-// 按官方建议视为看完，防刷由云函数每日上限兜底）→ unlock 登记 → onRewarded。
+// 按官方建议视为看完，防刷由云函数每日上限兜底）→ unlock 登记 → onRewarded；
+// 拉起失败（show 两次失败 / 广告组件不可用）→ onUnavailable 免费放行兜底。
 // loading 全程不断：「解锁中...」→「备份上传中...」→ 结果 toast，中途不闪断；
 // 因此本文件内所有 loading 生命周期路径都必须保证 hideLoading 恰好一次
 let _rewardedAd = null
 function _runRewardedAd(hooks) {
   if (!isCloudAvailable() || typeof wx.createRewardedVideoAd !== 'function') {
-    wx.showToast({ title: '广告组件不可用', icon: 'none' })
-    if (hooks.onError) hooks.onError()
+    // 低版本基础库没有广告组件，与拉起失败同待遇：走免费放行兜底，不让备份死在这
+    if (hooks.onUnavailable) hooks.onUnavailable()
+    else if (hooks.onError) hooks.onError()
     return
   }
   if (!_rewardedAd) {
@@ -302,12 +330,13 @@ function _runRewardedAd(hooks) {
   }
   ad.onClose(onClose)
   ad.show().catch(() => {
-    // 首次 show 失败（广告未拉起）：load 后重试一次，仍失败才算不可用
+    // 首次 show 失败（广告未拉起）：load 后重试一次，仍失败走免费放行兜底——
+    // 审核环境广告常无填充，直接报错会让「备份到云端」被判功能不可用
     ad.load().then(() => ad.show()).catch((err) => {
       console.error('激励视频拉起失败', err)
       ad.offClose(onClose)
-      wx.showToast({ title: '广告加载失败，请稍后再试', icon: 'none' })
-      if (hooks.onError) hooks.onError()
+      if (hooks.onUnavailable) hooks.onUnavailable()
+      else if (hooks.onError) hooks.onError()
     })
   })
 }

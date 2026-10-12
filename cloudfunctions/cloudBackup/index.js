@@ -1,7 +1,8 @@
 // 云函数 cloudBackup：云备份（每人 1 份覆盖式快照）+ 备份权益闸门
 // action:
 //   get —— 按 openid 取当前快照（压缩串 payload_z 或旧明文 payload + meta）
-//   put —— 校验并覆盖写入快照（10 分钟频控防连点）；需备份权益：会员或广告点数 ≥1
+//   put —— 校验并覆盖写入快照（10 分钟频控防连点）；需备份权益：会员或广告点数 ≥1，
+//          或广告拉起失败的免费放行（free_fallback，每日 ≤ DAILY_FREE_LIMIT 次）
 //   delete —— 删除该用户全部快照文档（正常 1 份，历史重复一并清理）
 //   entitlement —— 查询当前权益状态（会员 / 剩余广告点数 / 今日已看次数）
 //   unlock —— 激励视频完整观看后登记，+1 备份点数（每日上限防刷）
@@ -10,6 +11,8 @@
 //   备份设墙、恢复/删除不设墙——取回自己的数据永远免费；
 //   云端数据永不过期不删除；权益判定收口云函数，前端广告回调不可信。
 //   会员字段 membership 预留（type/expireAt），支付通道就绪后仅增购买写入入口。
+//   广告兜底：激励视频拉起失败（审核环境无填充 / 广告位冷启动）时免费放行，每日
+//   限额防滥用——保证「备份到云端」在任何环境下都可用，消除审核侧功能不可用拒审风险。
 //
 // 数据存集合 cloud_backups（免费版不引入云存储）：
 //   新路径 { openid, payload_z(gzip+base64), size_z, size(原文), childCount, recordCount, updatedAt }
@@ -34,6 +37,7 @@ const DEDUP_MS = 10 * 60 * 1000 // 同用户 10 分钟内重复上传直接去�
 // 权益集合与配置（商业化：备份需会员或广告点数）
 const ENT_COL = 'entitlements'
 const DAILY_AD_LIMIT = 5 // 每日最多通过广告获得的备份次数（防刷兜底，前端无感）
+const DAILY_FREE_LIMIT = 2 // 每日广告拉起失败的免费放行上限（审核安全兜底：广告无填充时备份仍可用）
 
 function ok(data) {
   return Object.assign({ ok: true }, data || {})
@@ -161,14 +165,14 @@ async function handlePut(openid, event) {
     if (now - prev.updatedAt < DEDUP_MS && sameContent) {
       return ok({ deduped: true, updatedAt: prev.updatedAt }) // 内容未变不算新备份，不消耗权益
     }
-    const gate = await consumeBackupCredit(openid)
+    const gate = await consumeBackupCredit(openid, !!(event && event.free_fallback))
     if (!gate.ok) return gate
     await db.collection(COL).doc(prev._id).update({ data: updateData })
     return ok({ updatedAt: now })
   }
 
   // 首次备份：权益闸门 + 显式写 openid 字段（云函数写入不会自动注入 _openid）
-  const gate = await consumeBackupCredit(openid)
+  const gate = await consumeBackupCredit(openid, !!(event && event.free_fallback))
   if (!gate.ok) return gate
   const addData = storeZ
     ? Object.assign({ openid, payload_z: storeZ, size_z: Buffer.byteLength(storeZ, 'utf8') }, baseData)
@@ -209,23 +213,41 @@ async function _loadEnt(openid) {
   if (q.data.length) return q.data[0]
   try {
     await db.collection(ENT_COL).add({
-      data: { openid, credits: 0, dailyDate: '', dailyEarned: 0, membership: null, updatedAt: Date.now() }
+      data: { openid, credits: 0, dailyDate: '', dailyEarned: 0, freeDate: '', freeUsed: 0, membership: null, updatedAt: Date.now() }
     })
   } catch (e) { /* 并发下重复创建忽略 */ }
   const q2 = await db.collection(ENT_COL).where({ openid }).limit(1).get()
   return q2.data[0] || null
 }
 
-// 备份闸门：会员放行；否则原子扣 1 点（credits ≥1 条件更新，防并发双扣）
+// 备份闸门：会员放行；广告拉起失败走免费放行通道（每日限额，防审核环境判功能不可用）；
+// 否则原子扣 1 点（credits ≥1 条件更新，防并发双扣）
 // 放行返回 { ok: true }，无权益返回 NEED_ENTITLEMENT（前端据此引导看广告）
-async function consumeBackupCredit(openid) {
+async function consumeBackupCredit(openid, freeFallback) {
   const ent = await _loadEnt(openid)
   if (_isMember(ent)) return ok()
+  if (freeFallback) {
+    if (await _grantFreeFallback(openid)) return ok({ free: true })
+    return fail('NEED_ENTITLEMENT', '今日免费备份次数已用完，看一段视频即可继续')
+  }
   const res = await db.collection(ENT_COL)
     .where({ openid, credits: _.gte(1) })
     .update({ data: { credits: _.inc(-1), updatedAt: Date.now() } })
   if (res.stats && res.stats.updated > 0) return ok()
   return fail('NEED_ENTITLEMENT', '看一段视频或开通会员后可备份到云端')
+}
+
+// 免费放行计数：按东八区自然日限额（与 handleUnlock 同款「跨日重置 + 条件自增」
+// 原子模式，并发直调不会超限）；freeDate 字段缺失的老权益文档会被跨日重置一并补齐
+async function _grantFreeFallback(openid) {
+  const today = _bjDate(Date.now())
+  await db.collection(ENT_COL)
+    .where({ openid, freeDate: _.neq(today) })
+    .update({ data: { freeDate: today, freeUsed: 0 } })
+  const res = await db.collection(ENT_COL)
+    .where({ openid, freeDate: today, freeUsed: _.lt(DAILY_FREE_LIMIT) })
+    .update({ data: { freeUsed: _.inc(1), updatedAt: Date.now() } })
+  return !!(res.stats && res.stats.updated > 0)
 }
 
 // 查询权益状态（前端按钮态与「看视频解锁」入口的展示依据）
