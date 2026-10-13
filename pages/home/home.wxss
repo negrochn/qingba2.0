@@ -300,7 +300,7 @@
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 3;
+  z-index: 4;                          /* 气泡永远最顶层（高于柱区所有叠层） */
   padding: 10rpx 18rpx;
   background: var(--card);
   color: var(--text);
@@ -312,12 +312,25 @@
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
   animation: barTipIn 0.16s ease-out;
 }
+/* 气泡内两行「标签 + 值」：右对齐等宽（气泡宽由最长行撑开），行距 8rpx；
+   上周行整行弱化为次级色（参考值整体退后，不只弱化数值），
+   「0分钟」的值再弱一档（--text3，占位语义） */
+.home-bar-tip-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16rpx;                          /* 标签与值的保底间距 */
+  white-space: nowrap;
+}
+.home-bar-tip-row + .home-bar-tip-row { margin-top: 8rpx; }
+.home-bar-tip-row--sub { color: var(--text2); }
+.home-bar-tip-val.is-dim { color: var(--text3); }
 /* 箭头独立于气泡、以列定位：恒指列中心，不受首尾气泡 clamp 影响 */
 .home-bar-tip-arrow {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 3;
+  z-index: 4;                          /* 与气泡同层，恒在其正下方 */
   width: 0;
   height: 0;
   border: 8rpx solid transparent;
@@ -332,6 +345,7 @@
   from { opacity: 0; }
 }
 .home-bar-track {
+  position: relative;                 /* 灰柱/顶线(absolute)的定位与裁切基准 */
   width: 64rpx;
   height: 192rpx;
   background: transparent;                   /* 透明轨道，数据完全由 fill 体现 */
@@ -341,8 +355,22 @@
   overflow: hidden;
 }
 .home-bar-fill {
+  position: relative;
+  z-index: 2;                                 /* 叠色顺序：灰(1) < 绿(2) */
   width: 100%;
   background: rgba(7, 193, 96, .14);         /* 统一低透明品牌绿（今日/非今日一致） */
+  border-radius: 28rpx;
+}
+/* 上周同宽叠色柱：垫在绿柱下的低透明灰。var(--text3)+opacity 随深浅主题自适应，
+   两色半透明叠出深浅差——灰柱露出的上段即上周高度 */
+.home-bar-last {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  background: var(--text3);
+  opacity: 0.35;
   border-radius: 28rpx;
 }
 .home-bar-fill.is-active {                     /* 选中柱加深，呼应气泡 */

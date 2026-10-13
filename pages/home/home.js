@@ -134,7 +134,7 @@ Page({
     } catch (e) {}
   },
 
-  // 轻条 / 引导的「去备份」：直达数据与备份页
+  // 轻条 / 引导的「去备份」：直达数据管理页
   goDataBackup() {
     this.setData({ backupTipVisible: false, guideVisible: false })
     wx.navigateTo({ url: '/pages/dataBackup/dataBackup' })
@@ -190,6 +190,7 @@ Page({
 
     const all = checkin.getAll()
     const weekDayMinutes = {}
+    const lastWeekDayMinutes = {}    // 上周每日（叠色柱对比用）
     let thisWeek = 0
     let lastWeek = 0
     let todayMinutes = 0
@@ -215,20 +216,27 @@ Page({
           thisWeek += min
         } else if (day >= lastWeekStartStr && day < weekStartStr) {
           lastWeek += min
+          lastWeekDayMinutes[day] = (lastWeekDayMinutes[day] || 0) + min
         }
       }
     }
 
-    // 柱状图：本周 7 天（周一~周日）。满刻度 = 周内最大值向上取整到 0.5h（下限 1h），
+    // 柱状图：本周 7 天（周一~周日），叠上周同日灰柱对比。满刻度取本周+上周最大值
+    // 向上取整到 0.5h（下限 1h）——两周共用同一把尺才有对比意义，
     // 柱高为对满刻度的绝对占比，配合顶部/中部/底部三条参考线与满刻度标签读数
     let maxVal = 0
     const bars = []
     for (let i = 0; i < 7; i++) {
       const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i)
       const ds = checkin.todayStr(d)
+      // 上周同星期列：日期位移 -7 天（列 key 是本周日期，上周数据要按偏移对齐取）
+      const ld = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() - 7 + i)
+      const lastDs = checkin.todayStr(ld)
       const val = weekDayMinutes[ds] || 0
+      const lastVal = lastWeekDayMinutes[lastDs] || 0
       if (val > maxVal) maxVal = val
-      bars.push({ day: ds, label: DAY_LABELS[i], isToday: ds === todayStr })
+      if (lastVal > maxVal) maxVal = lastVal
+      bars.push({ day: ds, label: DAY_LABELS[i], isToday: ds === todayStr, lastDay: lastDs })
     }
     const scaleMinutes = Math.max(60, Math.ceil(maxVal / 30) * 30)   // 满刻度（分钟）
     const scaleH = Math.floor(scaleMinutes / 60), scaleM = scaleMinutes % 60
@@ -236,18 +244,33 @@ Page({
     const weekBars = bars.map(b => {
       const val = weekDayMinutes[b.day] || 0
       // 零 = 无柱（透明轨道上零值画柱会误读成打过卡）；非零下限 2%（≈2px）：
-      // 保住「打过卡必可见」的区分，又把旧下限 6% 的读数虚高压到可忽略
+      // 保住「打过卡必可见」的区分，又把旧下限 6% 的读数虚高压到可忽略。
+      // 上周灰柱/顶线同规则、同刻度
       const percent = val > 0 ? Math.max(2, Math.round(val / scaleMinutes * 100)) : 0
-      // 点按气泡文案（echarts tooltip 同款信息）：星期：时长（零值即 0分钟）
-      const bh = Math.floor(val / 60), bm = val % 60
-      const dur = bh ? (bm ? `${bh}小时${bm}分钟` : `${bh}小时`) : `${bm}分钟`
-      // 气泡锚定柱顶：柱高 = 192rpx 轨道×percent%，+ 标签区/间隙 68rpx。
-      // JS 直接拼好最终值，内联 style 只做字符串替换——规避真机 calc 乘法兼容坑。
-      // 箭头独立于气泡、以列定位（恒指列中心，不受首尾 clamp 影响），底边=气泡底-8rpx 三角高
-      const tipBase = Math.round(percent * 1.92 + 68)
+      const lastVal = lastWeekDayMinutes[b.lastDay] || 0
+      const lastPercent = lastVal > 0 ? Math.max(2, Math.round(lastVal / scaleMinutes * 100)) : 0
+      // 点按气泡（echarts tooltip 风格）：两行「标签 + 值」左右对齐——本周行 /
+      // 上周同星期行（Last Wed 比「上周」更点明对比对象）。上周行整行弱化
+      // （--text2，参考值整体退后，不只弱化数值）；未来日不显示本周行——「未到」
+      // 不是数据，此时气泡只剩上周同天一行。零值统一「0分钟」（与有时长的行同构，
+      // 值再弱一档 --text3 提示当天无打卡）
+      const fmt = m => {
+        const h = Math.floor(m / 60), mm = m % 60
+        return h ? (mm ? `${h}小时${mm}分钟` : `${h}小时`) : `${mm}分钟`
+      }
+      const isFuture = !b.isToday && b.day > todayStr   // YYYY-MM-DD 字典序即时间序
+      const tipRows = []
+      if (!isFuture) tipRows.push({ label: b.isToday ? 'Today' : b.label, val: fmt(val), rowCls: '', valCls: val > 0 ? '' : 'is-dim' })
+      tipRows.push({ label: `Last ${b.label}`, val: fmt(lastVal), rowCls: 'home-bar-tip-row--sub', valCls: lastVal > 0 ? '' : 'is-dim' })
+      // 气泡锚定列内最高柱顶（本周/上周谁高锚谁）：叠色柱下灰柱更高时，气泡若锚在
+      // 矮的绿柱顶会「陷」在灰柱半腰。柱高 = 192rpx 轨道×max(percent, lastPercent)%，
+      // + 标签区/间隙 68rpx。JS 直接拼好最终值，内联 style 只做字符串替换——
+      // 规避真机 calc 乘法兼容坑。箭头独立于气泡、以列定位（恒指列中心，不受首尾
+      // clamp 影响），底边=气泡底-8rpx 三角高
+      const tipBase = Math.round(Math.max(percent, lastPercent) * 1.92 + 68)
       return {
-        day: b.day, label: b.label, isToday: b.isToday, percent,
-        tipText: `${b.label}：${dur}`,
+        day: b.day, label: b.label, isToday: b.isToday, percent, lastPercent,
+        tipRows,
         tipBottom: `${tipBase}rpx`,
         tipArrowBottom: `${tipBase - 8}rpx`
       }

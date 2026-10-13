@@ -114,9 +114,15 @@
       </view>
       <view class="home-hero-bars" bindtouchstart="onBarsTouchStart" catchtouchmove="onBarsTouchMove" bindtouchend="onBarsTouchEnd" bindtouchcancel="onBarsTouchEnd">
         <view class="home-bar" wx:for="{{weekBars}}" wx:key="day" data-idx="{{index}}" catchtap="onBarTap">
-          <view class="home-bar-tip {{index === 0 ? 'home-bar-tip--first' : ''}} {{index === 6 ? 'home-bar-tip--last' : ''}}" wx:if="{{activeBar === index}}" style="bottom: {{item.tipBottom}}">{{item.tipText}}</view>
+          <view class="home-bar-tip {{index === 0 ? 'home-bar-tip--first' : ''}} {{index === 6 ? 'home-bar-tip--last' : ''}}" wx:if="{{activeBar === index}}" style="bottom: {{item.tipBottom}}">
+            <view class="home-bar-tip-row {{row.rowCls}}" wx:for="{{item.tipRows}}" wx:for-item="row" wx:key="label">
+              <text>{{row.label}}</text>
+              <text class="home-bar-tip-val {{row.valCls}}">{{row.val}}</text>
+            </view>
+          </view>
           <view class="home-bar-tip-arrow" wx:if="{{activeBar === index}}" style="bottom: {{item.tipArrowBottom}}"></view>
           <view class="home-bar-track">
+            <view class="home-bar-last" wx:if="{{item.lastPercent > 0}}" style="height: {{item.lastPercent}}%"></view>
             <view class="home-bar-fill {{item.isToday ? 'is-today' : ''}} {{activeBar === index ? 'is-active' : ''}}" style="height: {{item.percent}}%"></view>
           </view>
           <text class="home-bar-label {{item.isToday ? 'is-today' : ''}} {{activeBar === index ? 'is-active' : ''}}">{{item.label}}</text>
