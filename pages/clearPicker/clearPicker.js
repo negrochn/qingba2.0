@@ -37,7 +37,7 @@ Page({
     });
     options.unshift({
       key: 'route',
-      label: `全部数据（${route.name}）`,
+      label: `整条路线（${route.name}）`,
       meta: total > 0 ? `共 ${total} 条` : ''
     });
     this.setData({ scopes: options });

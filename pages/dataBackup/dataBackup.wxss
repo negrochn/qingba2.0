@@ -1,4 +1,4 @@
-/* 数据与备份页 - WeUI 风格，组件原语见全局 app.wxss（.weui-cells / .weui-cell 等） */
+/* 数据管理页 - WeUI 风格，组件原语见全局 app.wxss（.weui-cells / .weui-cell 等） */
 page {
   background: var(--bg);
 }
@@ -57,6 +57,29 @@ page {
   color: #fff;
   font-size: calc(20rpx * var(--fs, 1));
   font-weight: 400;
+  line-height: 1.4;
+}
+
+/* 会员「早鸟价」徽标（金）与说明卡会员标识 */
+.db-badge--gold {
+  background: #d29a3a;
+}
+
+/* 购买行右侧价格：与「早鸟价」徽标同金色（价格即诱因，独立成列最醒目） */
+.db-price {
+  font-size: calc(34rpx * var(--fs, 1));
+  font-weight: 600;
+  color: #d29a3a;
+  line-height: 1.41176471;
+}
+
+.db-member-tag {
+  margin-left: 12rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+  background: #d29a3a;
+  color: #fff;
+  font-size: calc(20rpx * var(--fs, 1));
   line-height: 1.4;
 }
 

@@ -469,6 +469,8 @@ Page({
         }
         // 顺带清掉可能存在的隐藏标记，避免留下永不渲染的死键
         resourcePrefs.unhide(id)
+        // 备注预填随资源消亡：精确清该资源 id 的默认备注键（per-child id 天然隔离，不波及他人）
+        checkin.removeDefaultRemark(found.stageId, found.groupKey, id)
         this.refresh()
         wx.showToast({ title: '已删除', icon: 'success' })
       }

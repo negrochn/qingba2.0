@@ -1,10 +1,8 @@
 // 设置页
 const checkin = require('../../utils/checkin.js');
 const children = require('../../utils/children.js');
-const customResources = require('../../utils/customResources.js');
 const { ROUTES } = require('../../utils/data.js');
 const { generateStressData } = require('../../utils/stress-test.js');
-const backup = require('../../utils/backup.js');
 
 // 获取「关于小程序」右侧显示文案：
 // 正式版读线上版本号；开发版 / 体验版读不到版本号，只显示环境（不做假版本号兜底）
@@ -24,7 +22,6 @@ function getAppVersionText() {
 
 Page({
   data: {
-    totalCount: 0,
     currentRouteName: '',
     childCountText: '',
     appVersionText: getAppVersionText(),
@@ -36,8 +33,6 @@ Page({
     youquEnabled: true,
     listeningEnabled: false,
     targetSummary: '',
-    // 备份提醒红点（「数据与备份」入口）：数据量达标且超期未备份
-    backupRemind: false,
     // 字号 / 深色 class（跟随微信设置，由 app.applyFontLevel 下发）
     fontClass: 'fs-normal',
     darkClass: 'dm-auto',
@@ -54,8 +49,8 @@ Page({
     const app = getApp();
     if (app && app.applyFontLevel) app.applyFontLevel(this);
 
-    // 各数据项统一由 onShow 加载：onLoad 后紧接着就会触发 onShow，
-    // 两处都调会让 loadStats（内部 getAll 全量读存储）这类重活白做一遍
+    // 各数据项统一由 onShow 加载：onLoad 后紧接着就会触发 onShow，两处都调会让
+    // getAll 全量读存储这类重活白做一遍
   },
 
   onShow() {
@@ -64,12 +59,10 @@ Page({
 
     this.loadRoute();
     this.loadChildCount();
-    this.loadStats();
     this.loadCurrentStage();
     this.loadYouquPlan();
     this.loadListening();
     this.loadTargetSummary();
-    this.loadBackupRemind();
   },
 
   // 跳转「我的资源」管理页
@@ -180,112 +173,6 @@ Page({
     wx.navigateTo({ url: '/pages/stagePicker/stagePicker' });
   },
 
-  // 加载统计数据（目前只需要 totalCount，用于清空数据提示）
-  loadStats() {
-    try {
-      const count = checkin.totalCountAll();
-      this.setData({ totalCount: count });
-    } catch (e) {
-      console.error('加载统计失败', e);
-    }
-  },
-
-  // ===== 数据与备份 =====
-  // 跳转「数据与备份」页：备份/恢复/存储说明的统一入口（导出导入逻辑在 utils/backup.js）
-  goDataBackup() {
-    wx.navigateTo({ url: '/pages/dataBackup/dataBackup' });
-  },
-
-  // 备份提醒红点：数据量达标且超期未备份（常驻直至备份，不受首页轻条关闭冷却影响）
-  loadBackupRemind() {
-    try {
-      this.setData({ backupRemind: backup.shouldRemind() });
-    } catch (e) {}
-  },
-
-  // 跳转清空范围选择页（原语 3：picker-page 整页单选）
-  goClearPicker() {
-    wx.navigateTo({ url: '/pages/clearPicker/clearPicker' });
-  },
-
-  // 从 clearPicker 返回后，二次确认并执行清空
-  startClear(opt) {
-    if (!opt) return;
-
-    const content = opt.key === 'route'
-      ? `将清空${opt.label}：当前路线的打卡记录与自定义资源（另一条路线不受影响），并重置该路线的阶段进度，此操作不可恢复，是否继续？`
-      : `将清空「${opt.label}」的所有打卡记录与该阶段的自定义资源，此操作不可恢复，是否继续？`;
-
-    wx.showModal({
-      title: '确认清空',
-      content,
-      confirmText: '清空',
-      cancelText: '取消',
-      confirmColor: '#e74c3c',
-      success: (res) => {
-        if (res.confirm) {
-          this.doClear(opt.key);
-        }
-      }
-    });
-  },
-
-  doClear(scope) {
-    wx.showLoading({ title: '清除中...' });
-
-    setTimeout(() => {
-      try {
-        if (scope === 'route') {
-          // 当前路线全部数据：逐阶段清记录/次数/备注与该阶段自定义资源，重置当前阶段
-          // 与完成标记；另一条路线不受影响（stage_id 命名空间隔离）；清完回到未设置态
-          const stages = checkin.getCurrentRoute().stages || [];
-          let removedTotal = 0;
-          stages.forEach(s => {
-            removedTotal += checkin.clearCheckinsByStage(s.stage_id);
-            customResources.clearByStage(s.stage_id);
-          });
-          checkin.clearCurrentStage();
-          const ids = {};
-          stages.forEach(s => { ids[s.stage_id] = true });
-          checkin.setCompletedStages(
-            checkin.getCompletedStages().filter(id => !ids[id])
-          );
-          if (!removedTotal) {
-            wx.hideLoading();
-            wx.showToast({ title: '该范围暂无数据', icon: 'none' });
-            return;
-          }
-        } else {
-          // 按阶段清除：仅删除该阶段的记录、已读次数与自定义资源
-          const hasCustom = customResources.countByStage(scope) > 0;
-          const removed = checkin.clearCheckinsByStage(scope);
-          customResources.clearByStage(scope);
-          if (!removed && !hasCustom) {
-            wx.hideLoading();
-            wx.showToast({ title: '该范围暂无数据', icon: 'none' });
-            return;
-          }
-        }
-
-        wx.hideLoading();
-        this.loadStats();
-        this.loadCurrentStage();
-
-        wx.showToast({
-          title: '已清空',
-          icon: 'success'
-        });
-
-      } catch (e) {
-        wx.hideLoading();
-        wx.showToast({
-          title: '清除失败',
-          icon: 'none'
-        });
-      }
-    }, 300);
-  },
-
   // ===== 压力测试 =====
   onStressTest() {
     wx.showModal({
@@ -328,7 +215,6 @@ Page({
           confirmText: '确定'
         });
 
-        this.loadStats();
         this.loadCurrentStage();
 
         const app = getApp();

@@ -74,29 +74,6 @@
     </view>
   </view>
 
-  <!-- 数据管理 -->
-  <view class="weui-cells__title">数据管理</view>
-  <view class="weui-cells">
-    <view class="weui-cell weui-cell_access" bindtap="goDataBackup">
-      <view class="weui-cell__bd">
-        <view class="weui-cell__bd_text">数据与备份<text class="backup-dot" wx:if="{{backupRemind}}"></text></view>
-        <view class="weui-cell__desc">备份、恢复与数据存储说明</view>
-      </view>
-      <view class="weui-cell__ft">
-        <text class="iconfont icon-right"></text>
-      </view>
-    </view>
-    <view class="weui-cell weui-cell_access weui-cell_warn" bindtap="goClearPicker">
-      <view class="weui-cell__bd">
-        <view class="weui-cell__bd_text">清空数据</view>
-        <view class="weui-cell__desc">清空当前路线的全部或单个阶段打卡记录</view>
-      </view>
-      <view class="weui-cell__ft">
-        <text class="iconfont icon-right"></text>
-      </view>
-    </view>
-  </view>
-
   <!-- 开发者工具（仅开发版显示） -->
   <block wx:if="{{showDevTools}}">
     <view class="weui-cells__title">开发者工具</view>

@@ -6,11 +6,16 @@
 //   delete —— 删除该用户全部快照文档（正常 1 份，历史重复一并清理）
 //   entitlement —— 查询当前权益状态（会员 / 剩余广告点数 / 今日已看次数）
 //   unlock —— 激励视频完整观看后登记，+1 备份点数（每日上限防刷）
+//   createOrder —— 永久会员购买下单：SKU 价格收口云端，生成业务订单（vp_orders，
+//                   pending）并返回虚拟支付签名参数（前端 wx.requestVirtualPayment
+//                   拉起收银台）；发货由独立回调云函数 payNotify 完成，本函数不写权益
 //
 // 权益模型（商业化定案）：
 //   备份设墙、恢复/删除不设墙——取回自己的数据永远免费；
 //   云端数据永不过期不删除；权益判定收口云函数，前端广告回调不可信。
-//   会员字段 membership 预留（type/expireAt），支付通道就绪后仅增购买写入入口。
+//   会员：虚拟支付道具直购（mode=short_series_goods）买断制早鸟价，payNotify
+//   回调写 membership { type, expireAt, sku, pricePaid }，退款回调回收——
+//   前端展示价仅为文案，实收价以云函数 SKU 表为准。
 //   广告兜底：激励视频拉起失败（审核环境无填充 / 广告位冷启动）时免费放行，每日
 //   限额防滥用——保证「备份到云端」在任何环境下都可用，消除审核侧功能不可用拒审风险。
 //
@@ -24,6 +29,8 @@
 
 const cloud = require('wx-server-sdk')
 const zlib = require('zlib')
+const crypto = require('crypto')
+const https = require('https')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
@@ -38,6 +45,20 @@ const DEDUP_MS = 10 * 60 * 1000 // 同用户 10 分钟内重复上传直接去�
 const ENT_COL = 'entitlements'
 const DAILY_AD_LIMIT = 5 // 每日最多通过广告获得的备份次数（防刷兜底，前端无感）
 const DAILY_FREE_LIMIT = 2 // 每日广告拉起失败的免费放行上限（审核安全兜底：广告无填充时备份仍可用）
+
+// ===== 虚拟支付（永久会员买断，道具直购 mode=short_series_goods）=====
+// 签名口径（官方「签名详解」）：paySig = HMAC-SHA256(appKey, 'requestVirtualPayment&' + signData)，
+// signature = HMAC-SHA256(sessionKey, signData)，均输出 hex。env=0 现网 / 1 沙箱，
+// appKey 必须与 env 对应环境匹配，错配直接签名失败；iOS（Apple 支付）仅支持现网 env=0。
+const VP_COL = 'vp_orders'
+const PAY_OFFER_ID = '1450675891'
+const PAY_ENV = 1 // 1=沙箱（开发联调用），切正式：改 0 + 填 PAY_APP_KEY_PROD + 后台道具「发布至现网版本」
+const PAY_APP_KEY_SANDBOX = 'oW9kZ51eW4KQqG0m63e5e2wunXp6ml0Q'
+const PAY_APP_KEY_PROD = '58iiBQ5nkDuXDjUdTwXh8Ah7o7Ozox7M'
+// SKU 表（道具 ID 必须与后台道具管理一致；改价只动这里，前端价格文案记得同步）
+const PAY_SKUS = {
+  member_lifetime: { title: '永久会员', price: 990, type: 'lifetime' } // price 单位：分（990 = ¥9.9 早鸟价）
+}
 
 function ok(data) {
   return Object.assign({ ok: true }, data || {})
@@ -58,6 +79,7 @@ exports.main = async (event) => {
     if (action === 'delete') return await handleDelete(OPENID)
     if (action === 'entitlement') return await handleEntitlement(OPENID)
     if (action === 'unlock') return await handleUnlock(OPENID)
+    if (action === 'createOrder') return await handleCreateOrder(OPENID, event)
     return fail('BAD_ACTION', '未知操作')
   } catch (e) {
     console.error('cloudBackup error', e)
@@ -285,5 +307,107 @@ async function handleUnlock(openid) {
     credits: ent ? Math.max(0, ent.credits | 0) : 1,
     dailyEarned: ent && ent.dailyDate === today ? (ent.dailyEarned | 0) : 1,
     dailyLimit: DAILY_AD_LIMIT
+  })
+}
+
+// ===== 支付层：永久会员买断（虚拟支付道具直购，发货收口 payNotify 回调） =====
+
+function _hmacHex(key, msg) {
+  return crypto.createHmac('sha256', key).update(msg, 'utf8').digest('hex')
+}
+
+function _payAppKey() {
+  const key = PAY_ENV === 1 ? PAY_APP_KEY_SANDBOX : PAY_APP_KEY_PROD
+  if (!key) throw new Error('PAY_APP_KEY 未配置（env=' + PAY_ENV + '）')
+  return key
+}
+
+// 会员购买下单：wx.login code → jscode2session 换 sessionKey（用户态签名密钥），
+// 价格/商品收口云端 SKU 表（前端传价不可信），订单先落 vp_orders（pending）。
+// 返回的签名参数前端必须原样透传 wx.requestVirtualPayment（signData 字符串不再
+// 二次序列化，保证与签名一致）。发货在 payNotify 回调完成，本函数不写任何权益——
+// 前端 success 回调可能因微信异常退出丢失，权益发放只信服务端推送/对账。
+
+// ===== 登录态换取：auth.code2Session 不在云调用开放接口列表（调用报 errCode 604100），
+// 改为云函数直连官方 jscode2session HTTPS 接口，需 AppSecret =====
+const WX_APP_SECRET = '64e9b76da3d564eb7f53bbb3596a16c8'
+
+function _code2Session(loginCode) {
+  const appid = (cloud.getWXContext() && cloud.getWXContext().APPID) || ''
+  if (!WX_APP_SECRET) return Promise.reject(new Error('WX_APP_SECRET 未配置'))
+  if (!appid) return Promise.reject(new Error('APPID 获取失败'))
+  const url = 'https://api.weixin.qq.com/sns/jscode2session?appid=' + appid
+    + '&secret=' + WX_APP_SECRET + '&js_code=' + loginCode
+    + '&grant_type=authorization_code'
+  return new Promise((resolve, reject) => {
+    const req = https.get(url, (res) => {
+      let buf = ''
+      res.on('data', (c) => { buf += c })
+      res.on('end', () => {
+        try { resolve(JSON.parse(buf)) }
+        catch (e) { reject(new Error('响应解析失败: ' + buf.slice(0, 80))) }
+      })
+    })
+    req.on('error', reject)
+    req.setTimeout(8000, () => { req.destroy(new Error('jscode2session 请求超时')) })
+  })
+}
+
+async function handleCreateOrder(openid, event) {
+  const skuId = event && event.product_id
+  const sku = PAY_SKUS[skuId]
+  if (!sku) return fail('BAD_SKU', '商品不存在')
+  const loginCode = event && event.login_code
+  if (!loginCode) return fail('NO_LOGIN_CODE', '登录态缺失，请重试')
+
+  // wx.login 的 code 一次性：用过/过期直接报错，前端每次购买前现取即可
+  let sessionKey = ''
+  try {
+    const sess = await _code2Session(loginCode)
+    if (sess && sess.errcode) {
+      // 常见：40029 code无效 / 40163 code已用 / 40013 appid不匹配 / 40125 secret错误
+      return fail('LOGIN_EXPIRED', '登录态获取失败[errCode:' + sess.errcode + ']')
+    }
+    sessionKey = (sess && sess.session_key) || ''
+    // code 换出的 openid 与调用方不一致 = code 与账号错配，拒绝（防御串号）
+    if (sess && sess.openid && sess.openid !== openid) {
+      return fail('LOGIN_EXPIRED', '登录态校验失败[openid不匹配]')
+    }
+  } catch (e) {
+    console.error('code2Session 失败', e)
+    return fail('LOGIN_EXPIRED', '登录态获取失败[' + String((e && e.message) || e || '未知错误').slice(0, 60) + ']')
+  }
+  if (!sessionKey) return fail('LOGIN_EXPIRED', '登录态获取失败[session_key为空]')
+
+  // 业务订单号：8-32 位字母数字（微信要求），VP + 时间戳36进制 + 4 位随机
+  const outTradeNo = ('VP' + Date.now().toString(36)
+    + Math.random().toString(36).slice(2, 6)).toUpperCase()
+  const now = Date.now()
+  await db.collection(VP_COL).add({
+    data: {
+      openid, outTradeNo, productId: skuId, skuType: sku.type, title: sku.title,
+      pricePaid: sku.price, env: PAY_ENV, status: 'pending', createdAt: now
+    }
+  })
+
+  // signData 字段顺序即 JSON 序列化顺序：构造后不再改动
+  const signData = JSON.stringify({
+    buyQuantity: 1,
+    env: PAY_ENV,
+    offerId: PAY_OFFER_ID,
+    currencyType: 'CNY',
+    productId: skuId,
+    goodsPrice: sku.price,
+    outTradeNo,
+    attach: skuId
+  })
+  return ok({
+    signData,
+    paySig: _hmacHex(_payAppKey(), 'requestVirtualPayment&' + signData),
+    signature: _hmacHex(sessionKey, signData),
+    mode: 'short_series_goods',
+    outTradeNo,
+    title: sku.title,
+    price: sku.price
   })
 }

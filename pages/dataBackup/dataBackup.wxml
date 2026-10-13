@@ -1,11 +1,12 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- 数据说明卡：按有无云端快照自适应两态 -->
+  <!-- 数据说明卡三态（标题/描述由页面 refreshBackupState 计算）：云端快照 > 文件备份 > 数据保存在本机；
+       无云时展示丢失风险告知（转化位，不可省）；已有云端快照时只留状态行——
+       快照详情已在下方「备份到云端」副文案，desc 属重复教育 -->
   <view class="db-intro">
-    <view class="db-intro__title">{{hasCloud ? '数据已有云端快照' : '数据保存在本机'}}</view>
-    <view class="db-intro__desc" wx:if="{{hasCloud}}">打卡记录、孩子资料与自定义资源已同步一份云端快照，换手机登录同一微信即可找回。云端仅保留最新 1 份，如需长期留存多个版本，请定期「备份到文件」。</view>
-    <view class="db-intro__desc" wx:else>打卡记录、孩子资料与自定义资源都保存在手机微信的本地存储中。移除小程序、清理微信存储空间或更换手机都会导致数据丢失且无法找回，建议开启「备份到云端」，或定期备份发送文件。</view>
-    <view class="db-intro__meta">上次备份：{{lastBackupText || '从未备份'}}</view>
+    <view class="db-intro__title">{{backupTitle}}</view>
+    <view class="db-intro__desc" wx:if="{{backupDesc}}">{{backupDesc}}</view>
+    <view class="db-intro__meta">{{lastBackupMeta}}<text class="db-member-tag" wx:if="{{isMember}}">永久会员</text></view>
     <view class="db-intro__warn" wx:if="{{remindText}}">{{remindText}}</view>
   </view>
 
@@ -15,16 +16,29 @@
     <view class="weui-cell weui-cell_access" bindtap="onCloudBackup">
       <view class="weui-cell__bd">
         <view class="weui-cell__bd_text db-title-row">备份到云端<text class="db-badge">推荐</text></view>
-        <view class="weui-cell__desc">{{cloudStateText ? '云端快照：' + cloudStateText : (cloudEntText || '暂无快照')}}</view>
+        <view class="weui-cell__desc">{{cloudStateText ? '云端快照：' + cloudSizeText : (cloudEntText || '暂无快照')}}</view>
       </view>
       <view class="weui-cell__ft">
+        <text class="weui-cell__ft_value" wx:if="{{cloudTimeText}}">{{cloudTimeText}}</text>
+        <text class="iconfont icon-right"></text>
+      </view>
+    </view>
+    <view class="weui-cell weui-cell_access" wx:if="{{!isMember}}" bindtap="onBuyLifetime">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text db-title-row">开通永久会员<text class="db-badge db-badge--gold">早鸟价</text></view>
+        <view class="weui-cell__desc">一次买断 · 免看视频备份，不限次数</view>
+      </view>
+      <view class="weui-cell__ft">
+        <text class="db-price">¥9.9</text>
         <text class="iconfont icon-right"></text>
       </view>
     </view>
     <view class="weui-cell weui-cell_access" bindtap="onCloudRestore">
       <view class="weui-cell__bd">
         <view class="weui-cell__bd_text">从云端恢复</view>
-        <view class="weui-cell__desc">用云端快照覆盖本机数据（换手机、误删找回）</view>
+        <!-- 常驻可点：换手机本地缓存未拉到时 hasCloud 短暂为 false，但云端可能有快照，
+             隐藏/拦截会挡住最需要恢复的人；desc 只做两态教育，点击仍真实查云端兜底 -->
+        <view class="weui-cell__desc">{{hasCloud ? '用云端快照覆盖本机数据（换手机、误删找回）' : '暂无快照，完成云备份后可在此一键恢复'}}</view>
       </view>
       <view class="weui-cell__ft">
         <text class="iconfont icon-right"></text>
@@ -50,6 +64,7 @@
         <view class="weui-cell__desc">发送到聊天，可长期留存多个版本</view>
       </view>
       <view class="weui-cell__ft">
+        <text class="weui-cell__ft_value" wx:if="{{fileBackupText}}">{{fileBackupText}}</text>
         <text class="iconfont icon-right"></text>
       </view>
     </view>
@@ -64,7 +79,21 @@
     </view>
   </view>
 
-  <view class="weui-cells__tips">云端保留 1 份最新快照，换手机登录同一微信即可恢复；备份需开通会员或看短视频解锁（每日最多 5 次），恢复与删除永久免费。文件备份由自己留存，可保留多个版本，重要数据建议两者都用。</view>
+  <!-- 危险操作（原设置页「数据管理」迁入：范围在 clearPicker 选择，返回后二次确认执行） -->
+  <view class="weui-cells__title">危险操作</view>
+  <view class="weui-cells">
+    <view class="weui-cell weui-cell_access weui-cell_warn" bindtap="goClearPicker">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text">清空数据</view>
+        <view class="weui-cell__desc">清空本机打卡记录与练习进度，自定义资源与云端备份不受影响</view>
+      </view>
+      <view class="weui-cell__ft">
+        <text class="iconfont icon-right"></text>
+      </view>
+    </view>
+  </view>
+
+  <view class="weui-cells__tips">云端保留 1 份最新快照，换手机登录同一微信即可恢复；备份需永久会员或看视频解锁（每日最多 5 次），恢复与删除永久免费。文件备份由自己留存，可保留多个版本，重要数据建议两者都用。</view>
 
 </view>
 

@@ -1,6 +1,7 @@
 const theme = require('./utils/theme.js')
 const checkin = require('./utils/checkin.js')
 const children = require('./utils/children.js')
+const cloudBackup = require('./utils/cloudBackup.js')
 
 App({
   onLaunch() {
@@ -29,6 +30,11 @@ App({
     } catch (e) {
       console.error('资源 key 迁移失败', e)
     }
+    // 权益预热：启动静默查一次会员/点数态写本地缓存（fire-and-forget，失败不提示），
+    // 备份页「开通永久会员 / 会员不限次」首屏即时可见，不必进页才查询
+    try {
+      cloudBackup.warmupEntitlement()
+    } catch (e) {}
     this.initUpdateManager()
   },
 

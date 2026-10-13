@@ -593,6 +593,16 @@ function saveDefaultRemark(stageId, groupKey, resourceId, remark) {
   _saveDefaultRemarks(all)
 }
 
+// 删除某资源的默认备注（资源管理删除资源时调用，预填记忆随资源消亡）；
+// 键精确到资源 id（per-child 生成，天然隔离），不会波及另一孩子
+function removeDefaultRemark(stageId, groupKey, resourceId) {
+  const all = _getDefaultRemarks()
+  const key = _remarkKey(stageId, groupKey, resourceId)
+  if (all[key] === undefined) return
+  delete all[key]
+  _saveDefaultRemarks(all)
+}
+
 // ===== 小小优趣成长计划开关（feature flag） =====
 // 默认开启；用户可在设置页显式关闭，关闭后按存储的布尔值判断
 function isYouquPlanEnabled() {
@@ -923,7 +933,8 @@ function countCheckinsByStage(stageId) {
   }
 }
 
-// 清除某阶段的全部打卡记录（同时清除该阶段的已读次数与默认备注）
+// 清除某阶段的全部打卡记录（同时清除该阶段的已读次数与完成标记）
+// 默认备注不在清空范围：预填记忆随资源生命周期，由资源管理删除资源时精确回收
 // 保留其它阶段数据，返回被删除的记录条数
 function clearCheckinsByStage(stageId) {
   try {
@@ -952,18 +963,6 @@ function clearCheckinsByStage(stageId) {
       }
     }
     if (changed) _saveReadCounts(counts)
-
-    // 同步清除该阶段的默认备注（key 格式: stageId|groupKey|resourceId）
-    // 否则重新添加同名资源时，清空前保存过的备注会"复活"
-    const remarks = _getDefaultRemarks()
-    let remarkChanged = false
-    for (const k in remarks) {
-      if (String(k).indexOf(prefix) === 0) {
-        delete remarks[k]
-        remarkChanged = true
-      }
-    }
-    if (remarkChanged) _saveDefaultRemarks(remarks)
 
     // 同步从已完成名单移除该阶段
     const done = getCompletedStages()
@@ -1574,6 +1573,7 @@ module.exports = {
   fmtMinutesCN,
   getDefaultRemark,
   saveDefaultRemark,
+  removeDefaultRemark,
   getReadCount,
   incrementReadCount,
   decrementReadCount,

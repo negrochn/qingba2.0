@@ -9,3 +9,14 @@ page {
   color: var(--text2);
   margin-right: 8rpx;
 }
+
+/* 「数据与备份」入口的提醒红点：与设置页同款（数据量达标且超期未备份时常驻显示） */
+.backup-dot {
+  display: inline-block;
+  width: 14rpx;
+  height: 14rpx;
+  margin-left: 12rpx;
+  border-radius: 50%;
+  background: var(--danger);
+  vertical-align: middle;
+}

@@ -17,6 +17,8 @@ const timeText = require('./timeText.js')
 const FUNC_NAME = 'cloudBackup'
 const AD_UNIT_ID = 'adunit-78cec41c9a325278' // 激励视频广告位（流量主后台创建）
 const STATE_KEY = 'qingba_cloud_backup_state' // 家庭级：{ updatedAt, childCount, recordCount }
+const ENT_CACHE_KEY = 'qingba_ent_cache' // 权益缓存：{ t, member, credits, ... }（app 启动预热写入，页面首屏先读，实查后覆盖）
+const ENT_CACHE_TTL = 10 * 60 * 1000 // 缓存时效：10 分钟，超时视为无缓存走实查
 
 function _get(key) {
   try { return wx.getStorageSync(key) } catch (e) { return '' }
@@ -88,6 +90,20 @@ function getStateText() {
   const s = getCachedState()
   if (!s || !s.updatedAt) return ''
   return `${timeText.formatSmart(s.updatedAt)} · ${s.childCount}孩${s.recordCount}条`
+}
+
+// 拆分版：时间入「备份到云端」右侧值位（扫视即知多久没备份），规模入副文案；
+// getStateText 仍返回完整拼接（删除确认弹窗在用）
+function getStateTime() {
+  const s = getCachedState()
+  if (!s || !s.updatedAt) return ''
+  return timeText.formatSmart(s.updatedAt)
+}
+
+function getStateSize() {
+  const s = getCachedState()
+  if (!s || !s.updatedAt) return ''
+  return `${s.childCount}孩${s.recordCount}条`
 }
 
 // 异步刷新云端状态：换手机后本地无缓存也能正确展示（静默失败，沿用缓存）
@@ -341,7 +357,8 @@ function _runRewardedAd(hooks) {
   })
 }
 
-// 查询当前权益（会员 / 剩余点数 / 今日已看次数）：页面展示与静默兜底预留
+// 查询当前权益（会员 / 剩余点数 / 今日已看次数）：页面展示与静默兜底预留；
+// 成功结果顺手写本地缓存（首屏即时渲染用），失败不动缓存
 function getEntitlement(callback) {
   if (!isCloudAvailable()) {
     if (typeof callback === 'function') callback({ ok: false })
@@ -352,6 +369,14 @@ function getEntitlement(callback) {
     data: { action: 'entitlement' },
     success: (res) => {
       const r = res && res.result
+      if (r && r.ok) {
+        try {
+          wx.setStorageSync(ENT_CACHE_KEY, {
+            t: Date.now(), member: !!r.member, credits: r.credits | 0,
+            dailyEarned: r.dailyEarned | 0, dailyLimit: r.dailyLimit | 0
+          })
+        } catch (e) {}
+      }
       if (typeof callback === 'function') {
         callback(r && r.ok
           ? { ok: true, member: !!r.member, credits: r.credits | 0,
@@ -363,6 +388,27 @@ function getEntitlement(callback) {
       if (typeof callback === 'function') callback({ ok: false })
     }
   })
+}
+
+// 权益缓存读取：app 启动预热后，页面首屏先用缓存渲染、再实查刷新（消查询空窗）；
+// 无缓存 / 超时 / 结构异常返回 null，调用方回落实查
+function getCachedEntitlement() {
+  try {
+    const c = wx.getStorageSync(ENT_CACHE_KEY)
+    if (c && c.t && Date.now() - c.t < ENT_CACHE_TTL && typeof c.member === 'boolean') {
+      return { ok: true, member: c.member, credits: c.credits | 0,
+        dailyEarned: c.dailyEarned | 0, dailyLimit: c.dailyLimit | 0 }
+    }
+  } catch (e) {}
+  return null
+}
+
+// 启动预热：app.onLaunch 静默查一次权益写缓存（fire-and-forget，失败不提示），
+// 让「开通永久会员」等权益态在进入备份页时即时可见，不必等进页才发起查询；
+// 成本为每用户每次冷启动 1 次云函数调用（购买成功后的轮询也会顺手刷新缓存）
+function warmupEntitlement() {
+  if (!isCloudAvailable()) return
+  getEntitlement(() => {})
 }
 
 // 从云端恢复：拉取快照 → backup.importFromText 走「确认弹窗 + 覆盖式落库」全流程
@@ -503,13 +549,124 @@ function _saveStateFromPayload(json, updatedAt) {
   } catch (e) {}
 }
 
+// ===== 会员购买（虚拟支付道具直购 mode=short_series_goods，买断制早鸟价） =====
+
+const LIFETIME_SKU = 'member_lifetime' // 与云函数 SKU 表 / 后台道具管理一致
+
+// 购买永久会员：wx.login 取 code → createOrder 拿签名参数（价格收口云端）→
+// 拉起收银台 → 支付成功后轮询权益。发货走 payNotify 服务端回调，前端 success
+// 只代表支付完成、不代表权益已到账，故轮询确认而非直接报成功。
+// hooks.onDone({ ok, pending, cancelled })：pending=支付成功但权益确认超时
+function purchaseLifetime(hooks) {
+  hooks = hooks || {}
+  if (!isCloudAvailable()) {
+    wx.showToast({ title: '云服务不可用', icon: 'none' })
+    if (hooks.onDone) hooks.onDone({ ok: false })
+    return
+  }
+  if (typeof wx.requestVirtualPayment !== 'function') {
+    wx.showToast({ title: '微信版本过低，无法购买', icon: 'none' })
+    if (hooks.onDone) hooks.onDone({ ok: false })
+    return
+  }
+
+  wx.login({
+    success: (res) => {
+      if (!res.code) {
+        wx.showToast({ title: '登录态获取失败', icon: 'none' })
+        if (hooks.onDone) hooks.onDone({ ok: false })
+        return
+      }
+      wx.showLoading({ title: '创建订单...', mask: true })
+      wx.cloud.callFunction({
+        name: FUNC_NAME,
+        data: { action: 'createOrder', product_id: LIFETIME_SKU, login_code: res.code },
+        success: (ores) => {
+          wx.hideLoading()
+          const or = ores && ores.result
+          if (!or || !or.ok) {
+            _toastAfterLoading((or && or.message) || '下单失败，请稍后再试')
+            if (hooks.onDone) hooks.onDone({ ok: false })
+            return
+          }
+          _launchVirtualPay(or, hooks)
+        },
+        fail: () => {
+          wx.hideLoading()
+          _toastAfterLoading('网络异常，下单失败')
+          if (hooks.onDone) hooks.onDone({ ok: false })
+        }
+      })
+    },
+    fail: () => {
+      wx.showToast({ title: '登录态获取失败', icon: 'none' })
+      if (hooks.onDone) hooks.onDone({ ok: false })
+    }
+  })
+}
+
+// 拉起收银台：签名参数原样透传（signData 是云函数签好的字符串，不能二次序列化）
+function _launchVirtualPay(order, hooks) {
+  wx.requestVirtualPayment({
+    signData: order.signData,
+    paySig: order.paySig,
+    signature: order.signature,
+    mode: order.mode,
+    success: () => {
+      // 支付成功 → 等服务端发货：每 1.5s 查一次权益，约 15s 内确认；
+      // 超时不误报失败（回调可能延迟），用户稍后进页自然看到会员态
+      wx.showLoading({ title: '确认权益...', mask: true })
+      _pollMember(10, (member) => {
+        wx.hideLoading()
+        if (member) {
+          _toastAfterLoading('永久会员已开通', 'success')
+          if (hooks.onDone) hooks.onDone({ ok: true })
+        } else {
+          _toastAfterLoading('支付成功，权益确认稍有延迟')
+          if (hooks.onDone) hooks.onDone({ ok: true, pending: true })
+        }
+      })
+    },
+    fail: (err) => {
+      const msg = (err && err.errMsg) || ''
+      if (/cancel/i.test(msg)) {
+        if (hooks.onDone) hooks.onDone({ ok: false, cancelled: true })
+        return
+      }
+      console.error('虚拟支付失败', err)
+      _toastAfterLoading('支付未完成')
+      if (hooks.onDone) hooks.onDone({ ok: false })
+    }
+  })
+}
+
+// 轮询会员态（发货回调到达前 member 仍为 false）
+function _pollMember(remain, callback) {
+  getEntitlement((ent) => {
+    if (ent && ent.ok && ent.member) {
+      callback(true)
+      return
+    }
+    if (remain <= 0) {
+      callback(false)
+      return
+    }
+    setTimeout(() => _pollMember(remain - 1, callback), 1500)
+  })
+}
+
 module.exports = {
   isCloudAvailable,
   getCachedState,
   getStateText,
+  getStateTime,
+  getStateSize,
   refreshCloudState,
   getEntitlement,
+  getCachedEntitlement,
+  warmupEntitlement,
   uploadToCloud,
   restoreFromCloud,
-  deleteFromCloud
+  deleteFromCloud,
+  purchaseLifetime
 }

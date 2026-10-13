@@ -36,11 +36,12 @@ function _set(key, value) {
 
 // ===== 提醒 / 引导状态 =====
 
-function getLastBackupTime() {
-  // 「上次备份」= 已留存备份中最新的一份的时间。留存物有两类且并列：
-  //   文件备份（本地时间戳）与云端快照（cloudBackup 状态缓存）。
-  // 取两者较大者：删除云端快照后云端项自然消失，回落到文件备份时间或「从未备份」；
-  // 换手机后本地时间戳丢失，则只剩云端项（refreshCloudState 拉回 meta 后生效）
+// 「上次备份」明细：{ ts, source }，ts=0 表示从未备份。
+// 留存物有两类且并列：文件备份（本地时间戳）与云端快照（cloudBackup 状态缓存），
+// 取较大者为「上次备份」，source 据此实时推断（谁新算谁，无需落存储、天然兼容存量）：
+//   删除云端快照后云端项自然消失，回落到文件备份或从未备份；
+//   换手机后本地时间戳丢失，则只剩云端项（refreshCloudState 拉回 meta 后生效）
+function getLastBackupInfo() {
   let cloudTs = 0
   try {
     // 延迟 require：cloudBackup.js 顶层依赖本文件，此处反向调用须避开模块加载环
@@ -48,7 +49,13 @@ function getLastBackupTime() {
     if (s && Number(s.updatedAt) > 0) cloudTs = Number(s.updatedAt)
   } catch (e) {}
   const local = Number(_get(LAST_BACKUP_KEY))
-  return Math.max(local > 0 ? local : 0, cloudTs)
+  if (cloudTs > 0 && cloudTs >= local) return { ts: cloudTs, source: 'cloud' }
+  if (local > 0) return { ts: local, source: 'file' }
+  return { ts: 0, source: '' }
+}
+
+function getLastBackupTime() {
+  return getLastBackupInfo().ts
 }
 
 // 备份成功落时间戳（shareFileMessage / openDocument 成功回调调用）
@@ -69,8 +76,15 @@ function clearLastBackupIf(cloudTs) {
 // 「今天 14:11 / 昨天 22:30 / 10月8日 20:35 / 2025年12月3日」（智能格式，口径见 timeText.js）
 // 从未备份返回 ''
 function getLastBackupText() {
-  const ts = getLastBackupTime()
-  return ts ? timeText.formatSmart(ts) : ''
+  const info = getLastBackupInfo()
+  return info.ts ? timeText.formatSmart(info.ts) : ''
+}
+
+// 纯文件备份时间（本地时间戳，不混云端）：「备份到文件」cell 右侧值位用；
+// getLastBackupText 是云+文件统一口径，与云端 cell 右侧的快照时间并列，三者语义不同勿混用
+function getLastFileBackupText() {
+  const local = Number(_get(LAST_BACKUP_KEY))
+  return local > 0 ? timeText.formatSmart(local) : ''
 }
 
 // 当前是否需要提醒（纯条件，不含冷却）：设置页红点直接用它（常驻直至备份）
@@ -722,9 +736,11 @@ function _applyGlobalData(data) {
 
 module.exports = {
   getLastBackupTime,
+  getLastBackupInfo,
   markBackedUp,
   clearLastBackupIf,
   getLastBackupText,
+  getLastFileBackupText,
   shouldRemind,
   getRemindText,
   shouldShowHomeTip,

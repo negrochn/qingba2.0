@@ -2,5 +2,5 @@
   "usingComponents": {
     "half-sheet": "/components/half-sheet/half-sheet"
   },
-  "navigationBarTitleText": "数据与备份"
+  "navigationBarTitleText": "数据管理"
 }

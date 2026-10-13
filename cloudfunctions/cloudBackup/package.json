@@ -1,7 +1,7 @@
 {
   "name": "cloudBackup",
   "version": "1.0.0",
-  "description": "庆爸2.0 免费云备份：每人 1 份覆盖式快照（get / put / delete）",
+  "description": "庆爸2.0 云备份：每人 1 份覆盖式快照 + 备份权益闸门 + 会员购买下单（get/put/delete/entitlement/unlock/createOrder）",
   "main": "index.js",
   "dependencies": {
     "wx-server-sdk": "~2.6.3"

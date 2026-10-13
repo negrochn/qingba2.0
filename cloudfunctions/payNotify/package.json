@@ -1,0 +1,9 @@
+{
+  "name": "payNotify",
+  "version": "1.0.0",
+  "description": "庆爸2.0 虚拟支付回调：会员发货（幂等）/ 退款回收 / iOS 退款问询",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
