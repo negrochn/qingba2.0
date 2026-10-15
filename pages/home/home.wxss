@@ -43,7 +43,7 @@
   line-height: 1.7;
 }
 
-/* ① 欢迎条：左「英文日期 + 欢迎语」/ 右「当前阶段」 */
+/* ① 欢迎条：左「日期 + 问候语（问候后接当前孩子名字）」/ 右「阶段进度环」 */
 .home-header {
   display: flex;
   align-items: flex-start;
@@ -67,22 +67,79 @@
   line-height: 1.3;
   margin-top: 4rpx;
 }
-.home-greet-day {
-  color: var(--brand);              /* 品牌绿：弱化区里靠颜色而非字号突出 */
+.home-greet-arrow {
+  margin: 0 8rpx 0 4rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);                 /* 仅多孩显示：暗示名字可点切换 */
 }
 
-/* 右上角孩子切换器（仅多孩显示）：纯头像，点按弹切换弹层（名字/对勾在弹层内核对）。
-   cp-av 72rpx + 外层 padding 8rpx → 点击热区 88rpx（规范 7–9mm）；
-   负 margin 抵消 padding 外扩，视觉仍与页面右边距对齐 */
-.home-child-av {
-  flex-shrink: 0;
-  margin-left: 24rpx;
-  margin-top: 4rpx;
-  margin-right: -8rpx;
-  padding: 8rpx;
-  border-radius: 50%;
+/* 阶段进度环：wxml 不支持内联 SVG，dashoffset 技法用 conic-gradient 等价移植——
+   conic 角度 0deg 即 12 点方向，起点=终点=顶部（区别于 SVG 描边起点 3 点钟需转 -90°）；
+   --p 注册为 <number>（0~1）：conic 与端头旋转共用 calc(var(--p) * 360deg)，动画天然同步。
+   端头圆点 = SVG stroke-linecap: round 的等价物：弧线两端各盖一枚与环带等宽（10rpx）
+   的圆点，同时遮住 conic 的半径直边切口；opacity 挂在 --p 上（0% 端头自动隐没）。
+   中心挖空不用 mask（小程序环境支持不稳）：::after 盖一枚页面底色圆片露出 10rpx 环带，
+   数字 z-index 高于盖片 */
+@property --p {
+  syntax: '<number>';
+  inherits: true;                    /* 必须可继承：--p 设在 .home-ring，画环的是 ::before */
+  initial-value: 0;
 }
-.home-child-av-hover { opacity: 0.8; }
+.home-ring {
+  position: relative;
+  width: 88rpx;
+  height: 88rpx;
+  flex-shrink: 0;
+}
+.home-ring::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--brand) calc(var(--p) * 360deg), var(--divider) 0);
+  transition: --p 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.home-ring::after {                  /* 中心盖圆：88 - 2×10 = 68rpx，颜色随页面底（环在欢迎条上） */
+  content: '';
+  position: absolute;
+  inset: 10rpx;
+  border-radius: 50%;
+  background: var(--bg);
+}
+.home-ring__cap {
+  position: absolute;
+  inset: 0;
+  z-index: 1;                        /* 端头骑在环带与盖圆交界处，须高于 ::after */
+  opacity: calc(var(--p) * 100);     /* ×100 饱和截断：--p>0 即全显，0% 端头隐没 */
+  transition: --p 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.home-ring__cap::before {            /* 圆点：中心压环带中线——top:0 + 高 10rpx → 中心距顶 5rpx，旋转半径 39rpx 与弧线同心 */
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 10rpx;
+  height: 10rpx;
+  margin-left: -5rpx;
+  border-radius: 50%;
+  background: var(--brand);
+}
+.home-ring__cap--end {
+  transform: rotate(calc(var(--p) * 360deg));   /* 终点端头随进度转 */
+}
+.home-ring--hover { opacity: 0.8; }
+.home-ring__num {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(24rpx * var(--fs, 1));   /* 12px：68rpx 中心区放「89%」的舒适上限 */
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1;
+}
 
 /* 欢迎卡：WeUI msg 范式（结果/引导页）+ 配置 cell 分组（路线/阶段），无按钮 */
 .home-welcome {
@@ -199,9 +256,10 @@
   color: var(--text3);
 }
 
-/* ② Hero 卡：白底卡片 + 7 日柱状图（扁平纯色，无阴影） */
+/* ② Hero 卡：白底卡片 + 7 日柱状图（扁平纯色，无阴影）；
+   上间距归 header 的 padding-bottom（单一所有者，不叠加） */
 .home-hero {
-  margin: 16rpx 32rpx 24rpx;
+  margin: 0 32rpx 24rpx;
   padding: 32rpx;
   border-radius: 20rpx;
   background: var(--card);             /* 卡片背景 */
@@ -210,16 +268,10 @@
 .home-hero-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
 }
 .home-hero-title {
   font-size: calc(28rpx * var(--fs, 1));   /* 14px 次级 */
   color: var(--text2);
-}
-/* 头部右侧阶段进度（承接原 header 阶段块，同源信息不重复展示） */
-.home-hero-stage {
-  font-size: calc(28rpx * var(--fs, 1));   /* 14px 次级 */
-  color: var(--text3);
 }
 
 .home-hero-num {

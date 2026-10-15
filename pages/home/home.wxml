@@ -1,14 +1,20 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- ① 欢迎条：英文日期 + 欢迎语（左），孩子切换器（右，仅多孩显示） -->
+  <!-- ① 欢迎条：日期 + 问候语（问候后接当前孩子名字，多孩时点名字弹切换弹层）+ Day N（左），
+       阶段进度环（右上角：conic-gradient 自顶部顺时针填充，中心百分比，点按进阶段页）；
+       无时长目标的阶段不渲染环 -->
   <view class="home-header">
     <view class="home-greet">
       <view class="home-date">{{dateText}}</view>
-      <view class="home-greet-sub">{{greetText}}<text wx:if="{{dayNumber > 0}}" class="home-greet-day">Day {{dayNumber}}</text></view>
+      <view class="home-greet-sub">
+        <text bindtap="{{isMultiChild ? 'openChildSheet' : ''}}">{{greetText}}</text>
+        <text wx:if="{{isMultiChild}}" class="iconfont icon-right home-greet-arrow"></text>
+      </view>
     </view>
-    <!-- 孩子切换器：仅多孩时显示，纯头像（点按弹切换弹层，名字/对勾在弹层内核对）；阶段进度已并入下方统计卡 -->
-    <view class="home-child-av" wx:if="{{isMultiChild}}" bindtap="openChildSheet" hover-class="home-child-av-hover">
-      <view class="cp-av cp-av--{{activeChildColor}}">{{activeChildInitial}}</view>
+    <view class="home-ring" wx:if="{{hasStage && !stageNoTarget}}" style="--p: {{ringPct / 100}}" bindtap="goStage" hover-class="home-ring--hover">
+      <view class="home-ring__cap home-ring__cap--end"></view>
+      <view class="home-ring__cap"></view>
+      <text class="home-ring__num">{{stagePercent}}%</text>
     </view>
   </view>
 
@@ -86,11 +92,10 @@
   </view>
 
   <block wx:else>
-  <!-- ② Hero 卡：本周时长 + 周一~周日柱状图（头部右侧承接原 header 的阶段进度） -->
+  <!-- ② Hero 卡：本周时长 + 周一~周日柱状图（纯周口径，阶段进度在右上角进度环） -->
   <view class="home-hero">
     <view class="home-hero-head">
       <view class="home-hero-title">本周时长</view>
-      <view class="home-hero-stage" wx:if="{{stageName}}">{{stageName}}<text wx:if="{{!stageNoTarget}}"> · {{stagePercent}}%</text></view>
     </view>
     <view class="home-hero-num">
       <block wx:if="{{weekTime.h > 0}}">
@@ -156,8 +161,8 @@
     </view>
     <view class="home-stat">
       <text class="home-stat-arrow iconfont icon-right"></text>
-      <view class="home-stat-num">{{streakDays}}<text class="home-stat-unit">天</text></view>
-      <view class="home-stat-label">连续打卡</view>
+      <view class="home-stat-num">{{stageDays}}<text class="home-stat-unit">天</text></view>
+      <view class="home-stat-label">打卡天数</view>
     </view>
   </view>
   </block>

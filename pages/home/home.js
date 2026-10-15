@@ -44,7 +44,6 @@ Page({
     darkClass: '',
     dateText: '',
     greetText: '',
-    stageName: '',
     todayCount: 0,
     weekTime: { h: 0, m: 0 },          // 本周时长（分段：小时/分钟）
     weekDeltaText: '—',
@@ -56,8 +55,7 @@ Page({
     todayTime: { h: 0, m: 0 },         // 今日时长（分段）
     totalTime: { h: 0, m: 0 },         // 阶段时长（分段）
     stagePercent: 0,
-    dayNumber: 0,
-    streakDays: 0,
+    stageDays: 0,                      // 当前阶段打卡天数（去重日期数，非连续）
     hasStage: false,
     // 今日明细弹窗（今日时长 / 今日打卡 共用一套面板，随入口切换度量）
     sheetVisible: false,
@@ -74,11 +72,14 @@ Page({
     companionDays: 0,
     allHours: '0',
     allDays: 0,
-    // 孩子切换器（仅多孩显示）：纯头像 + 切换弹层
+    // 孩子切换器（仅多孩显示切换箭头）：身份条头像 + 切换弹层
     isMultiChild: false,
     activeChildInitial: '',
     activeChildColor: 'green',
+    activeChildName: '',
     childSheetVisible: false,
+    // 阶段进度环显示值（transition 驱动，与 stagePercent 分离：先归零再赋目标值触发动画）
+    ringPct: 0,
     // 备份提醒：一次性引导弹层优先，其次顶部轻条（两者不同时出现）
     guideVisible: false,
     backupTipVisible: false
@@ -94,6 +95,7 @@ Page({
     if (app && app.applyFontLevel) app.applyFontLevel(this)
     this._refreshChild()
     this._refresh()
+    this._playRing()
     this._refreshBackupState()
   },
 
@@ -106,6 +108,7 @@ Page({
     }
     // 柱状图气泡一并收起：定时器不清会在后台仍触发 setData
     if (this._barTipTimer) { clearTimeout(this._barTipTimer); this._barTipTimer = null }
+    if (this._ringTimer) { clearTimeout(this._ringTimer); this._ringTimer = null }
     this._barTouching = false
     if (this.data.activeBar !== -1) this.setData({ activeBar: -1 })
   },
@@ -150,14 +153,40 @@ Page({
     this.setData({ guideVisible: false })
   },
 
-  // 孩子切换器状态：仅多孩时显示（单孩零感知）
+  // 孩子切换器状态：身份条始终显示当前孩子（单/多孩一致），仅切换箭头随多孩显隐
   _refreshChild() {
     const active = children.getActiveChild() || {}
     this.setData({
       isMultiChild: children.isMultiChild(),
       activeChildInitial: String(active.name || '').trim().charAt(0) || '·',
-      activeChildColor: active.color || 'green'
+      activeChildColor: active.color || 'green',
+      activeChildName: String(active.name || '').trim() || '宝宝'
     })
+  },
+
+  // 进度环动画：--p 需先归零上屏、再赋目标值 transition 才触发（两帧合并则直接终态）。
+  // 延时 50ms 等 0% 帧渲染；旧内核不支持 @property 注册时无动画、终态正确。
+  // 无阶段 / 无目标阶段 / 毕业态一律归零（环不渲染或停 0，不误报进度）
+  _playRing() {
+    const play = this.data.hasStage && !this.data.stageNoTarget && !this.data.graduated
+    const pct = play ? this.data.stagePercent : 0
+    this.setData({ ringPct: 0 })
+    if (!pct) return
+    if (this._ringTimer) clearTimeout(this._ringTimer)
+    this._ringTimer = setTimeout(() => {
+      this._ringTimer = null
+      this.setData({ ringPct: pct })
+    }, 50)
+  },
+
+  // 进度环点按：进阶段页。stage 页以 ?index= 定位阶段（route 页同款入口），
+  // 裸跳会因索引缺失提示「阶段不存在」并自动退回
+  goStage() {
+    const cur = checkin.getCurrentStage()
+    const stages = checkin.getCurrentRoute().stages || []
+    const index = cur ? stages.findIndex(s => s.stage_id === cur.id) : -1
+    if (index < 0) return
+    wx.navigateTo({ url: `/pages/stage/stage?index=${index}` })
   },
 
   // 分享给好友：标题带上当前累计时长（比纯口号更有说服力），落地页统一首页
@@ -196,7 +225,6 @@ Page({
     let todayMinutes = 0
     let todayCount = 0
     let totalMinutes = 0
-    let firstDayStr = ''
     const daysSet = new Set()
 
     for (const day in all) {
@@ -206,7 +234,6 @@ Page({
         const min = checkin.effectiveMinutes(r)      // 熏听时长按 factor 折算后计入
         totalMinutes += min                            // 阶段时长（当前阶段）
         daysSet.add(day)
-        if (!firstDayStr || day < firstDayStr) firstDayStr = day   // 阶段首次打卡日（YYYY-MM-DD 字典序即时间序）
         if (day === todayStr) {
           todayMinutes += min
           todayCount += 1                          // 今日打卡次数（当前阶段口径）
@@ -289,27 +316,11 @@ Page({
       weekDeltaState = 'up'
     }
 
-    // 连续打卡天数（当前阶段口径）：今天未打卡则从昨天起算，避免当天还没打就归零
-    let streakDays = 0
-    const startOffset = daysSet.has(todayStr) ? 0 : 1
-    for (let i = startOffset; i < 365; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i)
-      if (daysSet.has(checkin.todayStr(d))) streakDays++
-      else break
-    }
-
-    // Day N：当前阶段首次打卡日 -> 今天（含首尾，首次当天为 Day 1；跨阶段自动重新计数）
-    let dayNumber = 0
-    if (firstDayStr) {
-      const diffDays = Math.round(
-        (checkin.dayToTimestamp(todayStr) - checkin.dayToTimestamp(firstDayStr)) / 86400000
-      )
-      dayNumber = Math.max(1, diffDays + 1)
-    }
-
-    // 欢迎语：时段问候 + Day N（当前阶段尚无记录时不显示）
+    // 欢迎语：时段问候 + 名字（问候行不再承担打卡引导，职能归「今日打卡」卡）。
+    // 名字拼在 js：_refreshChild 先行 setData 同步可读，wxml 只做展示
     const greet = greetByHour(h)
-    let greetText = dayNumber > 0 ? `${greet}, ` : `${greet}, start today`
+    const childName = this.data.activeChildName || '宝宝'
+    let greetText = `${greet}, ${childName}`
 
     // ===== 毕业态：主链终点已被显式标记完成 → 口径整体切「全程」 =====
     // 判定是纯运行时计算：老用户零迁移，切走复习自动失效
@@ -339,9 +350,8 @@ Page({
           (checkin.dayToTimestamp(todayStr) - checkin.dayToTimestamp(allFirstDay)) / 86400000
         ) + 1)
       }
-      // 毕业是状态而非时刻：祝贺语固定，Day 切全程陪伴天数
-      dayNumber = companionDays
-      greetText = 'Congratulations, '
+      // 毕业是状态而非时刻：祝贺语 + 名字
+      greetText = `Congratulations, ${childName}`
     }
     const gradTexts = GRAD_TEXTS[route.id] || GRAD_TEXTS.regular
 
@@ -365,7 +375,6 @@ Page({
     this.setData({
       dateText,
       greetText,
-      stageName: cur ? (cur.name || '') : '',
       weekTime: splitDuration(thisWeek),
       weekDeltaText,
       weekDeltaValue,
@@ -378,8 +387,7 @@ Page({
       totalTime: splitDuration(totalMinutes),   // 当前阶段累计，非全阶段
       stagePercent,
       stageNoTarget,
-      dayNumber,
-      streakDays,
+      stageDays: daysSet.size,        // 阶段内去重日期数（断续累计，非连续天数）
       hasStage: !!cur,
       journeyText: route.journeyText || '',
       routeName: route.name || '',
@@ -500,6 +508,7 @@ Page({
   onChildChanged() {
     this._refreshChild()
     this._refresh()
+    this._playRing()
   },
 
   // 构建今日明细：口径与卡片完全一致（仅当前阶段、仅今天）
