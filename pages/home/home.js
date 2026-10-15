@@ -252,16 +252,16 @@ Page({
       // 点按气泡（echarts tooltip 风格）：两行「标签 + 值」左右对齐——本周行 /
       // 上周同星期行（Last Wed 比「上周」更点明对比对象）。上周行整行弱化
       // （--text2，参考值整体退后，不只弱化数值）；未来日不显示本周行——「未到」
-      // 不是数据，此时气泡只剩上周同天一行。零值统一「0分钟」（与有时长的行同构，
-      // 值再弱一档 --text3 提示当天无打卡）
+      // 不是数据，此时气泡只剩上周同天一行。零值统一「0分钟」，不做额外弱化
+      // （上周行已整行弱化，层级足够；再弱一档反而碎）
       const fmt = m => {
         const h = Math.floor(m / 60), mm = m % 60
         return h ? (mm ? `${h}小时${mm}分钟` : `${h}小时`) : `${mm}分钟`
       }
       const isFuture = !b.isToday && b.day > todayStr   // YYYY-MM-DD 字典序即时间序
       const tipRows = []
-      if (!isFuture) tipRows.push({ label: b.isToday ? 'Today' : b.label, val: fmt(val), rowCls: '', valCls: val > 0 ? '' : 'is-dim' })
-      tipRows.push({ label: `Last ${b.label}`, val: fmt(lastVal), rowCls: 'home-bar-tip-row--sub', valCls: lastVal > 0 ? '' : 'is-dim' })
+      if (!isFuture) tipRows.push({ label: b.isToday ? 'Today' : b.label, val: fmt(val), rowCls: '' })
+      tipRows.push({ label: `Last ${b.label}`, val: fmt(lastVal), rowCls: 'home-bar-tip-row--sub' })
       // 气泡锚定列内最高柱顶（本周/上周谁高锚谁）：叠色柱下灰柱更高时，气泡若锚在
       // 矮的绿柱顶会「陷」在灰柱半腰。柱高 = 192rpx 轨道×max(percent, lastPercent)%，
       // + 标签区/间隙 68rpx。JS 直接拼好最终值，内联 style 只做字符串替换——

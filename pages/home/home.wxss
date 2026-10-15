@@ -313,8 +313,7 @@
   animation: barTipIn 0.16s ease-out;
 }
 /* 气泡内两行「标签 + 值」：右对齐等宽（气泡宽由最长行撑开），行距 8rpx；
-   上周行整行弱化为次级色（参考值整体退后，不只弱化数值），
-   「0分钟」的值再弱一档（--text3，占位语义） */
+   上周行整行弱化为次级色（参考值整体退后，不只弱化数值），零值不另做处理 */
 .home-bar-tip-row {
   display: flex;
   align-items: baseline;
@@ -324,7 +323,6 @@
 }
 .home-bar-tip-row + .home-bar-tip-row { margin-top: 8rpx; }
 .home-bar-tip-row--sub { color: var(--text2); }
-.home-bar-tip-val.is-dim { color: var(--text3); }
 /* 箭头独立于气泡、以列定位：恒指列中心，不受首尾气泡 clamp 影响 */
 .home-bar-tip-arrow {
   position: absolute;
@@ -375,6 +373,9 @@
 }
 .home-bar-fill.is-active {                     /* 选中柱加深，呼应气泡 */
   background: rgba(7, 193, 96, .4);
+}
+.home-bar-last.is-active {                     /* 上周灰柱同语言：选中时同幅加深 */
+  opacity: 0.6;
 }
 .home-bar-label {
   font-size: calc(24rpx * var(--fs, 1));
