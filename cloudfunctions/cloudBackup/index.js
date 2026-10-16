@@ -334,7 +334,10 @@ function _payAppKey() {
 
 // ===== 登录态换取：auth.code2Session 不在云调用开放接口列表（调用报 errCode 604100），
 // 改为云函数直连官方 jscode2session HTTPS 接口，需 AppSecret =====
-const WX_APP_SECRET = '64e9b76da3d564eb7f53bbb3596a16c8'
+// AppSecret 走云函数环境变量（云开发控制台 → 云函数 → cloudBackup → 函数配置 → 环境变量），
+// 不进代码库——硬编码过不了提审代码质量扫描，且泄露可换取用户 sessionKey；
+// 环境变量持久存于函数配置，重新上传代码不会丢失
+const WX_APP_SECRET = process.env.WX_APP_SECRET || ''
 
 function _code2Session(loginCode) {
   const appid = (cloud.getWXContext() && cloud.getWXContext().APPID) || ''
