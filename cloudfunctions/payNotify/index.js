@@ -14,7 +14,6 @@
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
-const _ = db.command // _.remove() 清字段用（退款回收不再置 null，防发货时嵌套写报错）
 
 const ENT_COL = 'entitlements'
 const VP_COL = 'vp_orders'
@@ -24,6 +23,9 @@ exports.main = async (event) => {
   try {
     console.log('[payNotify]', Event, event && event.OutTradeNo,
       'env=' + (event && event.Env), event && event.OpenId)
+    // 完整报文落日志：三类 xpay 推送结构可能有差异（退款通知真机实测顶层无 OutTradeNo），
+    // 排查取值问题以此为准
+    console.log('[payNotify] raw', JSON.stringify(event))
 
     if (Event === 'xpay_goods_deliver_notify') return await onDeliver(event)
     if (Event === 'xpay_refund_notify') return await onRefund(event)
@@ -108,9 +110,22 @@ async function onDeliver(event) {
 // 退款：回收会员（membership 置空，_isMember 即刻失效）→ 订单置 refunded。
 // 仅当当前 membership 对应本单商品时才清，防误清后续新购的权益
 async function onRefund(event) {
-  const q = await db.collection(VP_COL).where({ outTradeNo: event.OutTradeNo }).limit(1).get()
+  // 退款通知报文与发货通知结构不同（官方字段表）：
+  // 无 OutTradeNo / Env——原支付单商户单号在 MchOrderId，退款结果在 RetCode（0=成功）
+  const outTradeNo = event.MchOrderId || event.OutTradeNo
+  if (!outTradeNo) {
+    console.error('[payNotify] 退款通知缺单号，结构异常，放弃（raw 日志可查报文）',
+      JSON.stringify(event))
+    return ok0()
+  }
+  if ((event.RetCode | 0) !== 0) {
+    console.error('[payNotify] 退款未成功，不回收权益', outTradeNo,
+      'RetCode=' + event.RetCode, event.RetMsg)
+    return ok0()
+  }
+  const q = await db.collection(VP_COL).where({ outTradeNo }).limit(1).get()
   if (!q.data.length) {
-    console.error('[payNotify] 退款订单不存在', event.OutTradeNo)
+    console.error('[payNotify] 退款订单不存在', outTradeNo)
     return ok0()
   }
   const order = q.data[0]
@@ -118,19 +133,29 @@ async function onRefund(event) {
 
   const entQ = await db.collection(ENT_COL).where({ openid: order.openid }).limit(1).get()
   if (entQ.data.length) {
-    const m = entQ.data[0].membership
+    const ent = entQ.data[0]
+    const m = ent.membership
     if (m && m.sku === order.productId) {
-      // 删字段而非置 null：置 null 会让后续发货的嵌套写报「Cannot create field」；
-      // _isMember 对字段缺失判非会员，语义不变
-      await db.collection(ENT_COL).doc(entQ.data[0]._id)
-        .update({ data: { membership: _.remove(), updatedAt: Date.now() } })
+      // set 整文档替换（不带 membership 键 = 删字段）：与 onDeliver 的 set 化对称，
+      // 避开 update 对嵌套字段/操作符的拍平兼容坑；带全部存量字段防丢（同 onDeliver）
+      await db.collection(ENT_COL).doc(ent._id).set({
+        data: {
+          openid: ent.openid,
+          credits: ent.credits || 0,
+          dailyDate: ent.dailyDate || '',
+          dailyEarned: ent.dailyEarned || 0,
+          freeDate: ent.freeDate || '',
+          freeUsed: ent.freeUsed || 0,
+          updatedAt: Date.now()
+        }
+      })
       console.log('[payNotify] 已回收会员', order.openid)
     }
   }
   await db.collection(VP_COL).doc(order._id).update({
     data: { status: 'refunded', refundAt: Date.now() }
   })
-  console.log('[payNotify] 退款处理完成', event.OutTradeNo)
+  console.log('[payNotify] 退款处理完成', outTradeNo)
   return ok0()
 }
 
