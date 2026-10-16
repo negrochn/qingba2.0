@@ -11,6 +11,12 @@ page {
   background: var(--card);
 }
 
+.db-intro__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .db-intro__title {
   font-size: calc(34rpx * var(--fs, 1));
   font-weight: 600;
@@ -74,7 +80,7 @@ page {
 }
 
 .db-member-tag {
-  margin-left: 12rpx;
+  flex-shrink: 0;
   padding: 2rpx 12rpx;
   border-radius: 8rpx;
   background: #d29a3a;

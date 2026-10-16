@@ -4,9 +4,12 @@
        无云时展示丢失风险告知（转化位，不可省）；已有云端快照时只留状态行——
        快照详情已在下方「备份到云端」副文案，desc 属重复教育 -->
   <view class="db-intro">
-    <view class="db-intro__title">{{backupTitle}}</view>
+    <view class="db-intro__head">
+      <view class="db-intro__title">{{backupTitle}}</view>
+      <text class="db-member-tag" wx:if="{{isMember}}">永久会员</text>
+    </view>
     <view class="db-intro__desc" wx:if="{{backupDesc}}">{{backupDesc}}</view>
-    <view class="db-intro__meta">{{lastBackupMeta}}<text class="db-member-tag" wx:if="{{isMember}}">永久会员</text></view>
+    <view class="db-intro__meta">{{lastBackupMeta}}</view>
     <view class="db-intro__warn" wx:if="{{remindText}}">{{remindText}}</view>
   </view>
 
