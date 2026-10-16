@@ -19,6 +19,9 @@ Page({
     hasCloud: false,     // 是否存在云端快照（说明卡标题三态之一）
     cloudEntText: '',    // 无云端快照时「备份到云端」副文案（跟随会员/点数状态；'' 回落「暂无快照」）
     isMember: false,     // 永久会员态：会员徽标展示 / 购买入口隐藏
+    // 邀请码兑换弹层
+    redeemVisible: false,
+    redeemCode: '',
     // 导入备份 · 选孩子弹层（v2 单孩格式专用；v3 多孩格式整体恢复不经过此处）
     importPickVisible: false,
     importPickItems: [],
@@ -121,6 +124,41 @@ Page({
       onDone: () => {
         this._payBusy = false;
         this.refreshCloudEntitlement(); // 会员态同步（购买行隐藏 + 徽标展示）
+      }
+    });
+  },
+
+  // ===== 邀请码兑换永久会员 =====
+
+  // 入口常驻不做显隐：权益缓存有时效，误隐藏会让新会员找不到入口；
+  // 永久会员输码由云函数拒绝并提示码未消耗可转赠，正好承载转赠场景
+  onRedeemCode() {
+    this.setData({ redeemVisible: true });
+  },
+
+  closeRedeem() {
+    this.setData({ redeemVisible: false, redeemCode: '' });
+  },
+
+  onRedeemInput(e) {
+    this.setData({ redeemCode: e.detail.value });
+  },
+
+  confirmRedeem() {
+    const code = (this.data.redeemCode || '').trim();
+    if (!code) {
+      wx.showToast({ title: '请输入邀请码', icon: 'none' });
+      return;
+    }
+    if (this._redeemBusy) return;
+    this._redeemBusy = true;
+    cloudBackup.redeemCode(code, {
+      onDone: (result) => {
+        this._redeemBusy = false;
+        if (result && result.ok) {
+          this.setData({ redeemVisible: false, redeemCode: '' });
+          this.refreshCloudEntitlement(); // 升永久：徽标展示 + 购买行隐藏
+        }
       }
     });
   },

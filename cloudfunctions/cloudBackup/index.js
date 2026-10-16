@@ -9,6 +9,8 @@
 //   createOrder —— 永久会员购买下单：SKU 价格收口云端，生成业务订单（vp_orders，
 //                   pending）并返回虚拟支付签名参数（前端 wx.requestVirtualPayment
 //                   拉起收银台）；发货由独立回调云函数 payNotify 完成，本函数不写权益
+//   redeem —— 邀请码兑换永久会员：一次性码原子核销（unused → used，防并发双兑）+
+//             写 membership（与 payNotify.onDeliver 同构）；已是永久会员拒绝且码不消耗
 //
 // 权益模型（商业化定案）：
 //   备份设墙、恢复/删除不设墙——取回自己的数据永远免费；
@@ -43,6 +45,7 @@ const MAX_Z_B64 = 380 * 1024        // 压缩路径：base64 串上限（文档�
 const DEDUP_MS = 10 * 60 * 1000 // 同用户 10 分钟内重复上传直接去重返回
 // 权益集合与配置（商业化：备份需会员或广告点数）
 const ENT_COL = 'entitlements'
+const REDEEM_COL = 'redeem_codes' // 邀请码（一次性：unused → used；code 存去横线大写纯码）
 const DAILY_AD_LIMIT = 5 // 每日最多通过广告获得的备份次数（防刷兜底，前端无感）
 const DAILY_FREE_LIMIT = 2 // 每日广告拉起失败的免费放行上限（审核安全兜底：广告无填充时备份仍可用）
 
@@ -80,6 +83,7 @@ exports.main = async (event) => {
     if (action === 'entitlement') return await handleEntitlement(OPENID)
     if (action === 'unlock') return await handleUnlock(OPENID)
     if (action === 'createOrder') return await handleCreateOrder(OPENID, event)
+    if (action === 'redeem') return await handleRedeem(OPENID, event)
     return fail('BAD_ACTION', '未知操作')
   } catch (e) {
     console.error('cloudBackup error', e)
@@ -410,4 +414,79 @@ async function handleCreateOrder(openid, event) {
     title: sku.title,
     price: sku.price
   })
+}
+
+// ===== 邀请码兑换：送码开通永久会员（不经支付链路，发放收口服务端） =====
+
+// 规整用户输入为纯码口径：去空格/横线、转大写（生成脚本与库内 code 均为纯码）
+function _normalizeCode(raw) {
+  return String(raw || '').toUpperCase().replace(/[\s-]/g, '')
+}
+
+// 兑换永久会员：码一次性，unused → used 原子核销（where 条件更新，并发双兑天然被挡）；
+// 已是永久会员则拒绝且不消耗码（可转赠）。发放结构与 payNotify.onDeliver 同构
+// （sku: redeem_lifetime 标记兑换来源，pricePaid 0），写入用 doc().set() 整文档替换
+// ——存量 membership 为 null 时嵌套 update 会报「Cannot create field」，set 无此问题。
+// 核销成功但权益写入失败时回滚核销（条件更新只回滚本人刚核销的单），码回到可用态。
+async function handleRedeem(openid, event) {
+  const code = _normalizeCode(event && event.code)
+  if (code.length < 8 || code.length > 32) {
+    return fail('BAD_CODE', '请输入正确的邀请码')
+  }
+
+  const ent = await _loadEnt(openid)
+  const m = ent && ent.membership
+  if (m && m.type === 'lifetime' && (!m.expireAt || m.expireAt > Date.now())) {
+    return fail('ALREADY_LIFETIME', '你已是永久会员，无需兑换。邀请码未消耗，可转赠他人')
+  }
+
+  const now = Date.now()
+  const burn = await db.collection(REDEEM_COL)
+    .where({ code, status: 'unused' })
+    .update({ data: { status: 'used', usedBy: openid, usedAt: now } })
+  if (!burn.stats || burn.stats.updated === 0) {
+    return fail('BAD_CODE', '邀请码无效或已被使用')
+  }
+
+  const membership = {
+    type: 'lifetime',
+    expireAt: null,
+    sku: 'redeem_lifetime',
+    pricePaid: 0,
+    paidAt: now,
+    source: 'redeem',
+    code
+  }
+  try {
+    if (ent && ent._id) {
+      await db.collection(ENT_COL).doc(ent._id).set({
+        data: {
+          openid: ent.openid,
+          credits: ent.credits || 0,
+          dailyDate: ent.dailyDate || '',
+          dailyEarned: ent.dailyEarned || 0,
+          freeDate: ent.freeDate || '',
+          freeUsed: ent.freeUsed || 0,
+          membership,
+          updatedAt: Date.now()
+        }
+      })
+    } else {
+      // 权益档不存在（_loadEnt 建档失败的极端情况）：与 _loadEnt 建档结构同构
+      await db.collection(ENT_COL).add({
+        data: {
+          openid, credits: 0, dailyDate: '', dailyEarned: 0,
+          freeDate: '', freeUsed: 0, membership, updatedAt: Date.now()
+        }
+      })
+    }
+  } catch (e) {
+    console.error('redeem 写权益失败，回滚核销', code, e)
+    await db.collection(REDEEM_COL)
+      .where({ code, status: 'used', usedBy: openid })
+      .update({ data: { status: 'unused', usedBy: _.remove(), usedAt: _.remove() } })
+    throw e
+  }
+  console.log('redeem 已开通', code, '->', openid)
+  return ok({ member: true })
 }

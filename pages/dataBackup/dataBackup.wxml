@@ -33,6 +33,17 @@
         <text class="iconfont icon-right"></text>
       </view>
     </view>
+    <!-- 邀请码兑换入口常驻：缓存时效内误隐藏会让该用的人找不到；永久会员输码
+         由云函数提示未消耗可转赠，入口同时承载转赠前验证 -->
+    <view class="weui-cell weui-cell_access" bindtap="onRedeemCode">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text">邀请码</view>
+        <view class="weui-cell__desc">输入邀请码直接开通永久会员，无需付费</view>
+      </view>
+      <view class="weui-cell__ft">
+        <text class="iconfont icon-right"></text>
+      </view>
+    </view>
     <view class="weui-cell weui-cell_access" bindtap="onCloudRestore">
       <view class="weui-cell__bd">
         <view class="weui-cell__bd_text">从云端恢复</view>
@@ -124,5 +135,41 @@
   <view slot="footer" class="weui-btn-area_inline">
     <button class="weui-btn weui-btn_default" bindtap="closeImportPick">取消</button>
     <button class="weui-btn weui-btn_primary" bindtap="confirmImportPick">导入</button>
+  </view>
+</half-sheet>
+
+<!-- 邀请码兑换（自建弹层而非 showModal editable：input 无基础库版本门槛，风格与选孩子弹层统一） -->
+<half-sheet
+  show="{{redeemVisible}}"
+  title="输入邀请码"
+  font-class="{{fontClass}}"
+  dark-class="{{darkClass}}"
+  footer="{{true}}"
+  bind:close="closeRedeem"
+>
+  <view class="redeem-body">
+    <!-- WeUI 表单口径（同编辑记录页输入行）：白卡 cells + 行首标签 + 右侧无底色输入，
+         行高 112rpx；弹层面板自带 32rpx 内边距，内容区不再叠缩进 -->
+    <view class="weui-cells">
+      <view class="weui-cell redeem-cell">
+        <view class="weui-cell__bd redeem-label">
+          <text class="weui-cell__bd_text">邀请码</text>
+        </view>
+        <view class="weui-cell__ft redeem-ft">
+          <input
+            class="redeem-input"
+            value="{{redeemCode}}"
+            placeholder="如 QB-XXXX-XXXX-XXXX"
+            placeholder-class="redeem-input-ph"
+            maxlength="24"
+            bindinput="onRedeemInput"
+          />
+        </view>
+      </view>
+    </view>
+  </view>
+  <view slot="footer" class="weui-btn-area_inline">
+    <button class="weui-btn weui-btn_default" bindtap="closeRedeem">取消</button>
+    <button class="weui-btn weui-btn_primary" bindtap="confirmRedeem">兑换</button>
   </view>
 </half-sheet>

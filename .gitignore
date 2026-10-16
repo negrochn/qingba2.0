@@ -27,3 +27,6 @@ Thumbs.db
 # 临时文件
 *.tmp
 *.bak
+
+# 兑换码生成产物（真实兑换码=敏感数据，绝不入库；脚本 scripts/gen-redeem-codes.js 本身正常提交）
+scripts/out/

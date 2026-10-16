@@ -655,6 +655,58 @@ function _pollMember(remain, callback) {
   })
 }
 
+// ===== 邀请码兑换永久会员（送码开通，不经支付链路；核销与发放在云函数一次完成） =====
+
+// hooks.onDone({ ok, cancelled })。已是永久会员（ALREADY_LIFETIME）时用弹窗展示
+// 完整文案（码未消耗可转赠），其余失败走 toast；成功后静默实查刷新权益缓存
+function redeemCode(rawCode, hooks) {
+  hooks = hooks || {}
+  const code = String(rawCode || '').toUpperCase().replace(/[\s-]/g, '')
+  if (code.length < 8 || code.length > 32) {
+    wx.showToast({ title: '请输入正确的邀请码', icon: 'none' })
+    if (hooks.onDone) hooks.onDone({ ok: false })
+    return
+  }
+  if (!isCloudAvailable()) {
+    wx.showToast({ title: '云服务不可用', icon: 'none' })
+    if (hooks.onDone) hooks.onDone({ ok: false })
+    return
+  }
+  wx.showLoading({ title: '兑换中...', mask: true })
+  wx.cloud.callFunction({
+    name: FUNC_NAME,
+    data: { action: 'redeem', code },
+    success: (res) => {
+      wx.hideLoading()
+      const r = res && res.result
+      if (r && r.ok) {
+        getEntitlement(() => {}) // 权益已变，静默实查覆盖缓存（首屏渲染即时可见）
+        _toastAfterLoading('永久会员已开通', 'success')
+        if (hooks.onDone) hooks.onDone({ ok: true })
+        return
+      }
+      if (r && r.code === 'ALREADY_LIFETIME') {
+        wx.showModal({
+          title: '无需兑换',
+          content: r.message || '你已是永久会员，邀请码未消耗，可转赠他人',
+          showCancel: false,
+          confirmText: '知道了'
+        })
+      } else {
+        // 统一口径「无效或已被使用」，不区分码不存在/已用掉，防枚举试探
+        _toastAfterLoading((r && r.message) || '兑换失败，请稍后再试')
+      }
+      if (hooks.onDone) hooks.onDone({ ok: false, code: r && r.code })
+    },
+    fail: (err) => {
+      wx.hideLoading()
+      console.error('邀请码兑换失败', err)
+      _toastAfterLoading('网络异常，兑换失败')
+      if (hooks.onDone) hooks.onDone({ ok: false })
+    }
+  })
+}
+
 module.exports = {
   isCloudAvailable,
   getCachedState,
@@ -668,5 +720,6 @@ module.exports = {
   uploadToCloud,
   restoreFromCloud,
   deleteFromCloud,
-  purchaseLifetime
+  purchaseLifetime,
+  redeemCode
 }

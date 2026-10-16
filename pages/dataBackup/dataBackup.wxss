@@ -129,3 +129,30 @@ page {
   color: var(--text3);
   line-height: 1.5;
 }
+
+/* ===== 邀请码兑换弹层（WeUI 表单口径，与编辑记录页输入行同构） ===== */
+.redeem-cell {
+  padding-top: 12rpx;
+  padding-bottom: 12rpx;   /* 88rpx 输入框 + 12×2 = 112rpx 行高（WeUI cell 56px 口径） */
+}
+
+.redeem-cell .weui-cell__bd {
+  flex: none;              /* 标签仅两字不参与宽度分配，剩余宽度全让给输入框 */
+}
+
+.redeem-ft {
+  max-width: none;
+  flex: 1;
+}
+
+.redeem-input {
+  width: 100%;
+  height: 88rpx;           /* 「可点项最小热区」口径 */
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text);
+  text-align: right;       /* WeUI 表单：标签左、值右 */
+}
+
+.redeem-input-ph {
+  color: var(--text3);
+}
