@@ -55,7 +55,7 @@ const DAILY_FREE_LIMIT = 2 // 每日广告拉起失败的免费放行上限（�
 // appKey 必须与 env 对应环境匹配，错配直接签名失败；iOS（Apple 支付）仅支持现网 env=0。
 const VP_COL = 'vp_orders'
 const PAY_OFFER_ID = '1450675891'
-const PAY_ENV = 1 // 1=沙箱（开发联调用），切正式：改 0 + 填 PAY_APP_KEY_PROD + 后台道具「发布至现网版本」
+const PAY_ENV = 0 // 0=现网（正式收费），1=沙箱（开发联调）；沙箱闭环已于 2026-10-16 全链路验证后切现网
 const PAY_APP_KEY_SANDBOX = 'oW9kZ51eW4KQqG0m63e5e2wunXp6ml0Q'
 const PAY_APP_KEY_PROD = '58iiBQ5nkDuXDjUdTwXh8Ah7o7Ozox7M'
 // SKU 表（道具 ID 必须与后台道具管理一致；改价只动这里，前端价格文案记得同步）
