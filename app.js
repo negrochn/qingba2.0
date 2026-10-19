@@ -10,7 +10,7 @@ App({
     try {
       const mpEnv = wx.getAccountInfoSync().miniProgram.envVersion
       if (mpEnv === 'develop' || mpEnv === 'trial') {
-        console.log('[青吧] 测试侧运行（' + mpEnv + '）：本地/云端数据均已与正式版隔离')
+        console.log('[庆爸] 测试侧运行（' + mpEnv + '）：本地/云端数据均已与正式版隔离')
       }
     } catch (e) {}
     // 云开发初始化：云备份依赖。环境用控制台的「默认环境」，真实 envId 不入库；
