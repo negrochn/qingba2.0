@@ -38,14 +38,23 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
 const _ = db.command // 更新指令（_.remove() 清除字段用）
+
+// ===== 集合分流：开发版/体验版与正式版云端数据隔离 =====
+// 前端按 envVersion 带 env_tag（'dev' = 开发版/体验版，正式缺省）：
+// dev 请求全部读写 *_dev 集合，与正式数据完全隔离（快照/权益/订单/邀请码各一套）；
+// 正式请求走原集合，行为不变。payNotify 按订单所在集合定位权益集合。
+// dev 集合无需预建：_loadEnt 对缺失集合有建集合尝试；快照集合首写前在控制台建好亦可
 const COL = 'cloud_backups'
+const COL_DEV = 'cloud_backups_dev'
 const MAX_BYTES = 500 * 1024        // 旧明文路径上限（贴文档 512KB 硬限制，仅旧版本前端会走）
 const MAX_RAW_BYTES = 2 * 1024 * 1024 // 压缩路径：解压后原文上限（防御压缩炸弹 + 防御性上限）
 const MAX_Z_B64 = 380 * 1024        // 压缩路径：base64 串上限（文档总大小留足 512KB 余量）
 const DEDUP_MS = 10 * 60 * 1000 // 同用户 10 分钟内重复上传直接去重返回
 // 权益集合与配置（商业化：备份需会员或广告点数）
 const ENT_COL = 'entitlements'
+const ENT_COL_DEV = 'entitlements_dev'
 const REDEEM_COL = 'redeem_codes' // 邀请码（一次性：unused → used；code 存去横线大写纯码）
+const REDEEM_COL_DEV = 'redeem_codes_dev' // dev 测试码放这里（控制台手动造码，不与正式码互通）
 const DAILY_AD_LIMIT = 5 // 每日最多通过广告获得的备份次数（防刷兜底，前端无感）
 const DAILY_FREE_LIMIT = 2 // 每日广告拉起失败的免费放行上限（审核安全兜底：广告无填充时备份仍可用）
 
@@ -54,6 +63,7 @@ const DAILY_FREE_LIMIT = 2 // 每日广告拉起失败的免费放行上限（�
 // signature = HMAC-SHA256(sessionKey, signData)，均输出 hex。env=0 现网 / 1 沙箱，
 // appKey 必须与 env 对应环境匹配，错配直接签名失败；iOS（Apple 支付）仅支持现网 env=0。
 const VP_COL = 'vp_orders'
+const VP_COL_DEV = 'vp_orders_dev' // dev 测试单（沙箱支付）独立落集合
 const PAY_OFFER_ID = '1450675891'
 const PAY_ENV = 0 // 0=现网（正式收费），1=沙箱（开发联调）；沙箱闭环已于 2026-10-16 全链路验证后切现网
 const PAY_APP_KEY_SANDBOX = 'oW9kZ51eW4KQqG0m63e5e2wunXp6ml0Q'
@@ -71,19 +81,28 @@ function fail(code, message) {
   return { ok: false, code, message }
 }
 
+// 按请求 env_tag 选集合组：dev（开发版/体验版）→ *_dev；正式（缺省/空）→ 原集合
+function _cols(event) {
+  const dev = !!(event && event.env_tag === 'dev')
+  return dev
+    ? { backups: COL_DEV, ent: ENT_COL_DEV, redeem: REDEEM_COL_DEV, vp: VP_COL_DEV, dev: true }
+    : { backups: COL, ent: ENT_COL, redeem: REDEEM_COL, vp: VP_COL, dev: false }
+}
+
 exports.main = async (event) => {
   const { OPENID } = cloud.getWXContext()
   if (!OPENID) return fail('NO_AUTH', '无法获取用户身份')
 
   const action = event && event.action
+  const cols = _cols(event)
   try {
-    if (action === 'get') return await handleGet(OPENID)
-    if (action === 'put') return await handlePut(OPENID, event)
-    if (action === 'delete') return await handleDelete(OPENID)
-    if (action === 'entitlement') return await handleEntitlement(OPENID)
-    if (action === 'unlock') return await handleUnlock(OPENID)
-    if (action === 'createOrder') return await handleCreateOrder(OPENID, event)
-    if (action === 'redeem') return await handleRedeem(OPENID, event)
+    if (action === 'get') return await handleGet(OPENID, cols)
+    if (action === 'put') return await handlePut(OPENID, event, cols)
+    if (action === 'delete') return await handleDelete(OPENID, cols)
+    if (action === 'entitlement') return await handleEntitlement(OPENID, cols)
+    if (action === 'unlock') return await handleUnlock(OPENID, cols)
+    if (action === 'createOrder') return await handleCreateOrder(OPENID, event, cols)
+    if (action === 'redeem') return await handleRedeem(OPENID, event, cols)
     return fail('BAD_ACTION', '未知操作')
   } catch (e) {
     console.error('cloudBackup error', e)
@@ -91,8 +110,8 @@ exports.main = async (event) => {
   }
 }
 
-async function handleGet(openid) {
-  const res = await db.collection(COL)
+async function handleGet(openid, cols) {
+  const res = await db.collection(cols.backups)
     .where({ openid })
     .orderBy('updatedAt', 'desc')
     .limit(1)
@@ -115,12 +134,12 @@ async function handleGet(openid) {
 }
 
 // 删除该用户全部快照文档（每人正常 1 份，历史重复文档一并兜底清理；幂等）
-async function handleDelete(openid) {
-  const res = await db.collection(COL).where({ openid }).remove()
+async function handleDelete(openid, cols) {
+  const res = await db.collection(cols.backups).where({ openid }).remove()
   return ok({ removed: (res.stats && res.stats.removed) || 0 })
 }
 
-async function handlePut(openid, event) {
+async function handlePut(openid, event, cols) {
   const z = event && event.payload_z
   const legacy = event && event.payload
   let text = ''   // 解压后的 v3 JSON 原文（统一校验口径）
@@ -171,7 +190,7 @@ async function handlePut(openid, event) {
 
   const now = Date.now()
   // 按 updatedAt 降序取最新一份：并发首次备份可能产生 2 份文档，取到旧的会读写错位
-  const exist = await db.collection(COL).where({ openid }).orderBy('updatedAt', 'desc').limit(1).get()
+  const exist = await db.collection(cols.backups).where({ openid }).orderBy('updatedAt', 'desc').limit(1).get()
 
   // 压缩/明文互斥：覆盖更新时清掉另一路径的旧字段，避免两个大字段共存撑爆文档
   const baseData = { size, childCount, recordCount, updatedAt: now }
@@ -191,19 +210,19 @@ async function handlePut(openid, event) {
     if (now - prev.updatedAt < DEDUP_MS && sameContent) {
       return ok({ deduped: true, updatedAt: prev.updatedAt }) // 内容未变不算新备份，不消耗权益
     }
-    const gate = await consumeBackupCredit(openid, !!(event && event.free_fallback))
+    const gate = await consumeBackupCredit(openid, !!(event && event.free_fallback), cols.ent)
     if (!gate.ok) return gate
-    await db.collection(COL).doc(prev._id).update({ data: updateData })
+    await db.collection(cols.backups).doc(prev._id).update({ data: updateData })
     return ok({ updatedAt: now })
   }
 
   // 首次备份：权益闸门 + 显式写 openid 字段（云函数写入不会自动注入 _openid）
-  const gate = await consumeBackupCredit(openid, !!(event && event.free_fallback))
+  const gate = await consumeBackupCredit(openid, !!(event && event.free_fallback), cols.ent)
   if (!gate.ok) return gate
   const addData = storeZ
     ? Object.assign({ openid, payload_z: storeZ, size_z: Buffer.byteLength(storeZ, 'utf8') }, baseData)
     : Object.assign({ openid, payload: legacy }, baseData)
-  await db.collection(COL).add({ data: addData })
+  await db.collection(cols.backups).add({ data: addData })
   return ok({ updatedAt: now })
 }
 
@@ -223,40 +242,40 @@ function _isMember(ent) {
 // 读取该用户权益文档，不存在则惰性创建（并发重复创建无害，读取恒取第一条）
 // 注意：wx-server-sdk 的 db 可能没有 createCollection（管理端能力），集合缺失时
 // 依赖手动在云开发控制台建 entitlements 集合；此处保留尝试并记录真实错误便于排查
-async function _loadEnt(openid) {
+async function _loadEnt(openid, entCol) {
   let q
   try {
-    q = await db.collection(ENT_COL).where({ openid }).limit(1).get()
+    q = await db.collection(entCol).where({ openid }).limit(1).get()
   } catch (e) {
-    console.error(`[entitlements] 集合查询失败（检查云端是否已建 ${ENT_COL} 集合）`, e && e.message)
+    console.error(`[entitlements] 集合查询失败（检查云端是否已建 ${entCol} 集合）`, e && e.message)
     try {
-      if (typeof db.createCollection === 'function') await db.createCollection(ENT_COL)
+      if (typeof db.createCollection === 'function') await db.createCollection(entCol)
     } catch (e2) {
       console.error('[entitlements] 自动创建集合失败', e2 && e2.message)
     }
-    q = await db.collection(ENT_COL).where({ openid }).limit(1).get()
+    q = await db.collection(entCol).where({ openid }).limit(1).get()
   }
   if (q.data.length) return q.data[0]
   try {
-    await db.collection(ENT_COL).add({
+    await db.collection(entCol).add({
       data: { openid, credits: 0, dailyDate: '', dailyEarned: 0, freeDate: '', freeUsed: 0, membership: null, updatedAt: Date.now() }
     })
   } catch (e) { /* 并发下重复创建忽略 */ }
-  const q2 = await db.collection(ENT_COL).where({ openid }).limit(1).get()
+  const q2 = await db.collection(entCol).where({ openid }).limit(1).get()
   return q2.data[0] || null
 }
 
 // 备份闸门：会员放行；广告拉起失败走免费放行通道（每日限额，防审核环境判功能不可用）；
 // 否则原子扣 1 点（credits ≥1 条件更新，防并发双扣）
 // 放行返回 { ok: true }，无权益返回 NEED_ENTITLEMENT（前端据此引导看广告）
-async function consumeBackupCredit(openid, freeFallback) {
-  const ent = await _loadEnt(openid)
+async function consumeBackupCredit(openid, freeFallback, entCol) {
+  const ent = await _loadEnt(openid, entCol)
   if (_isMember(ent)) return ok()
   if (freeFallback) {
-    if (await _grantFreeFallback(openid)) return ok({ free: true })
+    if (await _grantFreeFallback(openid, entCol)) return ok({ free: true })
     return fail('NEED_ENTITLEMENT', '今日免费备份次数已用完，看一段视频即可继续')
   }
-  const res = await db.collection(ENT_COL)
+  const res = await db.collection(entCol)
     .where({ openid, credits: _.gte(1) })
     .update({ data: { credits: _.inc(-1), updatedAt: Date.now() } })
   if (res.stats && res.stats.updated > 0) return ok()
@@ -265,20 +284,20 @@ async function consumeBackupCredit(openid, freeFallback) {
 
 // 免费放行计数：按东八区自然日限额（与 handleUnlock 同款「跨日重置 + 条件自增」
 // 原子模式，并发直调不会超限）；freeDate 字段缺失的老权益文档会被跨日重置一并补齐
-async function _grantFreeFallback(openid) {
+async function _grantFreeFallback(openid, entCol) {
   const today = _bjDate(Date.now())
-  await db.collection(ENT_COL)
+  await db.collection(entCol)
     .where({ openid, freeDate: _.neq(today) })
     .update({ data: { freeDate: today, freeUsed: 0 } })
-  const res = await db.collection(ENT_COL)
+  const res = await db.collection(entCol)
     .where({ openid, freeDate: today, freeUsed: _.lt(DAILY_FREE_LIMIT) })
     .update({ data: { freeUsed: _.inc(1), updatedAt: Date.now() } })
   return !!(res.stats && res.stats.updated > 0)
 }
 
 // 查询权益状态（前端按钮态与「看视频解锁」入口的展示依据）
-async function handleEntitlement(openid) {
-  const ent = await _loadEnt(openid)
+async function handleEntitlement(openid, cols) {
+  const ent = await _loadEnt(openid, cols.ent)
   const today = _bjDate(Date.now())
   const dailyEarned = ent && ent.dailyDate === today ? (ent.dailyEarned | 0) : 0
   return ok({
@@ -291,21 +310,21 @@ async function handleEntitlement(openid) {
 
 // 激励视频完整观看后登记：+1 备份点数，每日上限 DAILY_AD_LIMIT 防刷
 // 前端只在此登记成功后才发起备份；伪造直调 put 无权益仍会被闸门拦下
-async function handleUnlock(openid) {
+async function handleUnlock(openid, cols) {
   const today = _bjDate(Date.now())
-  await _loadEnt(openid)
+  await _loadEnt(openid, cols.ent)
   // 跨日重置计数器（条件更新，天然幂等）
-  await db.collection(ENT_COL)
+  await db.collection(cols.ent)
     .where({ openid, dailyDate: _.neq(today) })
     .update({ data: { dailyDate: today, dailyEarned: 0 } })
   // 条件自增：今日已获次数 < 上限才生效，绕过上限的直调在此被拦
-  const res = await db.collection(ENT_COL)
+  const res = await db.collection(cols.ent)
     .where({ openid, dailyDate: today, dailyEarned: _.lt(DAILY_AD_LIMIT) })
     .update({ data: { dailyEarned: _.inc(1), credits: _.inc(1), updatedAt: Date.now() } })
   if (!res.stats || res.stats.updated === 0) {
     return fail('DAILY_LIMIT', `今日看视频获得的次数已达上限（${DAILY_AD_LIMIT} 次），明天再来`)
   }
-  const ent = await _loadEnt(openid)
+  const ent = await _loadEnt(openid, cols.ent)
   return ok({
     member: _isMember(ent),
     credits: ent ? Math.max(0, ent.credits | 0) : 1,
@@ -320,9 +339,9 @@ function _hmacHex(key, msg) {
   return crypto.createHmac('sha256', key).update(msg, 'utf8').digest('hex')
 }
 
-function _payAppKey() {
-  const key = PAY_ENV === 1 ? PAY_APP_KEY_SANDBOX : PAY_APP_KEY_PROD
-  if (!key) throw new Error('PAY_APP_KEY 未配置（env=' + PAY_ENV + '）')
+function _payAppKey(payEnv) {
+  const key = payEnv === 1 ? PAY_APP_KEY_SANDBOX : PAY_APP_KEY_PROD
+  if (!key) throw new Error('PAY_APP_KEY 未配置（env=' + payEnv + '）')
   return key
 }
 
@@ -360,12 +379,17 @@ function _code2Session(loginCode) {
   })
 }
 
-async function handleCreateOrder(openid, event) {
+async function handleCreateOrder(openid, event, cols) {
   const skuId = event && event.product_id
   const sku = PAY_SKUS[skuId]
   if (!sku) return fail('BAD_SKU', '商品不存在')
   const loginCode = event && event.login_code
   if (!loginCode) return fail('NO_LOGIN_CODE', '登录态缺失，请重试')
+
+  // 测试侧（开发版/体验版）强制走沙箱收银台（env=1，不真扣钱、可用沙箱 AppKey 签名），
+  // 订单落 vp_orders_dev、后续发货写 entitlements_dev，与正式支付链路完全隔离；
+  // 正式侧维持现网配置不变（PAY_ENV）
+  const payEnv = cols.dev ? 1 : PAY_ENV
 
   // wx.login 的 code 一次性：用过/过期直接报错，前端每次购买前现取即可
   let sessionKey = ''
@@ -390,17 +414,18 @@ async function handleCreateOrder(openid, event) {
   const outTradeNo = ('VP' + Date.now().toString(36)
     + Math.random().toString(36).slice(2, 6)).toUpperCase()
   const now = Date.now()
-  await db.collection(VP_COL).add({
+  await db.collection(cols.vp).add({
     data: {
       openid, outTradeNo, productId: skuId, skuType: sku.type, title: sku.title,
-      pricePaid: sku.price, env: PAY_ENV, status: 'pending', createdAt: now
+      pricePaid: sku.price, env: payEnv, envTag: cols.dev ? 'dev' : '',
+      status: 'pending', createdAt: now
     }
   })
 
   // signData 字段顺序即 JSON 序列化顺序：构造后不再改动
   const signData = JSON.stringify({
     buyQuantity: 1,
-    env: PAY_ENV,
+    env: payEnv,
     offerId: PAY_OFFER_ID,
     currencyType: 'CNY',
     productId: skuId,
@@ -410,7 +435,7 @@ async function handleCreateOrder(openid, event) {
   })
   return ok({
     signData,
-    paySig: _hmacHex(_payAppKey(), 'requestVirtualPayment&' + signData),
+    paySig: _hmacHex(_payAppKey(payEnv), 'requestVirtualPayment&' + signData),
     signature: _hmacHex(sessionKey, signData),
     mode: 'short_series_goods',
     outTradeNo,
@@ -431,20 +456,21 @@ function _normalizeCode(raw) {
 // （sku: redeem_lifetime 标记兑换来源，pricePaid 0），写入用 doc().set() 整文档替换
 // ——存量 membership 为 null 时嵌套 update 会报「Cannot create field」，set 无此问题。
 // 核销成功但权益写入失败时回滚核销（条件更新只回滚本人刚核销的单），码回到可用态。
-async function handleRedeem(openid, event) {
+async function handleRedeem(openid, event, cols) {
   const code = _normalizeCode(event && event.code)
   if (code.length < 8 || code.length > 32) {
     return fail('BAD_CODE', '请输入正确的邀请码')
   }
 
-  const ent = await _loadEnt(openid)
+  const ent = await _loadEnt(openid, cols.ent)
   const m = ent && ent.membership
   if (m && m.type === 'lifetime' && (!m.expireAt || m.expireAt > Date.now())) {
     return fail('ALREADY_LIFETIME', '你已是永久会员，无需兑换。邀请码未消耗，可转赠他人')
   }
 
   const now = Date.now()
-  const burn = await db.collection(REDEEM_COL)
+  // dev 侧核销 redeem_codes_dev 的测试码（控制台手动造码），与正式码库互不影响
+  const burn = await db.collection(cols.redeem)
     .where({ code, status: 'unused' })
     .update({ data: { status: 'used', usedBy: openid, usedAt: now } })
   if (!burn.stats || burn.stats.updated === 0) {
@@ -462,7 +488,7 @@ async function handleRedeem(openid, event) {
   }
   try {
     if (ent && ent._id) {
-      await db.collection(ENT_COL).doc(ent._id).set({
+      await db.collection(cols.ent).doc(ent._id).set({
         data: {
           openid: ent.openid,
           credits: ent.credits || 0,
@@ -476,7 +502,7 @@ async function handleRedeem(openid, event) {
       })
     } else {
       // 权益档不存在（_loadEnt 建档失败的极端情况）：与 _loadEnt 建档结构同构
-      await db.collection(ENT_COL).add({
+      await db.collection(cols.ent).add({
         data: {
           openid, credits: 0, dailyDate: '', dailyEarned: 0,
           freeDate: '', freeUsed: 0, membership, updatedAt: Date.now()
@@ -485,7 +511,7 @@ async function handleRedeem(openid, event) {
     }
   } catch (e) {
     console.error('redeem 写权益失败，回滚核销', code, e)
-    await db.collection(REDEEM_COL)
+    await db.collection(cols.redeem)
       .where({ code, status: 'used', usedBy: openid })
       .update({ data: { status: 'unused', usedBy: _.remove(), usedAt: _.remove() } })
     throw e

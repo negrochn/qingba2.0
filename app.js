@@ -5,6 +5,14 @@ const cloudBackup = require('./utils/cloudBackup.js')
 
 App({
   onLaunch() {
+    // 版本隔离标识：开发版/体验版本地数据走 d_ 前缀（utils/storage.js）、
+    // 云端读写走 *_dev 集合（env_tag），与正式数据完全隔离
+    try {
+      const mpEnv = wx.getAccountInfoSync().miniProgram.envVersion
+      if (mpEnv === 'develop' || mpEnv === 'trial') {
+        console.log('[青吧] 测试侧运行（' + mpEnv + '）：本地/云端数据均已与正式版隔离')
+      }
+    } catch (e) {}
     // 云开发初始化：云备份依赖。环境用控制台的「默认环境」，真实 envId 不入库；
     // 低版本基础库 / 非微信宿主无 wx.cloud 时跳过，本地功能零影响
     try {

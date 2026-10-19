@@ -10,6 +10,7 @@
 //  可转发/存文件（降级口径，宁可宽裕）。用户取消转发不记录。
 
 const checkin = require('./checkin.js')
+const storage = require('./storage.js')
 const children = require('./children.js')
 const customResources = require('./customResources.js')
 const theme = require('./theme.js')
@@ -27,11 +28,11 @@ const REMIND_INTERVAL_DAYS = 30         // 距上次备份超过该天数则提�
 const DISMISS_COOLDOWN_DAYS = 30        // 首页轻条关闭后的冷却期（设置页红点不受冷却影响）
 
 function _get(key) {
-  try { return wx.getStorageSync(key) } catch (e) { return '' }
+  try { return storage.get(key) } catch (e) { return '' }
 }
 
 function _set(key, value) {
-  try { wx.setStorageSync(key, value) } catch (e) {}
+  try { storage.set(key, value) } catch (e) {}
 }
 
 // ===== 提醒 / 引导状态 =====
@@ -69,7 +70,7 @@ function markBackedUp() {
 function clearLastBackupIf(cloudTs) {
   const last = Number(_get(LAST_BACKUP_KEY))
   if (last > 0 && last === Number(cloudTs)) {
-    try { wx.removeStorageSync(LAST_BACKUP_KEY) } catch (e) {}
+    try { storage.remove(LAST_BACKUP_KEY) } catch (e) {}
   }
 }
 
@@ -189,7 +190,7 @@ function collectBackupJson() {
   data.children = childrenOut;
 
   // ===== 全局（家庭级）设置 =====
-  const remarks = wx.getStorageSync(checkin.DEFAULT_REMARK_KEY);
+  const remarks = storage.get(checkin.DEFAULT_REMARK_KEY);
   if (remarks) {
     data.checkin_default_remark = remarks;
   }
@@ -727,7 +728,7 @@ function _applyChildData(data, mode = 'overwrite') {
 // 全局（家庭级）设置：默认备注 + 熏听开关；字体档位已跟随微信设置，旧字段有意忽略
 function _applyGlobalData(data) {
   if (data.checkin_default_remark) {
-    wx.setStorageSync(checkin.DEFAULT_REMARK_KEY, data.checkin_default_remark);
+    storage.set(checkin.DEFAULT_REMARK_KEY, data.checkin_default_remark);
   }
   if (typeof data.listening_enabled === 'boolean') {
     checkin.setListeningEnabled(data.listening_enabled);

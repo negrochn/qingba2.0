@@ -34,6 +34,17 @@
       <view class="weui-cell__bd">数据管理<text class="backup-dot" wx:if="{{backupRemind}}"></text></view>
       <view class="weui-cell__ft"><text class="iconfont icon-right"></text></view>
     </view>
+    <!-- 会员中心：非会员纯导航无值位（常驻空间不亮价格，与「数据管理」等入口平权）；
+         会员金色「永久会员」是身份确认。价格只留在意愿场景内：
+         会员中心页状态卡 + 备份被拦的解锁弹层 -->
+    <view class="weui-cell weui-cell_access" bindtap="goMembership">
+      <view class="weui-cell__hd"><text class="iconfont icon-vip"></text></view>
+      <view class="weui-cell__bd">会员中心</view>
+      <view class="weui-cell__ft">
+        <text class="mine-member-ft" wx:if="{{isMember}}">永久会员</text>
+        <text class="iconfont icon-right"></text>
+      </view>
+    </view>
   </view>
 
   <!-- 设置 -->

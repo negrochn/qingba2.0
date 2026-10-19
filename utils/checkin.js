@@ -6,6 +6,7 @@
 //      factor 为时长折算系数（熏听分组按阶段取 0 / 0.5 / 0.8），缺省视为 1，故只在 ≠1 时写入
 
 const { ROUTES, listeningFactor } = require('./data.js')
+const storage = require('./storage.js')
 const { getActiveChildId, getPrimaryChildId } = require('./children.js')
 
 const STORAGE_KEY = 'qingba_checkins'
@@ -46,13 +47,13 @@ function _pcGet(baseKey, extraSeg, defaultValue) {
   const extra = extraSeg || ''
   const key = baseKey + _childSeg() + extra
   try {
-    const v = wx.getStorageSync(key)
+    const v = storage.get(key)
     if (v !== '' && v !== null && v !== undefined) return v
     if (_isPrimaryChild()) {
-      const legacy = wx.getStorageSync(baseKey + extra)
+      const legacy = storage.get(baseKey + extra)
       if (legacy !== '' && legacy !== null && legacy !== undefined) {
-        try { wx.setStorageSync(key, legacy) } catch (e2) {}
-        try { wx.removeStorageSync(baseKey + extra) } catch (e3) {}
+        try { storage.set(key, legacy) } catch (e2) {}
+        try { storage.remove(baseKey + extra) } catch (e3) {}
         return legacy
       }
     }
@@ -62,7 +63,7 @@ function _pcGet(baseKey, extraSeg, defaultValue) {
 
 function _pcSet(baseKey, extraSeg, value) {
   try {
-    wx.setStorageSync(baseKey + _childSeg() + (extraSeg || ''), value)
+    storage.set(baseKey + _childSeg() + (extraSeg || ''), value)
     return true
   } catch (e) {
     return false
@@ -71,7 +72,7 @@ function _pcSet(baseKey, extraSeg, value) {
 
 function _pcRemove(baseKey, extraSeg) {
   try {
-    wx.removeStorageSync(baseKey + _childSeg() + (extraSeg || ''))
+    storage.remove(baseKey + _childSeg() + (extraSeg || ''))
     return true
   } catch (e) {
     return false
@@ -174,9 +175,11 @@ function _tmpChunkKey(ym) {
 function _removeChunkKeys() {
   try {
     const info = wx.getStorageInfoSync()
+    // 真实前缀（含版本前缀）：keys 遍历拿到的是真实 key，必须用真实形态匹配
+    const prefix = storage.realKey(_chunkPrefix())
     ;(info.keys || []).forEach(k => {
-      if (k.startsWith(_chunkPrefix())) {
-        try { wx.removeStorageSync(k) } catch (e) {}
+      if (k.startsWith(prefix)) {
+        try { storage.removeRaw(k) } catch (e) {}
       }
     })
   } catch (e) {}
@@ -231,7 +234,8 @@ function _listChunkKeys() {
     const info = wx.getStorageInfoSync()
     if (info && Array.isArray(info.keys)) {
       // 只匹配当前孩子的分片前缀；排除临时分片：它是写入中间态，若参与合并会读到"半成品"数据
-      const prefix = _chunkPrefix()
+      // 真实前缀（含版本前缀）：keys 遍历拿到的是真实 key，必须用真实形态匹配
+      const prefix = storage.realKey(_chunkPrefix())
       return info.keys.filter(k => {
         const s = String(k)
         return s.startsWith(prefix) && !s.startsWith(prefix + TMP_CHUNK_SUB)
@@ -248,7 +252,7 @@ function _listChunkKeys() {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
     const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
     try {
-      const v = wx.getStorageSync(_chunkKey(ym))
+      const v = storage.get(_chunkKey(ym))
       if (v && typeof v === 'object') found.push(_chunkKey(ym))
     } catch (e) {}
   }
@@ -269,15 +273,15 @@ function _migrateLegacyCheckins() {
   if (!_isPrimaryChild()) return
   try {
     // 1) 旧主键 → 孩子主键（同日以孩子槽位已有数据优先，正常时序下不会共存）
-    const legacyMain = wx.getStorageSync(STORAGE_KEY)
+    const legacyMain = storage.get(STORAGE_KEY)
     if (legacyMain && typeof legacyMain === 'object') {
-      const cur = wx.getStorageSync(_mainKey())
+      const cur = storage.get(_mainKey())
       const merged = (cur && typeof cur === 'object') ? { ...cur } : {}
       for (const day in legacyMain) {
         if (merged[day] === undefined) merged[day] = legacyMain[day]
       }
-      try { wx.setStorageSync(_mainKey(), merged) } catch (e2) {}
-      try { wx.removeStorageSync(STORAGE_KEY) } catch (e3) {}
+      try { storage.set(_mainKey(), merged) } catch (e2) {}
+      try { storage.remove(STORAGE_KEY) } catch (e3) {}
     }
 
     // 2) 旧分片改名为孩子分片；旧 tmp 中间态直接清理
@@ -288,15 +292,15 @@ function _migrateLegacyCheckins() {
       if (!s.startsWith(CHUNK_PREFIX)) return
       const rest = s.slice(CHUNK_PREFIX.length)
       if (rest.startsWith(TMP_CHUNK_SUB)) {
-        try { wx.removeStorageSync(s) } catch (e2) {}
+        try { storage.removeRaw(s) } catch (e2) {}
         return
       }
       if (/^\d{4}-\d{2}(_\d{2})?$/.test(rest)) {
-        const v = wx.getStorageSync(s)
+        const v = storage.getRaw(s)
         if (v && typeof v === 'object') {
-          try { wx.setStorageSync(_chunkPrefix() + rest, v) } catch (e2) {}
+          try { storage.set(_chunkPrefix() + rest, v) } catch (e2) {}
         }
-        try { wx.removeStorageSync(s) } catch (e3) {}
+        try { storage.removeRaw(s) } catch (e3) {}
       }
     })
   } catch (e) {
@@ -308,7 +312,7 @@ function getAll() {
   try {
     // 主孩子兜底迁移（正常路径在 onLaunch migrateLegacyData 已完成，此处为容灾双保险）
     if (_isPrimaryChild()) _migrateLegacyCheckins()
-    const main = wx.getStorageSync(_mainKey()) || {}
+    const main = storage.get(_mainKey()) || {}
     const chunkKeys = _listChunkKeys()
 
     // 无分片：直接返回主 key（空对象即表示确实没有数据）
@@ -318,7 +322,7 @@ function getAll() {
     const merged = { ...main }
     chunkKeys.forEach(k => {
       try {
-        const chunk = wx.getStorageSync(k)
+        const chunk = storage.getRaw(k)
         if (chunk && typeof chunk === 'object') {
           for (const day in chunk) {
             if (Array.isArray(chunk[day]) && chunk[day].length > 0) {
@@ -351,7 +355,7 @@ function saveAll(data) {
     if (bytes <= MAX_ITEM_BYTES && itemCount < 500) {
       let ok = true
       try {
-        wx.setStorageSync(_mainKey(), data)
+        storage.set(_mainKey(), data)
       } catch (e) {
         ok = false
         _onSaveFail()
@@ -381,7 +385,7 @@ function saveAll(data) {
       try {
         if (chunkBytes <= MAX_ITEM_BYTES && chunkItems < 500) {
           const tmp = _tmpChunkKey(ym)
-          wx.setStorageSync(tmp, chunkData)
+          storage.set(tmp, chunkData)
           written.push(tmp)
           pending.push({ tmp, key: _chunkKey(ym), data: chunkData })
         } else {
@@ -390,7 +394,7 @@ function saveAll(data) {
             const suffix = ym + '_' + day.substring(8)
             const tmp = _tmpChunkKey(suffix)
             const piece = { [day]: chunkData[day] }
-            wx.setStorageSync(tmp, piece)
+            storage.set(tmp, piece)
             written.push(tmp)
             pending.push({ tmp, key: _chunkKey(suffix), data: piece })
           }
@@ -398,7 +402,7 @@ function saveAll(data) {
       } catch (e) {
         // 回滚：只删本次写入的临时 key（旧分片原样保留）
         written.forEach(k => {
-          try { wx.removeStorageSync(k) } catch (e2) {}
+          try { storage.remove(k) } catch (e2) {}
         })
         _onSaveFail()
         return false
@@ -409,8 +413,8 @@ function saveAll(data) {
     const newKeys = []
     for (const p of pending) {
       try {
-        wx.setStorageSync(p.key, p.data)
-        try { wx.removeStorageSync(p.tmp) } catch (e) {}
+        storage.set(p.key, p.data)
+        try { storage.remove(p.tmp) } catch (e) {}
         newKeys.push(p.key)
       } catch (e) {
         // 改名中途失败：已改名的分片是完整新数据、未改名的仍是完整旧数据，
@@ -421,10 +425,11 @@ function saveAll(data) {
     }
 
     // 3) 全部改名成功后，再清理主 key 与不再使用的旧分片
-    try { wx.removeStorageSync(_mainKey()) } catch(e) {}
+    // oldKeys 来自 _listChunkKeys（真实 key），须走 removeRaw；newKeys 是逻辑 key 故直接比对
+    try { storage.remove(_mainKey()) } catch(e) {}
     oldKeys.forEach(k => {
       if (newKeys.indexOf(k) < 0) {
-        try { wx.removeStorageSync(k) } catch (e) {}
+        try { storage.removeRaw(k) } catch (e) {}
       }
     })
 
@@ -466,14 +471,14 @@ function addCheckin(opts) {
   if (_isChunkMode()) {
     try {
       const key = _chunkKey(_dayToMonth(day))
-      const chunk = wx.getStorageSync(key)
+      const chunk = storage.get(key)
       if (chunk && typeof chunk === 'object') {
         const list = Array.isArray(chunk[day]) ? chunk[day].slice() : []
         list.push(record)
         chunk[day] = list
         // 该分片未超限才走快路径，否则回退全量以重新分片
         if (_estimateBytes(chunk) <= MAX_ITEM_BYTES && _estimateItemCount(chunk) < 500) {
-          wx.setStorageSync(key, chunk)
+          storage.set(key, chunk)
           return record
         }
       }
@@ -558,7 +563,7 @@ function addCheckinsOnDay(day, records) {
 // （迁移前遗留的 name key 由 migrateResourceKeysToId() / migrateResourceRecords() 处理）
 function _getDefaultRemarks() {
   try {
-    return wx.getStorageSync(DEFAULT_REMARK_KEY) || {}
+    return storage.get(DEFAULT_REMARK_KEY) || {}
   } catch (e) {
     return {}
   }
@@ -566,7 +571,7 @@ function _getDefaultRemarks() {
 
 function _saveDefaultRemarks(data) {
   try {
-    wx.setStorageSync(DEFAULT_REMARK_KEY, data)
+    storage.set(DEFAULT_REMARK_KEY, data)
   } catch (e) {}
 }
 
@@ -626,7 +631,7 @@ function setYouquPlanEnabled(enabled) {
 // 默认关闭（官方数据里熏听分组没有任何素材，默认开着也只是个空分组）
 function isListeningEnabled() {
   try {
-    const v = wx.getStorageSync(LISTENING_ENABLED_KEY)
+    const v = storage.get(LISTENING_ENABLED_KEY)
     return typeof v === 'boolean' ? v : false
   } catch (e) {
     return false
@@ -635,7 +640,7 @@ function isListeningEnabled() {
 
 function setListeningEnabled(enabled) {
   try {
-    wx.setStorageSync(LISTENING_ENABLED_KEY, !!enabled)
+    storage.set(LISTENING_ENABLED_KEY, !!enabled)
     return true
   } catch (e) {
     console.error('setListeningEnabled failed:', e)
@@ -1393,10 +1398,10 @@ function getCurrentStage() {
   // v1 旧单键兜底（仅主孩子 + 常规路线）：迁移后删除，否则「清空路线数据」后又被兜底读回
   if (_isPrimaryChild() && getCurrentRouteId() === 'regular') {
     try {
-      const legacyV1 = wx.getStorageSync(CURRENT_STAGE_KEY)
+      const legacyV1 = storage.get(CURRENT_STAGE_KEY)
       if (legacyV1) {
         _pcSet(CURRENT_STAGE_KEY, _currentStageSeg(), legacyV1)
-        wx.removeStorageSync(CURRENT_STAGE_KEY)
+        storage.remove(CURRENT_STAGE_KEY)
         return legacyV1
       }
     } catch (e) {}
@@ -1462,8 +1467,8 @@ function getChildSummary(childId) {
   const summary = { count: 0, minutes: 0, todayCount: 0 }
   if (!childId) return summary
   const today = todayStr()
-  const mainKey = STORAGE_KEY + '_' + childId
-  const chunkPrefix = CHUNK_PREFIX + childId + '_'
+  const mainKey = STORAGE_KEY + '_' + childId                       // 逻辑 key：配合 storage.get 读
+  const chunkPrefix = storage.realKey(CHUNK_PREFIX + childId + '_') // 真实前缀：配合 keys 遍历匹配
   const fold = data => {
     for (const day in data) {
       const list = data[day]
@@ -1477,7 +1482,7 @@ function getChildSummary(childId) {
     }
   }
   try {
-    const main = wx.getStorageSync(mainKey)
+    const main = storage.get(mainKey)
     if (main && typeof main === 'object') fold(main)
     let keys = []
     try {
@@ -1489,7 +1494,7 @@ function getChildSummary(childId) {
     } catch (e2) {}
     keys.forEach(k => {
       try {
-        const chunk = wx.getStorageSync(k)
+        const chunk = storage.getRaw(k)
         if (chunk && typeof chunk === 'object') fold(chunk)
       } catch (e3) {}
     })
@@ -1501,24 +1506,25 @@ function getChildSummary(childId) {
 // 遍历 keys 按前缀删除；getStorageInfoSync 不可用时按已知组合键显式删除兜底
 function removeChildData(childId) {
   if (!childId) return 0
-  const mainKey = STORAGE_KEY + '_' + childId
-  const chunkPrefix = CHUNK_PREFIX + childId + '_'
-  const stagePrefix = CURRENT_STAGE_KEY + '_' + childId + '_'
+  // 全部转真实 key/前缀（含版本前缀）：tryRemove 走 removeRaw，遍历 keys 与 exactKeys 兜底都按真实形态操作
+  const mainKey = storage.realKey(STORAGE_KEY + '_' + childId)
+  const chunkPrefix = storage.realKey(CHUNK_PREFIX + childId + '_')
+  const stagePrefix = storage.realKey(CURRENT_STAGE_KEY + '_' + childId + '_')
   const exactKeys = [
     mainKey,
-    READ_COUNT_KEY + '_' + childId,
-    STAGE_DONE_KEY + '_' + childId,
-    CURRENT_ROUTE_KEY + '_' + childId,
-    TARGET_MODE_KEY + '_' + childId,
-    TARGET_CUSTOM_KEY + '_' + childId,
-    YOUQU_PLAN_KEY + '_' + childId,
+    storage.realKey(READ_COUNT_KEY + '_' + childId),
+    storage.realKey(STAGE_DONE_KEY + '_' + childId),
+    storage.realKey(CURRENT_ROUTE_KEY + '_' + childId),
+    storage.realKey(TARGET_MODE_KEY + '_' + childId),
+    storage.realKey(TARGET_CUSTOM_KEY + '_' + childId),
+    storage.realKey(YOUQU_PLAN_KEY + '_' + childId),
     stagePrefix + 'regular',
     stagePrefix + 'bigloop'
   ]
 
   let removed = 0
   const tryRemove = k => {
-    try { wx.removeStorageSync(k); removed++ } catch (e) {}
+    try { storage.removeRaw(k); removed++ } catch (e) {}
   }
   try {
     const info = wx.getStorageInfoSync()

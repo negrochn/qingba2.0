@@ -1,5 +1,7 @@
 // 孩子管理：孩子列表 CRUD + 当前孩子（activeChildId）
-// 依赖方向：本文件不依赖其它 utils；checkin.js / customResources.js 反向依赖本文件
+// 依赖方向：storage.js 零依赖；本文件不依赖其它 utils；checkin.js / customResources.js 反向依赖本文件
+
+const storage = require('./storage.js')
 //
 // child = { id, name, color, createdAt }
 //   id     'ch_<ts36>_<rand6>'，唯一且永不变更，作为 per-child 存储键段
@@ -16,7 +18,7 @@ const AVATAR_COLORS = ['green', 'blue', 'orange', 'purple', 'pink']
 
 function _readList() {
   try {
-    const v = wx.getStorageSync(CHILDREN_KEY)
+    const v = storage.get(CHILDREN_KEY)
     if (Array.isArray(v) && v.length > 0) return v.filter(c => c && c.id)
   } catch (e) {}
   return []
@@ -24,7 +26,7 @@ function _readList() {
 
 function _saveList(list) {
   try {
-    wx.setStorageSync(CHILDREN_KEY, list || [])
+    storage.set(CHILDREN_KEY, list || [])
     return true
   } catch (e) {
     return false
@@ -45,7 +47,7 @@ function ensureInit() {
   }
   const active = getActiveChildId()
   if (!active || !list.some(c => c.id === active)) {
-    try { wx.setStorageSync(ACTIVE_CHILD_KEY, list[0].id) } catch (e) {}
+    try { storage.set(ACTIVE_CHILD_KEY, list[0].id) } catch (e) {}
   }
   return list
 }
@@ -56,7 +58,7 @@ function getChildren() {
 
 function getActiveChildId() {
   try {
-    return wx.getStorageSync(ACTIVE_CHILD_KEY) || ''
+    return storage.get(ACTIVE_CHILD_KEY) || ''
   } catch (e) {
     return ''
   }
@@ -124,7 +126,7 @@ function addChild(name) {
   }
   list.push(child)
   if (!_saveList(list)) return { ok: false, error: '保存失败' }
-  try { wx.setStorageSync(ACTIVE_CHILD_KEY, child.id) } catch (e) {}
+  try { storage.set(ACTIVE_CHILD_KEY, child.id) } catch (e) {}
   return { ok: true, child }
 }
 
@@ -165,7 +167,7 @@ function removeChild(id) {
 
   const active = getActiveChildId()
   if (active === id || !list.some(c => c.id === active)) {
-    try { wx.setStorageSync(ACTIVE_CHILD_KEY, list[0].id) } catch (e) {}
+    try { storage.set(ACTIVE_CHILD_KEY, list[0].id) } catch (e) {}
   }
   return { ok: true }
 }
@@ -177,7 +179,7 @@ function switchChild(id) {
   if (!hit) return { ok: false, error: '孩子不存在' }
   if (getActiveChildId() === id) return { ok: true, child: hit }
   try {
-    wx.setStorageSync(ACTIVE_CHILD_KEY, id)
+    storage.set(ACTIVE_CHILD_KEY, id)
   } catch (e) {
     return { ok: false, error: '保存失败' }
   }

@@ -71,14 +71,6 @@ page {
   background: #d29a3a;
 }
 
-/* 购买行右侧价格：与「早鸟价」徽标同金色（价格即诱因，独立成列最醒目） */
-.db-price {
-  font-size: calc(34rpx * var(--fs, 1));
-  font-weight: 600;
-  color: #d29a3a;
-  line-height: 1.41176471;
-}
-
 .db-member-tag {
   flex-shrink: 0;
   padding: 2rpx 12rpx;
@@ -136,29 +128,52 @@ page {
   line-height: 1.5;
 }
 
-/* ===== 邀请码兑换弹层（WeUI 表单口径，与编辑记录页输入行同构） ===== */
-.redeem-cell {
-  padding-top: 12rpx;
-  padding-bottom: 12rpx;   /* 88rpx 输入框 + 12×2 = 112rpx 行高（WeUI cell 56px 口径） */
+/* ===== 云备份解锁选择弹层（三动作：看视频 / 开通会员 / 暂不） ===== */
+.unlock-buy {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 8rpx;
 }
-
-.redeem-cell .weui-cell__bd {
-  flex: none;              /* 标签仅两字不参与宽度分配，剩余宽度全让给输入框 */
+.unlock-buy-hover {
+  background: var(--bg);
 }
-
-.redeem-ft {
-  max-width: none;
+.unlock-buy__bd {
   flex: 1;
+  min-width: 0;
 }
-
-.redeem-input {
-  width: 100%;
-  height: 88rpx;           /* 「可点项最小热区」口径 */
-  font-size: calc(34rpx * var(--fs, 1));
+.unlock-buy__title {
+  display: flex;
+  align-items: center;
+  font-size: calc(30rpx * var(--fs, 1));
+  font-weight: 500;
   color: var(--text);
-  text-align: right;       /* WeUI 表单：标签左、值右 */
+  line-height: 1.4;
 }
-
-.redeem-input-ph {
+.unlock-buy__desc {
+  margin-top: 6rpx;
+  font-size: calc(24rpx * var(--fs, 1));
   color: var(--text3);
+  line-height: 1.5;
+}
+.unlock-buy__ft {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  color: var(--text3);
+}
+.unlock-buy__price {
+  margin-right: 8rpx;
+  font-size: calc(34rpx * var(--fs, 1));
+  font-weight: 600;
+  color: #d29a3a;
+}
+.unlock-note {
+  padding: 4rpx 8rpx 8rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+  line-height: 1.5;
+}
+.db-link {
+  color: var(--brand);
 }

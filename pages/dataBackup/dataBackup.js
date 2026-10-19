@@ -18,10 +18,9 @@ Page({
     fileBackupText: '',  // 最近一次文件备份时间（「备份到文件」右侧值位）；'' = 从未
     hasCloud: false,     // 是否存在云端快照（说明卡标题三态之一）
     cloudEntText: '',    // 无云端快照时「备份到云端」副文案（跟随会员/点数状态；'' 回落「暂无快照」）
-    isMember: false,     // 永久会员态：会员徽标展示 / 购买入口隐藏
-    // 邀请码兑换弹层
-    redeemVisible: false,
-    redeemCode: '',
+    isMember: false,     // 永久会员态：说明卡徽标 / 副文案口径（购买入口已迁会员中心页）
+    // 云备份解锁选择弹层（非会员点数用尽时：看视频 / 开通会员 / 暂不）
+    unlockVisible: false,
     // 导入备份 · 选孩子弹层（v2 单孩格式专用；v3 多孩格式整体恢复不经过此处）
     importPickVisible: false,
     importPickItems: [],
@@ -116,57 +115,55 @@ Page({
     cloudBackup.getEntitlement(apply);
   },
 
-  // 开通永久会员（虚拟支付）：下单/收银台/权益确认都在 cloudBackup，页面只做胶水
-  onBuyLifetime() {
-    if (this._payBusy) return;
-    this._payBusy = true;
-    cloudBackup.purchaseLifetime({
-      onDone: () => {
-        this._payBusy = false;
-        this.refreshCloudEntitlement(); // 会员态同步（购买行隐藏 + 徽标展示）
-      }
-    });
+  // 会员中心（购买/兑换已迁出本页，tips 链接与解锁弹层共用入口）
+  goMembership() {
+    wx.navigateTo({ url: '/pages/membership/membership' });
   },
 
-  // ===== 邀请码兑换永久会员 =====
+  // ===== 云备份解锁选择弹层（替代系统 showModal：三动作——看视频 / 开通会员 / 暂不。
+  // utils 检测到无权益时经 onNeedUnlock 回调到这里弹层，选择结果回传续跑原流程） =====
 
-  // 入口常驻不做显隐：权益缓存有时效，误隐藏会让新会员找不到入口；
-  // 永久会员输码由云函数拒绝并提示码未消耗可转赠，正好承载转赠场景
-  onRedeemCode() {
-    this.setData({ redeemVisible: true });
+  // utils 回调：弹层选择结果的续跑句柄存实例上（关闭/选择后置空防重复回传）
+  onNeedUnlock(handle) {
+    this._unlockHandle = handle;
+    this.setData({ unlockVisible: true });
   },
 
-  closeRedeem() {
-    this.setData({ redeemVisible: false, redeemCode: '' });
+  // 看视频解锁：回传 'ad'，广告拉起 / 完整观看登记 / 重试备份都在 utils 原流程
+  unlockByAd() {
+    this.setData({ unlockVisible: false });
+    const handle = this._unlockHandle;
+    this._unlockHandle = null;
+    if (handle) handle('ad');
   },
 
-  onRedeemInput(e) {
-    this.setData({ redeemCode: e.detail.value });
+  // 开通会员：结束本次备份流（购买在会员中心完成，返回后重按备份即走会员通道）
+  unlockByBuy() {
+    this.setData({ unlockVisible: false });
+    const handle = this._unlockHandle;
+    this._unlockHandle = null;
+    if (handle) handle('cancel');
+    this.goMembership();
   },
 
-  confirmRedeem() {
-    const code = (this.data.redeemCode || '').trim();
-    if (!code) {
-      wx.showToast({ title: '请输入邀请码', icon: 'none' });
-      return;
-    }
-    if (this._redeemBusy) return;
-    this._redeemBusy = true;
-    cloudBackup.redeemCode(code, {
-      onDone: (result) => {
-        this._redeemBusy = false;
-        if (result && result.ok) {
-          this.setData({ redeemVisible: false, redeemCode: '' });
-          this.refreshCloudEntitlement(); // 升永久：徽标展示 + 购买行隐藏
-        }
-      }
-    });
+  cancelUnlock() {
+    this.closeUnlock();
+  },
+
+  // 遮罩关闭与「暂不」同口径：静默结束本次流程，不算错误不提示
+  closeUnlock() {
+    this.setData({ unlockVisible: false });
+    const handle = this._unlockHandle;
+    this._unlockHandle = null;
+    if (handle) handle('cancel');
   },
 
   onCloudBackup() {
     if (this._cloudBusy) return;
     this._cloudBusy = true;
     cloudBackup.uploadToCloud({
+      // 无权益时页面弹「解锁选择」弹层（三动作），选择结果回传 utils 续跑
+      onNeedUnlock: (handle) => this.onNeedUnlock(handle),
       onDone: () => {
         this._cloudBusy = false;
         const cloudStateText = cloudBackup.getStateText();

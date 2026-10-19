@@ -26,27 +26,8 @@
         <text class="iconfont icon-right"></text>
       </view>
     </view>
-    <view class="weui-cell weui-cell_access" wx:if="{{!isMember}}" bindtap="onBuyLifetime">
-      <view class="weui-cell__bd">
-        <view class="weui-cell__bd_text db-title-row">开通永久会员<text class="db-badge db-badge--gold">早鸟价</text></view>
-        <view class="weui-cell__desc">一次买断 · 免看视频备份，不限次数</view>
-      </view>
-      <view class="weui-cell__ft">
-        <text class="db-price">¥9.9</text>
-        <text class="iconfont icon-right"></text>
-      </view>
-    </view>
-    <!-- 邀请码兑换入口常驻：缓存时效内误隐藏会让该用的人找不到；永久会员输码
-         由云函数提示未消耗可转赠，入口同时承载转赠前验证 -->
-    <view class="weui-cell weui-cell_access" bindtap="onRedeemCode">
-      <view class="weui-cell__bd">
-        <view class="weui-cell__bd_text">邀请码</view>
-        <view class="weui-cell__desc">输入邀请码直接开通永久会员，无需付费</view>
-      </view>
-      <view class="weui-cell__ft">
-        <text class="iconfont icon-right"></text>
-      </view>
-    </view>
+    <!-- 购买/邀请码入口已迁「会员中心」页（4.5.0 工具页去商业化）：
+         非会员转化走「我的-会员中心」+ 备份被拦时的解锁弹层，页面回归纯工具 -->
     <view class="weui-cell weui-cell_access" bindtap="onCloudRestore">
       <view class="weui-cell__bd">
         <view class="weui-cell__bd_text">从云端恢复</view>
@@ -107,7 +88,7 @@
     </view>
   </view>
 
-  <view class="weui-cells__tips">云端保留 1 份最新快照，换手机登录同一微信即可恢复；备份需永久会员或看视频解锁（每日最多 5 次），恢复与删除永久免费。文件备份由自己留存，可保留多个版本，重要数据建议两者都用。</view>
+  <view class="weui-cells__tips">云端保留 1 份最新快照，换手机登录同一微信即可恢复；备份需<text class="db-link" bindtap="goMembership">永久会员</text>或看视频解锁（每日最多 5 次），恢复与删除永久免费。文件备份由自己留存，可保留多个版本，重要数据建议两者都用。</view>
 
 </view>
 
@@ -141,38 +122,31 @@
   </view>
 </half-sheet>
 
-<!-- 邀请码兑换（自建弹层而非 showModal editable：input 无基础库版本门槛，风格与选孩子弹层统一） -->
+<!-- 云备份解锁选择（替代系统 showModal：三动作——看视频 / 开通会员 / 暂不；
+     开通会员跳会员中心页，购买完成后返回重按备份即走会员通道） -->
 <half-sheet
-  show="{{redeemVisible}}"
-  title="输入邀请码"
+  show="{{unlockVisible}}"
+  title="解锁云备份"
   font-class="{{fontClass}}"
   dark-class="{{darkClass}}"
   footer="{{true}}"
-  bind:close="closeRedeem"
+  bind:close="closeUnlock"
 >
-  <view class="redeem-body">
-    <!-- WeUI 表单口径（同编辑记录页输入行）：白卡 cells + 行首标签 + 右侧无底色输入，
-         行高 112rpx；弹层面板自带 32rpx 内边距，内容区不再叠缩进 -->
-    <view class="weui-cells">
-      <view class="weui-cell redeem-cell">
-        <view class="weui-cell__bd redeem-label">
-          <text class="weui-cell__bd_text">邀请码</text>
-        </view>
-        <view class="weui-cell__ft redeem-ft">
-          <input
-            class="redeem-input"
-            value="{{redeemCode}}"
-            placeholder="如 QB-XXXX-XXXX-XXXX"
-            placeholder-class="redeem-input-ph"
-            maxlength="24"
-            bindinput="onRedeemInput"
-          />
-        </view>
+  <view class="unlock-body">
+    <view class="unlock-buy" bindtap="unlockByBuy" hover-class="unlock-buy-hover">
+      <view class="unlock-buy__bd">
+        <view class="unlock-buy__title">开通永久会员<text class="db-badge db-badge--gold">早鸟价</text></view>
+        <view class="unlock-buy__desc">不限次数备份，无需再看视频</view>
+      </view>
+      <view class="unlock-buy__ft">
+        <text class="unlock-buy__price">¥9.9</text>
+        <text class="iconfont icon-right"></text>
       </view>
     </view>
+    <view class="unlock-note">不想开通也可以看一段短视频免费解锁本次备份</view>
   </view>
   <view slot="footer" class="weui-btn-area_inline">
-    <button class="weui-btn weui-btn_default" bindtap="closeRedeem">取消</button>
-    <button class="weui-btn weui-btn_primary" bindtap="confirmRedeem">兑换</button>
+    <button class="weui-btn weui-btn_default" bindtap="cancelUnlock">暂不</button>
+    <button class="weui-btn weui-btn_primary" bindtap="unlockByAd">看视频解锁</button>
   </view>
 </half-sheet>

@@ -1,0 +1,6 @@
+{
+  "usingComponents": {
+    "half-sheet": "/components/half-sheet/half-sheet"
+  },
+  "navigationBarTitleText": "会员中心"
+}

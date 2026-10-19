@@ -3,6 +3,7 @@
 // 无官方目标的阶段（大循环调整支线）按「试走量」12-20小时生成，保持未完成语义
 // 每日总时长15-60分钟，约12%的天数缺卡；日期从今天往回推算
 const { resourceLabels, parseTargetHours } = require('./data.js')
+const storage = require('./storage.js')
 const { READ_COUNT_KEY, saveAll, setCurrentStage, setCompletedStages, getCurrentRoute } = require('./checkin.js')
 
 function genId() {
@@ -183,7 +184,7 @@ function generateStressData(onProgress) {
 
   // 保存到存储（使用分片存储，自动按月拆分）
   saveAll(allCheckins)
-  wx.setStorageSync(READ_COUNT_KEY, readCounts)
+  storage.set(READ_COUNT_KEY, readCounts)
 
   // 设置当前阶段为最后阶段，并按晋级链标记前序完成（与 stagePicker 的链式写入一致：
   // 大循环下调整支线与主线互不误标；常规路线 = 数组前序，行为不变）

@@ -10,6 +10,7 @@
 // 依赖方向：data.js ← checkin.js ← customResources.js
 
 const checkin = require('./checkin.js')
+const storage = require('./storage.js')
 const { ROUTES, resourceLabels } = require('./data.js')
 const { getActiveChildId, getPrimaryChildId } = require('./children.js')
 
@@ -66,13 +67,13 @@ function _stageName(stageId) {
 
 function getAll() {
   try {
-    let v = wx.getStorageSync(_storageKey())
+    let v = storage.get(_storageKey())
     // 主孩子兜底：旧单孩键一次性迁移进孩子槽位并删除（读到即迁，幂等）
     if ((v === '' || v == null) && _isPrimary()) {
-      const legacy = wx.getStorageSync(STORAGE_KEY)
+      const legacy = storage.get(STORAGE_KEY)
       if (legacy && typeof legacy === 'object' && !Array.isArray(legacy)) {
-        try { wx.setStorageSync(_storageKey(), legacy) } catch (e2) {}
-        try { wx.removeStorageSync(STORAGE_KEY) } catch (e3) {}
+        try { storage.set(_storageKey(), legacy) } catch (e2) {}
+        try { storage.remove(STORAGE_KEY) } catch (e3) {}
         v = legacy
       }
     }
@@ -84,7 +85,7 @@ function getAll() {
 
 function _saveAll(data) {
   try {
-    wx.setStorageSync(_storageKey(), data || {})
+    storage.set(_storageKey(), data || {})
     return true
   } catch (e) {
     return false
@@ -99,7 +100,7 @@ function migrateLegacyData() {
 // 删除某孩子的全部自定义资源（供 children.removeChild 级联调用）
 function removeChildData(childId) {
   if (!childId) return
-  try { wx.removeStorageSync(STORAGE_KEY + '_' + childId) } catch (e) {}
+  try { storage.remove(STORAGE_KEY + '_' + childId) } catch (e) {}
 }
 
 function getByStage(stageId) {
@@ -277,9 +278,9 @@ function clearByStage(stageId) {
 // 清空当前孩子的自定义资源（多孩语义：不碰其他孩子）
 // 主孩子时顺带清 legacy 旧键，避免「清空后兜底迁移复活」
 function clearAll() {
-  try { wx.removeStorageSync(_storageKey()) } catch (e) {}
+  try { storage.remove(_storageKey()) } catch (e) {}
   if (_isPrimary()) {
-    try { wx.removeStorageSync(STORAGE_KEY) } catch (e) {}
+    try { storage.remove(STORAGE_KEY) } catch (e) {}
   }
 }
 

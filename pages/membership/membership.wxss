@@ -1,0 +1,82 @@
+/* ===== 会员中心 ===== */
+
+/* 状态卡标题：大号字重，徽标 flex 对齐（同数据管理页标题行口径） */
+.ms-hero__title {
+  display: flex;
+  align-items: center;
+  font-size: calc(36rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+/* 标题前的 vip 图标：金色与徽标/价格同系 */
+.ms-hero__icon {
+  margin-right: 10rpx;
+  color: #d29a3a;
+}
+
+/* 「已开通」金徽标（同 db-member-tag 样式口径） */
+.ms-tag {
+  margin-left: 12rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+  background: #d29a3a;
+  color: #fff;
+  font-size: calc(20rpx * var(--fs, 1));
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* 非会员状态卡右侧价格（金色，价格即诱因） */
+.ms-price {
+  font-size: calc(34rpx * var(--fs, 1));
+  font-weight: 600;
+  color: #d29a3a;
+  line-height: 1.41176471;
+}
+
+/* 开通按钮：金底白字（与徽标/价格同一金色系） */
+.ms-btn-gold {
+  background: #d29a3a;
+  color: #fff;
+}
+
+/* 权益行：金色对勾 + 标题 flex 对齐 */
+.ms-benefit {
+  display: flex;
+  align-items: center;
+}
+
+.ms-check {
+  margin-right: 12rpx;
+  color: #d29a3a;
+  font-weight: 600;
+}
+
+/* ===== 邀请码兑换弹层（自数据管理页迁入，样式同构） ===== */
+.redeem-cell {
+  padding-top: 12rpx;
+  padding-bottom: 12rpx;   /* 88rpx 输入框 + 12×2 = 112rpx 行高（WeUI cell 56px 口径） */
+}
+
+.redeem-cell .weui-cell__bd {
+  flex: none;              /* 标签仅两字不参与宽度分配，剩余宽度全让给输入框 */
+}
+
+.redeem-ft {
+  max-width: none;
+  flex: 1;
+}
+
+.redeem-input {
+  width: 100%;
+  height: 88rpx;           /* 「可点项最小热区」口径 */
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text);
+  text-align: right;       /* WeUI 表单：标签左、值右 */
+}
+
+.redeem-input-ph {
+  color: var(--text3);
+}

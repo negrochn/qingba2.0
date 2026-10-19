@@ -12,6 +12,7 @@
 //   qingba_resource_order_<childId>   : { [stageId]: { [groupKey]: [resourceId, ...] } }
 
 const children = require('./children.js')
+const storage = require('./storage.js')
 
 const HIDDEN_KEY = 'qingba_hidden_resources'
 const ORDER_KEY = 'qingba_resource_order'
@@ -28,7 +29,7 @@ function _orderKey() {
 
 function getHiddenMap() {
   try {
-    const v = wx.getStorageSync(_hiddenKey())
+    const v = storage.get(_hiddenKey())
     return (v && typeof v === 'object' && !Array.isArray(v)) ? v : {}
   } catch (e) {
     return {}
@@ -45,7 +46,7 @@ function hide(resourceId) {
   const map = getHiddenMap()
   map[resourceId] = true
   try {
-    wx.setStorageSync(_hiddenKey(), map)
+    storage.set(_hiddenKey(), map)
     return { ok: true }
   } catch (e) {
     return { ok: false, error: '保存失败' }
@@ -60,8 +61,8 @@ function unhide(resourceId) {
   delete map[resourceId]
   try {
     // 清空后删键，避免留下空对象键
-    if (Object.keys(map).length === 0) wx.removeStorageSync(_hiddenKey())
-    else wx.setStorageSync(_hiddenKey(), map)
+    if (Object.keys(map).length === 0) storage.remove(_hiddenKey())
+    else storage.set(_hiddenKey(), map)
     return { ok: true }
   } catch (e) {
     return { ok: false }
@@ -72,7 +73,7 @@ function unhide(resourceId) {
 
 function getOrderMap() {
   try {
-    const v = wx.getStorageSync(_orderKey())
+    const v = storage.get(_orderKey())
     return (v && typeof v === 'object' && !Array.isArray(v)) ? v : {}
   } catch (e) {
     return {}
@@ -111,8 +112,8 @@ function saveGroupOrder(stageId, groupKey, ids) {
   }
 
   try {
-    if (Object.keys(all).length === 0) wx.removeStorageSync(_orderKey())
-    else wx.setStorageSync(_orderKey(), all)
+    if (Object.keys(all).length === 0) storage.remove(_orderKey())
+    else storage.set(_orderKey(), all)
     return { ok: true }
   } catch (e) {
     return { ok: false, error: '保存失败' }
@@ -124,8 +125,8 @@ function saveGroupOrder(stageId, groupKey, ids) {
 // 删除某孩子的全部偏好（供 children.removeChild 延迟 require 级联调用）
 function removeChildData(childId) {
   if (!childId) return
-  try { wx.removeStorageSync(HIDDEN_KEY + '_' + childId) } catch (e) {}
-  try { wx.removeStorageSync(ORDER_KEY + '_' + childId) } catch (e) {}
+  try { storage.remove(HIDDEN_KEY + '_' + childId) } catch (e) {}
+  try { storage.remove(ORDER_KEY + '_' + childId) } catch (e) {}
 }
 
 module.exports = {

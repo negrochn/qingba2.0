@@ -20,3 +20,11 @@ page {
   background: var(--danger);
   vertical-align: middle;
 }
+
+/* 「会员中心」入口的值位（weui-cell__ft 内、箭头左侧）：仅会员态展示，
+   金色「永久会员」是身份确认；非会员纯导航无值位（价格只在意愿场景） */
+.mine-member-ft {
+  margin-right: 8rpx;
+  font-size: calc(26rpx * var(--fs, 1));
+  color: #d29a3a;
+}

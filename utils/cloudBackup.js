@@ -13,6 +13,7 @@
 const backup = require('./backup.js')
 const pako = require('./pako.min.js')
 const timeText = require('./timeText.js')
+const storage = require('./storage.js')
 
 const FUNC_NAME = 'cloudBackup'
 const AD_UNIT_ID = 'adunit-78cec41c9a325278' // 激励视频广告位（流量主后台创建）
@@ -21,11 +22,11 @@ const ENT_CACHE_KEY = 'qingba_ent_cache' // 权益缓存：{ t, member, credits,
 const ENT_CACHE_TTL = 10 * 60 * 1000 // 缓存时效：10 分钟，超时视为无缓存走实查
 
 function _get(key) {
-  try { return wx.getStorageSync(key) } catch (e) { return '' }
+  try { return storage.get(key) } catch (e) { return '' }
 }
 
 function _set(key, value) {
-  try { wx.setStorageSync(key, value) } catch (e) {}
+  try { storage.set(key, value) } catch (e) {}
 }
 
 // 真机上 hideLoading 紧接 showToast 会把提示吞掉（两者共用视图层），
@@ -114,7 +115,7 @@ function refreshCloudState(callback) {
   }
   wx.cloud.callFunction({
     name: FUNC_NAME,
-    data: { action: 'get' },
+    data: { action: 'get', env_tag: storage.envTag() },
     success: (res) => {
       const r = res && res.result
       if (r && r.ok && !r.empty && r.meta) {
@@ -210,8 +211,8 @@ function _doUpload(json, hooks, retried, freeFallback) {
   wx.cloud.callFunction({
     name: FUNC_NAME,
     data: freeFallback
-      ? { action: 'put', payload_z: payloadZ, free_fallback: true }
-      : { action: 'put', payload_z: payloadZ },
+      ? { action: 'put', payload_z: payloadZ, free_fallback: true, env_tag: storage.envTag() }
+      : { action: 'put', payload_z: payloadZ, env_tag: storage.envTag() },
     success: (res) => {
       wx.hideLoading()
       const r = res && res.result
@@ -244,7 +245,31 @@ function _doUpload(json, hooks, retried, freeFallback) {
 // 无权益时的引导弹窗 → 拉起激励视频 → 完整观看登记成功 → 重试备份
 // 注意：showModal 的 confirmText 真机最多 4 个字符（iOS 超限直接 fail），
 // 文案不能超 4 字，且必须带 fail 兜底——否则弹窗失败会静默无反馈并卡住页面忙碌态
+// 无权益时的引导：优先交由页面弹「解锁选择」自定义弹层（hooks.onNeedUnlock，
+// 4.5.0 会员中心上线后弹层含「看视频 / 开通会员 / 暂不」三动作，showModal 只装得下两个），
+// 页面经 handle(choice) 回传：'ad'=看视频续跑广告流程，'cancel'=放弃（开通会员跳页后由
+// 用户返回重按备份，不自动续跑）；未传 hook 的调用回落系统 showModal（confirmText
+// 真机最多 4 字符且必须带 fail 兜底，否则弹窗失败静默卡住忙碌态）
 function _offerAdUnlock(json, hooks) {
+  if (hooks && typeof hooks.onNeedUnlock === 'function') {
+    hooks.onNeedUnlock((choice) => {
+      if (choice === 'ad') {
+        _runRewardedAd({
+          onRewarded: () => _doUpload(json, hooks, 1),
+          onBroken: () => {
+            if (hooks.onDone) hooks.onDone({ ok: false })
+          },
+          onError: () => {
+            if (hooks.onDone) hooks.onDone({ ok: false })
+          },
+          onUnavailable: () => _offerFreeFallback(json, hooks)
+        })
+      } else {
+        if (hooks.onDone) hooks.onDone({ ok: false, cancelled: true })
+      }
+    })
+    return
+  }
   wx.showModal({
     title: '解锁云备份',
     content: '看一段短视频，即可免费备份一次。开通会员可无限制备份。',
@@ -322,7 +347,7 @@ function _runRewardedAd(hooks) {
     wx.showLoading({ title: '解锁中...', mask: true })
     wx.cloud.callFunction({
       name: FUNC_NAME,
-      data: { action: 'unlock' },
+      data: { action: 'unlock', env_tag: storage.envTag() },
       success: (ures) => {
         const ur = ures && ures.result
         if (ur && ur.ok) {
@@ -366,12 +391,12 @@ function getEntitlement(callback) {
   }
   wx.cloud.callFunction({
     name: FUNC_NAME,
-    data: { action: 'entitlement' },
+    data: { action: 'entitlement', env_tag: storage.envTag() },
     success: (res) => {
       const r = res && res.result
       if (r && r.ok) {
         try {
-          wx.setStorageSync(ENT_CACHE_KEY, {
+          storage.set(ENT_CACHE_KEY, {
             t: Date.now(), member: !!r.member, credits: r.credits | 0,
             dailyEarned: r.dailyEarned | 0, dailyLimit: r.dailyLimit | 0
           })
@@ -394,7 +419,7 @@ function getEntitlement(callback) {
 // 无缓存 / 超时 / 结构异常返回 null，调用方回落实查
 function getCachedEntitlement() {
   try {
-    const c = wx.getStorageSync(ENT_CACHE_KEY)
+    const c = storage.get(ENT_CACHE_KEY)
     if (c && c.t && Date.now() - c.t < ENT_CACHE_TTL && typeof c.member === 'boolean') {
       return { ok: true, member: c.member, credits: c.credits | 0,
         dailyEarned: c.dailyEarned | 0, dailyLimit: c.dailyLimit | 0 }
@@ -424,7 +449,7 @@ function restoreFromCloud(hooks) {
   wx.showLoading({ title: '获取云端快照...', mask: true })
   wx.cloud.callFunction({
     name: FUNC_NAME,
-    data: { action: 'get' },
+    data: { action: 'get', env_tag: storage.envTag() },
     success: (res) => {
       wx.hideLoading()
       const r = res && res.result
@@ -502,7 +527,7 @@ function _doDelete(hooks) {
   wx.showLoading({ title: '删除中...', mask: true })
   wx.cloud.callFunction({
     name: FUNC_NAME,
-    data: { action: 'delete' },
+    data: { action: 'delete', env_tag: storage.envTag() },
     success: (res) => {
       wx.hideLoading()
       const r = res && res.result
@@ -529,10 +554,10 @@ function _doDelete(hooks) {
 // 存量兼容：旧版本云备份会把时间戳写入备份模块本地 key，等值时一并清掉
 function _clearState() {
   try {
-    const s = wx.getStorageSync(STATE_KEY)
+    const s = storage.get(STATE_KEY)
     if (s && Number(s.updatedAt) > 0) backup.clearLastBackupIf(s.updatedAt)
   } catch (e) {}
-  try { wx.removeStorageSync(STATE_KEY) } catch (e) {}
+  try { storage.remove(STATE_KEY) } catch (e) {}
 }
 
 // 上传成功后按快照内容更新本地状态缓存（不存原文，只存概要）
@@ -580,7 +605,7 @@ function purchaseLifetime(hooks) {
       wx.showLoading({ title: '创建订单...', mask: true })
       wx.cloud.callFunction({
         name: FUNC_NAME,
-        data: { action: 'createOrder', product_id: LIFETIME_SKU, login_code: res.code },
+        data: { action: 'createOrder', product_id: LIFETIME_SKU, login_code: res.code, env_tag: storage.envTag() },
         success: (ores) => {
           wx.hideLoading()
           const or = ores && ores.result
@@ -675,7 +700,7 @@ function redeemCode(rawCode, hooks) {
   wx.showLoading({ title: '兑换中...', mask: true })
   wx.cloud.callFunction({
     name: FUNC_NAME,
-    data: { action: 'redeem', code },
+    data: { action: 'redeem', code, env_tag: storage.envTag() },
     success: (res) => {
       wx.hideLoading()
       const r = res && res.result

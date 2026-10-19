@@ -1,0 +1,94 @@
+<view class="container {{fontClass}} {{darkClass}}">
+
+  <!-- 会员状态卡：会员=身份确认（不可点）；非会员=开通入口（整行可点） -->
+  <view class="weui-cells__title">会员状态</view>
+  <view class="weui-cells">
+    <view class="weui-cell {{isMember ? '' : 'weui-cell_access'}}" bindtap="goBuy">
+      <view class="weui-cell__bd">
+        <view class="ms-hero__title"><text class="iconfont icon-vip ms-hero__icon"></text>永久会员<text class="ms-tag" wx:if="{{isMember}}">已开通</text></view>
+        <view class="weui-cell__desc">{{isMember ? '权益已全部生效，感谢支持' : '一次买断 · 云备份不限次 · 后续新权益免费享'}}</view>
+      </view>
+      <view class="weui-cell__ft">
+        <text class="ms-price" wx:if="{{!isMember}}">¥9.9</text>
+        <text class="iconfont icon-right" wx:if="{{!isMember}}"></text>
+      </view>
+    </view>
+  </view>
+  <view class="weui-btn-area" wx:if="{{!isMember}}">
+    <button class="weui-btn ms-btn-gold" bindtap="goBuy" hover-class="weui-btn_active">开通永久会员</button>
+  </view>
+
+  <!-- 权益清单（当前仅云备份相关；新权益上线在此追加） -->
+  <view class="weui-cells__title">会员权益</view>
+  <view class="weui-cells">
+    <view class="weui-cell">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text ms-benefit"><text class="ms-check iconfont icon-check"></text>云备份不限次</view>
+        <view class="weui-cell__desc">解除每日最多 5 次的备份限制</view>
+      </view>
+    </view>
+    <view class="weui-cell">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text ms-benefit"><text class="ms-check iconfont icon-check"></text>免看视频解锁</view>
+        <view class="weui-cell__desc">备份不用先看短视频，一键直达</view>
+      </view>
+    </view>
+    <view class="weui-cell">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text ms-benefit"><text class="ms-check iconfont icon-check"></text>后续新权益免费享</view>
+        <view class="weui-cell__desc">功能更新时自动包含在永久会员内</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 邀请码兑换（从数据管理页迁入，会员域统一） -->
+  <view class="weui-cells__title">邀请码</view>
+  <view class="weui-cells">
+    <view class="weui-cell weui-cell_access" bindtap="onRedeemCode">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text">使用邀请码</view>
+        <view class="weui-cell__desc">输入邀请码直接开通永久会员，无需付费</view>
+      </view>
+      <view class="weui-cell__ft">
+        <text class="iconfont icon-right"></text>
+      </view>
+    </view>
+  </view>
+
+  <view class="weui-cells__tips">一次买断，长期有效，绑定微信账号（换手机登录同一微信权益不丢），购买由微信虚拟支付提供收款服务。会员与打卡功能相互独立：不购买也可正常使用全部功能，云备份可用每日免费次数或看视频解锁。</view>
+
+</view>
+
+<!-- 邀请码兑换弹层（与数据管理页原弹层同构：WeUI 表单口径 + half-sheet） -->
+<half-sheet
+  show="{{redeemVisible}}"
+  title="输入邀请码"
+  font-class="{{fontClass}}"
+  dark-class="{{darkClass}}"
+  footer="{{true}}"
+  bind:close="closeRedeem"
+>
+  <view class="redeem-body">
+    <view class="weui-cells">
+      <view class="weui-cell redeem-cell">
+        <view class="weui-cell__bd redeem-label">
+          <text class="weui-cell__bd_text">邀请码</text>
+        </view>
+        <view class="weui-cell__ft redeem-ft">
+          <input
+            class="redeem-input"
+            value="{{redeemCode}}"
+            placeholder="如 QB-XXXX-XXXX-XXXX"
+            placeholder-class="redeem-input-ph"
+            maxlength="24"
+            bindinput="onRedeemInput"
+          />
+        </view>
+      </view>
+    </view>
+  </view>
+  <view slot="footer" class="weui-btn-area_inline">
+    <button class="weui-btn weui-btn_default" bindtap="closeRedeem">取消</button>
+    <button class="weui-btn weui-btn_primary" bindtap="confirmRedeem">兑换</button>
+  </view>
+</half-sheet>
