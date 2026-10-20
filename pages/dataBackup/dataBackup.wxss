@@ -129,6 +129,13 @@ page {
 }
 
 /* ===== 云备份解锁选择弹层（三动作：看视频 / 开通会员 / 暂不） ===== */
+/* 顶部风险告知行：数据丢失痛点前置（转化位），text2 比正文弱一档、比 note 醒目 */
+.unlock-risk {
+  padding: 4rpx 8rpx 16rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text2);
+  line-height: 1.6;
+}
 .unlock-buy {
   display: flex;
   align-items: center;

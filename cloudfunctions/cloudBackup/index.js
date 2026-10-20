@@ -11,6 +11,8 @@
 //                   拉起收银台）；发货由独立回调云函数 payNotify 完成，本函数不写权益
 //   redeem —— 邀请码兑换永久会员：一次性码原子核销（unused → used，防并发双兑）+
 //             写 membership（与 payNotify.onDeliver 同构）；已是永久会员拒绝且码不消耗
+//   track —— 激励视频漏斗埋点（弹层曝光/选择/完播/中断/免费放行等），白名单校验后落
+//             ad_funnel 集合（含 openid + 北京时间自然日），运营按事件聚合读转化漏斗
 //
 // 权益模型（商业化定案）：
 //   备份设墙、恢复/删除不设墙——取回自己的数据永远免费；
@@ -55,6 +57,8 @@ const ENT_COL = 'entitlements'
 const ENT_COL_DEV = 'entitlements_dev'
 const REDEEM_COL = 'redeem_codes' // 邀请码（一次性：unused → used；code 存去横线大写纯码）
 const REDEEM_COL_DEV = 'redeem_codes_dev' // dev 测试码放这里（控制台手动造码，不与正式码互通）
+const FUNNEL_COL = 'ad_funnel' // 激励视频漏斗埋点（纯运营分析，不参与功能判定；控制台预建，权限同 entitlements）
+const FUNNEL_COL_DEV = 'ad_funnel_dev' // dev 埋点独立落集合，与正式数据隔离
 const DAILY_AD_LIMIT = 5 // 每日最多通过广告获得的备份次数（防刷兜底，前端无感）
 const DAILY_FREE_LIMIT = 2 // 每日广告拉起失败的免费放行上限（审核安全兜底：广告无填充时备份仍可用）
 
@@ -85,8 +89,8 @@ function fail(code, message) {
 function _cols(event) {
   const dev = !!(event && event.env_tag === 'dev')
   return dev
-    ? { backups: COL_DEV, ent: ENT_COL_DEV, redeem: REDEEM_COL_DEV, vp: VP_COL_DEV, dev: true }
-    : { backups: COL, ent: ENT_COL, redeem: REDEEM_COL, vp: VP_COL, dev: false }
+    ? { backups: COL_DEV, ent: ENT_COL_DEV, redeem: REDEEM_COL_DEV, vp: VP_COL_DEV, funnel: FUNNEL_COL_DEV, dev: true }
+    : { backups: COL, ent: ENT_COL, redeem: REDEEM_COL, vp: VP_COL, funnel: FUNNEL_COL, dev: false }
 }
 
 exports.main = async (event) => {
@@ -103,6 +107,7 @@ exports.main = async (event) => {
     if (action === 'unlock') return await handleUnlock(OPENID, cols)
     if (action === 'createOrder') return await handleCreateOrder(OPENID, event, cols)
     if (action === 'redeem') return await handleRedeem(OPENID, event, cols)
+    if (action === 'track') return await handleTrack(OPENID, event, cols)
     return fail('BAD_ACTION', '未知操作')
   } catch (e) {
     console.error('cloudBackup error', e)
@@ -255,14 +260,29 @@ async function _loadEnt(openid, entCol) {
     }
     q = await db.collection(entCol).where({ openid }).limit(1).get()
   }
-  if (q.data.length) return q.data[0]
+  if (q.data.length) return await _giftCredits(q.data[0], entCol)
   try {
     await db.collection(entCol).add({
-      data: { openid, credits: 0, dailyDate: '', dailyEarned: 0, freeDate: '', freeUsed: 0, membership: null, updatedAt: Date.now() }
+      // 新用户建档即含 1 点免费体验（gifted 标记防重复补赠）：先免费体验一次云端备份、
+      // 建立价值感后再遇墙，看广告解锁的转化率高于冷启动即收费
+      data: { openid, credits: 1, gifted: true, dailyDate: '', dailyEarned: 0, freeDate: '', freeUsed: 0, membership: null, updatedAt: Date.now() }
     })
   } catch (e) { /* 并发下重复创建忽略 */ }
   const q2 = await db.collection(entCol).where({ openid }).limit(1).get()
   return q2.data[0] || null
+}
+
+// 存量权益档一次性补赠体验点（本功能上线前建档的用户 credits 均为 0，未体验过云端备份
+// 就撞墙是广告转化低的主因）：gifted 字段缺失才补，条件更新幂等（并发双调不会双发，
+// where gifted _.neq(true) 只有一个能命中）；补齐后 gifted 已在档内，本函数零额外开销
+async function _giftCredits(ent, entCol) {
+  if (!ent || ent.gifted === true) return ent
+  const res = await db.collection(entCol)
+    .where({ openid: ent.openid, gifted: _.neq(true) })
+    .update({ data: { credits: _.inc(1), gifted: true, updatedAt: Date.now() } })
+  if (!(res.stats && res.stats.updated > 0)) return ent // 并发下已被其他请求赠过，返回旧读值无碍
+  const q = await db.collection(entCol).where({ openid: ent.openid }).limit(1).get()
+  return (q.data && q.data[0]) || ent
 }
 
 // 备份闸门：会员放行；广告拉起失败走免费放行通道（每日限额，防审核环境判功能不可用）；
@@ -331,6 +351,39 @@ async function handleUnlock(openid, cols) {
     dailyEarned: ent && ent.dailyDate === today ? (ent.dailyEarned | 0) : 1,
     dailyLimit: DAILY_AD_LIMIT
   })
+}
+
+// ===== 激励视频漏斗埋点（纯运营分析，不参与任何功能判定） =====
+
+// 事件口径（前端 utils/cloudBackup.js 上报，白名单外一律丢弃防脏数据）：
+//   offer_show 弹层曝光 → offer_ad 选看视频 / offer_buy 选开通会员 / offer_cancel 放弃
+//   ad_broken 未完整观看 / ad_ended 完播并登记成功 / ad_unlock_fail 登记失败 /
+//   ad_unavailable 广告拉起失败 → free_fallback 免费放行确认 → retry_ok 被拦后重试备份成功
+const FUNNEL_EVENTS = [
+  'offer_show', 'offer_ad', 'offer_buy', 'offer_cancel',
+  'ad_broken', 'ad_ended', 'ad_unlock_fail', 'ad_unavailable',
+  'free_fallback', 'retry_ok'
+]
+
+// 埋点落库：{ openid, event, date(北京时间自然日), createdAt }，运营在云开发控制台按
+// event 聚合即可读出各环节转化率与流失点。写失败静默返回 ok——埋点绝不能影响备份主流程；
+// 集合缺失时沿用 _loadEnt 的建集合尝试模式（失败则需控制台手动预建）
+async function handleTrack(openid, event, cols) {
+  const ev = event && event.event
+  if (FUNNEL_EVENTS.indexOf(ev) < 0) return ok()
+  try {
+    await db.collection(cols.funnel).add({
+      data: { openid, event: ev, date: _bjDate(Date.now()), createdAt: Date.now() }
+    })
+  } catch (e) {
+    console.error('[ad_funnel] 埋点写入失败', ev, e && e.message)
+    try {
+      if (typeof db.createCollection === 'function') await db.createCollection(cols.funnel)
+    } catch (e2) {
+      console.error('[ad_funnel] 自动创建集合失败（需控制台预建）', e2 && e2.message)
+    }
+  }
+  return ok()
 }
 
 // ===== 支付层：永久会员买断（虚拟支付道具直购，发货收口 payNotify 回调） =====
@@ -492,6 +545,7 @@ async function handleRedeem(openid, event, cols) {
         data: {
           openid: ent.openid,
           credits: ent.credits || 0,
+          gifted: true, // 免费体验标记不因整文档替换丢失（丢了对老档会再补赠 1 点）
           dailyDate: ent.dailyDate || '',
           dailyEarned: ent.dailyEarned || 0,
           freeDate: ent.freeDate || '',
@@ -504,7 +558,7 @@ async function handleRedeem(openid, event, cols) {
       // 权益档不存在（_loadEnt 建档失败的极端情况）：与 _loadEnt 建档结构同构
       await db.collection(cols.ent).add({
         data: {
-          openid, credits: 0, dailyDate: '', dailyEarned: 0,
+          openid, credits: 1, gifted: true, dailyDate: '', dailyEarned: 0,
           freeDate: '', freeUsed: 0, membership, updatedAt: Date.now()
         }
       })

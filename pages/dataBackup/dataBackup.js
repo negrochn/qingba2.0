@@ -21,6 +21,8 @@ Page({
     isMember: false,     // 永久会员态：说明卡徽标 / 副文案口径（购买入口已迁会员中心页）
     // 云备份解锁选择弹层（非会员点数用尽时：看视频 / 开通会员 / 暂不）
     unlockVisible: false,
+    unlockRiskText: '', // 弹层顶部风险告知（「已积累 N 条打卡记录...」，utils 解析快照回传）
+    adLeftText: '',     // 弹层备注「今日还可看 N 次视频免费解锁」（权益实查带回；'' 回落原文案）
     // 导入备份 · 选孩子弹层（v2 单孩格式专用；v3 多孩格式整体恢复不经过此处）
     importPickVisible: false,
     importPickItems: [],
@@ -103,12 +105,18 @@ Page({
   refreshCloudEntitlement() {
     const apply = (ent) => {
       let text = '';
+      let adLeftText = '';
       if (ent && ent.ok) {
         if (ent.member) text = '暂无快照 · 会员不限次备份';
         else if (ent.credits > 0) text = '暂无快照 · 还可免费备份 ' + ent.credits + ' 次';
         else text = '暂无快照 · 看短视频解锁备份，会员不限次';
+        // 无点数非会员：算今日剩余可看次数（稀缺感促转化，弹层备注用）；0 = 今日已看满不展示
+        if (!ent.member && ent.credits <= 0 && ent.dailyLimit > 0) {
+          const left = Math.max(0, ent.dailyLimit - (ent.dailyEarned | 0));
+          if (left > 0) adLeftText = '今日还可看 ' + left + ' 次视频免费解锁';
+        }
       }
-      this.setData({ cloudEntText: text, isMember: !!(ent && ent.ok && ent.member) });
+      this.setData({ cloudEntText: text, isMember: !!(ent && ent.ok && ent.member), adLeftText });
     };
     const cached = cloudBackup.getCachedEntitlement();
     if (cached) apply(cached);
@@ -123,10 +131,17 @@ Page({
   // ===== 云备份解锁选择弹层（替代系统 showModal：三动作——看视频 / 开通会员 / 暂不。
   // utils 检测到无权益时经 onNeedUnlock 回调到这里弹层，选择结果回传续跑原流程） =====
 
-  // utils 回调：弹层选择结果的续跑句柄存实例上（关闭/选择后置空防重复回传）
-  onNeedUnlock(handle) {
+  // utils 回调：弹层选择结果的续跑句柄存实例上（关闭/选择后置空防重复回传）；
+  // info.recordCount 为本次快照打卡记录数，拼风险告知文案（0/缺省回落通用文案）
+  onNeedUnlock(handle, info) {
     this._unlockHandle = handle;
-    this.setData({ unlockVisible: true });
+    const n = (info && info.recordCount) | 0;
+    this.setData({
+      unlockVisible: true,
+      unlockRiskText: n > 0
+        ? '已积累 ' + n + ' 条打卡记录，仅保存在这台手机，换手机或清理微信缓存可能丢失且无法找回'
+        : '打卡数据仅保存在这台手机，换手机或清理微信缓存可能丢失且无法找回'
+    });
   },
 
   // 看视频解锁：回传 'ad'，广告拉起 / 完整观看登记 / 重试备份都在 utils 原流程
@@ -137,12 +152,13 @@ Page({
     if (handle) handle('ad');
   },
 
-  // 开通会员：结束本次备份流（购买在会员中心完成，返回后重按备份即走会员通道）
+  // 开通会员：结束本次备份流（购买在会员中心完成，返回后重按备份即走会员通道）；
+  // 回传 'buy' 仅用于漏斗埋点区分购买意向与放弃（utils 侧与 cancel 同为结束流程）
   unlockByBuy() {
     this.setData({ unlockVisible: false });
     const handle = this._unlockHandle;
     this._unlockHandle = null;
-    if (handle) handle('cancel');
+    if (handle) handle('buy');
     this.goMembership();
   },
 
@@ -162,8 +178,9 @@ Page({
     if (this._cloudBusy) return;
     this._cloudBusy = true;
     cloudBackup.uploadToCloud({
-      // 无权益时页面弹「解锁选择」弹层（三动作），选择结果回传 utils 续跑
-      onNeedUnlock: (handle) => this.onNeedUnlock(handle),
+      // 无权益时页面弹「解锁选择」弹层（三动作），选择结果回传 utils 续跑；
+      // info.recordCount（快照记录数）转发给弹层拼风险文案
+      onNeedUnlock: (handle, info) => this.onNeedUnlock(handle, info),
       onDone: () => {
         this._cloudBusy = false;
         const cloudStateText = cloudBackup.getStateText();

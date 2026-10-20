@@ -133,6 +133,7 @@
   bind:close="closeUnlock"
 >
   <view class="unlock-body">
+    <view class="unlock-risk">{{unlockRiskText}}</view>
     <view class="unlock-buy" bindtap="unlockByBuy" hover-class="unlock-buy-hover">
       <view class="unlock-buy__bd">
         <view class="unlock-buy__title">开通永久会员<text class="db-badge db-badge--gold">早鸟价</text></view>
@@ -143,7 +144,7 @@
         <text class="iconfont icon-right"></text>
       </view>
     </view>
-    <view class="unlock-note">不想开通也可以看一段短视频免费解锁本次备份</view>
+    <view class="unlock-note">{{adLeftText || '不想开通也可以看一段短视频免费解锁本次备份'}}</view>
   </view>
   <view slot="footer" class="weui-btn-area_inline">
     <button class="weui-btn weui-btn_default" bindtap="cancelUnlock">暂不</button>

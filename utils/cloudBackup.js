@@ -8,6 +8,8 @@
 //     时引导看激励视频 → unlock 登记 +1 点 → 自动重试备份。恢复/删除不设墙。
 //     广告拉起失败（审核环境无填充 / 广告位冷启动）时弹窗告知免费放行，put 带
 //     free_fallback 标记走云函数免费通道（每日 ≤2 次限额），备份功能始终可用。
+//  6. 激励视频漏斗埋点（fire-and-forget 上报云函数 track，失败静默）：弹层曝光/选择/
+//     完播/中断/免费放行/重试成功各环节，供运营读转化漏斗；不参与任何功能判定。
 // 页面层只做 UI 与流程胶水，数据与判断都收口在本文件。
 
 const backup = require('./backup.js')
@@ -35,6 +37,29 @@ function _toastAfterLoading(title, icon) {
   setTimeout(() => {
     wx.showToast({ title, icon: icon || 'none' })
   }, 150)
+}
+
+// 激励视频漏斗埋点：fire-and-forget 上报（事件白名单校验在云函数），失败静默——
+// 埋点绝不能阻塞备份主流程；事件口径见云函数 handleTrack 注释
+function _track(event) {
+  if (!isCloudAvailable()) return
+  try {
+    wx.cloud.callFunction({
+      name: FUNC_NAME,
+      data: { action: 'track', event, env_tag: storage.envTag() }
+    }).catch(() => {})
+  } catch (e) { /* 埋点失败静默 */ }
+}
+
+// 快照打卡记录总数（解锁弹层风险文案用）；解析失败返回 0，文案回落不带数字版本
+function _countRecords(json) {
+  try {
+    const d = JSON.parse(json)
+    const arr = Array.isArray(d.children) ? d.children : []
+    return arr.reduce((n, c) => n + (Array.isArray(c.checkin_records) ? c.checkin_records.length : 0), 0)
+  } catch (e) {
+    return 0
+  }
 }
 
 // ===== base64（Uint8Array ↔ string）：小程序无 btoa/atob，自实现，不依赖已停维护的 wx 转换 API =====
@@ -217,6 +242,7 @@ function _doUpload(json, hooks, retried, freeFallback) {
       wx.hideLoading()
       const r = res && res.result
       if (r && r.ok) {
+        if (retried) _track('retry_ok') // 被拦后（看视频解锁/免费放行）重试成功，漏斗收口
         _saveStateFromPayload(json, r.updatedAt || Date.now())
         // 云备份时间以 STATE_KEY 为事实源，不再写 backup.markBackedUp()：
         // getLastBackupTime 取「文件备份时间 / 云端快照时间」较大者，写本地
@@ -247,13 +273,18 @@ function _doUpload(json, hooks, retried, freeFallback) {
 // 文案不能超 4 字，且必须带 fail 兜底——否则弹窗失败会静默无反馈并卡住页面忙碌态
 // 无权益时的引导：优先交由页面弹「解锁选择」自定义弹层（hooks.onNeedUnlock，
 // 4.5.0 会员中心上线后弹层含「看视频 / 开通会员 / 暂不」三动作，showModal 只装得下两个），
-// 页面经 handle(choice) 回传：'ad'=看视频续跑广告流程，'cancel'=放弃（开通会员跳页后由
-// 用户返回重按备份，不自动续跑）；未传 hook 的调用回落系统 showModal（confirmText
-// 真机最多 4 字符且必须带 fail 兜底，否则弹窗失败静默卡住忙碌态）
+// 页面经 handle(choice) 回传：'ad'=看视频续跑广告流程，'buy'=开通会员（跳页后由
+// 用户返回重按备份，不自动续跑），其余=放弃；未传 hook 的调用回落系统 showModal（confirmText
+// 真机最多 4 字符且必须带 fail 兜底，否则弹窗失败静默卡住忙碌态）。
+// 弹层各环节上报漏斗埋点：曝光 offer_show → 选择 offer_ad / offer_buy / offer_cancel；
+// 回调第二参 info.recordCount 为快照记录数，供弹层痛点文案（「已积累 N 条打卡记录」）
 function _offerAdUnlock(json, hooks) {
+  const recordCount = _countRecords(json)
   if (hooks && typeof hooks.onNeedUnlock === 'function') {
+    _track('offer_show')
     hooks.onNeedUnlock((choice) => {
       if (choice === 'ad') {
+        _track('offer_ad')
         _runRewardedAd({
           onRewarded: () => _doUpload(json, hooks, 1),
           onBroken: () => {
@@ -265,21 +296,27 @@ function _offerAdUnlock(json, hooks) {
           onUnavailable: () => _offerFreeFallback(json, hooks)
         })
       } else {
+        _track(choice === 'buy' ? 'offer_buy' : 'offer_cancel')
         if (hooks.onDone) hooks.onDone({ ok: false, cancelled: true })
       }
-    })
+    }, { recordCount })
     return
   }
+  _track('offer_show')
   wx.showModal({
     title: '解锁云备份',
-    content: '看一段短视频，即可免费备份一次。开通会员可无限制备份。',
+    content: recordCount > 0
+      ? `已积累 ${recordCount} 条打卡记录，仅保存在这台手机，换手机或清理微信缓存可能丢失。看一段短视频即可免费备份到云端；开通会员不限次。`
+      : '打卡数据仅保存在这台手机，换手机或清理微信缓存可能丢失。看一段短视频即可免费备份到云端；开通会员不限次。',
     confirmText: '看视频',
     cancelText: '暂不',
     success: (r) => {
       if (!r.confirm) {
+        _track('offer_cancel')
         if (hooks.onDone) hooks.onDone({ ok: false, cancelled: true })
         return
       }
+      _track('offer_ad')
       _runRewardedAd({
         onRewarded: () => _doUpload(json, hooks, 1),
         onBroken: () => {
@@ -308,7 +345,10 @@ function _offerFreeFallback(json, hooks) {
     confirmText: '继续备份',
     cancelText: '暂不',
     success: (r) => {
-      if (r.confirm) _doUpload(json, hooks, 1, true)
+      if (r.confirm) {
+        _track('free_fallback')
+        _doUpload(json, hooks, 1, true)
+      }
       else if (hooks.onDone) hooks.onDone({ ok: false, cancelled: true })
     },
     fail: (err) => {
@@ -328,6 +368,7 @@ let _rewardedAd = null
 function _runRewardedAd(hooks) {
   if (!isCloudAvailable() || typeof wx.createRewardedVideoAd !== 'function') {
     // 低版本基础库没有广告组件，与拉起失败同待遇：走免费放行兜底，不让备份死在这
+    _track('ad_unavailable')
     if (hooks.onUnavailable) hooks.onUnavailable()
     else if (hooks.onError) hooks.onError()
     return
@@ -340,6 +381,7 @@ function _runRewardedAd(hooks) {
   const onClose = (res) => {
     ad.offClose(onClose)
     if (res && res.isEnded === false) {
+      _track('ad_broken')
       wx.showToast({ title: '需完整观看视频才能解锁', icon: 'none' })
       if (hooks.onBroken) hooks.onBroken()
       return
@@ -351,12 +393,14 @@ function _runRewardedAd(hooks) {
       success: (ures) => {
         const ur = ures && ures.result
         if (ur && ur.ok) {
+          _track('ad_ended') // 完整观看且登记成功（+1 点）
           // 不关 loading：文案直接从「解锁中...」过渡为「备份上传中...」，
           // 与紧随的重试备份无缝衔接（避免解锁/上传两次 loading 闪断）
           wx.showLoading({ title: '备份上传中...', mask: true })
           if (hooks.onRewarded) hooks.onRewarded(ur)
         } else {
           wx.hideLoading()
+          _track('ad_unlock_fail')
           _toastAfterLoading((ur && ur.message) || '解锁失败')
           if (hooks.onBroken) hooks.onBroken()
         }
@@ -364,6 +408,7 @@ function _runRewardedAd(hooks) {
       fail: (err) => {
         wx.hideLoading()
         console.error('解锁登记失败', err)
+        _track('ad_unlock_fail')
         _toastAfterLoading('网络异常，解锁失败')
         if (hooks.onBroken) hooks.onBroken()
       }
@@ -376,6 +421,7 @@ function _runRewardedAd(hooks) {
     ad.load().then(() => ad.show()).catch((err) => {
       console.error('激励视频拉起失败', err)
       ad.offClose(onClose)
+      _track('ad_unavailable')
       if (hooks.onUnavailable) hooks.onUnavailable()
       else if (hooks.onError) hooks.onError()
     })
