@@ -213,9 +213,11 @@ Page({
     const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday)
     const todayStr = checkin.todayStr(now)
     const weekStartStr = checkin.todayStr(monday)
-    // 上周同区间起点（前 7 天）
+    // 上周起点（前 7 天）；上周同期终点 = 今天 - 7 天——环比对齐到相同天数
+    // （本周 N 天 vs 上周同期 N 天），周初不再被「本周 1 天 vs 上周 7 天」压扁
     const lastMonday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() - 7)
     const lastWeekStartStr = checkin.todayStr(lastMonday)
+    const lastSameDayStr = checkin.todayStr(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7))
 
     const all = checkin.getAll()
     const weekDayMinutes = {}
@@ -242,8 +244,8 @@ Page({
           weekDayMinutes[day] = (weekDayMinutes[day] || 0) + min
           thisWeek += min
         } else if (day >= lastWeekStartStr && day < weekStartStr) {
-          lastWeek += min
-          lastWeekDayMinutes[day] = (lastWeekDayMinutes[day] || 0) + min
+          lastWeekDayMinutes[day] = (lastWeekDayMinutes[day] || 0) + min  // 灰柱要完整上周
+          if (day <= lastSameDayStr) lastWeek += min                      // 环比只取上周同期
         }
       }
     }
@@ -303,7 +305,8 @@ Page({
       }
     })
 
-    // 周环比（涨绿 / 跌红只作用于数值；「较上周」前缀保持中性灰）
+    // 周环比（同比口径：本周 N 天 vs 上周同期 N 天，与柱状图叠上周同星期一致；
+    // 涨绿 / 跌红只作用于数值，「较上周」前缀保持中性灰）
     let weekDeltaText = '—'
     let weekDeltaValue = ''
     let weekDeltaState = ''
