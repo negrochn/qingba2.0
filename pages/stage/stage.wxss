@@ -217,21 +217,6 @@
   color: var(--text3);
 }
 
-/* 分组进度摘要（品牌绿浅底标签） */
-.rg-progress {
-  display: flex;
-  align-items: center;
-  font-size: calc(28rpx * var(--fs, 1));
-  color: var(--brand);
-  margin-right: 12rpx;
-  background: var(--brand-soft);
-  padding: 4rpx 14rpx;
-  border-radius: 16rpx;
-}
-.rg-progress-empty,
-.rg-progress-locked { color: var(--text3); background: var(--cell-active); }
-.rg-progress-val { color: var(--brand); }
-
 /* 展开/折叠图标：展开态 icon-fold（提示可收起）、折叠态 icon-unfold（提示可展开），直接切换不旋转 */
 .rg-arrow {
   font-size: calc(34rpx * var(--fs, 1));
@@ -381,14 +366,11 @@
 
 .r-right { display: flex; align-items: center; flex-shrink: 0; gap: 8rpx; }
 
-/* 时长徽标（品牌绿，无渐变） */
-.r-badge {
-  background: var(--brand);
-  color: #fff;
-  padding: 6rpx 16rpx;
-  border-radius: 20rpx;
-  font-size: calc(28rpx * var(--fs, 1));
-  margin-right: 8rpx;
+/* 累计时长（WeUI cell 右侧值文字口径，同 .weui-cell__ft_value：34rpx + FG-1） */
+.r-acc {
+  color: var(--text2);
+  font-size: calc(34rpx * var(--fs, 1));
+  line-height: 1.41176471;
 }
 
 /* 行尾箭头：深浅档统一走 --text3（FG-2），与 WeUI 列表箭头一致（不用品牌绿） */

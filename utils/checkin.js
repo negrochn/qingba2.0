@@ -772,6 +772,28 @@ function getDayTotalsByStage(stageId, day) {
   return { minutes, rawMinutes }
 }
 
+// 某阶段内各资源的累计有效时长（分钟）——跨全部历史，按阶段隔离（同名资源在其他阶段的投入不计入）
+// key 口径与 getDayTotalsByStage 一致："groupKey|resourceName"（名称为记录里的快照）
+// 供阶段页绿标展示「本阶段累计投入」，页面侧再做 iHour 风格小时制格式化
+function getStageTotalsByResource(stageId) {
+  const minutes = {}
+  try {
+    const all = getAll()
+    for (const day in all) {
+      const list = all[day]
+      if (!Array.isArray(list)) continue
+      for (const r of list) {
+        if (!r || r.stageId !== stageId) continue
+        const k = `${r.groupKey}|${r.resourceName}`
+        minutes[k] = (minutes[k] || 0) + effectiveMinutes(r)
+      }
+    }
+  } catch (e) {
+    console.error('getStageTotalsByResource failed:', e)
+  }
+  return minutes
+}
+
 // 获取某月所有打卡记录
 // ym: 'YYYY-MM'
 function getByMonth(ym) {
@@ -1575,6 +1597,7 @@ module.exports = {
   totalCountAll,
   totalReadCountByStage,
   getDayTotalsByStage,
+  getStageTotalsByResource,
   fmtMinutes,
   fmtMinutesCN,
   getDefaultRemark,

@@ -67,8 +67,11 @@ Page({
       fusion_apps: true,
       listening_audio: true   // 熏听（是否展示由设置页开关决定）
     },
-    // 分组进度摘要 { groupKey: { todayMin } }
-    groupProgress: {},
+    // 资源今日打卡副文（「今日已打卡 X 分钟」与行 done 态用）{ "groupKey|资源名": 分钟 }
+    resTotals: {},       // 原始投入（今日）
+    resEffective: {},    // 有效时长（熏听行补「有效 X 分钟」，与统计 / 进度同口径）
+    // 资源本阶段累计文本 { "groupKey|资源名": "20m" / "1h20m" }（fmtMinutes 口径，学过就常驻显示）
+    resAccText: {},
     // 打卡弹窗
     showCheckin: false,
     currentGroup: null,       // { key, label }
@@ -440,31 +443,37 @@ Page({
   _refreshResTotals() {
     const stage = this.data.stage
     if (!stage) return
-    const totals = {}        // 原始投入（徽标 / 副文）
-    const effective = {}     // 有效时长（熏听行的「有效 X 分钟」）
-    const groupProgress = {}
+    const totals = {}        // 今日原始投入（副文 / 行 done 态）
+    const effective = {}     // 今日有效时长（熏听行的「有效 X 分钟」）
+    const accText = {}       // 本阶段累计绿标文本
+    this._resAccMin = {}     // 累计分钟原始值（打卡成功后乐观累加用，不下发渲染）
 
     // 一次读取当天该阶段全部资源的时长，避免在循环内重复全量读取
     const { minutes, rawMinutes } = checkin.getDayTotalsByStage(stage.stage_id, checkin.todayStr())
+    // 本阶段内各资源累计有效时长（绿标与统计/阶段进度同口径，按阶段隔离）
+    const accMin = checkin.getStageTotalsByResource(stage.stage_id)
 
     this.data.resourceGroups.forEach(g => {
       if (!g.clickable) return
-      let groupToday = 0
       g.items.forEach(res => {
         // 时长 key 用资源名（记录里的名称快照）
         const minKey = `${g.key}|${res.name}`
         // 是否「今天打过卡」按原始投入判断：熏听在常规1/2 的有效时长为 0，
-        // 若按有效值判断，这些行会被当成今天没打卡（徽标与分组头都不显示）
+        // 若按有效值判断，这些行会被当成今天没打卡（副文不显示）
         const raw = rawMinutes[minKey] || 0
         if (raw > 0) {
           totals[minKey] = raw
           effective[minKey] = minutes[minKey] || 0
-          groupToday += raw
+        }
+        // 累计文本：本阶段学过就常驻显示（不限于今天），格式 <60 -> Xm、>=60 -> XhYm
+        const acc = accMin[minKey] || 0
+        if (acc > 0) {
+          this._resAccMin[minKey] = acc
+          accText[minKey] = checkin.fmtMinutes(acc)
         }
       })
-      groupProgress[g.key] = { todayMin: groupToday }
     })
-    this.setData({ resTotals: totals, resEffective: effective, groupProgress })
+    this.setData({ resTotals: totals, resEffective: effective, resAccText: accText })
   },
 
   _refreshReadCounts() {
@@ -732,8 +741,8 @@ Page({
     checkin.saveDefaultRemark(stage.stage_id, currentGroup.key, currentResourceId, remarkText)
 
     // 有效时长：熏听分组按系数折算（0 / 0.5 / 0.8），其余分组与原始值相同
-    // 徽标与分组今日时长展示的是「原始投入」，有效值只用于熏听行副文的「有效 X 分钟」
-    // （统计与阶段进度另行按有效值算）
+    // 副文「今日已打卡 X 分钟」展示的是「原始投入」，有效值只用于熏听行副文的「有效 X 分钟」
+    // （统计、阶段进度与累计绿标按有效值算）
     const factor = typeof this.data.listeningFactor === 'number' ? this.data.listeningFactor : 1
     const effMinutes = Math.round(minutes * factor)
 
@@ -741,22 +750,23 @@ Page({
     // 基于本地值累加，避免再触发一次全量读取
     const newTotal = (Number(this.data.resTotals[resKey]) || 0) + minutes
     const newEffective = (Number(this.data.resEffective[resKey]) || 0) + effMinutes
-    
-    // 更新分组今日时长
-    const groupProgress = { ...this.data.groupProgress }
-    const prev = groupProgress[currentGroup.key] || { todayMin: 0 }
-    groupProgress[currentGroup.key] = { todayMin: prev.todayMin + minutes }
-    
+
+    // 累计绿标同步乐观累加（按折算后的有效值，与展示口径一致）
+    if (!this._resAccMin) this._resAccMin = {}
+    const newAcc = (this._resAccMin[resKey] || 0) + effMinutes
+    this._resAccMin[resKey] = newAcc
+
     // 整体下发两个 map：资源名可能含 . [ ]（如「RAZ D.2」），
     // 用 `resTotals.${resKey}` 这种 dataPath 会被解析成多级路径，导致该行徽标不刷新
     const resTotals = { ...this.data.resTotals, [resKey]: newTotal }
     const resEffective = { ...this.data.resEffective, [resKey]: newEffective }
+    const resAccText = { ...this.data.resAccText, [resKey]: checkin.fmtMinutes(newAcc) }
 
     this.setData({
       showCheckin: false,
       resTotals,
       resEffective,
-      groupProgress
+      resAccText
     })
     this._submitting = false
 
