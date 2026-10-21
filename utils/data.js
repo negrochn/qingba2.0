@@ -72,7 +72,7 @@ const routeData = {
         "main_graded_readers": [
           { "id": "o_r1_mgr_01", "name": "培生启明星L1" },
           { "id": "o_r1_mgr_02", "name": "培生词汇妙趣屋L1-2" },
-          { "id": "o_r1_mgr_03", "name": "Super hammy A-B" },
+          { "id": "o_r1_mgr_03", "name": "Super Hammy A-B" },
           { "id": "o_r1_mgr_04", "name": "Buddy Reader A-B" }
         ],
         "main_animations": [
@@ -119,7 +119,7 @@ const routeData = {
           { "id": "o_r2_mgr_01", "name": "牛津树L1-2" },
           { "id": "o_r2_mgr_02", "name": "培生启明星L2" },
           { "id": "o_r2_mgr_03", "name": "培生词汇妙趣屋L3" },
-          { "id": "o_r2_mgr_04", "name": "Super hammy C-D" },
+          { "id": "o_r2_mgr_04", "name": "Super Hammy C-D" },
           { "id": "o_r2_mgr_05", "name": "Buddy Reader C-D" }
         ],
         "main_animations": [
@@ -165,7 +165,7 @@ const routeData = {
         "main_graded_readers": [
           { "id": "o_r3_mgr_01", "name": "牛津树L3" },
           { "id": "o_r3_mgr_02", "name": "培生启明星L3" },
-          { "id": "o_r3_mgr_03", "name": "Super hammy E-F" },
+          { "id": "o_r3_mgr_03", "name": "Super Hammy E-F" },
           { "id": "o_r3_mgr_04", "name": "Buddy Reader E-F" },
           { "id": "o_r3_mgr_05", "name": "大猫L3（虚构）" }
         ],

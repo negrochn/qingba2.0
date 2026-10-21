@@ -5,7 +5,7 @@
 //      二阶段 tips 已按内容归属拆到各小段（切入方法各归牛1/2/3，小段摘要归牛4-6）
 //   2) resources 直用标准分组 key：分组顺序（GROUP_ORDER）、名称（resourceLabels）、
 //      阶段页色点（rg-dot-<key>）与常规路线完全同源
-//   3) 素材 id = 素材名（历史存储兼容，勿改 id）
+//   3) 素材 id 沿用素材名历史拼写（历史存储兼容，勿改 id；显示名拼写可修正）
 // tips 文案中「**…**」为行内高亮标记（对应官方素材红字标注），由 toKeyPoints 解析为片段
 
 // 「**…**」→ 行内片段 [{t, hi}]：split 交替产生普通/高亮段（奇数位为高亮）
@@ -78,7 +78,7 @@ module.exports = {
         "main_graded_readers": [
           { "id": "培生启明星L1", "name": "培生启明星L1" },
           { "id": "培生词汇妙趣屋L1-2", "name": "培生词汇妙趣屋L1-2" },
-          { "id": "Super hammy A-B", "name": "Super hammy A-B" },
+          { "id": "Super hammy A-B", "name": "Super Hammy A-B" },
           { "id": "Buddy Reader A-B", "name": "Buddy Reader A-B" }
         ],
         "sub_graded_readers": [
@@ -167,7 +167,7 @@ module.exports = {
         "main_graded_readers": [
           { "id": "培生启明星L1", "name": "培生启明星L1" },
           { "id": "培生词汇妙趣屋L1-2", "name": "培生词汇妙趣屋L1-2" },
-          { "id": "Super hammy A-B", "name": "Super hammy A-B" },
+          { "id": "Super hammy A-B", "name": "Super Hammy A-B" },
           { "id": "Buddy Reader A-B", "name": "Buddy Reader A-B" }
         ],
         "main_animations": [
@@ -224,7 +224,7 @@ module.exports = {
           { "id": "牛津树L1-2", "name": "牛津树L1-2" },
           { "id": "培生启明星L2", "name": "培生启明星L2" },
           { "id": "培生词汇妙趣屋L3", "name": "培生词汇妙趣屋L3" },
-          { "id": "Super hammy C-D", "name": "Super hammy C-D" },
+          { "id": "Super hammy C-D", "name": "Super Hammy C-D" },
           { "id": "Buddy Reader C-D", "name": "Buddy Reader C-D" }
         ],
         "main_animations": [
@@ -275,7 +275,7 @@ module.exports = {
         "main_graded_readers": [
           { "id": "牛津树L3", "name": "牛津树L3" },
           { "id": "培生启明星L3", "name": "培生启明星L3" },
-          { "id": "Super hammy E-F", "name": "Super hammy E-F" },
+          { "id": "Super hammy E-F", "name": "Super Hammy E-F" },
           { "id": "Buddy Reader E-F", "name": "Buddy Reader E-F" },
           { "id": "大猫L3（虚构）", "name": "大猫L3（虚构）" }
         ],
