@@ -31,6 +31,7 @@ const TITLES = {
   stage: '陪孩子练英语听力 · 阶段资源清单',
   records: '陪孩子练英语听力 · 每天的打卡都在这里',
   stats: '陪孩子练英语听力 · 用数据看时间投入',
+  myStats: '陪孩子练英语听力 · 用数据看时间投入',
   mine: DEFAULT_TITLE,
   about: DEFAULT_TITLE,
   aboutBigloop: '庆爸2.0 · 大循环路线（虚构类）介绍'

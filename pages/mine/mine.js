@@ -48,8 +48,8 @@ Page({
   goRecords() {
     wx.navigateTo({ url: '/pages/records/records' });
   },
-  goStats() {
-    wx.navigateTo({ url: '/pages/stats/stats' });
+  goMyStats() {
+    wx.navigateTo({ url: '/pages/myStats/myStats' });
   },
   goAbout() {
     wx.navigateTo({ url: '/pages/about/about' });

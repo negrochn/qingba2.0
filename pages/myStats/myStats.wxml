@@ -1,0 +1,154 @@
+<view class="container {{fontClass}} {{darkClass}}">
+
+  <!-- 顶部：阶段选择器（与数据统计页同款，全页按所选阶段统计） -->
+  <view class="section-head" wx:if="{{stageNames.length}}">
+    <picker mode="selector" range="{{stageNames}}" value="{{stageIndex}}" bindchange="onStageChange">
+      <view class="stage-picker">
+        <text class="stage-picker-name">{{stageName || "选择阶段"}}</text>
+        <text class="stage-picker-arrow">▾</text>
+      </view>
+    </picker>
+  </view>
+
+  <!-- ===== 卡1 总览：四联指标 + 当月打卡热力格 ===== -->
+  <view class="card">
+    <view class="card-head">
+      <text class="card-title">总览</text>
+    </view>
+    <view class="kpis">
+      <view class="kpi">
+        <view class="kpi-line"><text class="kpi-num">{{kpi.records}}</text></view>
+        <text class="kpi-label">总记录数</text>
+      </view>
+      <view class="kpi">
+        <view class="kpi-line"><text class="kpi-num">{{kpi.hours}}</text><text class="kpi-unit">h</text></view>
+        <text class="kpi-label">累计时长</text>
+      </view>
+      <view class="kpi">
+        <view class="kpi-line"><text class="kpi-num">{{kpi.days}}</text><text class="kpi-unit">天</text></view>
+        <text class="kpi-label">打卡天数</text>
+      </view>
+      <view class="kpi">
+        <view class="kpi-line"><text class="kpi-num">{{kpi.reads}}</text><text class="kpi-unit">次</text></view>
+        <text class="kpi-label">读完次数</text>
+      </view>
+    </view>
+
+  </view>
+
+  <!-- ===== 卡2 每日统计：标题 + 居中日期切换 + 分享；环形图（ECharts pie）+ 卡底图例 ===== -->
+  <view class="card">
+    <view class="card-head daily-head">
+      <text class="card-title">每日统计</text>
+      <view class="date-nav daily-date">
+        <text class="date-arrow date-arrow-prev iconfont icon-right {{daily.canPrev ? '' : 'date-arrow-off'}}" bindtap="onDailyPrev"></text>
+        <text class="date-val">{{daily.label}}</text>
+        <text class="date-arrow iconfont icon-right {{daily.canNext ? '' : 'date-arrow-off'}}" bindtap="onDailyNext"></text>
+      </view>
+    </view>
+    <view class="chart">
+      <canvas
+        type="2d"
+        id="chart-daily"
+        class="ring-box"
+        bindtouchstart="onChartTouchStart"
+        bindtouchmove="onChartTouchMove"
+        bindtouchend="onChartTouchEnd"
+      ></canvas>
+    </view>
+    <view class="legend" wx:if="{{daily.legend.length}}">
+      <view class="legend-row" wx:for="{{daily.legend}}" wx:key="name">
+        <view class="legend-avatar" style="background: {{item.color}};">{{item.initial}}</view>
+        <view class="legend-main">
+          <view class="legend-top">
+            <text class="legend-name">{{item.name}}</text>
+            <text class="legend-val">{{item.valText}}</text>
+          </view>
+          <view class="legend-bar-row">
+            <view class="legend-bar">
+              <view class="legend-fill" style="width: {{item.pct}}%; background: {{item.color}};"></view>
+            </view>
+            <text class="legend-pct">{{item.pct}}%</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 卡3 投入趋势：最近7天 / 按月 / 按年，Top N 堆叠柱 ===== -->
+  <view class="card">
+    <view class="card-head">
+      <text class="card-title">投入趋势</text>
+            <view class="tabs">
+        <text class="tab {{trend.mode === 'day7' ? 'tab-on' : ''}}" data-mode="day7" bindtap="onTrendMode">最近7天</text>
+        <text class="tab {{trend.mode === 'week' ? 'tab-on' : ''}}" data-mode="week" bindtap="onTrendMode">按周</text>
+        <text class="tab {{trend.mode === 'month' ? 'tab-on' : ''}}" data-mode="month" bindtap="onTrendMode">按月</text>
+        <text class="tab {{trend.mode === 'year' ? 'tab-on' : ''}}" data-mode="year" bindtap="onTrendMode">按年</text>
+      </view>
+    </view>
+    <view class="chart">
+      <canvas
+        type="2d"
+        id="chart-trend"
+        class="bar-box"
+        bindtouchstart="onChartTouchStart"
+        bindtouchmove="onChartTouchMove"
+        bindtouchend="onChartTouchEnd"
+      ></canvas>
+    </view>
+  </view>
+
+  <!-- ===== 卡4 投入分布：全部 / 年 / 月 + 资源排行 ===== -->
+  <view class="card">
+    <view class="card-head">
+      <text class="card-title">投入分布</text>
+      <view class="tabs">
+        <text class="tab {{dist.scope === 'all' ? 'tab-on' : ''}}" data-scope="all" bindtap="onDistScope">全部</text>
+        <text class="tab {{dist.scope === 'year' ? 'tab-on' : ''}}" data-scope="year" bindtap="onDistScope">年</text>
+        <text class="tab {{dist.scope === 'month' ? 'tab-on' : ''}}" data-scope="month" bindtap="onDistScope">月</text>
+        <text class="tab {{dist.scope === 'week' ? 'tab-on' : ''}}" data-scope="week" bindtap="onDistScope">周</text>
+      </view>
+    </view>
+    <view class="period-nav" wx:if="{{dist.scope !== 'all'}}">
+      <text class="date-arrow date-arrow-prev iconfont icon-right {{dist.canPrev ? '' : 'date-arrow-off'}}" bindtap="onDistPrev"></text>
+      <text class="date-val">{{dist.periodLabel}}</text>
+      <text class="date-arrow iconfont icon-right {{dist.canNext ? '' : 'date-arrow-off'}}" bindtap="onDistNext"></text>
+    </view>
+    <view class="dist-days" wx:else>
+      <text class="dist-days-text">在 QingBa2.0 记录时间的 </text>
+      <text class="dist-days-num">{{dist.totalDays}}</text>
+      <text class="dist-days-text"> 天</text>
+    </view>
+    <view class="chart">
+            <canvas
+        type="2d"
+        id="chart-dist"
+        class="ring-box"
+      ></canvas>
+    </view>
+      <!-- 图例：与每日统计同款 -->
+    <view class="legend" wx:if="{{dist.legend.length}}">
+      <view class="legend-row" wx:for="{{dist.legend}}" wx:key="name">
+        <view class="legend-avatar" style="background: {{item.color}};">{{item.initial}}</view>
+        <view class="legend-main">
+          <view class="legend-top">
+            <text class="legend-name">{{item.name}}</text>
+            <text class="legend-val">{{item.valText}}</text>
+          </view>
+          <view class="legend-bar-row">
+            <view class="legend-bar">
+              <view class="legend-fill" style="width: {{item.pct}}%; background: {{item.color}};"></view>
+            </view>
+            <text class="legend-pct">{{item.pct}}%</text>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="empty-hint" wx:else>
+      <text class="iconfont icon-info empty-icon"></text>
+      <text class="empty-text">该范围还没有打卡记录</text>
+    </view>
+  </view>
+
+
+</view>

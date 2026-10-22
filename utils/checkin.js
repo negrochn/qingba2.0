@@ -794,6 +794,89 @@ function getStageTotalsByResource(stageId) {
   return minutes
 }
 
+// ===== 我的统计：全景聚合（pages/myStats 专用）=====
+
+// 基准日期串偏移 n 天后的日期串（本地时区；n 可负）
+function _dayStrOffsetFrom(baseDay, n) {
+  const t = new Date(baseDay + 'T00:00:00')
+  t.setDate(t.getDate() + n)
+  return todayStr(t)
+}
+
+// 连续打卡：判定只看「当天是否有记录」（×0 熏听也算打过）
+// current 从今天往回数——今天没打卡不断签（从昨天起算，宽限一天，微信读书同款）；
+// longest 为历史最长连击：每个「前一天不在集合」的天都是一段连击起点
+function _calcStreak(daySet) {
+  const keys = Object.keys(daySet)
+  if (!keys.length) return { current: 0, longest: 0 }
+  const runFrom = (startOffset) => {
+    let n = 0
+    let off = startOffset
+    const today = todayStr()
+    while (daySet[_dayStrOffsetFrom(today, off)]) { n += 1; off -= 1 }
+    return n
+  }
+  const current = daySet[todayStr()] ? runFrom(0) : runFrom(-1)
+  let longest = 0
+  for (const d of keys) {
+    const prev = _dayStrOffsetFrom(d, -1)
+    if (daySet[prev]) continue
+    let n = 1
+    let off = 1
+    while (daySet[_dayStrOffsetFrom(d, off)]) { n += 1; off += 1 }
+    if (n > longest) longest = n
+  }
+  return { current, longest }
+}
+
+// 我的统计全景聚合：一次 getAll 派生全部总览指标
+// 口径：有效分钟 = durationMinutes × factor（熏听折算），与统计页 / 阶段晋级一致
+// days 只含「有记录的天」（值 = 当天有效分钟合计）——热力格 / 最近7天 / 按月按年趋势均由它派生，
+// 页面侧不重复读存储；byResource 为资源榜降序（环形图 / 排行共用）
+// @returns { totalRecords, totalMinutes, days, streak:{current,longest}, firstDay, lastDay, maxDayMinutes, byResource }
+function getOverallSummary() {
+  const days = {}
+  const byRes = {}
+  let totalRecords = 0
+  let totalMinutes = 0
+  try {
+    const all = getAll()
+    for (const day in all) {
+      const list = all[day]
+      if (!Array.isArray(list)) continue
+      for (const r of list) {
+        if (!r) continue
+        const eff = effectiveMinutes(r)
+        totalRecords += 1
+        totalMinutes += eff
+        days[day] = (days[day] || 0) + eff
+        const k = r.resourceName || '未命名'
+        byRes[k] = (byRes[k] || 0) + eff
+      }
+    }
+  } catch (e) {
+    console.error('getOverallSummary failed:', e)
+  }
+  const dayKeys = Object.keys(days).sort()
+  const daySet = {}
+  dayKeys.forEach((d) => { daySet[d] = true })
+  const byResource = Object.keys(byRes)
+    .map(name => ({ name, minutes: Math.round(byRes[name]) }))
+    .sort((a, b) => b.minutes - a.minutes)
+  let maxDayMinutes = 0
+  dayKeys.forEach((d) => { if (days[d] > maxDayMinutes) maxDayMinutes = days[d] })
+  return {
+    totalRecords,
+    totalMinutes: Math.round(totalMinutes),
+    days,
+    streak: _calcStreak(daySet),
+    firstDay: dayKeys[0] || '',
+    lastDay: dayKeys[dayKeys.length - 1] || '',
+    maxDayMinutes: Math.round(maxDayMinutes),
+    byResource
+  }
+}
+
 // 获取某月所有打卡记录
 // ym: 'YYYY-MM'
 function getByMonth(ym) {
@@ -1598,6 +1681,7 @@ module.exports = {
   totalReadCountByStage,
   getDayTotalsByStage,
   getStageTotalsByResource,
+  getOverallSummary,
   fmtMinutes,
   fmtMinutesCN,
   getDefaultRemark,

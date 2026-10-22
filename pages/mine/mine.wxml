@@ -22,9 +22,9 @@
       <view class="weui-cell__bd">打卡记录</view>
       <view class="weui-cell__ft"><text class="iconfont icon-right"></text></view>
     </view>
-    <view class="weui-cell weui-cell_access" bindtap="goStats">
+    <view class="weui-cell weui-cell_access" bindtap="goMyStats">
       <view class="weui-cell__hd"><text class="iconfont icon-rank"></text></view>
-      <view class="weui-cell__bd">数据统计</view>
+      <view class="weui-cell__bd">我的统计</view>
       <view class="weui-cell__ft"><text class="iconfont icon-right"></text></view>
     </view>
     <!-- 数据管理：备份 / 恢复 / 清空的唯一聚合页（设置页已无数据入口），

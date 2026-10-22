@@ -1,0 +1,253 @@
+/* 我的统计：跨阶段个人总览（模仿 iHour「我的统计」，WeUI 白卡分组）
+   与「数据统计」页分工：stats = 按阶段的累计分析，本页 = 个人总览 + 每日回顾 + 激励 */
+
+page { background: var(--bg); }
+
+/* ===== 白卡（同 stats 页口径：20rpx 圆角、无阴影） ===== */
+.card {
+  margin: 16rpx 32rpx 24rpx;
+  padding: 32rpx 24rpx;
+  background: var(--card);
+  border-radius: 20rpx;
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+.card-title {
+  font-size: calc(34rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ===== 顶部阶段选择器（照 stats 页） ===== */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 16rpx 32rpx;
+}
+.stage-picker {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx 16rpx;
+  background: var(--cell-active);
+  border-radius: 8rpx;
+}
+.stage-picker-name {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
+  font-weight: 500;
+}
+.stage-picker-arrow {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text3);
+}
+
+/* ===== 卡1 总览：四联指标（看板原语：大数字 + 弱说明） ===== */
+.kpis { display: flex; }
+.kpi {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.kpi-line { display: flex; align-items: baseline; }
+.kpi-num {
+  font-size: calc(64rpx * var(--fs, 1));
+  font-weight: 400;
+  color: var(--text);
+  line-height: 1.1;
+}
+.kpi-unit {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
+  margin-left: 4rpx;
+}
+.kpi-label {
+  margin-top: 8rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
+}
+
+/* ===== 图表容器 ===== */
+.chart { display: flex; justify-content: center; }
+.ring-box { width: 100%; height: 480rpx; }
+.bar-box { width: 100%; height: 380rpx; }
+
+/* ===== 卡2 每日统计：标题左、日期视觉居中 ===== */
+.daily-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.daily-date {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* ===== 日期/周期切换（每日统计 + 分布共用） ===== */
+.date-nav {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+.date-arrow {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: var(--card2);
+  color: var(--text2);
+  font-size: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.date-arrow-prev { transform: scaleX(-1); }   /* 左箭头 = 右箭头镜像 */
+.date-arrow-off { color: var(--text3); }   /* 圆底保持，仅图标变浅 */
+.date-val {
+  font-size: calc(30rpx * var(--fs, 1));
+  color: var(--text);
+  min-width: 120rpx;
+  text-align: center;
+}
+.period-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24rpx;
+  height: 48rpx;
+  margin-bottom: 16rpx;
+}
+/* 投入分布「全部」：记录天数文案（数字稍大） */
+.dist-days {
+  display: flex;
+  align-items: center;
+  height: 48rpx;
+  justify-content: center;
+  gap: 6rpx;
+  margin-bottom: 16rpx;
+}
+.dist-days-text {
+  font-size: 24rpx;
+  color: var(--text2);
+}
+.dist-days-num {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ===== 每日回顾图例：两列网格，紧凑项（色点 + 名字 + 时长） ===== */
+.legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 32rpx;
+  margin-top: 8rpx;
+}
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 4rpx 0;
+  min-width: 0;
+}
+.legend-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.legend-top {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  min-width: 0;
+}
+.legend-avatar {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(20rpx * var(--fs, 1));
+  color: #fff;
+  flex-shrink: 0;
+}
+.legend-name {
+  flex: 1;
+  min-width: 0;
+  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.legend-val {
+  flex-shrink: 0;
+  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text2);
+}
+.legend-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+.legend-bar {
+  flex: 1;
+  height: 12rpx;
+  background: var(--card2);
+  border-radius: 6rpx;
+  overflow: hidden;
+}
+.legend-fill { height: 100%; border-radius: 6rpx; }
+.legend-pct {
+  flex-shrink: 0;
+  min-width: 52rpx;
+  text-align: right;
+  font-size: calc(22rpx * var(--fs, 1));
+  color: var(--text2);
+}
+
+/* ===== 胶囊分段（WeUI 分段控件风：滑块白底 + 品牌绿字） ===== */
+.tabs {
+  display: flex;
+  background: var(--cell-active);
+  border-radius: 10rpx;
+  padding: 4rpx;
+}
+.tab {
+  padding: 6rpx 20rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text2);
+  border-radius: 8rpx;
+}
+.tab-on {
+  background: var(--card);
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* ===== 投入分布：资源排行 ===== */
+/* ===== 空态（同 stats 页口径） ===== */
+.empty-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32rpx 0;
+}
+.empty-icon {
+  font-size: calc(48rpx * var(--fs, 1));
+  color: var(--text3);
+}
+.empty-text {
+  margin-top: 12rpx;
+  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text2);
+}

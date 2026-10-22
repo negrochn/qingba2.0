@@ -8,7 +8,7 @@
     "pages/about/about",
     "pages/about-bigloop/about-bigloop",
     "pages/settings/settings",
-    "pages/stats/stats",
+    "pages/myStats/myStats",
     "pages/stagePicker/stagePicker",
     "pages/childManage/childManage",
     "pages/routePicker/routePicker",

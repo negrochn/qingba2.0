@@ -38,3 +38,4 @@
 .icon-calendar:before { content: "\e74a"; }
 .icon-fold:before { content: "\e661"; }
 .icon-unfold:before { content: "\e6de"; }
+.icon-roundright:before { content: "\e65b"; }
