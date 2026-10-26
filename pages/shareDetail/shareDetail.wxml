@@ -1,0 +1,32 @@
+<view class="container {{fontClass}} {{darkClass}}">
+
+  <!-- 类型选择：胶囊分段（同统计页 tabs 风格），无数据的类型置灰禁选 -->
+  <view class="card">
+    <view class="type-tabs">
+      <view
+        wx:for="{{typeList}}"
+        wx:key="key"
+        class="type-tab {{type === item.key ? 'type-tab-on' : ''}} {{item.disabled ? 'type-tab-off' : ''}}"
+        data-type="{{item.key}}"
+        bindtap="onPickType"
+      >{{item.name}}</view>
+    </view>
+    <view class="type-note" wx:if="{{disabledTip}}">{{disabledTip}}</view>
+  </view>
+
+  <!-- 预览：当前类型的分享图（长按可识别 / 发送） -->
+  <view class="card">
+    <view class="preview-box">
+      <image wx:if="{{preview}}" class="preview-img" src="{{preview}}" mode="widthFix" show-menu-by-longpress="{{true}}"></image>
+      <view wx:elif="{{generating}}" class="preview-tip">正在生成分享图…</view>
+      <view wx:elif="{{error}}" class="preview-tip">{{error}}</view>
+    </view>
+  </view>
+
+  <!-- 操作：保存到相册（含授权兜底）/ 转发给好友（拉起微信原生面板直接发图片） -->
+  <view class="weui-btn-area weui-btn-area_inline">
+    <button class="weui-btn weui-btn_default" bindtap="onSave" disabled="{{!preview}}">保存到相册</button>
+    <button class="weui-btn weui-btn_primary" bindtap="onForward" disabled="{{!preview}}">转发给好友</button>
+  </view>
+
+</view>

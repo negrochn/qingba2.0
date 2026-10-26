@@ -1,0 +1,69 @@
+/* 分享详情页：类型分段选择 + 预览 + 保存/转发（卡片口径同 myStats 页） */
+
+/* 底部按钮为 fixed 贴底：预留按钮区高度 + iPhone 安全区，长图滚动到底不被遮挡 */
+.container {
+  padding-bottom: calc(180rpx + env(safe-area-inset-bottom));
+}
+
+/* 类型分段（同 myStats .tabs 胶囊分段风） */
+.type-tabs {
+  display: flex;
+  background: var(--cell-active);
+  border-radius: 10rpx;
+  padding: 4rpx;
+}
+.type-tab {
+  flex: 1;
+  text-align: center;
+  padding: 12rpx 0;
+  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text2);
+  border-radius: 8rpx;
+}
+.type-tab-on {
+  background: var(--card);
+  color: var(--text);
+  font-weight: 500;
+}
+.type-tab-off { opacity: 0.4; }
+.type-note {
+  margin-top: 16rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+  text-align: center;
+}
+
+/* 预览区 */
+.preview-box {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 300rpx;
+}
+.preview-img {
+  width: 100%;
+  border-radius: 16rpx;
+  border: 1rpx solid var(--divider);
+}
+.preview-tip {
+  width: 100%;
+  padding: 120rpx 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text3);
+  font-size: calc(26rpx * var(--fs, 1));
+}
+
+/* 操作按钮固定底部（含 iPhone 底部安全区留白） */
+.weui-btn-area {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 16rpx 32rpx;
+  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+  background: var(--bg);
+  border-top: 1rpx solid var(--divider);
+}

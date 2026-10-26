@@ -9,6 +9,7 @@
     "pages/about-bigloop/about-bigloop",
     "pages/settings/settings",
     "pages/myStats/myStats",
+    "pages/shareDetail/shareDetail",
     "pages/stagePicker/stagePicker",
     "pages/childManage/childManage",
     "pages/routePicker/routePicker",
@@ -58,6 +59,11 @@
     ]
   },
   "style": "v2",
+  "permission": {
+    "scope.writePhotosAlbum": {
+      "desc": "用于将统计分享图保存到手机相册"
+    }
+  },
   "darkmode": true,
   "themeLocation": "theme.json",
   "sitemapLocation": "sitemap.json",

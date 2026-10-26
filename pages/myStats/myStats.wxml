@@ -1,6 +1,6 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- 顶部：阶段选择器（与数据统计页同款，全页按所选阶段统计） -->
+  <!-- 顶部：阶段选择器（与数据统计页同款，全页按所选阶段统计）+ 分享入口 -->
   <view class="section-head" wx:if="{{stageNames.length}}">
     <picker mode="selector" range="{{stageNames}}" value="{{stageIndex}}" bindchange="onStageChange">
       <view class="stage-picker">
@@ -8,6 +8,8 @@
         <text class="stage-picker-arrow">▾</text>
       </view>
     </picker>
+    <!-- 分享：进入分享详情页，可选导出 每日统计 / 投入趋势 / 投入分布 -->
+    <text class="head-share" bindtap="onShareTap">分享</text>
   </view>
 
   <!-- ===== 卡1 总览：四联指标 + 当月打卡热力格 ===== -->
@@ -37,7 +39,7 @@
   </view>
 
   <!-- ===== 卡2 每日统计：标题 + 居中日期切换 + 分享；环形图（ECharts pie）+ 卡底图例 ===== -->
-  <view class="card">
+  <view class="card daily-card">
     <view class="card-head daily-head">
       <text class="card-title">每日统计</text>
       <view class="date-nav daily-date">
@@ -150,5 +152,7 @@
     </view>
   </view>
 
+  <!-- 分享图合成用屏外 canvas（webview 渲染器无整页截图能力，方案见 utils/sharePoster.js） -->
+  <canvas type="2d" id="poster-canvas" class="poster-canvas"></canvas>
 
 </view>

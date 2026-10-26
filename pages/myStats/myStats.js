@@ -7,6 +7,8 @@
 
 const checkin = require('../../utils/checkin')
 const theme = require('../../utils/theme')
+const share = require('../../utils/share.js')
+const sharePoster = require('../../utils/sharePoster.js')
 const echarts = require('../../utils/echarts')
 const WxCanvas = require('../../utils/wx-canvas')
 
@@ -18,6 +20,7 @@ const WxCanvas = require('../../utils/wx-canvas')
 // 「其他」用弱灰（canvas 吃不到 CSS 变量，深浅色在 JS 侧选择后传入）
 const PALETTE = ['#f57c84', '#71b7f3', '#54d2b9', '#fca40d', '#b5a8e8']
 const WEEK_CN = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+// 趋势口径中文（分享图卡头右侧文本与转发标题用）
 
 // ISO 周号（周一为一周之始）
 function isoWeek(d) {
@@ -484,6 +487,127 @@ Page({
     return { year: d.getFullYear(), month: d.getMonth() + 1 }
   },
 
+
+  // ===== 分享：供分享详情页（pages/shareDetail）调用，生成三张统计图 =====
+  // 三张图均为 ECharts canvas 导出 + 屏外 canvas 合成（utils/sharePoster.js）：
+  // 每日统计 = iHour 式日期块卡头 + 图例；趋势 / 分布 = 还原页面卡头（标题 + tabs + 期号行）
+  // 不用 snapshot 整页截图：webview 渲染器不支持（仅 skyline），takeSnapshot 直接报错。
+  // 回传 out：{ daily/trend/dist: { path, title } | { error } | { disabled: true } }
+
+  // 进入分享详情页
+  onShareTap() {
+    wx.navigateTo({ url: '/pages/shareDetail/shareDetail' })
+  },
+
+  buildShareImages(done) {
+    const query = this.createSelectorQuery()
+    query.select('#chart-daily').fields({ node: true })
+    query.select('#chart-trend').fields({ node: true })
+    query.select('#chart-dist').fields({ node: true })
+    query.select('#poster-canvas').fields({ node: true })
+    query.exec(res => {
+      const node = i => (res && res[i] && res[i].node) || null
+      const poster = node(3)
+      const info = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()
+      const common = {
+        dark: theme.isDarkNow(),
+        windowWidth: info.windowWidth,
+        pixelRatio: info.pixelRatio
+      }
+      const out = { daily: null, trend: null, dist: null }
+      const tasks = []   // 合成共用屏外 canvas，需串行；导出在各自任务内进行
+
+      // ---- 每日统计：当日无记录置灰 ----
+      const dl = this.data.daily.legend || []
+      if (!dl.length) {
+        out.daily = { disabled: true }
+      } else if (!node(0)) {
+        out.daily = { error: '环形图未就绪，请返回重试' }
+      } else {
+        tasks.push(next => wx.canvasToTempFilePath({
+          canvas: node(0),
+          success: r => sharePoster.buildDailyPoster({
+            ...common,
+            canvas: poster,
+            dayBlock: this._dailyDay,
+            chartImg: r.tempFilePath,
+            legend: dl
+          }, (fp, err) => {
+            out.daily = fp ? { path: fp } : { error: err || '合成失败' }
+            next()
+          }),
+          fail: err => { out.daily = { error: (err && err.errMsg) || '导出失败' }; next() }
+        }))
+      }
+
+      // ---- 投入趋势：所有桶均为 0 视为无数据置灰 ----
+      const td = this._trendData
+      const trendSum = td
+        ? td.series.reduce((a, s) => a + s.data.reduce((x, v) => x + v, 0), 0)
+        : 0
+      if (!trendSum) {
+        out.trend = { disabled: true }
+      } else if (!node(1)) {
+        out.trend = { error: '趋势图未就绪，请返回重试' }
+      } else {
+        const modeIdx = ['day7', 'week', 'month', 'year'].indexOf(this._trendMode)
+        tasks.push(next => wx.canvasToTempFilePath({
+          canvas: node(1),
+          success: r => sharePoster.buildTrendPoster({
+            ...common,
+            canvas: poster,
+            title: '投入趋势',
+            tabs: { items: ['最近7天', '按周', '按月', '按年'], active: modeIdx },
+            chartImg: r.tempFilePath
+          }, (fp, err) => {
+            out.trend = fp ? { path: fp } : { error: err || '合成失败' }
+            next()
+          }),
+          fail: err => { out.trend = { error: (err && err.errMsg) || '导出失败' }; next() }
+        }))
+      }
+
+      // ---- 投入分布：当前范围无记录置灰；「全部」卡头为记录天数纯文本 ----
+      const dist = this.data.dist || {}
+      const rg = dist.legend || []
+      if (!rg.length) {
+        out.dist = { disabled: true }
+      } else if (!node(2)) {
+        out.dist = { error: '分布图未就绪，请返回重试' }
+      } else {
+        const isAll = dist.scope === 'all'
+        tasks.push(next => wx.canvasToTempFilePath({
+          canvas: node(2),
+          success: r => sharePoster.buildDailyPoster({
+            ...common,
+            canvas: poster,
+            title: '投入分布',
+            tabs: { items: ['全部', '年', '月', '周'], active: ['all', 'year', 'month', 'week'].indexOf(dist.scope) },
+            subText: isAll ? `在 QingBa2.0 记录时间的 ${dist.totalDays} 天` : dist.periodLabel,
+            chartImg: r.tempFilePath,
+            legend: rg
+          }, (fp, err) => {
+            out.dist = fp ? { path: fp } : { error: err || '合成失败' }
+            next()
+          }),
+          fail: err => { out.dist = { error: (err && err.errMsg) || '导出失败' }; next() }
+        }))
+      }
+
+      // 串行执行，全部完成后回传
+      let i = 0
+      const run = () => {
+        if (i >= tasks.length) { done(out); return }
+        tasks[i++](() => setTimeout(run, 60))
+      }
+      run()
+    })
+  },
+
+  // 右上角菜单转发：默认无图卡片（带图转发走分享详情页）
+  onShareAppMessage() {
+    return share.appMessage('myStats')
+  },
 
   // ===== 交互 =====
 

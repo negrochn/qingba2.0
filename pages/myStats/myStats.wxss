@@ -5,7 +5,7 @@ page { background: var(--bg); }
 
 /* ===== 白卡（同 stats 页口径：20rpx 圆角、无阴影） ===== */
 .card {
-  margin: 16rpx 32rpx 24rpx;
+  margin: 0 32rpx 24rpx;
   padding: 32rpx 24rpx;
   background: var(--card);
   border-radius: 20rpx;
@@ -22,11 +22,26 @@ page { background: var(--bg); }
   color: var(--text);
 }
 
-/* ===== 顶部阶段选择器（照 stats 页） ===== */
+/* ===== 页头分享入口（阶段选择器行右侧）+ 合成用屏外画布 ===== */
+.head-share {
+  padding: 8rpx 8rpx 8rpx 16rpx;
+  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--brand);
+}
+/* 屏外合成画布：参与渲染但不进视口，绘制缓冲尺寸由 JS 设定 */
+.poster-canvas {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 750px;
+  height: 1600px;
+}
+
+/* ===== 顶部阶段选择器（照 stats 页，右侧分享入口） ===== */
 .section-head {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   padding: 16rpx 32rpx;
 }
 .stage-picker {
