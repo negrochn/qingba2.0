@@ -1,0 +1,90 @@
+/* ============================================================
+   打卡矩阵原语（checkin-matrix.wxss）
+   周打卡七格矩阵：列表页成绩单卡（pages/reportCard）与详情页
+   一周成绩单（pages/reportCardDetail）共用，全局唯一一份来源
+   （由 app.wxss @import，改样式只改这里）。
+
+   结构：
+     [.matrix 容器可选——页面自定，如详情页用它画底部分隔线]
+     .grid-row.grid-cols   列头行（一 ~ 日；.col-today 今天高亮）
+     .grid-row × N         数据行（.row-head + .cell-box × 7）
+       .row-head > .rsc-avatar（色块首字头像）+ .rsc-name
+       .cell-box > .mark.mark-on（品牌绿 ✓）/ .mark-off（空格）
+
+   口径：打卡 ✓ 只看当天有无该资源记录（不看时长折算）；
+   头像色为资源色（全期首见顺序循环色板，见 utils/weeklySheet.js）。
+
+   页面差异在页面 wxss 覆写（公共文件只放两页一致的值）：
+     reportCardDetail：列头字号 28（展示型提档）、.grid-cols 上距 6rpx（合卡布局）
+   ============================================================ */
+
+.grid-row {
+  display: flex;
+  align-items: center;
+  padding: 6rpx 0;
+}
+.grid-cols {
+  padding-bottom: 2rpx;
+}
+.row-head {
+  width: 300rpx;
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding-right: 8rpx;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.rsc-avatar {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: calc(20rpx * var(--fs, 1));
+}
+.rsc-name {
+  font-size: calc(30rpx * var(--fs, 1));
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cell,
+.cell-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cell {
+  height: 40rpx;
+  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text3);
+}
+.cell.col-today {
+  color: var(--brand);
+  font-weight: 600;
+}
+.cell-box {
+  height: 48rpx;
+}
+.mark {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 4rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(24rpx * var(--fs, 1));
+}
+.mark-on {
+  background: var(--brand);
+  color: #ffffff;
+}
+.mark-off {
+  background: var(--cell-active);
+}

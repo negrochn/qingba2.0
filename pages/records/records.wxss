@@ -15,16 +15,19 @@ page {
   padding: 16rpx 32rpx;
 }
 
-/* 补录入口（右上角，次级按钮：弱化配色，避免抢眼） */
+/* 补录入口（右上角，白底描边胶囊：与 myStats 页头入口同款） */
 .overview-add {
   display: flex;
   align-items: center;
   gap: 4rpx;
   padding: 8rpx 20rpx;
-  background: var(--cell-active);
+  background: var(--card);
+  border: 1rpx solid var(--divider);
+  border-radius: 999rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, .04);
   color: var(--text2);
-  border-radius: 8rpx;
-  font-size: calc(28rpx * var(--fs, 1));
+  font-size: calc(26rpx * var(--fs, 1));
+  line-height: 1;
 }
 
 .overview-add:active {
@@ -32,9 +35,9 @@ page {
 }
 
 .overview-add-icon {
-  font-size: calc(30rpx * var(--fs, 1));
+  font-size: calc(26rpx * var(--fs, 1));
   line-height: 1;
-  color: var(--text3);
+  color: var(--text2);
 }
 
 /* 月份选择器（头部右侧，与首页一致） */

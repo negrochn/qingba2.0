@@ -22,11 +22,31 @@ page { background: var(--bg); }
   color: var(--text);
 }
 
-/* ===== 页头分享入口（阶段选择器行右侧）+ 合成用屏外画布 ===== */
-.head-share {
-  padding: 8rpx 8rpx 8rpx 16rpx;
+/* ===== 页头右侧描边胶囊入口（成绩单 / 分享）+ 合成用屏外画布 ===== */
+.head-actions {
+  display: flex;
+  align-items: center;
+}
+.head-link {
+  display: flex;
+  align-items: center;
+  padding: 8rpx 20rpx;
+  background: var(--card);
+  border: 1rpx solid var(--divider);
+  border-radius: 999rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, .04);
   font-size: calc(26rpx * var(--fs, 1));
-  color: var(--brand);
+  line-height: 1;
+  color: var(--text2);
+}
+.head-link__icon {
+  margin-right: 6rpx;
+  font-size: calc(26rpx * var(--fs, 1));
+  line-height: 1;
+  color: var(--text2);
+}
+.head-link + .head-link {
+  margin-left: 12rpx;
 }
 /* 屏外合成画布：参与渲染但不进视口，绘制缓冲尺寸由 JS 设定 */
 .poster-canvas {
@@ -92,6 +112,8 @@ page { background: var(--bg); }
 .chart { display: flex; justify-content: center; }
 .ring-box { width: 100%; height: 480rpx; }
 .bar-box { width: 100%; height: 380rpx; }
+/* 雷达图（分组投入对比）：轴名占位多，比环形图加高（旧数据统计页同款 520rpx） */
+.ring-box--radar { height: 520rpx; }
 
 /* ===== 卡2 每日统计：标题左、日期视觉居中 ===== */
 .daily-head {
@@ -265,4 +287,35 @@ page { background: var(--bg); }
   margin-top: 12rpx;
   font-size: calc(26rpx * var(--fs, 1));
   color: var(--text2);
+}
+
+/* ===== 卡6 我的图鉴：精简橱窗——一行最多 8 格（7 已收集图标 + 1 个「+N」未展示格），
+   格壳与详情页列表图标列（pages/decoDex 的 .dex-hd）同款：灰底 + 分隔线灰框 + 16rpx 圆角 ===== */
+.dex-progress {
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
+}
+.dex-strip { display: flex; flex-wrap: nowrap; gap: 12rpx; padding: 6rpx 0; }   /* 一行封顶：7 图标 + 1 个 +N 格 */
+.dex-chip {
+  box-sizing: border-box;
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cell-active);
+  border: 2rpx solid var(--divider);
+  border-radius: 16rpx;
+}
+.dex-chip-icon { width: 60rpx; height: 60rpx; }
+.dex-chip-more {
+  font-size: calc(24rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text3);
+}
+.dex-empty {
+  margin-top: 16rpx;
+  text-align: center;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
 }

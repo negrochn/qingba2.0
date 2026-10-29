@@ -1,0 +1,62 @@
+/* 我的图鉴详情页：结构全走 WeUI 原语（styles/weui-cells.wxss 的 cells/cell/title/hd/bd/ft），
+   本文件只补原语管不到的三件事：摘要行、档名语义色、水果图标列。
+   页面底色必须靠 .container（dm-auto 挂在上面），不能写 page 背景变量 */
+
+/* 行密度：原语 .weui-cell 上下 padding 已是 32rpx，72rpx 图标把每行撑到 ~136rpx，
+   专属类收紧上下到 24rpx（左右仍 32 与组标题对齐），每行 ~120rpx 更紧凑 */
+.dex-cell { padding: 24rpx 32rpx; }
+
+/* 摘要行：居中，重点数字品牌绿 */
+.summary {
+  padding: 24rpx 0 4rpx;
+  text-align: center;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
+}
+.summary-num { font-weight: 600; color: var(--brand); }
+
+/* 档名语义色（取自饼图色板 myStats PALETTE，稀有度越高越暖，形成灰→蓝→粉→橙梯度）：
+   稀有天蓝 / 限定粉彩红 / 隐藏橙黄「传说感」；常见款不定义，回退 WeUI 标题默认灰 */
+.dex-title--rare { color: #71b7f3; }
+.dex-title--seasonal { color: #f57c84; }
+.dex-title--hidden { color: #fca40d; }
+
+/* 水果图标列（weui-cell__hd 自带 margin-right 16rpx）：
+   分隔线灰框 + 浅灰底做「收集格」，两态同壳，off 态只差文字样式 */
+.dex-hd {
+  box-sizing: border-box;
+  width: 72rpx;
+  height: 72rpx;
+  justify-content: center;
+  background: var(--cell-active);
+  border: 2rpx solid var(--divider);
+  border-radius: 16rpx;
+}
+.dex-hd image { width: 60rpx; height: 60rpx; }
+/* 未解锁：「?」字色字号随容器继承，不露剪影 */
+.dex-hd--off {
+  font-size: calc(30rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text3);
+}
+.dex-name--off { color: var(--text3); }
+
+/* 已收集副标题：首次入册周（「10月第2周入册」）；多抽次数看行尾 ×N */
+.dex-sub {
+  margin-top: 4rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+}
+
+/* 行尾状态走 weui-cell__ft 默认（右对齐灰值），无页面样式 */
+
+/* 列表行不可点，压掉原语 .weui-cell:active 的按压底色（页面级，只影响本页） */
+.weui-cell:active { background-color: transparent; }
+
+/* 图鉴空态独立命名（.empty 已是全局空态原语，本页为纯文案款） */
+.dex-empty {
+  padding: 48rpx 0 40rpx;
+  text-align: center;
+  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text3);
+}

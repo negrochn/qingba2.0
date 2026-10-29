@@ -1,0 +1,264 @@
+.container {
+  padding: 24rpx 32rpx;
+  /* 底部为固定操作条让位（按钮高约 106rpx）+ 安全区（与 shareDetail 同款） */
+  padding-bottom: calc(env(safe-area-inset-bottom) + 160rpx);
+}
+
+/* 操作条固定底部（含 iPhone 底部安全区留白），覆写全局 WeUI 类，同 shareDetail */
+.weui-btn-area {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 16rpx 32rpx;
+  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+  background: var(--bg);
+  border-top: 1rpx solid var(--divider);
+}
+.card {
+  background: var(--card);
+  border-radius: 20rpx;
+  padding: 24rpx;
+  padding-bottom: 160rpx;          /* 底部装饰带：盲盒图标 48rpx + 上呼吸 40 + 旋转溢出/卡底余量 ~72 */
+  position: relative;              /* 底部装饰图标的定位基准 */
+  margin-bottom: 24rpx;
+}
+
+/* ===== 卡头：居中大标题 + 周次日期副行（合入单卡，卡内已有 24rpx 边距） ===== */
+.sheet-hero {
+  position: relative;              /* 装饰图标的定位基准 */
+  padding: 4rpx 0 24rpx;
+  text-align: center;
+  border-bottom: 1rpx solid var(--divider);
+}
+/* 盲盒装饰（utils/decoBox.js 按周抽定款式与排版）：统一 40rpx，坑位/偏移/角度全部内联 */
+/* top 6 挂 hero、foot 6 挂 card，绝对定位不占布局；彩色 PNG 深浅色模式通用 */
+.deco {
+  position: absolute;
+  width: 40rpx;
+  height: 40rpx;
+  opacity: 0.9;
+}
+/* 隐藏款光效：品牌绿光晕 + 呼吸透明度 */
+.deco-glow {
+  filter: drop-shadow(0 0 10rpx rgba(7, 193, 96, 0.85));
+  animation: deco-breathe 2.2s ease-in-out infinite;
+}
+/* 时令限定款光效：珊瑚粉光晕（与隐藏款绿光区分，色源 myStats 图表粉彩板首色） */
+.deco-glow-s {
+  filter: drop-shadow(0 0 10rpx rgba(245, 124, 132, 0.85));
+  animation: deco-breathe 2.2s ease-in-out infinite;
+}
+@keyframes deco-breathe {
+  50% { opacity: 0.55; }
+}
+
+/* 底部图标带中央的款式说明：水果名 + 稀有度（三档色与浮层徽章同源） */
+.deco-foot-label {
+  position: absolute;
+  bottom: 60rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  white-space: nowrap;
+  font-size: calc(28rpx * var(--fs, 1));
+}
+.deco-foot-name { color: var(--text2); }
+.deco-foot-dot { color: var(--text2); }
+.deco-foot-rarity--common { color: var(--text2); }
+.deco-foot-rarity--rare { color: #27ae60; }
+.deco-foot-rarity--hidden { color: #b8860b; font-weight: 600; }
+.deco-foot-rarity--seasonal { color: #e05a64; font-weight: 600; }
+
+/* ===== 抽中浮层：淡入→停→淡出一条 keyframes 完成，duration 由 js 按稀有度给（hold ms）===== */
+.deco-pop {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);   /* 遮罩压暗背景聚焦卡片，透明度随整层动画淡入淡出 */
+  animation: deco-pop-cycle 3000ms ease forwards;
+}
+.deco-pop-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 44rpx 64rpx 36rpx;
+  background: var(--card);
+  border-radius: 24rpx;
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.18);
+}
+.deco-pop-img { width: 96rpx; height: 96rpx; }
+.deco-pop-img-glow { filter: drop-shadow(0 0 16rpx rgba(7, 193, 96, 0.9)); }
+.deco-pop-img-glow-s { filter: drop-shadow(0 0 16rpx rgba(245, 124, 132, 0.9)); }
+.deco-pop-title {
+  margin-top: 20rpx;
+  font-size: calc(30rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text);
+}
+.deco-pop-badge {
+  margin-top: 14rpx;
+  padding: 4rpx 20rpx;
+  border-radius: 999rpx;
+  font-size: calc(22rpx * var(--fs, 1));
+  background: rgba(127, 127, 127, 0.14);
+  color: var(--text2);
+}
+.deco-pop-badge-green { background: rgba(46, 204, 113, 0.18); color: #27ae60; }
+.deco-pop-badge-gold { background: rgba(241, 196, 15, 0.22); color: #b8860b; font-weight: 600; }
+.deco-pop-badge-s { background: rgba(245, 124, 132, 0.18); color: #e05a64; font-weight: 600; }
+@keyframes deco-pop-cycle {
+  0%   { opacity: 0; transform: scale(0.72); }
+  10%  { opacity: 1; transform: scale(1); }
+  82%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+/* 品牌徽章：胶囊形（左右大圆角），白字绿底，随 --fs 缩放 */
+.hero-badge {
+  display: inline-block;
+  padding: 6rpx 26rpx;
+  border-radius: 999rpx;
+  background: var(--brand);
+  color: #ffffff;
+  font-size: calc(26rpx * var(--fs, 1));
+  font-weight: 400;
+  letter-spacing: 2rpx;
+}
+.hero-title {
+  margin-top: 12rpx;
+  font-size: calc(56rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text);
+}
+.hero-sub {
+  margin-top: 12rpx;
+  font-size: calc(34rpx * var(--fs, 1));
+  color: var(--text2);
+}
+
+/* ===== 打卡矩阵：公共原语见 styles/checkin-matrix.wxss（app.wxss 全局引入），
+   此处只覆写详情页差异 ===== */
+.grid-cols {
+  margin-top: 6rpx;                          /* 合卡后矩阵与标题卡头的间距 */
+}
+.cell {
+  font-size: calc(28rpx * var(--fs, 1));     /* 展示型列头，比公共 26 大一档 */
+}
+
+/* 矩阵底部分隔线（与投入区分界），留 24rpx 呼吸 */
+.matrix {
+  padding-bottom: 24rpx;
+  border-bottom: 1rpx solid var(--divider);
+}
+
+/* ===== 本周总投入 ===== */
+.sec-title {
+  margin: 16rpx 0 8rpx;
+  font-size: calc(30rpx * var(--fs, 1));
+  color: var(--text3);
+}
+/* 标题前奖台图标：同 myStats head-link__icon 惯例（随文字色号，跟随 --fs 缩放） */
+.sec-icon {
+  margin-right: 6rpx;
+  font-size: calc(30rpx * var(--fs, 1));
+  line-height: 1;
+  color: var(--text3);
+}
+.invest-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 12rpx 0;
+}
+/* 投入区头像：独立于矩阵的 .rsc-avatar，两处样式各自演化 */
+.invest-avatar {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: calc(30rpx * var(--fs, 1));
+}
+/* 头像独立左列（与右列间距由 .invest-row 的 gap 控制），右列自适应 */
+.invest-body {
+  flex: 1;
+  min-width: 0;
+}
+.invest-head {
+  display: flex;
+  align-items: center;
+}
+.invest-name {
+  font-size: calc(30rpx * var(--fs, 1));
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 时长（分级渲染）：外层「完成」底字弱化，数值大字 --text，单位小字再弱化 */
+.invest-min {
+  margin-left: auto;
+  padding-left: 16rpx;
+  flex-shrink: 0;
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text2);
+}
+.min-part {
+  font-size: calc(30rpx * var(--fs, 1));
+  color: var(--text);
+}
+.min-unit {
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+}
+
+/* 占比条：20 段正方块等距分布（缩进由左列头像布局承担；汇总行已与资源行同构，天然对齐） */
+.segbar {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6rpx;
+}
+.seg {
+  width: 26rpx;
+  height: 26rpx;
+  border-radius: 2rpx;
+  background: var(--cell-active);
+  flex-shrink: 0;
+}
+/* 亮段底色：汇总行品牌绿；资源行被 wxml 内联覆盖为资源色（与柱状图同色板） */
+.seg-on {
+  background: var(--brand);
+}
+/* 零头淡格：不足 1 小时的部分，同色降透明度（资源色/品牌色通用） */
+.seg-dim {
+  opacity: 0.35;
+}
+
+.total-label {
+  font-size: calc(30rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* 屏外合成画布：参与渲染但不进视口，绘制缓冲尺寸由 JS 设定（同 myStats） */
+.poster-canvas {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 750px;
+  height: 1600px;
+}
+
+/* ===== 空态：公共原语见 styles/empty-state.wxss（app.wxss 全局引入），本页无差异覆写 ===== */

@@ -128,7 +128,7 @@
 - **云开发**：微信云开发（云函数 `cloudBackup` + 云数据库）只承载用户主动备份的云端快照；打卡等核心数据仍全部存本地，云端不采集任何行为数据
 - **数据存储**：wx.getStorageSync / wx.setStorageSync（按月分片存储，含存储空间预警与两阶段写入回滚）
 - **文件操作**：wx.getFileSystemManager / wx.openDocument（导出 .docx 备份，导入 txt / json / docx）
-- **图表**：ECharts（按需构建，仅引入柱状图 / 雷达图，页面级集成，无需自定义组件）
+- **图表**：ECharts（按需构建，仅引入环形 / 堆叠柱状 / 雷达，页面级集成，无需自定义组件）
 - **图标**：iconfont —— 字形类抽到 `styles/iconfont.wxss`，字族以 base64 data URI 在 `app.wxss` 内联注册（跨页面生效）；更新字体后跑 `scripts/gen_iconfont_base64.ps1` 重新生成
 - **版本更新**：接入 `wx.getUpdateManager()`，新版本就绪时提示重启（不清本地数据）
 
@@ -148,7 +148,11 @@
 │   ├── records/              # 打卡记录（年 / 月筛选，左滑编辑 / 删除）
 │   ├── backfill/             # 打卡补录（一天多条：日期 + 阶段 + 当天多行，一次提交）
 │   ├── editRecord/           # 编辑单条打卡记录（一块 cells：日期 / 阶段 / 资源 / 时长 / 备注）
-│   ├── stats/                # 数据统计（阶段选择器 + 累计时长 / 图表 / 排行榜）
+│   ├── myStats/              # 我的统计（总览 KPI + 每日环形 / 趋势堆叠 / 分布环形 / 分组雷达 + 图鉴橱窗）
+│   ├── shareDetail/          # 分享详情（统计三图单选预览 + 保存相册 / 转发好友）
+│   ├── reportCard/           # 一周成绩单列表（按 ISO 周倒序卡片 + 打卡矩阵缩略）
+│   ├── reportCardDetail/     # 一周成绩单详情（打卡矩阵 + 投入占比 + 保存海报 + 盲盒装饰）
+│   ├── decoDex/              # 我的图鉴（盲盒水果收集进度与图鉴列表）
 │   ├── settings/             # 设置（切换路线 / 当前阶段 / 阶段目标时长 / 我的资源）
 │   ├── dataBackup/           # 数据管理（本机存储说明 + 云备份 / 文件备份 / 清空数据）
 │   ├── myResources/          # 我的资源（官方+自定义全量管理：隐藏/恢复/排序/索引条）
@@ -166,7 +170,9 @@
 │   └── resource-picker/      # 资源选择弹层（左分组 / 右资源，含分组记忆、高度按分组数自适应）
 ├── styles/
 │   ├── weui-cells.wxss       # 列表分组 / 单元格 / 单选（app.wxss 与自定义组件共用）
-│   └── iconfont.wxss         # .iconfont / .icon-* 字形类
+│   ├── iconfont.wxss         # .iconfont / .icon-* 字形类
+│   ├── checkin-matrix.wxss   # 打卡矩阵原语（成绩单列表 / 详情页共用，页面只覆写差异）
+│   └── empty-state.wxss      # 空态原语（灰底圆角块 + icon-upstage 奖台图标）
 ├── scripts/
 │   └── gen_iconfont_base64.ps1   # 生成 iconfont base64 data URI（更新字体后运行）
 ├── cloudfunctions/
@@ -179,6 +185,8 @@
 │   ├── theme.js              # 字号档位（跟随微信字体设置）与深色（固定跟随系统）的 CSS 变量下发
 │   ├── share.js              # 分享配置（转发给好友 / 分享到朋友圈，落地页统一首页）
 │   ├── sharePoster.js        # 统计分享图合成（ECharts 导出图 + 屏外 canvas 卡片版式，深浅色 token 手写对齐）
+│   ├── weeklySheet.js        # 一周成绩单视图模型（ISO 周聚合 / 打卡矩阵 / 投入分段 / 分级时长）
+│   ├── decoBox.js            # 盲盒装饰（按 ISO 周抽定款式与排版固化、稀有度划分、图鉴收集、备份恢复）
 │   ├── data.js               # 路线注册表与阶段静态数据、晋级链图语义判定、熏听分组占位与折算系数
 │   ├── bigloop_route.js      # 大循环路线（9 阶段，含可选调整支线与显式晋级链）
 │   ├── routeIntro.js         # 两个路线介绍页「阶段参考 + 素材要点」视图模型统一组装
@@ -187,11 +195,12 @@
 │   ├── cloudBackup.js        # 云端备份（权益闸门查询 / 激励视频解锁与漏斗埋点 / 快照状态缓存 / 恢复与删除 / 永久会员购买 purchaseLifetime）
 │   ├── pako.min.js           # pako gzip 压缩（云备份快照压缩后上云）
 │   ├── timeText.js           # 自然日时间文案（formatSmart，云端快照状态展示用）
-│   ├── echarts.js            # ECharts 按需构建（柱状图 / 雷达图）
+│   ├── echarts.js            # ECharts 按需构建（环形 / 堆叠柱状 / 雷达）
 │   ├── wx-canvas.js          # ECharts 微信 canvas 适配
 │   └── stress-test.js        # 测试数据生成（仅开发版可见，按阶段官方目标生成）
 ├── images/
-│   └── tabbar/               # tabBar 图标
+│   ├── tabbar/               # tabBar 图标
+│   └── deco/                 # 盲盒水果装饰 PNG（20 款，彩色绘制深浅色通用）
 ├── assets/
 │   └── fonts/                # iconfont.ttf / iconfont.woff 源文件
 ├── qingba_listening_route.json     # 常规路线原始数据

@@ -16,6 +16,7 @@ const customResources = require('./customResources.js')
 const theme = require('./theme.js')
 const docx = require('./docx.js')
 const timeText = require('./timeText.js')
+const decoBox = require('./decoBox.js')
 
 // ===== 存储 key（家庭级，不分孩：备份文件本身含全部孩子）=====
 const LAST_BACKUP_KEY = 'qingba_last_backup_time'            // 上次备份成功时间戳
@@ -200,6 +201,13 @@ function collectBackupJson() {
 
   // 字体大小档位（已跟随微信设置，字段保留以兼容旧版导入侧）
   data.font_level = theme.getFontLevel();
+
+  // 盲盒抽定记录（家庭级，按周固化；含 spins/jitters 排版参数整条原样进出，
+  // 恢复后老周装饰不变样；52 周/年约 15KB，远低于云端单文档 512KB 限制）
+  const decoRecords = decoBox.allRecords();
+  if (Object.keys(decoRecords).length) {
+    data.deco_records = decoRecords;
+  }
 
   // 版本信息
   data.__backup_meta = {
@@ -568,7 +576,7 @@ function importAllChildren(childrenArr, mode, rawData) {
     removeExtraChildren();
 
     // 全局（家庭级）设置只恢复一次
-    if (rawData) _applyGlobalData(rawData);
+    if (rawData) _applyGlobalData(rawData, mode);
   } finally {
     if (prevActiveId && children.getChildren().some(x => x.id === prevActiveId)) {
       children.switchChild(prevActiveId);
@@ -589,7 +597,7 @@ function importToChild(data, mode, targetId) {
   children.switchChild(targetId);
   try {
     _applyChildData(data, mode);
-    _applyGlobalData(data);
+    _applyGlobalData(data, mode);
   } finally {
     if (prevActiveId !== targetId) children.switchChild(prevActiveId);
   }
@@ -725,13 +733,18 @@ function _applyChildData(data, mode = 'overwrite') {
   }
 }
 
-// 全局（家庭级）设置：默认备注 + 熏听开关；字体档位已跟随微信设置，旧字段有意忽略
-function _applyGlobalData(data) {
+// 全局（家庭级）设置：默认备注 + 熏听开关 + 盲盒抽定记录；字体档位已跟随微信设置，旧字段有意忽略
+// 盲盒记录：v3 备份含（v2 旧格式无该字段，自动跳过）；
+// 覆盖=清空本机后整组恢复，合并=只补缺（抽定记录不可变，本机已有的一律不动）
+function _applyGlobalData(data, mode) {
   if (data.checkin_default_remark) {
     storage.set(checkin.DEFAULT_REMARK_KEY, data.checkin_default_remark);
   }
   if (typeof data.listening_enabled === 'boolean') {
     checkin.setListeningEnabled(data.listening_enabled);
+  }
+  if (data.deco_records) {
+    decoBox.restoreRecords(data.deco_records, mode);
   }
 }
 

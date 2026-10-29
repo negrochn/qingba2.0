@@ -1,0 +1,121 @@
+<view class="container {{fontClass}} {{darkClass}}">
+
+  <block wx:if="{{ready}}">
+
+    <!-- 单卡：标题卡头 + 打卡矩阵 + 本周总投入 -->
+    <view class="card">
+
+      <!-- 卡头：居中大标题 + 周次日期副行 + 盲盒装饰（首进该周抽定，顶 3+3，样式内联见 decoBox） -->
+      <view class="sheet-hero">
+        <image wx:for="{{deco.top}}" wx:key="style" class="deco {{deco.glow ? 'deco-glow' : ''}} {{deco.sglow ? 'deco-glow-s' : ''}}" src="/images/deco/{{deco.fruit}}.png" mode="aspectFit" style="{{item.style}}" />
+        <view class="hero-badge">QingBa</view>
+        <view class="hero-title">一周成绩单</view>
+        <view class="hero-sub">{{weekLabel}}　{{rangeLabel}}</view>
+      </view>
+
+      <!-- 打卡矩阵：该周全部资源行（列表卡截 3 行，此处完整展示） -->
+      <view class="matrix">
+        <view class="grid-row grid-cols">
+          <view class="row-head"></view>
+          <view class="cell {{c.today ? 'col-today' : ''}}" wx:for="{{cols}}" wx:for-item="c" wx:key="label">{{c.label}}</view>
+        </view>
+        <view class="grid-row" wx:for="{{rows}}" wx:for-item="row" wx:key="name">
+          <view class="row-head">
+            <view class="rsc-avatar" style="background: {{row.color}};">{{row.initial}}</view>
+            <text class="rsc-name">{{row.name}}</text>
+          </view>
+          <view class="cell-box" wx:for="{{row.cells}}" wx:for-item="c" wx:key="i">
+            <view class="mark mark-on" wx:if="{{c.done}}">✓</view>
+            <view class="mark mark-off" wx:else></view>
+          </view>
+        </view>
+
+        <!-- 我的一周：该周整体打卡情况（当天任一资源打卡即 ✓），样式与资源行同构 -->
+        <view class="grid-row">
+          <view class="row-head">
+            <view class="rsc-avatar" style="background: {{mine.color}};">{{mine.initial}}</view>
+            <text class="rsc-name">{{mine.name}}</text>
+          </view>
+          <view class="cell-box" wx:for="{{mine.cells}}" wx:for-item="c" wx:key="i">
+            <view class="mark mark-on" wx:if="{{c.done}}">✓</view>
+            <view class="mark mark-off" wx:else></view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 本周总投入：每资源折算时长 + 占比条；汇总行按打卡天数填充 -->
+      <view class="invest">
+        <view class="sec-title"><text class="iconfont icon-upstage sec-icon"></text>本周总投入</view>
+
+        <view class="invest-row" wx:for="{{rows}}" wx:for-item="row" wx:key="name">
+          <view class="invest-avatar" style="background: {{row.color}};">{{row.initial}}</view>
+          <view class="invest-body">
+            <view class="invest-head">
+              <text class="invest-name">{{row.name}}</text>
+              <text class="invest-min"><text class="min-part" wx:for="{{row.parts}}" wx:for-item="p" wx:key="u">{{p.v}}<text class="min-unit">{{p.u}}</text></text></text>
+            </view>
+            <view class="segbar">
+              <!-- 亮段用资源色（与 myStats 柱状图同色板）；三态：on 实色 / dim 零头淡格 / off 空格 -->
+              <view class="seg {{s.on ? 'seg-on' : ''}} {{s.dim ? 'seg-dim' : ''}}" style="{{s.on ? 'background:' + row.color : ''}}" wx:for="{{row.segs}}" wx:for-item="s" wx:key="i"></view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 汇总行：与资源行完全同构（头像「周」品牌色）；分隔线挂在 invest 内最后一行 -->
+        <view class="invest-row">
+          <view class="invest-avatar" style="background: var(--brand);">周</view>
+          <view class="invest-body">
+            <view class="invest-head">
+              <text class="total-label">本周总投入</text>
+              <text class="invest-min"><text class="min-part" wx:for="{{summary.parts}}" wx:for-item="p" wx:key="u">{{p.v}}<text class="min-unit">{{p.u}}</text></text></text>
+            </view>
+            <view class="segbar">
+              <view class="seg {{s.on ? 'seg-on' : ''}} {{s.dim ? 'seg-dim' : ''}}" wx:for="{{summary.segs}}" wx:for-item="s" wx:key="i"></view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 底部盲盒装饰：同款同排版，card 底部装饰带（padding-bottom 160 预留），bottom 定位内联 -->
+      <image wx:for="{{deco.foot}}" wx:key="style" class="deco {{deco.glow ? 'deco-glow' : ''}} {{deco.sglow ? 'deco-glow-s' : ''}}" src="/images/deco/{{deco.fruit}}.png" mode="aspectFit" style="{{item.style}}" />
+
+      <!-- 底部图标带中央：水果名 + 稀有度（与浮层同文案同色系） -->
+      <view class="deco-foot-label">
+        <text class="deco-foot-name">{{deco.name}}</text>
+        <text class="deco-foot-dot">·</text>
+        <text class="deco-foot-rarity deco-foot-rarity--{{deco.rarity}}">{{deco.rarityName}}</text>
+      </view>
+
+    </view>
+
+    <!-- 抽中浮层：该周首次进入弹一次（decoBox seen 标记），带遮罩，点击任意处提前关闭 -->
+    <view wx:if="{{decoPop}}" class="deco-pop" style="animation-duration: {{decoPop.hold}}ms;" bindtap="onDecoPopTap">
+      <view class="deco-pop-card">
+        <image class="deco-pop-img {{decoPop.glow ? 'deco-pop-img-glow' : ''}} {{decoPop.sglow ? 'deco-pop-img-glow-s' : ''}}" src="/images/deco/{{decoPop.fruit}}.png" mode="aspectFit" />
+        <view class="deco-pop-title">本周抽中 · {{decoPop.name}}</view>
+        <view class="deco-pop-badge {{decoPop.rarity === 'hidden' ? 'deco-pop-badge-gold' : (decoPop.rarity === 'seasonal' ? 'deco-pop-badge-s' : (decoPop.rarity === 'rare' ? 'deco-pop-badge-green' : ''))}}">{{decoPop.rarityName}}</view>
+      </view>
+    </view>
+
+  </block>
+
+  <!-- 空态（直链进入 / 该周无记录） -->
+  <view class="empty" wx:if="{{emptyText}}">
+    <view class="empty-icon">
+      <view class="empty-icon-inner">
+        <text class="iconfont icon-upstage"></text>
+      </view>
+    </view>
+    <view class="empty-text">{{emptyText}}</view>
+  </view>
+
+  <!-- 操作：与分享统计图（shareDetail）同款双按钮，海报就绪前置灰 -->
+  <view class="weui-btn-area weui-btn-area_inline" wx:if="{{ready}}">
+    <button class="weui-btn weui-btn_default" bindtap="onSave" disabled="{{!preview}}">保存到相册</button>
+    <button class="weui-btn weui-btn_primary" bindtap="onForward" disabled="{{!preview}}">转发给好友</button>
+  </view>
+
+  <!-- 屏外合成画布：一周成绩单白底海报（webview 无整页截图，方案见 utils/sharePoster.js） -->
+  <canvas type="2d" id="poster-canvas" class="poster-canvas"></canvas>
+
+</view>

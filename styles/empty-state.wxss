@@ -1,0 +1,46 @@
+/* ============================================================
+   空态原语（empty-state.wxss）
+   报告卡列表页 / 详情页共用的简洁款空态：中性灰圆角块 +
+   次级灰 icon-upstage 奖台图标 + 空态文案。
+   全局由 app.wxss @import，页面 wxss 不再各自定义。
+
+   结构：
+     .empty > .empty-icon > .empty-icon-inner > .iconfont.icon-upstage
+     .empty > .empty-text
+   ============================================================ */
+
+.empty {
+  padding-top: 280rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+/* 简洁款：单层中性灰圆角块，无内衬卡与投影。
+   底色用 --btn-default（半透明叠加）：列表页空态落在 --bg、详情页落在 --card，
+   任一实色都只适配一种底（--cell-active 撞 --bg、--card 撞弹窗，均踩过坑） */
+.empty-icon {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 36rpx;
+  background: var(--btn-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.empty-icon-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* iconfont 类自带 font-size: 36rpx，需两级选择器直接命中 icon 元素覆盖 */
+.empty-icon-inner .iconfont {
+  font-size: 72rpx;
+  line-height: 1;
+  color: var(--text2);
+}
+.empty-text {
+  margin-top: 44rpx;
+  font-size: calc(28rpx * var(--fs, 1));
+  font-weight: 500;
+  color: var(--text2);
+}

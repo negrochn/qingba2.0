@@ -2,15 +2,17 @@
 // 个人统计页：总览（KPI）+ 每日统计（环形图）+ 时间趋势 + 投入分布。
 // 聚合：全部按顶部所选阶段统计（_stageSummary 一次 getAll）；「天 × 资源」矩阵页面内自建一次，
 // 趋势堆叠 / 每日统计 / 范围分布全由矩阵派生，不逐项读存储。
-// 图表：每日/分布环形图与趋势堆叠柱走 ECharts（utils/echarts 定制构建，含 pie/bar/radar）。
+// 图表：每日/分布环形图、趋势堆叠柱与分组时长雷达走 ECharts（utils/echarts 定制构建，含 pie/bar/radar）。
 // 口径：全部按有效分钟（durationMinutes × factor，熏听折算），与统计页 / 晋级一致。
 
 const checkin = require('../../utils/checkin')
+const resources = require('../../utils/resources.js')
 const theme = require('../../utils/theme')
 const share = require('../../utils/share.js')
 const sharePoster = require('../../utils/sharePoster.js')
 const echarts = require('../../utils/echarts')
 const WxCanvas = require('../../utils/wx-canvas')
+const decoBox = require('../../utils/decoBox')
 
 // ===== 常量 =====
 
@@ -87,7 +89,9 @@ Page({
     stageNames: [],     // picker 的 range
     stageIndex: 0,
     stageName: '',
-    dist: { scope: 'all', periodLabel: '', canNext: false, top: null, tail: [] }
+    dist: { scope: 'all', periodLabel: '', canNext: false, top: null, tail: [] },
+    dex: null,                          // 我的图鉴（卡6）：decoBox.collection() 聚合结果
+    dexStrip: { items: [], more: 0 }    // 精简橱窗：已收集图标 + 未收集 +N
   },
 
   onLoad() {
@@ -111,6 +115,8 @@ Page({
     }
     // 数据可能在其它页变更，每次展示重算
     this._refresh()
+    // 图鉴随成绩单开盒变化，进页即刷新（开销：扫一遍 deco:* storage 键）
+    this._refreshDex()
   },
 
   onReady() {
@@ -219,6 +225,7 @@ Page({
     const days = {}
     const daySet = {}
     const byRes = {}
+    const byGroup = {}   // groupKey -> { name, minutes }（雷达图「分组时长对比」数据源）
     let totalRecords = 0
     let totalMinutes = 0
     try {
@@ -235,6 +242,10 @@ Page({
           daySet[day] = true
           const k = r.resourceName || '未命名'
           byRes[k] = (byRes[k] || 0) + eff
+          // 分组聚合（记录自带 groupKey / groupLabel，与旧数据统计页同口径）
+          const gk = r.groupKey || r.groupLabel || '未分组'
+          if (!byGroup[gk]) byGroup[gk] = { name: r.groupLabel || gk, minutes: 0 }
+          byGroup[gk].minutes += eff
         }
       }
     } catch (e) {
@@ -250,7 +261,9 @@ Page({
       lastDay: dayKeys[dayKeys.length - 1] || '',
       byResource: Object.keys(byRes)
         .map(name => ({ name, minutes: Math.round(byRes[name]) }))
-        .sort((a, b) => b.minutes - a.minutes)
+        .sort((a, b) => b.minutes - a.minutes),
+      byGroup: Object.keys(byGroup)
+        .map(key => ({ key, name: byGroup[key].name, minutes: Math.round(byGroup[key].minutes) }))
     }
   },
 
@@ -278,6 +291,8 @@ Page({
     this._dailyDay = sum.lastDay || checkin.todayStr()
     this._byDay = this._buildMatrix()
     this._colorMap = this._buildColorMap()
+    // 雷达图数据：分组维度（key + 有效分钟），轴顺序由 _ringAxisKeys 决定
+    this._ringData = (sum.byGroup || []).map(g => ({ key: g.key, value: g.minutes }))
 
     // ---- 卡1 KPI（最近 7 天含今天） ----
     const kpi = {
@@ -307,6 +322,7 @@ Page({
     this._renderTrend()
     this._renderDaily()
     this._renderDist()
+    this._renderRing()
   },
 
   // 有数据的年份区间（firstDay 年 ~ 今年），分布「年」与趋势「按年」的桶范围
@@ -493,6 +509,33 @@ Page({
   // 每日统计 = iHour 式日期块卡头 + 图例；趋势 / 分布 = 还原页面卡头（标题 + tabs + 期号行）
   // 不用 snapshot 整页截图：webview 渲染器不支持（仅 skyline），takeSnapshot 直接报错。
   // 回传 out：{ daily/trend/dist: { path, title } | { error } | { disabled: true } }
+
+  // 进入成绩单页（周打卡矩阵），沿用当前所选阶段
+  onReportTap() {
+    wx.navigateTo({ url: '/pages/reportCard/reportCard?stageId=' + (this._selStageId || '') })
+  },
+
+  // ===== 我的图鉴（卡6 精简橱窗，完整分组列表在 pages/decoDex 详情页）=====
+
+  // 橱窗数据：一行封顶——最多展示前 7 个已收集图标，末格固定「+N」（N = 未展示的其余款数，
+  // 含未展示的已收集 + 全部未收集）；明细进详情页看
+  _refreshDex() {
+    const dex = decoBox.collection()
+    const items = []
+    dex.groups.forEach(g => g.slots.forEach(s => { if (s.got) items.push(s) }))
+    items.length = Math.min(items.length, 7)
+    this.setData({ dex, dexStrip: { items, more: dex.total - items.length } })
+  },
+
+  // 整卡可点：进图鉴详情页
+  onDexTap() {
+    wx.navigateTo({ url: '/pages/decoDex/decoDex' })
+  },
+
+  // 空态引导：去成绩单开第一盒（沿用当前所选阶段）
+  onDexReport() {
+    this.onReportTap()
+  },
 
   // 进入分享详情页
   onShareTap() {
@@ -741,6 +784,12 @@ Page({
       this._distChart = chart
       this._renderDist()
     })
+    this._createChart('chart-ring', (canvas, w, h, dpr) => {
+      const chart = echarts.init(canvas, null, { width: w, height: h, devicePixelRatio: dpr })
+      canvas.setChart(chart)
+      this._ringChart = chart
+      this._renderRing()
+    })
   },
 
   _disposeCharts() {
@@ -755,6 +804,10 @@ Page({
     if (this._distChart) {
       try { this._distChart.dispose() } catch (e) {}
       this._distChart = null
+    }
+    if (this._ringChart) {
+      try { this._ringChart.dispose() } catch (e) {}
+      this._ringChart = null
     }
     this._chartReady = false
   },
@@ -1007,9 +1060,93 @@ _renderDist() {
     }, true)
   },
 
+  // ---- 分组投入对比（雷达图，旧「数据统计」页同款图形，随本页替代后应反馈加回） ----
+
+  // 雷达图的分组轴集合：当前阶段显示的分组 ∪ 记录里出现过的分组
+  // - 前者让轴数「按阶段动态」（熏听开关关闭时该轴不出现）
+  // - 后者兜住官方分组调整后的历史数据：那部分时长仍写在记录里，
+  //   若只按当前分组取轴，会「有数据但没轴」而画不出来
+  _ringAxisKeys() {
+    const stageId = this._selStageId
+    const keys = stageId ? resources.getStageGroupKeys(stageId).slice() : []
+    ;(this._ringData || []).forEach(d => {
+      if (d && d.key && keys.indexOf(d.key) < 0) keys.push(d.key)
+    })
+    return keys
+  },
+
+  // 各分组时长值：按 _ringAxisKeys 顺序取，无数据的轴保留为 0
+  _ringValues() {
+    const valByKey = {}
+    ;(this._ringData || []).forEach(d => { valByKey[d.key] = d.value })
+    return this._ringAxisKeys().map(k => valByKey[k] || 0)
+  },
+
+  _renderRing() {
+    if (!this._ringChart || !this._ringData) return
+    const axisKeys = this._ringAxisKeys()
+    // 3 轴以下画不出雷达形状，直接不画（避免 ECharts 报错；官方分组最少 7 个，仅极端兜底）
+    if (axisKeys.length < 3) return
+    const vals = this._ringValues()
+    const isDark = theme.isDarkNow()   // canvas 走不了 CSS 媒体查询，需含「跟随系统」的真实深色
+    const subTextColor = isDark ? 'rgba(255,255,255,0.5)' : '#737373'
+    const splitColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.06)'
+    const hasAny = vals.some(v => v > 0)
+    const maxVal = Math.max.apply(null, vals) || 1
+    const option = {
+      // 全零（该阶段无记录）：轴线仍在、数据面缩为中心点，加「暂无记录」占位（与环形图同套路）
+      title: {
+        text: hasAny ? '' : '暂无记录',
+        left: 'center', top: '52%',
+        textVerticalAlign: 'middle',
+        textStyle: { fontSize: 14, color: subTextColor }
+      },
+      radar: {
+        center: ['50%', '54%'],
+        radius: '62%',
+        indicator: axisKeys.map(k => ({ name: resources.getGroupLabel(k), max: maxVal })),
+        axisName: { color: subTextColor, fontSize: 12 },
+        splitLine: { lineStyle: { color: splitColor } },
+        axisLine: { lineStyle: { color: splitColor } },
+        splitArea: { show: false }
+      },
+      series: [{
+        type: 'radar',
+        symbol: 'circle',
+        symbolSize: 4,
+        data: [{
+          value: vals,
+          name: '分组投入',
+          // iHour 粉彩同族暖橙（#F5A742）：面积顶部 .26 渐隐到底 .05（对象式渐变，不依赖 graphic 命名空间），
+          // 描边/数据点实色——与整页色板统一（旧数据统计页为品牌绿，与本页粉彩系不搭）
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: 'rgba(245,167,66,.26)' },
+                { offset: 1, color: 'rgba(245,167,66,.05)' }
+              ]
+            }
+          },
+          lineStyle: { color: 'rgba(245,167,66,.85)', width: 2 },
+          itemStyle: { color: 'rgba(245,167,66,.9)' }
+        }]
+      }]
+    }
+    // 轴数变化时必须 notMerge：ECharts 对 indicator 数组是按下标合并的，
+    // 轴数变少时会残留旧轴 / 标签错位（切阶段、开关熏听都会改变轴数）
+    const axisChanged = this._ringAxisCount !== axisKeys.length
+    this._ringAxisCount = axisKeys.length
+    this._ringChart.setOption(option, axisChanged)
+  },
+
   // ===== canvas 触摸转发（原生 canvas 收不到手势，手动 dispatch 给 zrender） =====
   _chartByTouch(e) {
-    return e.currentTarget.id === 'chart-daily' ? this._dailyChart : this._trendChart
+    const id = e.currentTarget.id
+    if (id === 'chart-daily') return this._dailyChart
+    if (id === 'chart-trend') return this._trendChart
+    return null
   },
 
   _wrapTouch(event) {

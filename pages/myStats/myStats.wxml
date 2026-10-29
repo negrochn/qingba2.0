@@ -1,6 +1,6 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- 顶部：阶段选择器（与数据统计页同款，全页按所选阶段统计）+ 分享入口 -->
+  <!-- 顶部：阶段选择器（与数据统计页同款，全页按所选阶段统计）+ 成绩单 / 分享入口 -->
   <view class="section-head" wx:if="{{stageNames.length}}">
     <picker mode="selector" range="{{stageNames}}" value="{{stageIndex}}" bindchange="onStageChange">
       <view class="stage-picker">
@@ -8,8 +8,11 @@
         <text class="stage-picker-arrow">▾</text>
       </view>
     </picker>
-    <!-- 分享：进入分享详情页，可选导出 每日统计 / 投入趋势 / 投入分布 -->
-    <text class="head-share" bindtap="onShareTap">分享</text>
+    <!-- 成绩单：进入周打卡矩阵页；分享：进入分享详情页，可选导出 每日统计 / 投入趋势 / 投入分布 -->
+    <view class="head-actions">
+      <text class="head-link" bindtap="onReportTap"><text class="head-link__icon iconfont icon-upstage"></text>成绩单</text>
+      <text class="head-link" bindtap="onShareTap"><text class="head-link__icon iconfont icon-share"></text>分享</text>
+    </view>
   </view>
 
   <!-- ===== 卡1 总览：四联指标 + 当月打卡热力格 ===== -->
@@ -149,6 +152,39 @@
     <view class="empty-hint" wx:else>
       <text class="iconfont icon-info empty-icon"></text>
       <text class="empty-text">该范围还没有打卡记录</text>
+    </view>
+  </view>
+
+  <!-- ===== 卡5 分组投入对比：各分组累计有效时长雷达图（旧数据统计页同款） ===== -->
+  <view class="card">
+    <view class="card-head">
+      <text class="card-title">分组投入对比</text>
+    </view>
+    <view class="chart">
+      <canvas type="2d" id="chart-ring" class="ring-box ring-box--radar"></canvas>
+    </view>
+  </view>
+
+  <!-- ===== 卡6 我的图鉴：精简橱窗——已收集图标条 +「+N」未收集，完整分组列表进二级页（pages/decoDex） ===== -->
+  <view class="card" wx:if="{{dex}}" bindtap="onDexTap">
+    <view class="card-head">
+      <text class="card-title">我的图鉴</text>
+      <text class="dex-progress">{{dex.got}}/{{dex.total}}</text>
+    </view>
+
+    <!-- 已收集图标平铺（收集格壳与详情页列表同款），末尾 +N 未收集格 -->
+    <view class="dex-strip">
+      <view class="dex-chip" wx:for="{{dexStrip.items}}" wx:for-item="s" wx:key="f">
+        <image class="dex-chip-icon" src="/images/deco/{{s.f}}.png" mode="aspectFit" />
+      </view>
+      <view class="dex-chip">
+        <text class="dex-chip-more">+{{dexStrip.more}}</text>
+      </view>
+    </view>
+
+    <!-- 空态引导：catchtap 防止冒泡进详情页（此处可带所选阶段直达成绩单） -->
+    <view class="dex-empty" wx:if="{{!dex.got}}" catchtap="onDexReport">
+      <text>还没有开过盲盒，去成绩单开第一盒 ›</text>
     </view>
   </view>
 

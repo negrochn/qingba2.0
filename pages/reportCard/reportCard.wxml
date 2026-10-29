@@ -1,0 +1,46 @@
+<view class="container {{fontClass}} {{darkClass}}">
+
+  <!-- 每周一张成绩单卡（最近在上），点卡片进详情页看完整周报 -->
+  <view class="card" wx:for="{{weeks}}" wx:key="key" wx:for-item="wk"
+        hover-class="card-hover" bindtap="goDetail" data-y="{{wk.y}}" data-w="{{wk.w}}">
+    <view class="sheet-head">
+      <view class="head-left">
+        <text class="week-label">{{wk.weekLabel}}</text>
+        <image wx:if="{{wk.decoIcon.open}}" class="week-deco {{wk.decoIcon.glow ? 'week-deco-glow' : ''}} {{wk.decoIcon.sglow ? 'week-deco-glow-s' : ''}}" src="/images/deco/{{wk.decoIcon.fruit}}.png" mode="aspectFit" style="transform:rotate({{wk.decoIcon.spin}}deg)" />
+      </view>
+      <text class="range-label">{{wk.rangeLabel}}</text>
+    </view>
+
+    <view class="grid">
+      <!-- 列头：星期（今天列高亮） -->
+      <view class="grid-row grid-cols">
+        <view class="row-head"></view>
+        <view class="cell {{c.today ? 'col-today' : ''}}" wx:for="{{wk.cols}}" wx:for-item="c" wx:key="label">{{c.label}}</view>
+      </view>
+      <!-- 资源行：头像 + 名称 + 七格（最多 3 行） -->
+      <view class="grid-row" wx:for="{{wk.rows}}" wx:for-item="row" wx:key="name">
+        <view class="row-head">
+          <view class="rsc-avatar" style="background: {{row.color}};">{{row.initial}}</view>
+          <text class="rsc-name">{{row.name}}</text>
+        </view>
+        <view class="cell-box" wx:for="{{row.cells}}" wx:for-item="c" wx:key="i">
+          <view class="mark mark-on" wx:if="{{c.done}}">✓</view>
+          <view class="mark mark-off" wx:else></view>
+        </view>
+      </view>
+    </view>
+
+    <view class="card-more" wx:if="{{wk.more}}">还有 {{wk.more}} 项资源，点按查看详情 ›</view>
+  </view>
+
+  <!-- 空态：无记录时展示奖牌插画鼓励（对齐 iHour），引导类文案只显示文字 -->
+  <view class="empty" wx:if="{{emptyText}}">
+    <view class="empty-icon" wx:if="{{cheer}}">
+      <view class="empty-icon-inner">
+        <text class="iconfont icon-upstage"></text>
+      </view>
+    </view>
+    <view class="empty-text">{{emptyText}}</view>
+  </view>
+
+</view>

@@ -23,6 +23,25 @@ const GROUP_ORDER = [
   'listening_audio'       // 熏听
 ]
 
+// 分组识别色（与阶段详情页 / 我的资源页的 --dot-* 变量同源同值）：
+// CSS 变量 JS 读不到，图表 / 自绘面板要用色时走这张表；非标准 key（大循环官方中文分组）兜底灰
+const GROUP_COLORS = {
+  main_picture_books: '#e74c3c',   // 主线绘本
+  main_graded_readers: '#e67e22',  // 主线分级
+  main_animations: '#f1c40f',      // 主线动画
+  sub_graded_readers: '#2ecc71',   // 辅线分级
+  sub_animations: '#1abc9c',       // 辅线动画
+  fun_extensions: '#3498db',       // 趣味拓展
+  science_extensions: '#9b59b6',   // 科普拓展
+  fusion_apps: '#8e44ad',          // 融合APP
+  listening_audio: '#607d8b'       // 熏听
+}
+const GROUP_COLOR_DEFAULT = '#888888'
+
+function getGroupColor(groupKey) {
+  return GROUP_COLORS[groupKey] || GROUP_COLOR_DEFAULT
+}
+
 // 全路线查找（两路线 stage_id 命名空间隔离，不会互撞）；
 // 入参只带 stageId，按当前路线优先语义等价于精确命中
 function getStageById(stageId) {
@@ -169,6 +188,7 @@ module.exports = {
   getStageGroupKeys,
   isListeningVisible,
   getGroupLabel,
+  getGroupColor,
   getStageResources,
   getStageGroups,
   getResource,

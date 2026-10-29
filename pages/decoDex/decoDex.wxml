@@ -1,0 +1,33 @@
+<!-- 我的图鉴详情页：cell 结构全走 WeUI 原语（styles/weui-cells.wxss：cells/cell/title/hd/bd/ft），
+     页面只补语义色与图标列。未解锁不露真身（灰 ? 占位），行尾给线索；组序按稀有度递进 -->
+<view class="container {{fontClass}} {{darkClass}}">
+
+  <!-- 摘要行：居中 + 重点数字 -->
+  <view class="summary">已收集 <text class="summary-num">{{got}}</text> 款（共 {{total}} 款）</view>
+
+  <block wx:for="{{groups}}" wx:for-item="g" wx:key="key">
+    <!-- 分组标题：按档位挂语义色（dex-title--rare/seasonal/hidden），常见款无类回退默认灰 -->
+    <view class="weui-cells__title dex-title--{{g.key}}">{{g.name}} {{g.got}}/{{g.total}}</view>
+
+    <view class="weui-cells">
+      <view class="weui-cell dex-cell" wx:for="{{g.items}}" wx:for-item="it" wx:key="f">
+        <view class="weui-cell__hd dex-hd {{it.got ? '' : 'dex-hd--off'}}">
+          <image wx:if="{{it.got}}" src="/images/deco/{{it.f}}.png" mode="aspectFit" />
+          <text wx:else>?</text>
+        </view>
+        <view class="weui-cell__bd">
+          <view class="weui-cell__bd_text {{it.got ? '' : 'dex-name--off'}}">{{it.name}}</view>
+          <view class="dex-sub" wx:if="{{it.sub}}">{{it.sub}}</view>
+        </view>
+        <!-- 行尾线索：×N / 开盒可得 / 仅N月开出 / 开盒极稀有，样式走 weui-cell__ft 默认 -->
+        <view class="weui-cell__ft">{{it.status}}</view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 空态：纯文案引导（成绩单入口在「我的统计」，不在此跳转） -->
+  <view class="dex-empty" wx:if="{{!got}}">
+    <text>还没有开过盲盒 · 回「我的统计」进一周成绩单开第一盒</text>
+  </view>
+
+</view>

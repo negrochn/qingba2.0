@@ -153,10 +153,7 @@
     </view>
     <view class="home-stat">
       <text class="home-stat-arrow iconfont icon-right"></text>
-      <view class="home-stat-num">
-        <block wx:if="{{totalTime.h > 0}}"><text>{{totalTime.h}}</text><text class="home-stat-unit">小时</text></block>
-        <block wx:if="{{totalTime.m > 0 || totalTime.h === 0}}"><text>{{totalTime.m}}</text><text class="home-stat-unit">分钟</text></block>
-      </view>
+      <view class="home-stat-num">{{totalHoursText}}<text class="home-stat-unit">小时</text></view>
       <view class="home-stat-label">阶段时长</view>
     </view>
     <view class="home-stat">

@@ -1,0 +1,61 @@
+.container {
+  padding: 24rpx 32rpx;
+  /* 底部留白 + 全面屏 home 条安全区 */
+  padding-bottom: calc(env(safe-area-inset-bottom) + 48rpx);
+}
+.card {
+  background: var(--card);
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+}
+.card-hover {
+  opacity: .85;
+}
+
+/* 卡头：周标签（左）+ 日期范围（右），下缘分隔线与矩阵隔开 */
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+  padding: 0 8rpx 12rpx;
+  border-bottom: 1rpx solid var(--divider);
+}
+.week-label {
+  font-size: calc(34rpx * var(--fs, 1));
+  font-weight: 600;
+  color: var(--text2);
+}
+.head-left {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+/* 周标签右侧的盲盒图标：该周抽定款式（utils/decoBox.js），隐藏款绿光 / 时令限定款珊瑚粉光 */
+.week-deco {
+  width: 36rpx;
+  height: 36rpx;
+  margin-left: 6rpx;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+.week-deco-glow { filter: drop-shadow(0 0 8rpx rgba(7, 193, 96, 0.85)); }
+.week-deco-glow-s { filter: drop-shadow(0 0 8rpx rgba(245, 124, 132, 0.85)); }
+.range-label {
+  font-size: calc(32rpx * var(--fs, 1));
+  color: var(--text2);
+}
+
+/* 卡底提示：行数截断时引导进详情 */
+.card-more {
+  margin-top: 8rpx;
+  padding: 0 8rpx;
+  font-size: calc(24rpx * var(--fs, 1));
+  color: var(--text3);
+  text-align: right;
+}
+
+/* 矩阵样式为公共原语：见 styles/checkin-matrix.wxss（app.wxss 全局引入），本页无差异覆写 */
+
+/* 空态为公共原语：见 styles/empty-state.wxss（app.wxss 全局引入），本页无差异覆写 */

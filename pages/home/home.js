@@ -38,6 +38,11 @@ function splitDuration(minutes) {
   return { h: Math.floor(m / 60), m: m % 60 }
 }
 
+// 分钟 -> 小时文本（固定 1 位小数：12.5 / 1.0 / 0.0），首页阶段时长用
+function fmtHoursFixed(minutes) {
+  return (Math.max(0, Number(minutes) || 0) / 60).toFixed(1)
+}
+
 Page({
   data: {
     fontClass: '',
@@ -53,7 +58,7 @@ Page({
     activeBar: -1,                     // 周柱状图选中柱（点按气泡），-1 = 无
     barScaleText: '1小时',
     todayTime: { h: 0, m: 0 },         // 今日时长（分段）
-    totalTime: { h: 0, m: 0 },         // 阶段时长（分段）
+    totalHoursText: '0.0',             // 阶段时长（小时，固定 1 位小数）
     stagePercent: 0,
     stageDays: 0,                      // 当前阶段打卡天数（去重日期数，非连续）
     hasStage: false,
@@ -387,7 +392,7 @@ Page({
       barScaleText,
       todayTime: splitDuration(todayMinutes),
       todayCount,
-      totalTime: splitDuration(totalMinutes),   // 当前阶段累计，非全阶段
+      totalHoursText: fmtHoursFixed(totalMinutes),   // 当前阶段累计，非全阶段
       stagePercent,
       stageNoTarget,
       stageDays: daysSet.size,        // 阶段内去重日期数（断续累计，非连续天数）
