@@ -240,9 +240,18 @@ page {
 }
 
 .empty-icon {
+  /* 全局 empty-state.wxss 有同名类（160rpx 圆角块 + flex），属性会渗入本页：
+     显式还原为 emoji 文本空态；width 回 auto 后由 .empty-wrap 的
+     text-align: center 接管水平居中（block 定宽时 text-align 管不到自身位置） */
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: none;
+  display: block;
   font-size: 100rpx;
   opacity: 0.6;
   margin-bottom: 24rpx;
+  line-height: 1;
 }
 
 .empty-text {

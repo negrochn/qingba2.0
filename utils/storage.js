@@ -32,8 +32,9 @@ function get(key) {
   try { return wx.getStorageSync(_k(key)) } catch (e) { return '' }
 }
 
+// 返回是否写入成功：调用方需要「写失败就不能做后续危险动作（如删旧分片）」时依赖返回值
 function set(key, value) {
-  try { wx.setStorageSync(_k(key), value) } catch (e) {}
+  try { wx.setStorageSync(_k(key), value); return true } catch (e) { return false }
 }
 
 function remove(key) {

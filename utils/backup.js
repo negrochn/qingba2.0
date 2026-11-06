@@ -82,7 +82,7 @@ function getLastBackupText() {
   return info.ts ? timeText.formatSmart(info.ts) : ''
 }
 
-// 纯文件备份时间（本地时间戳，不混云端）：「备份到文件」cell 右侧值位用；
+// 纯文件备份时间（本地时间戳，不混云端）：「导出备份文件」cell 右侧值位用；
 // getLastBackupText 是云+文件统一口径，与云端 cell 右侧的快照时间并列，三者语义不同勿混用
 function getLastFileBackupText() {
   const local = Number(_get(LAST_BACKUP_KEY))
@@ -662,9 +662,9 @@ function _applyChildData(data, mode = 'overwrite') {
         deduped.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
         mergedByDay[day] = deduped;
       }
-      checkin.saveAll(mergedByDay);
+      checkin.saveAll(mergedByDay, 'import');
     } else {
-      checkin.saveAll(grouped);
+      checkin.saveAll(grouped, 'import');
     }
   }
 

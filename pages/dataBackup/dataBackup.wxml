@@ -2,12 +2,9 @@
 
   <!-- 数据说明卡三态（标题/描述由页面 refreshBackupState 计算）：云端快照 > 文件备份 > 数据保存在本机；
        无云时展示丢失风险告知（转化位，不可省）；已有云端快照时只留状态行——
-       快照详情已在下方「备份到云端」副文案，desc 属重复教育 -->
+       快照详情已在下方「立即备份」副文案，desc 属重复教育 -->
   <view class="db-intro">
-    <view class="db-intro__head">
-      <view class="db-intro__title">{{backupTitle}}</view>
-      <text class="db-member-tag" wx:if="{{isMember}}">永久会员</text>
-    </view>
+    <view class="db-intro__title">{{backupTitle}}</view>
     <view class="db-intro__desc" wx:if="{{backupDesc}}">{{backupDesc}}</view>
     <view class="db-intro__meta">{{lastBackupMeta}}</view>
     <view class="db-intro__warn" wx:if="{{remindText}}">{{remindText}}</view>
@@ -16,9 +13,31 @@
   <!-- 云备份（主路径：云端快照的备份 / 恢复 / 删除） -->
   <view class="weui-cells__title">云备份</view>
   <view class="weui-cells">
+    <!-- 自动备份（会员专属开关，默认关闭）：会员显示开关，非会员锁定引导开通；
+         开启后打卡/修改/删除等数据变更经 3s 防抖自动上云（调度收口 utils/cloudBackup.js） -->
+    <view class="weui-cell" wx:if="{{isMember}}">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text">自动备份</view>
+        <view class="weui-cell__desc">打卡、修改后自动同步到云端；多设备请仅在一台设备开启</view>
+      </view>
+      <view class="weui-cell__ft">
+        <switch checked="{{autoBackupOn}}" bindchange="onToggleAutoBackup" />
+      </view>
+    </view>
+    <view class="weui-cell weui-cell_access" wx:else bindtap="onLockedAutoBackup">
+      <view class="weui-cell__bd">
+        <view class="weui-cell__bd_text">自动备份<text class="db-badge db-badge--gold">会员</text></view>
+        <view class="weui-cell__desc">永久会员可开启，打卡数据自动同步到云端</view>
+      </view>
+      <view class="weui-cell__ft">
+        <text class="iconfont icon-right"></text>
+      </view>
+    </view>
     <view class="weui-cell weui-cell_access" bindtap="onCloudBackup">
       <view class="weui-cell__bd">
-        <view class="weui-cell__bd_text db-title-row">备份到云端<text class="db-badge">推荐</text></view>
+        <!-- 「推荐」只在自动备份未覆盖时显示：非会员（引导转化）、会员未开启自动备份；
+             会员开启自动备份后手备降级为兜底手段，推荐失去意义即隐藏 -->
+        <view class="weui-cell__bd_text db-title-row">立即备份<text class="db-badge" wx:if="{{!(isMember && autoBackupOn)}}">推荐</text></view>
         <view class="weui-cell__desc">{{cloudStateText ? '云端快照：' + cloudSizeText : (cloudEntText || '暂无快照')}}</view>
       </view>
       <view class="weui-cell__ft">
@@ -33,7 +52,7 @@
         <view class="weui-cell__bd_text">从云端恢复</view>
         <!-- 常驻可点：换手机本地缓存未拉到时 hasCloud 短暂为 false，但云端可能有快照，
              隐藏/拦截会挡住最需要恢复的人；desc 只做两态教育，点击仍真实查云端兜底 -->
-        <view class="weui-cell__desc">{{hasCloud ? '用云端快照覆盖本机数据（换手机、误删找回）' : '暂无快照，完成云备份后可在此一键恢复'}}</view>
+        <view class="weui-cell__desc">{{hasCloud ? '用云端快照覆盖本机数据（换手机、误删找回）' : '暂无快照，完成云备份后可在此恢复'}}</view>
       </view>
       <view class="weui-cell__ft">
         <text class="iconfont icon-right"></text>
@@ -41,8 +60,8 @@
     </view>
     <view class="weui-cell weui-cell_access" wx:if="{{hasCloud}}" bindtap="onDeleteCloud">
       <view class="weui-cell__bd">
-        <view class="weui-cell__bd_text db-danger">删除云端备份</view>
-        <view class="weui-cell__desc">删除后无法找回，本机数据不受影响</view>
+        <view class="weui-cell__bd_text db-danger">删除云备份</view>
+        <view class="weui-cell__desc">删除后无法找回；本机数据与文件备份不受影响</view>
       </view>
       <view class="weui-cell__ft">
         <text class="iconfont icon-right"></text>
@@ -55,8 +74,8 @@
   <view class="weui-cells">
     <view class="weui-cell weui-cell_access" bindtap="onBackup">
       <view class="weui-cell__bd">
-        <view class="weui-cell__bd_text">备份到文件</view>
-        <view class="weui-cell__desc">发送到聊天，可长期留存多个版本</view>
+        <view class="weui-cell__bd_text">导出备份文件</view>
+        <view class="weui-cell__desc">发给聊天或存为文件，可长期留存多个版本</view>
       </view>
       <view class="weui-cell__ft">
         <text class="weui-cell__ft_value" wx:if="{{fileBackupText}}">{{fileBackupText}}</text>
@@ -88,7 +107,7 @@
     </view>
   </view>
 
-  <view class="weui-cells__tips">云端保留 1 份最新快照，换手机登录同一微信即可恢复；备份需<text class="db-link" bindtap="goMembership">永久会员</text>或看视频解锁（每日最多 5 次），恢复与删除永久免费。文件备份由自己留存，可保留多个版本，重要数据建议两者都用。</view>
+  <view class="weui-cells__tips">云端保留 1 份最新快照（下次备份会覆盖它）；换手机后用同一微信打开小程序，在「从云端恢复」取回，恢复为覆盖式，本机现有数据会被快照替换。备份需<text class="db-link" bindtap="goMembership">永久会员</text>或看视频解锁（每日最多 5 次），恢复与删除永久免费。导出的备份文件由自己留存，可保留多个版本，重要数据建议两者都用。</view>
 
 </view>
 

@@ -41,11 +41,11 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command // 更新指令（_.remove() 清除字段用）
 
-// ===== 集合分流：开发版/体验版与正式版云端数据隔离 =====
-// 前端按 envVersion 带 env_tag（'dev' = 开发版/体验版，正式缺省）：
-// dev 请求全部读写 *_dev 集合，与正式数据完全隔离（快照/权益/订单/邀请码各一套）；
-// 正式请求走原集合，行为不变。payNotify 按订单所在集合定位权益集合。
-// dev 集合无需预建：_loadEnt 对缺失集合有建集合尝试；快照集合首写前在控制台建好亦可
+// ===== 集合分流（旧版前端兼容）：开发版/体验版与正式版云端数据隔离 =====
+// 新版前端已按云函数拆分：dev 直调 cloudBackup_dev（固定 *_dev 集合、沙箱支付），
+// 本函数只接正式前端请求。保留 env_tag 分流仅为兼容已发布的旧测试版前端
+// （旧版 dev 请求带 env_tag='dev' 落 *_dev 集合，不污染正式数据；正式请求
+// 缺省走原集合，行为不变）。payNotify 按订单所在集合定位权益集合。
 const COL = 'cloud_backups'
 const COL_DEV = 'cloud_backups_dev'
 const MAX_BYTES = 500 * 1024        // 旧明文路径上限（贴文档 512KB 硬限制，仅旧版本前端会走）

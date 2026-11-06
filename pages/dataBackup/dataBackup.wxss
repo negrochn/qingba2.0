@@ -11,12 +11,6 @@ page {
   background: var(--card);
 }
 
-.db-intro__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
 .db-intro__title {
   font-size: calc(34rpx * var(--fs, 1));
   font-weight: 600;
@@ -66,22 +60,12 @@ page {
   line-height: 1.4;
 }
 
-/* 会员「早鸟价」徽标（金）与说明卡会员标识 */
+/* 会员「早鸟价」徽标（金） */
 .db-badge--gold {
   background: #d29a3a;
 }
 
-.db-member-tag {
-  flex-shrink: 0;
-  padding: 2rpx 12rpx;
-  border-radius: 8rpx;
-  background: #d29a3a;
-  color: #fff;
-  font-size: calc(20rpx * var(--fs, 1));
-  line-height: 1.4;
-}
-
-/* ===== 删除云端备份：危险操作标题红，desc 保持中性弱化 ===== */
+/* ===== 删除云备份：危险操作标题红，desc 保持中性弱化 ===== */
 .db-danger {
   color: var(--danger);
 }

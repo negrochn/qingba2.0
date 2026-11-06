@@ -1,0 +1,9 @@
+{
+  "name": "cloudBackup_dev",
+  "version": "1.0.0",
+  "description": "庆爸2.0 云备份 dev 专用：全量读写 *_dev 集合 + 沙箱支付，逻辑与 cloudBackup 同构（改动需两份同步）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

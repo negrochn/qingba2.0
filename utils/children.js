@@ -2,6 +2,8 @@
 // 依赖方向：storage.js 零依赖；本文件不依赖其它 utils；checkin.js / customResources.js 反向依赖本文件
 
 const storage = require('./storage.js')
+// 数据变更通知：孩子增删改是快照内容变更，写入口 notify() 驱动自动备份（零依赖模块，无加载环）
+const dataChanged = require('./dataChanged.js')
 //
 // child = { id, name, color, createdAt }
 //   id     'ch_<ts36>_<rand6>'，唯一且永不变更，作为 per-child 存储键段
@@ -27,6 +29,7 @@ function _readList() {
 function _saveList(list) {
   try {
     storage.set(CHILDREN_KEY, list || [])
+    dataChanged.notify('child')
     return true
   } catch (e) {
     return false

@@ -13,12 +13,13 @@ Page({
     lastBackupMeta: '',  // 说明卡 meta「上次备份：云端 · 今天 14:11」（渠道按最新备份实时推断）
     remindText: '',       // 提醒文案（空 = 暂无需提醒）
     cloudStateText: '',  // 云端快照完整概要「时间 · N孩M条」；'' = 云端暂无
-    cloudTimeText: '',   // 云端快照时间（「备份到云端」右侧值位）；'' = 无快照不显示
+    cloudTimeText: '',   // 云端快照时间（「立即备份」右侧值位）；'' = 无快照不显示
     cloudSizeText: '',   // 云端快照规模「N孩M条」（副文案用）
-    fileBackupText: '',  // 最近一次文件备份时间（「备份到文件」右侧值位）；'' = 从未
+    fileBackupText: '',  // 最近一次文件备份时间（「导出备份文件」右侧值位）；'' = 从未
     hasCloud: false,     // 是否存在云端快照（说明卡标题三态之一）
-    cloudEntText: '',    // 无云端快照时「备份到云端」副文案（跟随会员/点数状态；'' 回落「暂无快照」）
-    isMember: false,     // 永久会员态：说明卡徽标 / 副文案口径（购买入口已迁会员中心页）
+    cloudEntText: '',    // 无云端快照时「立即备份」副文案（跟随会员/点数状态；'' 回落「暂无快照」）
+    isMember: false,     // 永久会员态：自动备份开关形态 / 副文案口径（购买入口已迁会员中心页）
+    autoBackupOn: false, // 自动备份开关（会员专属；持久化与调度收口 utils/cloudBackup.js）
     // 云备份解锁选择弹层（非会员点数用尽时：看视频 / 开通会员 / 暂不）
     unlockVisible: false,
     unlockRiskText: '', // 弹层顶部风险告知（「已积累 N 条打卡记录...」，utils 解析快照回传）
@@ -42,6 +43,8 @@ Page({
     this.refreshBackupState();
     this.refreshCloudState();
     this.refreshCloudEntitlement();
+    // 开关态每次进页重读（本地持久化即事实源；会员态变化时 cell 形态随 isMember 切换）
+    this.setData({ autoBackupOn: cloudBackup.isAutoBackupOn() });
   },
 
   // 刷新说明卡三态与提醒文案；转发面板 / 文档预览返回时 onShow 重查一次。
@@ -52,14 +55,19 @@ Page({
     const info = backup.getLastBackupInfo();
     const lastBackupText = backup.getLastBackupText(); // 混合口径最新一次的智能格式时间
     const srcLabel = info.source === 'cloud' ? '云端' : (info.source === 'file' ? '文件' : '');
+    // 云快照态同步读缓存判定，不依赖 this.data.hasCloud：onShow 里本方法先于
+    // refreshCloudState 执行，若靠 data 会先用旧值渲染一帧错误的「已导出备份」标题
+    const hasCloud = !!cloudBackup.getStateText();
     let backupTitle = '数据保存在本机';
-    let backupDesc = '打卡记录、孩子资料与自定义资源都保存在手机微信的本地存储中。移除小程序、清理微信存储空间或更换手机都会导致数据丢失且无法找回，建议开启「备份到云端」，或定期备份发送文件。';
-    if (this.data.hasCloud) {
+    let backupDesc = '打卡记录、孩子资料与自定义资源都保存在手机微信的本地存储中。移除小程序、清理微信存储空间或更换手机都会导致数据丢失且无法找回，建议开启「立即备份」，或定期导出备份文件。';
+    if (hasCloud) {
       backupTitle = '数据已有云端快照';
       backupDesc = '';
-    } else if (info.ts > 0) {
-      backupTitle = '数据已有文件备份';
-      backupDesc = '已通过文件备份留存数据，但备份文件可能随聊天记录清理而丢失。建议开启「备份到云端」，换手机登录同一微信即可一键恢复。';
+    } else if (info.source === 'file') {
+      // 文件态只说文件能做什么：导出的是聊天里的一份文件，会过期/被清理，换机要手动选文件恢复；
+      // 「一键恢复」是云端能力，不能挂到文件备份上（旧文案曾这样写，会让人以为换手机自动恢复）
+      backupTitle = '数据已导出备份';
+      backupDesc = '导出过备份文件，但聊天里的文件会过期或被清理，换手机需手动「从文件恢复」。建议同时备份到云端，换机可恢复且不受聊天记录影响。';
     }
     this.setData({
       backupTitle,
@@ -71,7 +79,7 @@ Page({
     });
   },
 
-  // 备份到文件：同步生成文件 → 拉起转发面板（手势链内同步调用，见 backup.js 说明）
+  // 导出备份文件：同步生成文件 → 拉起转发面板（手势链内同步调用，见 backup.js 说明）
   // PC 端不支持 shareFileMessage，内部自动降级 openDocument 预览
   onBackup() {
     backup.generateBackupFile((filePath, fileName) => {
@@ -99,7 +107,7 @@ Page({
     cloudBackup.refreshCloudState(apply);
   },
 
-  // 「备份到云端」副文案跟随权益状态：会员不限次 / 还可免费备份 N 次 / 需看短视频解锁
+  // 「立即备份」副文案跟随权益状态：会员不限次 / 还可免费备份 N 次 / 需看短视频解锁
   // （查询失败或云不可用时保持 ''，副文案回落「暂无快照」，不阻塞页面）
   // 缓存先行：app 启动已预热写缓存，首屏先按缓存渲染（会员态即时可见），实查回来再覆盖
   refreshCloudEntitlement() {
@@ -126,6 +134,30 @@ Page({
   // 会员中心（购买/兑换已迁出本页，tips 链接与解锁弹层共用入口）
   goMembership() {
     wx.navigateTo({ url: '/pages/membership/membership' });
+  },
+
+  // ===== 自动备份（会员专属开关；持久化/防抖/上传收口 utils/cloudBackup.js，页面只做胶水） =====
+
+  onToggleAutoBackup(e) {
+    const on = !!(e.detail && e.detail.value);
+    cloudBackup.setAutoBackupEnabled(on);
+    this.setData({ autoBackupOn: on });
+    if (on) {
+      // 开启瞬间立即建立云端基线快照（静默上传，失败不提示、后续变更会自动补传）
+      cloudBackup.startAutoBackup();
+      wx.showToast({ title: '已开启', icon: 'success' });
+    }
+  },
+
+  // 非会员点击锁定态：引导开通。自动备份不接广告解锁——点数是按次模型，撑不起持续自动行为
+  onLockedAutoBackup() {
+    wx.showModal({
+      title: '会员专属权益',
+      content: '自动备份可把打卡、修改自动同步到云端，换手机不丢数据。开通永久会员后在此开启即可。',
+      confirmText: '去开通',
+      cancelText: '暂不',
+      success: (r) => { if (r.confirm) this.goMembership(); }
+    });
   },
 
   // ===== 云备份解锁选择弹层（替代系统 showModal：三动作——看视频 / 开通会员 / 暂不。
@@ -208,7 +240,7 @@ Page({
     });
   },
 
-  // 删除云端备份：确认弹窗与删除流程在 cloudBackup 内；成功后说明卡回无快照态
+  // 删除云备份：确认弹窗与删除流程在 cloudBackup 内；成功后说明卡回无快照态
   onDeleteCloud() {
     if (this._cloudBusy) return;
     this._cloudBusy = true;
@@ -287,9 +319,11 @@ Page({
   startClear(opt) {
     if (!opt) return;
 
-    const content = opt.key === 'route'
+    // 末尾统一告知云端口径：清空只作用于本机，云端快照不动（可恢复），彻底删除走「删除云备份」
+    const cloudNote = '\n云端备份不会被清空，清空后可通过「从云端恢复」找回；如需彻底删除请用「删除云备份」。';
+    const content = (opt.key === 'route'
       ? `将清空${opt.label}的打卡记录、已读次数与练习进度（另一条路线与自定义资源不受影响），此操作不可恢复，是否继续？`
-      : `将清空「${opt.label}」的打卡记录与练习进度（自定义资源保留），此操作不可恢复，是否继续？`;
+      : `将清空「${opt.label}」的打卡记录与练习进度（自定义资源保留），此操作不可恢复，是否继续？`) + cloudNote;
 
     wx.showModal({
       title: '确认清空',
@@ -337,6 +371,9 @@ Page({
         }
 
         wx.hideLoading();
+        // 冻结清空触发的这一轮自动上传：云端保留清空前快照，清空可经「从云端恢复」撤销
+        // （若正常上传，云端唯一快照会被覆盖成残缺数据，且没有二次确认的机会）
+        cloudBackup.suspendAutoBackup();
         this.refreshBackupState(); // 清空后记录数下降，「上次备份/提醒文案」同步消失
 
         wx.showToast({

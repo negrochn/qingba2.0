@@ -8,6 +8,8 @@
 const { ROUTES, listeningFactor } = require('./data.js')
 const storage = require('./storage.js')
 const { getActiveChildId, getPrimaryChildId } = require('./children.js')
+// 数据变更通知：各写入口成功落盘后 notify()，cloudBackup 订阅驱动自动备份（零依赖模块，无加载环）
+const dataChanged = require('./dataChanged.js')
 
 const STORAGE_KEY = 'qingba_checkins'
 const CHUNK_PREFIX = 'qingba_checkins_' // 按月分片: qingba_checkins_<childId>_2021-06
@@ -62,12 +64,8 @@ function _pcGet(baseKey, extraSeg, defaultValue) {
 }
 
 function _pcSet(baseKey, extraSeg, value) {
-  try {
-    storage.set(baseKey + _childSeg() + (extraSeg || ''), value)
-    return true
-  } catch (e) {
-    return false
-  }
+  // storage.set 内部吞异常，用返回值判断真实成败（否则调用方拿到的 true 是假的）
+  return storage.set(baseKey + _childSeg() + (extraSeg || ''), value) !== false
 }
 
 function _pcRemove(baseKey, extraSeg) {
@@ -280,8 +278,10 @@ function _migrateLegacyCheckins() {
       for (const day in legacyMain) {
         if (merged[day] === undefined) merged[day] = legacyMain[day]
       }
-      try { storage.set(_mainKey(), merged) } catch (e2) {}
-      try { storage.remove(STORAGE_KEY) } catch (e3) {}
+      // 写成功才删旧主键：写失败时旧数据必须原地保留，否则唯一副本丢失
+      if (storage.set(_mainKey(), merged) !== false) {
+        try { storage.remove(STORAGE_KEY) } catch (e3) {}
+      }
     }
 
     // 2) 旧分片改名为孩子分片；旧 tmp 中间态直接清理
@@ -298,7 +298,8 @@ function _migrateLegacyCheckins() {
       if (/^\d{4}-\d{2}(_\d{2})?$/.test(rest)) {
         const v = storage.getRaw(s)
         if (v && typeof v === 'object') {
-          try { storage.set(_chunkPrefix() + rest, v) } catch (e2) {}
+          // 写成功才删旧分片：写失败时旧分片原地保留，下次迁移重试
+          if (storage.set(_chunkPrefix() + rest, v) === false) return
         }
         try { storage.removeRaw(s) } catch (e3) {}
       }
@@ -342,8 +343,10 @@ function getAll() {
 // 保存全部数据
 // 分片模式采用「两阶段写」：先把所有分片写到临时 key，全部成功后再逐个改名为正式 key。
 // 任何一步失败都只涉及临时 key，已存在的分片内容始终保持完整（不会被"回滚"删掉）
+// @param {Object} data 全量打卡数据
+// @param {string} [source] 动作标签（'add'/'edit'/'del'/'backfill'/'clear'…），仅用于自动备份日志
 // @returns {boolean} 是否保存成功
-function saveAll(data) {
+function saveAll(data, source) {
   try {
     // 保存前检查总量，超阈值弹一次提醒
     _checkStorageQuota()
@@ -353,13 +356,9 @@ function saveAll(data) {
 
     // 数据量小且条目少：直接存主 key（兼容旧版）
     if (bytes <= MAX_ITEM_BYTES && itemCount < 500) {
-      let ok = true
-      try {
-        storage.set(_mainKey(), data)
-      } catch (e) {
-        ok = false
-        _onSaveFail()
-      }
+      // storage.set 内部吞异常，必须看返回值：写失败时不能删旧分片（否则唯一副本被清）
+      const ok = storage.set(_mainKey(), data) !== false
+      if (!ok) _onSaveFail()
       // 只有写入成功才删除旧分片（写入失败时旧分片仍在，可兜底）
       if (ok) _removeChunkKeys()
       return ok
@@ -385,7 +384,8 @@ function saveAll(data) {
       try {
         if (chunkBytes <= MAX_ITEM_BYTES && chunkItems < 500) {
           const tmp = _tmpChunkKey(ym)
-          storage.set(tmp, chunkData)
+          // storage.set 吞异常只看返回值：临时分片写失败必须中止，不能进入改名阶段
+          if (storage.set(tmp, chunkData) === false) throw new Error('tmp chunk write failed')
           written.push(tmp)
           pending.push({ tmp, key: _chunkKey(ym), data: chunkData })
         } else {
@@ -394,7 +394,7 @@ function saveAll(data) {
             const suffix = ym + '_' + day.substring(8)
             const tmp = _tmpChunkKey(suffix)
             const piece = { [day]: chunkData[day] }
-            storage.set(tmp, piece)
+            if (storage.set(tmp, piece) === false) throw new Error('tmp piece write failed')
             written.push(tmp)
             pending.push({ tmp, key: _chunkKey(suffix), data: piece })
           }
@@ -413,7 +413,7 @@ function saveAll(data) {
     const newKeys = []
     for (const p of pending) {
       try {
-        storage.set(p.key, p.data)
+        if (storage.set(p.key, p.data) === false) throw new Error('rename failed')
         try { storage.remove(p.tmp) } catch (e) {}
         newKeys.push(p.key)
       } catch (e) {
@@ -425,14 +425,17 @@ function saveAll(data) {
     }
 
     // 3) 全部改名成功后，再清理主 key 与不再使用的旧分片
-    // oldKeys 来自 _listChunkKeys（真实 key），须走 removeRaw；newKeys 是逻辑 key 故直接比对
+    // oldKeys 来自 _listChunkKeys（真实 key，dev/体验版含 d_ 前缀），newKeys 是逻辑 key：
+    // 必须先转真实形态再比对，否则 dev 下恒不相等，会把刚写入的正式分片当旧分片全删（数据全灭）
     try { storage.remove(_mainKey()) } catch(e) {}
+    const newKeysReal = pending.map(p => storage.realKey(p.key))
     oldKeys.forEach(k => {
-      if (newKeys.indexOf(k) < 0) {
+      if (newKeysReal.indexOf(k) < 0) {
         try { storage.removeRaw(k) } catch (e) {}
       }
     })
 
+    dataChanged.notify(source)
     return true
   } catch (e) {
     console.error('saveAll failed:', e)
@@ -478,7 +481,9 @@ function addCheckin(opts) {
         chunk[day] = list
         // 该分片未超限才走快路径，否则回退全量以重新分片
         if (_estimateBytes(chunk) <= MAX_ITEM_BYTES && _estimateItemCount(chunk) < 500) {
-          storage.set(key, chunk)
+          // 写失败（超限等）抛错进 catch 回退慢路径，不能让调用方误以为已保存
+          if (storage.set(key, chunk) === false) throw new Error('chunk write failed')
+          dataChanged.notify('add')
           return record
         }
       }
@@ -492,7 +497,7 @@ function addCheckin(opts) {
   const list = all[day] || []
   list.push(record)
   all[day] = list
-  return saveAll(all) ? record : null
+  return saveAll(all, 'add') ? record : null
 }
 
 /**
@@ -550,7 +555,7 @@ function addCheckinsOnDay(day, records) {
     all[d] = dayList
 
     // 一次全量写（跨月 / 分片由 saveAll 自动重组）
-    if (!saveAll(all)) return null
+    if (!saveAll(all, 'backfill')) return null
 
     return { ok: true, count, minutes, day: d }
   } catch (e) {
@@ -572,6 +577,7 @@ function _getDefaultRemarks() {
 function _saveDefaultRemarks(data) {
   try {
     storage.set(DEFAULT_REMARK_KEY, data)
+    dataChanged.notify('remark')
   } catch (e) {}
 }
 
@@ -621,6 +627,7 @@ function setYouquPlanEnabled(enabled) {
     console.error('setYouquPlanEnabled failed')
     return false
   }
+  dataChanged.notify('setting')
   return true
 }
 
@@ -641,6 +648,7 @@ function isListeningEnabled() {
 function setListeningEnabled(enabled) {
   try {
     storage.set(LISTENING_ENABLED_KEY, !!enabled)
+    dataChanged.notify('setting')
     return true
   } catch (e) {
     console.error('setListeningEnabled failed:', e)
@@ -670,6 +678,7 @@ function setTargetMode(mode) {
     console.error('setTargetMode failed')
     return false
   }
+  dataChanged.notify('setting')
   return true
 }
 
@@ -703,6 +712,7 @@ function setCustomTarget(stageId, hours) {
     console.error('setCustomTarget failed')
     return false
   }
+  dataChanged.notify('setting')
   return true
 }
 
@@ -723,6 +733,7 @@ function replaceCustomTargets(obj) {
     console.error('replaceCustomTargets failed')
     return false
   }
+  dataChanged.notify('setting')
   return true
 }
 
@@ -924,7 +935,7 @@ function deleteCheckin(id) {
       } else {
         all[day] = list
       }
-      return !!saveAll(all)
+      return !!saveAll(all, 'del')
     }
   }
   return false
@@ -1017,7 +1028,7 @@ function updateCheckin(id, opts) {
     newList.push(next)
     all[newDay] = newList
 
-    if (!saveAll(all)) return { ok: false, moved: false, day: oldDay, record: null }
+    if (!saveAll(all, 'edit')) return { ok: false, moved: false, day: oldDay, record: null }
     return { ok: true, moved: newDay !== oldDay, day: newDay, record: next }
   } catch (e) {
     console.error('updateCheckin failed:', e)
@@ -1082,7 +1093,7 @@ function clearCheckinsByStage(stageId) {
       _pcSet(STAGE_DONE_KEY, '', done)
     }
 
-    if (removed > 0) saveAll(remain)
+    if (removed > 0) saveAll(remain, 'clear')
     return removed
   } catch (e) {
     return 0
@@ -1154,7 +1165,7 @@ function _getReadCounts() {
 }
 
 function _saveReadCounts(data) {
-  _pcSet(READ_COUNT_KEY, '', data)
+  if (_pcSet(READ_COUNT_KEY, '', data)) dataChanged.notify('read')
 }
 
 // 整份读次数（当前孩子）：导出备份用（页面不应直摸存储键）
@@ -1165,7 +1176,9 @@ function getReadCounts() {
 // 覆盖式写入整份读次数（当前孩子）：导入备份用
 function replaceReadCounts(data) {
   const src = (data && typeof data === 'object') ? data : {}
-  return _pcSet(READ_COUNT_KEY, '', src)
+  const ok = _pcSet(READ_COUNT_KEY, '', src)
+  if (ok) dataChanged.notify('read')
+  return ok
 }
 
 function _readCountKey(stageId, groupKey, resourceId) {
@@ -1416,7 +1429,7 @@ function migrateResourceRecords(opts) {
         recordsChanged = true
       }
     }
-    if (recordsChanged && !saveAll(all)) return { ok: false }
+    if (recordsChanged && !saveAll(all, 'migrate')) return { ok: false }
 
     // 2) 已读次数
     const counts = _getReadCounts()
@@ -1480,7 +1493,9 @@ function getCurrentRouteId() {
 }
 
 function setCurrentRouteId(id) {
-  return _pcSet(CURRENT_ROUTE_KEY, '', ROUTES[id] ? id : 'regular')
+  const ok = _pcSet(CURRENT_ROUTE_KEY, '', ROUTES[id] ? id : 'regular')
+  if (ok) dataChanged.notify('route')
+  return ok
 }
 
 // 当前路线完整对象 { id, name, stages }，页面用它替代写死的 routeData
@@ -1515,11 +1530,15 @@ function getCurrentStage() {
 }
 
 function setCurrentStage(stageData) {
-  return _pcSet(CURRENT_STAGE_KEY, _currentStageSeg(), stageData)
+  const ok = _pcSet(CURRENT_STAGE_KEY, _currentStageSeg(), stageData)
+  if (ok) dataChanged.notify('stage')
+  return ok
 }
 
 function clearCurrentStage() {
-  return _pcRemove(CURRENT_STAGE_KEY, _currentStageSeg())
+  const ok = _pcRemove(CURRENT_STAGE_KEY, _currentStageSeg())
+  if (ok) dataChanged.notify('stage')
+  return ok
 }
 
 // 当前孩子的两路线阶段槽位整组读（备份导出用；当前路线之外的槽位 getCurrentStage 读不到）
@@ -1535,6 +1554,7 @@ function restoreCurrentStages(map) {
   if (!map || typeof map !== 'object') return false
   if (map.regular) _pcSet(CURRENT_STAGE_KEY, '_regular', map.regular)
   if (map.bigloop) _pcSet(CURRENT_STAGE_KEY, '_bigloop', map.bigloop)
+  dataChanged.notify('stage')
   return true
 }
 
@@ -1554,12 +1574,16 @@ function markStageDone(stageId) {
   const list = getCompletedStages()
   if (list.indexOf(stageId) >= 0) return true
   list.push(stageId)
-  return _pcSet(STAGE_DONE_KEY, '', list)
+  const ok = _pcSet(STAGE_DONE_KEY, '', list)
+  if (ok) dataChanged.notify('stage')
+  return ok
 }
 
 // 批量覆盖已完成阶段名单（供选择阶段时标记前序阶段）
 function setCompletedStages(list) {
-  return _pcSet(STAGE_DONE_KEY, '', Array.isArray(list) ? list : [])
+  const ok = _pcSet(STAGE_DONE_KEY, '', Array.isArray(list) ? list : [])
+  if (ok) dataChanged.notify('stage')
+  return ok
 }
 
 // ===== 多孩：级联删除与启动迁移 =====

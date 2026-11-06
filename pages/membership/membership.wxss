@@ -1,31 +1,9 @@
 /* ===== 会员中心 ===== */
 
-/* 状态卡标题：大号字重，徽标 flex 对齐（同数据管理页标题行口径） */
-.ms-hero__title {
-  display: flex;
-  align-items: center;
-  font-size: calc(36rpx * var(--fs, 1));
-  font-weight: 600;
-  color: var(--text);
-  line-height: 1.3;
-}
-
-/* 标题前的 vip 图标：金色与徽标/价格同系 */
-.ms-hero__icon {
-  margin-right: 10rpx;
-  color: #d29a3a;
-}
-
-/* 「已开通」金徽标（同 db-member-tag 样式口径） */
+/* 「已开通」：会员态的值位，纯金色文字（字号 / 行高走 .weui-cell 默认 34rpx，
+   与非会员的 ¥9.9 同一位置、同一视觉重量；不套徽标底色，避免右侧出现两套值位样式） */
 .ms-tag {
-  margin-left: 12rpx;
-  padding: 2rpx 12rpx;
-  border-radius: 8rpx;
-  background: #d29a3a;
-  color: #fff;
-  font-size: calc(20rpx * var(--fs, 1));
-  font-weight: 400;
-  line-height: 1.4;
+  color: #d29a3a;
 }
 
 /* 非会员状态卡右侧价格（金色，价格即诱因） */
@@ -36,22 +14,20 @@
   line-height: 1.41176471;
 }
 
-/* 开通按钮：金底白字（与徽标/价格同一金色系） */
+/* 开通按钮：金底白字（与价格同一金色系） */
 .ms-btn-gold {
   background: #d29a3a;
   color: #fff;
 }
 
-/* 权益行：金色对勾 + 标题 flex 对齐 */
-.ms-benefit {
-  display: flex;
-  align-items: center;
-}
-
-.ms-check {
-  margin-right: 12rpx;
+/* 权益行对勾：位置 / 尺寸对齐「建议区间上限」单选 cell（右端、44rpx、不收缩），
+   颜色沿用本页金色系（与价格、按钮同源），不引单选 cell 的品牌绿 —— 一页只留一套强调色。
+   !important 与 .weui-cells_radio .weui-icon-checked 同款写法，压掉 .iconfont 的 32rpx 默认字号 */
+.ms-benefit-check {
+  flex-shrink: 0;
+  font-size: calc(44rpx * var(--fs, 1)) !important;
   color: #d29a3a;
-  font-weight: 600;
+  line-height: 1;
 }
 
 /* ===== 邀请码兑换弹层（自数据管理页迁入，样式同构） ===== */

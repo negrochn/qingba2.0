@@ -63,7 +63,7 @@ Page({
     this._refresh()
   },
 
-  // 每次回到本页重建周卡：详情页开盒后返回，本周卡盲盒图标要即时亮起
+  // 每次回到本页重建周卡：详情页开盒后返回，最新一周卡的盲盒图标要即时亮起
   onShow() {
     if (this._stageId) this._refresh()
   },
@@ -85,20 +85,26 @@ Page({
     })
     const days = Object.keys(byDay).sort()
     if (!days.length) {
-      this.setData({ emptyText: '只要坚持一周就有成绩单喔' })
+      this.setData({ ready: true, weeks: [], emptyText: '只要坚持一周就有成绩单喔' })
       return
     }
 
     this._byDay = byDay
     this._colorOf = {}
     ;[...firstSeen.keys()].forEach((n, i) => { this._colorOf[n] = PALETTE[i % PALETTE.length] })
-    this._today = dayStrOf(new Date())
+    const today = new Date()
+    this._today = dayStrOf(today)
 
-    // 有打卡的日期按 ISO 周分组，倒序排列（最近一周在最上）
+    // 本周还没结束，不出成绩单（含盲盒开盒）：本周记录留到下周再成卡
+    const curIw = isoWeek(today)
+    const curKey = `${curIw.y}-${curIw.w}`
+
+    // 有打卡的日期按 ISO 周分组，倒序排列（最近一周在最上）；只有产生过打卡的周才成卡
     const weekMap = new Map()
     days.forEach(day => {
       const iw = isoWeek(new Date(day + 'T00:00:00'))
       const key = `${iw.y}-${iw.w}`
+      if (key === curKey) return
       if (!weekMap.has(key)) weekMap.set(key, { key, y: iw.y, w: iw.w, days: [] })
       weekMap.get(key).days.push(day)
     })
@@ -106,7 +112,12 @@ Page({
       .sort((a, b) => (b.y * 100 + b.w) - (a.y * 100 + a.w))
       .map(wk => this._buildWeek(wk))
 
-    this.setData({ ready: true, weeks })
+    // 记录全在本周：本周尚在统计中，同样走空态，下周自动出现这张卡
+    this.setData({
+      ready: true,
+      weeks,
+      emptyText: weeks.length ? '' : '本周还没结束，下周就能看到成绩单喔'
+    })
   },
 
   // 构建一周卡片：补全周一~周日 7 天，行取该周全部资源的前 3 项

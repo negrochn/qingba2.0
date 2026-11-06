@@ -27,6 +27,8 @@ const POOL = [
   { f: 'orange', r: 'seasonal', m: 12 }
 ]
 const WEIGHT = { common: 12.5, rare: 2, hidden: 1, seasonal: 1.5 }   // 单果权重%（抽取时按当月在池实际总和归一化）
+// 数据变更通知：盲盒抽定记录进快照（deco_records），写盘后 notify() 驱动自动备份（零依赖模块）
+const dataChanged = require('./dataChanged.js')
 
 // fruit → 档位反查：老周记录展示时按当前划分重定档（划分调整后老记录自动跟上，无需迁移）
 const TIER_OF = {}
@@ -106,6 +108,7 @@ function drawFor(y, w) {
     jitters: SLOTS.map(() => [rnd(8), rnd(8)])  // 每份 x/y 偏移 ±8rpx
   }
   wx.setStorageSync(k, rec)
+  dataChanged.notify('deco')
   return rec
 }
 
@@ -116,6 +119,7 @@ function markSeen(y, w) {
   if (rec && rec.fruit && !rec.seen) {
     rec.seen = 1
     wx.setStorageSync(k, rec)
+    dataChanged.notify('deco')
   }
 }
 

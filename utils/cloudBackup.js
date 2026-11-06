@@ -16,8 +16,14 @@ const backup = require('./backup.js')
 const pako = require('./pako.min.js')
 const timeText = require('./timeText.js')
 const storage = require('./storage.js')
+const dataChanged = require('./dataChanged.js')
 
-const FUNC_NAME = 'cloudBackup'
+// 云函数按环境拆分：正式版调 cloudBackup（读写正式集合），开发版/体验版调
+// cloudBackup_dev（全量读写 *_dev 集合、支付走沙箱）——部署级隔离，dev 调试
+// 上传云函数不影响线上正式函数运行；口径与 storage 的本地前缀隔离一致
+function _funcName() {
+  return storage.envTag() ? 'cloudBackup_dev' : 'cloudBackup'
+}
 const AD_UNIT_ID = 'adunit-78cec41c9a325278' // 激励视频广告位（流量主后台创建）
 const STATE_KEY = 'qingba_cloud_backup_state' // 家庭级：{ updatedAt, childCount, recordCount }
 const ENT_CACHE_KEY = 'qingba_ent_cache' // 权益缓存：{ t, member, credits, ... }（app 启动预热写入，页面首屏先读，实查后覆盖）
@@ -45,8 +51,8 @@ function _track(event) {
   if (!isCloudAvailable()) return
   try {
     wx.cloud.callFunction({
-      name: FUNC_NAME,
-      data: { action: 'track', event, env_tag: storage.envTag() }
+      name: _funcName(),
+      data: { action: 'track', event }
     }).catch(() => {})
   } catch (e) { /* 埋点失败静默 */ }
 }
@@ -139,8 +145,8 @@ function refreshCloudState(callback) {
     return
   }
   wx.cloud.callFunction({
-    name: FUNC_NAME,
-    data: { action: 'get', env_tag: storage.envTag() },
+    name: _funcName(),
+    data: { action: 'get' },
     success: (res) => {
       const r = res && res.result
       if (r && r.ok && !r.empty && r.meta) {
@@ -234,16 +240,20 @@ function _doUpload(json, hooks, retried, freeFallback) {
 
   wx.showLoading({ title: '备份上传中...', mask: true })
   wx.cloud.callFunction({
-    name: FUNC_NAME,
+    name: _funcName(),
     data: freeFallback
-      ? { action: 'put', payload_z: payloadZ, free_fallback: true, env_tag: storage.envTag() }
-      : { action: 'put', payload_z: payloadZ, env_tag: storage.envTag() },
+      ? { action: 'put', payload_z: payloadZ, free_fallback: true }
+      : { action: 'put', payload_z: payloadZ },
     success: (res) => {
       wx.hideLoading()
       const r = res && res.result
       if (r && r.ok) {
         if (retried) _track('retry_ok') // 被拦后（看视频解锁/免费放行）重试成功，漏斗收口
-        _saveStateFromPayload(json, r.updatedAt || Date.now())
+        const st = _saveStateFromPayload(json, r.updatedAt || Date.now())
+        const brief = st
+          ? ` · ${st.recordCount} 条打卡 / ${st.childCount} 个孩子 / ${Math.round(json.length / 1024)}KB 原文`
+          : ''
+        console.log('[云备份] 已同步' + (r.deduped ? '（内容未变，云端去重）' : '') + brief)
         // 云备份时间以 STATE_KEY 为事实源，不再写 backup.markBackedUp()：
         // getLastBackupTime 取「文件备份时间 / 云端快照时间」较大者，写本地
         // 时间戳会污染文件备份口径，且删除云端后「上次备份」无法正确回落
@@ -388,8 +398,8 @@ function _runRewardedAd(hooks) {
     }
     wx.showLoading({ title: '解锁中...', mask: true })
     wx.cloud.callFunction({
-      name: FUNC_NAME,
-      data: { action: 'unlock', env_tag: storage.envTag() },
+      name: _funcName(),
+      data: { action: 'unlock' },
       success: (ures) => {
         const ur = ures && ures.result
         if (ur && ur.ok) {
@@ -436,8 +446,8 @@ function getEntitlement(callback) {
     return
   }
   wx.cloud.callFunction({
-    name: FUNC_NAME,
-    data: { action: 'entitlement', env_tag: storage.envTag() },
+    name: _funcName(),
+    data: { action: 'entitlement' },
     success: (res) => {
       const r = res && res.result
       if (r && r.ok) {
@@ -494,8 +504,8 @@ function restoreFromCloud(hooks) {
 
   wx.showLoading({ title: '获取云端快照...', mask: true })
   wx.cloud.callFunction({
-    name: FUNC_NAME,
-    data: { action: 'get', env_tag: storage.envTag() },
+    name: _funcName(),
+    data: { action: 'get' },
     success: (res) => {
       wx.hideLoading()
       const r = res && res.result
@@ -556,10 +566,10 @@ function deleteFromCloud(hooks) {
 
   const summary = getStateText()
   wx.showModal({
-    title: '删除云端备份',
+    title: '删除云备份',
     content: summary
-      ? `将删除云端快照（${summary}），删除后无法找回，本机数据不受影响。如需留存请先「备份到文件」。`
-      : '将删除云端快照，删除后无法找回，本机数据不受影响。如需留存请先「备份到文件」。',
+      ? `将删除云端快照（${summary}），删除后无法找回，本机数据不受影响。如需留存请先「导出备份文件」。`
+      : '将删除云端快照，删除后无法找回，本机数据不受影响。如需留存请先「导出备份文件」。',
     confirmText: '删除',
     confirmColor: '#FA5151',
     success: (r) => {
@@ -572,8 +582,8 @@ function deleteFromCloud(hooks) {
 function _doDelete(hooks) {
   wx.showLoading({ title: '删除中...', mask: true })
   wx.cloud.callFunction({
-    name: FUNC_NAME,
-    data: { action: 'delete', env_tag: storage.envTag() },
+    name: _funcName(),
+    data: { action: 'delete' },
     success: (res) => {
       wx.hideLoading()
       const r = res && res.result
@@ -607,18 +617,220 @@ function _clearState() {
 }
 
 // 上传成功后按快照内容更新本地状态缓存（不存原文，只存概要）
+// @returns 概要对象（供同步日志打印）；解析失败返回 null
 function _saveStateFromPayload(json, updatedAt) {
   try {
     const data = JSON.parse(json)
     const childrenArr = Array.isArray(data.children) ? data.children : []
-    _set(STATE_KEY, {
+    const summary = {
       updatedAt,
       childCount: childrenArr.length,
       recordCount: childrenArr.reduce(
         (n, c) => n + (Array.isArray(c.checkin_records) ? c.checkin_records.length : 0), 0)
-    })
-  } catch (e) {}
+    }
+    _set(STATE_KEY, summary)
+    return summary
+  } catch (e) {
+    return null
+  }
 }
+
+// ===== 自动备份（会员专属开关，默认关闭）：打卡/修改/删除等数据变更后自动上云 =====
+// 触发链：数据层写入口 → dataChanged.notify() → _markDirty 置脏 + 3s 防抖 → 静默上传。
+// 防抖取 3s：打卡是离散操作，单次操作后 3s 即同步（用户很快切后台也来得及，退后台
+// 补传再兜一层）；连续操作场景（批量导入/连续删改）靠窗口顺延合并为最后一次全量。
+// 与手动备份完全独立：无 loading / toast / 弹窗（后台行为不打扰用户），失败静默保留
+// 脏标记等下次变更/退后台重试。全量快照模型幂等，防抖窗口内连续变更只传最后一次；
+// 会员在云端闸门天然放行（不耗广告点数、无频控），服务端指纹去重让内容未变的
+// 重复上传零成本。非会员即使开关残留开启（会员过期场景），云端闸门仍兜底拦截。
+
+const AUTO_KEY = 'qingba_cloud_autobackup' // 开关持久化（家庭级，带 dev 前缀隔离）
+const AUTO_DEBOUNCE_MS = 3 * 1000
+
+let _autoTimer = null
+let _autoBusy = false // 一轮上传（含权益实查）进行中
+let _autoPending = false // 上传期间又发生变更：本轮结束后再排一轮
+let _autoDirty = false // 有未同步变更（防抖到期上传与退后台补传的判定依据）
+let _autoSources = new Set() // 本轮的变更来源（仅用于日志：打卡/修改/补录…），上传成功后清空
+
+// 变更来源标签：dataChanged.notify(source) 传短码，日志展示中文
+// 未登记的 source 原样展示，避免以后新增入口漏配就丢失信息
+const CHANGE_LABELS = {
+  add: '打卡',
+  edit: '修改打卡',
+  del: '删除打卡',
+  backfill: '补录',
+  clear: '清空数据',
+  migrate: '资源迁移',
+  read: '读完次数',
+  stage: '阶段进度',
+  route: '路线切换',
+  setting: '设置',
+  remark: '默认备注',
+  child: '孩子管理',
+  resource: '自定义资源',
+  deco: '盲盒',
+  import: '导入备份',
+  stress: '压力测试数据'
+}
+
+function _describeSources() {
+  if (!_autoSources.size) return ''
+  const names = []
+  _autoSources.forEach(s => names.push(CHANGE_LABELS[s] || s))
+  return names.join('、')
+}
+
+function isAutoBackupOn() {
+  return !!_get(AUTO_KEY)
+}
+
+// 开关落盘；关闭时清掉挂起的防抖与全部状态（重新开启经 startAutoBackup 立即建基线快照）
+function setAutoBackupEnabled(on) {
+  _set(AUTO_KEY, !!on)
+  if (!on) {
+    if (_autoTimer) { clearTimeout(_autoTimer); _autoTimer = null }
+    _autoBusy = false
+    _autoPending = false
+    _autoDirty = false
+    _autoSources.clear()
+  }
+}
+
+// 数据变更入口（dataChanged 总线回调）：开关关闭时仅一次布尔判断零开销
+function _markDirty(source) {
+  if (!isAutoBackupOn()) return
+  _autoDirty = true
+  if (source) _autoSources.add(source)
+  if (_autoTimer) clearTimeout(_autoTimer)
+  _autoTimer = setTimeout(_autoFlush, AUTO_DEBOUNCE_MS)
+}
+
+// 防抖到期统一入口；重入保护：上轮未完（含权益实查）时只记 pending，结束后再排一轮
+function _autoFlush() {
+  _autoTimer = null
+  _autoKick()
+}
+
+function _autoKick() {
+  if (_autoBusy) { _autoPending = true; return }
+  if (!isAutoBackupOn() || !_autoDirty || !isCloudAvailable()) return
+  _autoBusy = true
+  _autoCheckEntitlement()
+}
+
+// 会员预判：缓存有效且非会员直接跳过（省全量收集与流量）；缓存过期/缺失先实查再传，
+// 实查失败（网络差）本轮放弃。即使前端误判放行，云端闸门仍是最终防线
+function _autoCheckEntitlement() {
+  const cached = getCachedEntitlement()
+  if (cached && !cached.member) {
+    _autoBusy = false
+    _autoAfterRound()
+    return
+  }
+  if (!cached) {
+    getEntitlement((ent) => {
+      if (!(ent && ent.ok && ent.member)) {
+        _autoBusy = false
+        _autoAfterRound()
+        return
+      }
+      _autoUpload()
+    })
+    return
+  }
+  _autoUpload()
+}
+
+// 静默上传：绝不弹任何 UI。空快照静默跳过（防护口径同手动备份：不用空数据
+// 覆盖云端唯一快照，但自动场景无确认弹窗，留待有数据后自动补传）
+function _autoUpload() {
+  let json = ''
+  try {
+    json = backup.collectBackupJson()
+  } catch (e) {
+    console.error('[自动备份] 生成快照失败', e)
+    _autoBusy = false
+    return
+  }
+  if (_isEmptySnapshot(json)) {
+    _autoBusy = false
+    _autoAfterRound()
+    return
+  }
+  let payloadZ = ''
+  try {
+    payloadZ = _u8ToBase64(pako.gzip(json))
+  } catch (e) {
+    console.error('[自动备份] 压缩失败', e)
+    _autoBusy = false
+    return
+  }
+  wx.cloud.callFunction({
+    name: _funcName(),
+    data: { action: 'put', payload_z: payloadZ },
+    success: (res) => {
+      _autoBusy = false
+      const r = res && res.result
+      if (r && r.ok) {
+        _autoDirty = false
+        const st = _saveStateFromPayload(json, r.updatedAt || Date.now())
+        // 日志带来源与快照概要：既知道这次同步是谁触发的，也确认同步的是哪份数据
+        const sources = _describeSources()
+        _autoSources.clear()
+        const brief = (sources ? `（${sources}）` : '')
+          + (st ? ` · ${st.recordCount} 条打卡 / ${st.childCount} 个孩子 / ${Math.round(json.length / 1024)}KB` : '')
+          + (r.deduped ? ' · 云端去重' : '')
+        console.log('[自动备份] 已同步' + brief)
+      } else {
+        console.error('[自动备份] 上传未成功', r && r.code)
+      }
+      _autoAfterRound()
+    },
+    fail: (err) => {
+      console.error('[自动备份] 网络失败', err)
+      _autoBusy = false
+      _autoAfterRound()
+    }
+  })
+}
+
+// 一轮结束：上传期间有新变更则再排一轮防抖（窗口重新计时，期间变更合并为一次）
+function _autoAfterRound() {
+  if (_autoPending && isAutoBackupOn()) {
+    _autoPending = false
+    _autoTimer = setTimeout(_autoFlush, AUTO_DEBOUNCE_MS)
+  }
+}
+
+// 冻结本轮自动备份：供「清空数据」等破坏性操作在落盘后调用。
+// 清空会经 dataChanged 进防抖队列，若正常上传会把云端唯一快照覆盖成残缺数据；
+// 冻结后云端定格在操作前最后一版，清空因此在本机侧可撤销（备份页「从云端恢复」）。
+// 只取消当前这一轮，脏标记一并清掉（退后台补传也不会触发）；此后用户一旦产生
+// 新的数据变更，自动备份照常恢复，云端跟随最新状态。
+function suspendAutoBackup() {
+  if (_autoTimer) { clearTimeout(_autoTimer); _autoTimer = null }
+  _autoDirty = false
+  _autoPending = false
+  _autoSources.clear()
+}
+
+// 退后台补传：app.onHide 调用，防抖未到期时立即发起。同步收集+压缩后发请求，
+// 退后台悬挂期（约 5s）足够完成；极端超时丢弃本轮，脏标记保留，下次变更重传
+function flushAutoBackupOnHide() {
+  if (_autoTimer) { clearTimeout(_autoTimer); _autoTimer = null }
+  _autoKick()
+}
+
+// 开启开关瞬间：置脏并立即执行一轮，不等防抖——当场建立云端基线快照
+function startAutoBackup() {
+  _autoDirty = true
+  if (_autoTimer) { clearTimeout(_autoTimer); _autoTimer = null }
+  _autoKick()
+}
+
+// 订阅数据变更总线（模块加载即挂一次）：数据层只管 notify，不感知备份逻辑
+dataChanged.subscribe(_markDirty)
 
 // ===== 会员购买（虚拟支付道具直购 mode=short_series_goods，买断制早鸟价） =====
 
@@ -650,8 +862,8 @@ function purchaseLifetime(hooks) {
       }
       wx.showLoading({ title: '创建订单...', mask: true })
       wx.cloud.callFunction({
-        name: FUNC_NAME,
-        data: { action: 'createOrder', product_id: LIFETIME_SKU, login_code: res.code, env_tag: storage.envTag() },
+        name: _funcName(),
+        data: { action: 'createOrder', product_id: LIFETIME_SKU, login_code: res.code },
         success: (ores) => {
           wx.hideLoading()
           const or = ores && ores.result
@@ -745,8 +957,8 @@ function redeemCode(rawCode, hooks) {
   }
   wx.showLoading({ title: '兑换中...', mask: true })
   wx.cloud.callFunction({
-    name: FUNC_NAME,
-    data: { action: 'redeem', code, env_tag: storage.envTag() },
+    name: _funcName(),
+    data: { action: 'redeem', code },
     success: (res) => {
       wx.hideLoading()
       const r = res && res.result
@@ -792,5 +1004,10 @@ module.exports = {
   restoreFromCloud,
   deleteFromCloud,
   purchaseLifetime,
-  redeemCode
+  redeemCode,
+  isAutoBackupOn,
+  setAutoBackupEnabled,
+  startAutoBackup,
+  flushAutoBackupOnHide,
+  suspendAutoBackup
 }

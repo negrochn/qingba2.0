@@ -11,6 +11,8 @@
 
 const checkin = require('./checkin.js')
 const storage = require('./storage.js')
+// 数据变更通知：自定义资源进快照，写入口 notify() 驱动自动备份（零依赖模块，无加载环）
+const dataChanged = require('./dataChanged.js')
 const { ROUTES, resourceLabels } = require('./data.js')
 const { getActiveChildId, getPrimaryChildId } = require('./children.js')
 
@@ -86,6 +88,7 @@ function getAll() {
 function _saveAll(data) {
   try {
     storage.set(_storageKey(), data || {})
+    dataChanged.notify('resource')
     return true
   } catch (e) {
     return false

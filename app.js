@@ -46,6 +46,12 @@ App({
     this.initUpdateManager()
   },
 
+  // 退后台：自动备份防抖未到期时立即补传，防丢最后一次变更
+  // （未开启开关时是纯布尔判断零开销；逻辑见 utils/cloudBackup.js 自动备份段）
+  onHide() {
+    try { cloudBackup.flushAutoBackupOnHide() } catch (e) {}
+  },
+
   // 微信小程序版本更新检查：新版本就绪时提示并重启应用（不会清除本地数据）
   initUpdateManager() {
     if (!wx.canIUse('getUpdateManager')) return

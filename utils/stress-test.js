@@ -183,7 +183,7 @@ function generateStressData(onProgress) {
   }
 
   // 保存到存储（使用分片存储，自动按月拆分）
-  saveAll(allCheckins)
+  saveAll(allCheckins, 'stress')
   storage.set(READ_COUNT_KEY, readCounts)
 
   // 设置当前阶段为最后阶段，并按晋级链标记前序完成（与 stagePicker 的链式写入一致：
