@@ -113,50 +113,30 @@ page {
 }
 
 /* ===== 云备份解锁选择弹层（三动作：看视频 / 开通会员 / 暂不） ===== */
-/* 顶部风险告知行：数据丢失痛点前置（转化位），text2 比正文弱一档、比 note 醒目 */
+/* 顶部风险告知行：数据丢失痛点前置（转化位），主文色 + 28rpx 与 note 拉开差距，仍弱于会员卡标题 */
 .unlock-risk {
   padding: 4rpx 8rpx 16rpx;
-  font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text2);
+  font-size: calc(28rpx * var(--fs, 1));
+  color: var(--text);
   line-height: 1.6;
 }
-.unlock-buy {
-  display: flex;
-  align-items: center;
+/* 会员卡：结构迁 WeUI cell 原语（weui-cell__bd/desc/ft，标题 34rpx 主文档），只做弹层内覆盖：
+   上下 24rpx 紧凑、左右 8rpx 与 risk/note 对齐（面板已有 32rpx 横向 padding）；
+   点击跳会员中心但压掉 WeUI cell 的 :active 灰底——footer 已有「暂不/看视频」双按钮，
+   避免区域内双可点目标都带按压反馈；价格金色不加粗，与 cell 主文同字号 */
+.unlock-cell {
   padding: 24rpx 8rpx;
 }
-.unlock-buy-hover {
-  background: var(--bg);
-}
-.unlock-buy__bd {
-  flex: 1;
-  min-width: 0;
-}
+.unlock-cell.weui-cell:active { background: transparent; }
 .unlock-buy__title {
   display: flex;
   align-items: center;
-  font-size: calc(30rpx * var(--fs, 1));
-  font-weight: 500;
-  color: var(--text);
-  line-height: 1.4;
-}
-.unlock-buy__desc {
-  margin-top: 6rpx;
-  font-size: calc(24rpx * var(--fs, 1));
-  color: var(--text3);
-  line-height: 1.5;
-}
-.unlock-buy__ft {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  margin-left: 16rpx;
-  color: var(--text3);
+  font-size: calc(34rpx * var(--fs, 1));
+  line-height: 1.41176471;
 }
 .unlock-buy__price {
   margin-right: 8rpx;
   font-size: calc(34rpx * var(--fs, 1));
-  font-weight: 600;
   color: #d29a3a;
 }
 .unlock-note {

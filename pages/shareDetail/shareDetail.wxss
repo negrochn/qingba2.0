@@ -43,7 +43,6 @@
 .preview-img {
   width: 100%;
   border-radius: 16rpx;
-  border: 1rpx solid var(--divider);
 }
 .preview-tip {
   width: 100%;

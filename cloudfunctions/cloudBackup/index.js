@@ -357,10 +357,12 @@ async function handleUnlock(openid, cols) {
 
 // 事件口径（前端 utils/cloudBackup.js 上报，白名单外一律丢弃防脏数据）：
 //   offer_show 弹层曝光 → offer_ad 选看视频 / offer_buy 选开通会员 / offer_cancel 放弃
+//   offer_direct_ad 选看视频后 7 天免确认直通拉广告 / offer_skip_full 直通时今日次数已满
 //   ad_broken 未完整观看 / ad_ended 完播并登记成功 / ad_unlock_fail 登记失败 /
 //   ad_unavailable 广告拉起失败 → free_fallback 免费放行确认 → retry_ok 被拦后重试备份成功
 const FUNNEL_EVENTS = [
   'offer_show', 'offer_ad', 'offer_buy', 'offer_cancel',
+  'offer_direct_ad', 'offer_skip_full',
   'ad_broken', 'ad_ended', 'ad_unlock_fail', 'ad_unavailable',
   'free_fallback', 'retry_ok'
 ]

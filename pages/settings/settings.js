@@ -3,6 +3,7 @@ const checkin = require('../../utils/checkin.js');
 const children = require('../../utils/children.js');
 const { ROUTES } = require('../../utils/data.js');
 const { generateStressData } = require('../../utils/stress-test.js');
+const cloudBackup = require('../../utils/cloudBackup.js');
 
 // 获取「关于小程序」右侧显示文案：
 // 正式版读线上版本号；开发版 / 体验版读不到版本号，只显示环境（不做假版本号兜底）
@@ -25,8 +26,9 @@ Page({
     currentRouteName: '',
     childCountText: '',
     appVersionText: getAppVersionText(),
-    // 开发者工具（压力测试）仅在开发版显示
+    // 开发者工具（压力测试 / 会员态切换）仅在开发版显示
     showDevTools: false,
+    devIsMember: false, // 开发者工具「永久会员」开关：反映云端 dev 集合的真实会员态
     currentStageIndex: -1,
     currentStage: null,
     currentStageDisplay: '',
@@ -63,6 +65,7 @@ Page({
     this.loadYouquPlan();
     this.loadListening();
     this.loadTargetSummary();
+    this.loadDevMemberState();
   },
 
   // 跳转「我的资源」管理页
@@ -171,6 +174,43 @@ Page({
   // 跳转阶段选择页（原语 3：picker-page 整页单选）
   goStagePicker() {
     wx.navigateTo({ url: '/pages/stagePicker/stagePicker' });
+  },
+
+  // ===== 开发者工具：会员态切换 =====
+  // 直接改云端 dev 集合的 membership，不做本地覆盖开关——本地假会员会被服务端闸门
+  // 打回，反而测不出真实链路。开关态每次进页实查，失败保持原值不误报
+  loadDevMemberState() {
+    if (!this.data.showDevTools) return;
+    cloudBackup.getEntitlement((ent) => {
+      if (ent && ent.ok) this.setData({ devIsMember: !!ent.member });
+      // 查不到权益一般不阻断调试，但要留痕：多半是 dev 函数没部署或集合没建
+      else console.warn('[devMember] 权益查询失败，开关态不可信');
+    });
+  },
+
+  onDevMemberChange(e) {
+    const on = !!(e.detail && e.detail.value);
+    this.setData({ devIsMember: on }); // 先跟手，失败回滚
+    wx.showLoading({ title: '切换中...', mask: true });
+    cloudBackup.devSetMember(on, (r) => {
+      wx.hideLoading();
+      if (!r || !r.ok) {
+        this.setData({ devIsMember: !on });
+        // 失败原因直接展示（code + message），调试时不必再翻 Console
+        const code = (r && r.code) || 'UNKNOWN';
+        const msg = (r && r.message) || '未知错误';
+        wx.showModal({
+          title: '切换失败',
+          content: `${msg}\n\n错误码：${code}`,
+          showCancel: false,
+          confirmText: '知道了'
+        });
+        return;
+      }
+      // 切为非会员时顺手关掉自动备份：否则后台仍按会员节奏上传，全被闸门拒绝
+      if (!on && cloudBackup.isAutoBackupOn()) cloudBackup.setAutoBackupEnabled(false);
+      wx.showToast({ title: on ? '已切换为会员' : '已切换为非会员', icon: 'success' });
+    });
   },
 
   // ===== 压力测试 =====

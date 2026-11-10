@@ -68,6 +68,7 @@ exports.main = async (event) => {
     if (action === 'createOrder') return await handleCreateOrder(OPENID, event)
     if (action === 'redeem') return await handleRedeem(OPENID, event)
     if (action === 'track') return await handleTrack(OPENID, event)
+    if (action === 'devSetMember') return await handleDevSetMember(OPENID, event)
     return fail('BAD_ACTION', '未知操作')
   } catch (e) {
     console.error('cloudBackup_dev error', e)
@@ -288,6 +289,45 @@ async function handleEntitlement(openid) {
   })
 }
 
+// ===== 开发调试：切换会员态（只在 dev 函数存在，正式函数不提供此 action）=====
+// 用途：开发版设置页「开发者工具 → 永久会员」开关，省掉手工改 entitlements_dev 文档。
+// 只动 membership 一个字段，credits / 看视频计数原样保留，切回非会员后原有额度照旧；
+// membership 结构与正式发货完全同构（{ type, expireAt, sku, pricePaid }，expireAt
+// 为 null 即永久；sku=dev_lifetime 标记测试来源），_isMember 判定、备份闸门、
+// 自动备份调度全部走与真实会员完全一致的代码路径。
+// 写入必须用 doc().set() 整文档替换：update 对对象字段是合并语义，存量 membership
+// 为 null 时嵌套更新会报「Cannot update field ... in element {membership: null}」
+// ——handleRedeem 注释里记录过同款坑。非 membership 字段从读到的文档原样写回。
+async function handleDevSetMember(openid, event) {
+  const on = !!(event && event.member)
+  try {
+    // 文档不存在先建档（新用户自带 1 点免费体验，与正式一致）
+    const ent = await _loadEnt(openid, ENT_COL)
+    if (!ent || !ent._id) return fail('NO_DOC', '权益文档不存在，无法切换')
+    const membership = on
+      ? { type: 'lifetime', expireAt: null, sku: 'dev_lifetime', pricePaid: 0 }
+      : null
+    await db.collection(ENT_COL).doc(ent._id).set({
+      data: {
+        openid: ent.openid || openid,
+        credits: ent.credits || 0,
+        gifted: !!ent.gifted,
+        dailyDate: ent.dailyDate || '',
+        dailyEarned: ent.dailyEarned || 0,
+        freeDate: ent.freeDate || '',
+        freeUsed: ent.freeUsed || 0,
+        membership,
+        updatedAt: Date.now()
+      }
+    })
+    return ok({ member: on })
+  } catch (e) {
+    // 真实原因带回前端弹窗：最常见是 entitlements_dev 集合没建
+    console.error('[devSetMember] 写入失败', e)
+    return fail('DEV_SET_FAIL', (e && (e.errMsg || e.message)) || '写入 entitlements_dev 失败')
+  }
+}
+
 // 激励视频完整观看后登记：+1 备份点数，每日上限 DAILY_AD_LIMIT 防刷
 // 前端只在此登记成功后才发起备份；伪造直调 put 无权益仍会被闸门拦下
 async function handleUnlock(openid) {
@@ -317,10 +357,12 @@ async function handleUnlock(openid) {
 
 // 事件口径（前端 utils/cloudBackup.js 上报，白名单外一律丢弃防脏数据）：
 //   offer_show 弹层曝光 → offer_ad 选看视频 / offer_buy 选开通会员 / offer_cancel 放弃
+//   offer_direct_ad 选看视频后 7 天免确认直通拉广告 / offer_skip_full 直通时今日次数已满
 //   ad_broken 未完整观看 / ad_ended 完播并登记成功 / ad_unlock_fail 登记失败 /
 //   ad_unavailable 广告拉起失败 → free_fallback 免费放行确认 → retry_ok 被拦后重试备份成功
 const FUNNEL_EVENTS = [
   'offer_show', 'offer_ad', 'offer_buy', 'offer_cancel',
+  'offer_direct_ad', 'offer_skip_full',
   'ad_broken', 'ad_ended', 'ad_unlock_fail', 'ad_unavailable',
   'free_fallback', 'retry_ok'
 ]

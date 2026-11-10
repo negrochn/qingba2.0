@@ -1,7 +1,6 @@
 <view class="container route-page {{fontClass}} {{darkClass}}">
 
-  <!-- 顶部：当前孩子（仅多孩显示）+ 当前阶段；分组标题已移除，
-       留白由容器 padding-top 补齐（层级语义：为谁学 → 学到哪 → 怎么走） -->
+  <!-- 顶部：当前孩子（仅多孩显示）+ 当前阶段（层级语义：为谁学 → 学到哪 → 怎么走） -->
   <view class="weui-cells">
     <!-- 当前孩子 cell：点击弹切换弹层（纯切换）；标准 access 结构（无头像/CTA，箭头表意） -->
     <view
@@ -29,7 +28,7 @@
       >
         <view class="weui-cell__bd">
           <view class="weui-cell__bd_text">{{currentCard.name}}</view>
-          <view class="route-meta" wx:if="{{currentCard.targetText}}">目标 {{currentCard.targetText}}</view>
+          <view class="weui-cell__desc" wx:if="{{currentCard.targetText}}">目标 {{currentCard.targetText}}</view>
         </view>
         <view class="weui-cell__ft">
           <text class="weui-cell__ft_value">{{currentCard.noTarget ? '—' : currentCard.progress + '%'}}</text>
@@ -47,7 +46,7 @@
       >
         <view class="weui-cell__bd">
           <view class="weui-cell__bd_text route-unset">未设置</view>
-          <view class="route-meta">选择一个阶段作为起点</view>
+          <view class="weui-cell__desc">选择一个阶段作为起点</view>
         </view>
         <view class="weui-cell__ft">
           <text class="route-cta">去选择</text>

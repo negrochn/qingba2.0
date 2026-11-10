@@ -13,7 +13,9 @@
   <!-- 云备份（主路径：云端快照的备份 / 恢复 / 删除） -->
   <view class="weui-cells__title">云备份</view>
   <view class="weui-cells">
-    <!-- 自动备份（会员专属开关，默认关闭）：会员显示开关，非会员锁定引导开通；
+    <!-- 自动备份（会员专属开关，默认关闭）：仅会员可见，非会员整行不展示——
+         本页是纯工具页，需要会员的自会去会员中心买，此处不占位引导（转化交给
+         tips 里的「永久会员」链接与备份被拦时的解锁弹层）；
          开启后打卡/修改/删除等数据变更经 3s 防抖自动上云（调度收口 utils/cloudBackup.js） -->
     <view class="weui-cell" wx:if="{{isMember}}">
       <view class="weui-cell__bd">
@@ -22,15 +24,6 @@
       </view>
       <view class="weui-cell__ft">
         <switch checked="{{autoBackupOn}}" bindchange="onToggleAutoBackup" />
-      </view>
-    </view>
-    <view class="weui-cell weui-cell_access" wx:else bindtap="onLockedAutoBackup">
-      <view class="weui-cell__bd">
-        <view class="weui-cell__bd_text">自动备份<text class="db-badge db-badge--gold">会员</text></view>
-        <view class="weui-cell__desc">永久会员可开启，打卡数据自动同步到云端</view>
-      </view>
-      <view class="weui-cell__ft">
-        <text class="iconfont icon-right"></text>
       </view>
     </view>
     <view class="weui-cell weui-cell_access" bindtap="onCloudBackup">
@@ -141,8 +134,8 @@
   </view>
 </half-sheet>
 
-<!-- 云备份解锁选择（替代系统 showModal：三动作——看视频 / 开通会员 / 暂不；
-     开通会员跳会员中心页，购买完成后返回重按备份即走会员通道） -->
+<!-- 云备份解锁选择（替代系统 showModal：两动作——看视频 / 暂不；会员卡可点击跳会员中心，
+     购买完成后返回重按备份即走会员通道） -->
 <half-sheet
   show="{{unlockVisible}}"
   title="解锁云备份"
@@ -153,12 +146,12 @@
 >
   <view class="unlock-body">
     <view class="unlock-risk">{{unlockRiskText}}</view>
-    <view class="unlock-buy" bindtap="unlockByBuy" hover-class="unlock-buy-hover">
-      <view class="unlock-buy__bd">
+    <view class="weui-cell unlock-cell" bindtap="unlockByBuy">
+      <view class="weui-cell__bd">
         <view class="unlock-buy__title">开通永久会员<text class="db-badge db-badge--gold">早鸟价</text></view>
-        <view class="unlock-buy__desc">不限次数备份，无需再看视频</view>
+        <view class="weui-cell__desc">不限次数备份，无需再看视频</view>
       </view>
-      <view class="unlock-buy__ft">
+      <view class="weui-cell__ft">
         <text class="unlock-buy__price">¥9.9</text>
         <text class="iconfont icon-right"></text>
       </view>

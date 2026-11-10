@@ -2,9 +2,6 @@
      页面只补语义色与图标列。未解锁不露真身（灰 ? 占位），行尾给线索；组序按稀有度递进 -->
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- 摘要行：居中 + 重点数字 -->
-  <view class="summary">已收集 <text class="summary-num">{{got}}</text> 款（共 {{total}} 款）</view>
-
   <block wx:for="{{groups}}" wx:for-item="g" wx:key="key">
     <!-- 分组标题：按档位挂语义色（dex-title--rare/seasonal/hidden），常见款无类回退默认灰 -->
     <view class="weui-cells__title dex-title--{{g.key}}">{{g.name}} {{g.got}}/{{g.total}}</view>

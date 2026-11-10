@@ -10,8 +10,7 @@ Page({
   data: {
     fontClass: '',
     darkClass: '',
-    got: 0,
-    total: 0,
+    got: 0, // 空态判断用（wx:if="{{!got}}"）
     groups: []
   },
 
@@ -53,6 +52,6 @@ Page({
           status: this._statusOf(s, g.key)
         }))
       }))
-    this.setData({ got: dex.got, total: dex.total, groups })
+    this.setData({ got: dex.got, groups })
   }
 })

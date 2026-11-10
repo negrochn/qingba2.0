@@ -960,7 +960,9 @@ function getCheckinById(id) {
 // 语义约定：
 // - 日期未变：保留原 timestamp（只改时长/备注时不应改动展示时间）
 // - 日期改变：改到今天用 Date.now()，改到历史日期用该日 12:00（与 addCheckin 的补录口径一致）
-// - backfilled 按新日期重算（== 今天则清掉该标记）
+// - backfilled 仅在日期改变时按新日期重算；日期不变继承原值——改备注/时长不应改变
+//   记录的补录性质（昨天正常打卡的记录改完备注不能变成「补录」，反之补录记录改备注
+//   也不该丢标）；改到今天清标，改到历史日期打标
 // - 跨日 / 跨月移动由 saveAll 按月重组分片自然处理，无需特殊分支
 // 注意：不会迁移 qingba_read_counts（读完次数是用户主动标记的独立计数，
 //       与打卡记录并非 1:1，无法从记录可靠反推，故编辑不改动它）
@@ -989,7 +991,10 @@ function updateCheckin(id, opts) {
     if (!cur) return { ok: false, moved: false, day: '', record: null }
 
     const newDay = normalizeDay(o.day) || normalizeDay(cur.day) || oldDay
-    const backfilled = newDay !== todayStr()
+    const dayChanged = newDay !== oldDay
+    // 补录标签：日期不变继承原值（标签语义 = 这条记录是否经补录产生，编辑不改变性质）；
+    // 日期改变才按新日期重算，与 addCheckin / addCheckinsOnDay 的补录口径一致
+    const backfilled = dayChanged ? newDay !== todayStr() : !!cur.backfilled
 
     const next = {
       ...cur,
@@ -1016,7 +1021,7 @@ function updateCheckin(id, opts) {
     } else {
       delete next.backfilled
     }
-    if (newDay !== oldDay) {
+    if (dayChanged) {
       next.timestamp = backfilled ? dayToTimestamp(newDay) : Date.now()
     }
 

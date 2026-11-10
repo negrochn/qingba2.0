@@ -20,9 +20,9 @@ Page({
     cloudEntText: '',    // 无云端快照时「立即备份」副文案（跟随会员/点数状态；'' 回落「暂无快照」）
     isMember: false,     // 永久会员态：自动备份开关形态 / 副文案口径（购买入口已迁会员中心页）
     autoBackupOn: false, // 自动备份开关（会员专属；持久化与调度收口 utils/cloudBackup.js）
-    // 云备份解锁选择弹层（非会员点数用尽时：看视频 / 开通会员 / 暂不）
+    // 云备份解锁选择弹层（非会员点数用尽时：看视频 / 暂不；会员卡点击跳会员中心）
     unlockVisible: false,
-    unlockRiskText: '', // 弹层顶部风险告知（「已积累 N 条打卡记录...」，utils 解析快照回传）
+    unlockRiskText: '', // 弹层顶部风险告知（utils 按云端快照态拼装回传，有快照时聚焦未备份增量）
     adLeftText: '',     // 弹层备注「今日还可看 N 次视频免费解锁」（权益实查带回；'' 回落原文案）
     // 导入备份 · 选孩子弹层（v2 单孩格式专用；v3 多孩格式整体恢复不经过此处）
     importPickVisible: false,
@@ -149,30 +149,20 @@ Page({
     }
   },
 
-  // 非会员点击锁定态：引导开通。自动备份不接广告解锁——点数是按次模型，撑不起持续自动行为
-  onLockedAutoBackup() {
-    wx.showModal({
-      title: '会员专属权益',
-      content: '自动备份可把打卡、修改自动同步到云端，换手机不丢数据。开通永久会员后在此开启即可。',
-      confirmText: '去开通',
-      cancelText: '暂不',
-      success: (r) => { if (r.confirm) this.goMembership(); }
-    });
-  },
+  // 非会员不展示自动备份行，故无锁定态点击处理；自动备份也不接广告解锁
+  // （点数是按次模型，撑不起持续自动行为）
 
-  // ===== 云备份解锁选择弹层（替代系统 showModal：三动作——看视频 / 开通会员 / 暂不。
-  // utils 检测到无权益时经 onNeedUnlock 回调到这里弹层，选择结果回传续跑原流程） =====
+  // ===== 云备份解锁选择弹层（替代系统 showModal：两动作——看视频 / 暂不。
+  // utils 检测到无权益时经 onNeedUnlock 回调到这里弹层，选择结果回传续跑原流程；
+  // 会员卡可点击跳会员中心，回传 'buy' 用于漏斗埋点区分购买意向与放弃） =====
 
   // utils 回调：弹层选择结果的续跑句柄存实例上（关闭/选择后置空防重复回传）；
-  // info.recordCount 为本次快照打卡记录数，拼风险告知文案（0/缺省回落通用文案）
+  // 风险告知文案由 utils 按「本机快照 vs 云端快照」拼好回传（info.riskText，口径见 _riskText）
   onNeedUnlock(handle, info) {
     this._unlockHandle = handle;
-    const n = (info && info.recordCount) | 0;
     this.setData({
       unlockVisible: true,
-      unlockRiskText: n > 0
-        ? '已积累 ' + n + ' 条打卡记录，仅保存在这台手机，换手机或清理微信缓存可能丢失且无法找回'
-        : '打卡数据仅保存在这台手机，换手机或清理微信缓存可能丢失且无法找回'
+      unlockRiskText: (info && info.riskText) || ''
     });
   },
 
@@ -210,8 +200,8 @@ Page({
     if (this._cloudBusy) return;
     this._cloudBusy = true;
     cloudBackup.uploadToCloud({
-      // 无权益时页面弹「解锁选择」弹层（三动作），选择结果回传 utils 续跑；
-      // info.recordCount（快照记录数）转发给弹层拼风险文案
+      // 无权益时页面弹「解锁选择」弹层（两动作），选择结果回传 utils 续跑；
+      // info（记录数 + utils 按云端快照态拼好的风险文案）转发给弹层展示
       onNeedUnlock: (handle, info) => this.onNeedUnlock(handle, info),
       onDone: () => {
         this._cloudBusy = false;

@@ -13,15 +13,15 @@
 // （canvas 拿不到 CSS 变量，两套手写，改色板时需同步这里）。
 
 // 深浅色 token（对齐 app.wxss page / .dm-dark）
-// 注意 bg 是「画框底」：比页面 --bg 深一档（#e0e0e0 / #090909）——分享图四周只有
-// 细窄一圈底色，用页面同款浅灰会和白卡糊在一起，观感像没背景；深一档才衬出卡片轮廓
+// bg 必须与页面底色完全一致（#ededed / #111111）——分享图在 shareDetail 预览时
+// 图片底色与页面底色若深浅不一会出现明显色差（图片像贴上去的一块色块）
 const TOKENS = {
   light: {
-    bg: '#e0e0e0', card: '#ffffff', card2: '#f7f7f7', cellActive: '#ececec',
+    bg: '#ededed', card: '#ffffff', card2: '#f7f7f7', cellActive: '#ececec',
     text: '#1a1a1a', text2: '#737373', text3: '#b2b2b2'
   },
   dark: {
-    bg: '#090909', card: '#191919', card2: '#202020', cellActive: '#373737',
+    bg: '#111111', card: '#191919', card2: '#202020', cellActive: '#373737',
     text: 'rgba(255,255,255,.8)', text2: 'rgba(255,255,255,.5)', text3: 'rgba(255,255,255,.3)'
   }
 }
@@ -82,9 +82,9 @@ function compose(opts, cb) {
   const legend = opts.legend || []
   const rows = Math.ceil(legend.length / 2)
 
-  // 版式常量（单位 rpx；与页面 myStats.wxss 对齐，画框边距比页面略宽以衬卡片）
+  // 版式常量（单位 rpx；与页面 myStats.wxss 对齐，画框四周留白 32）
   const W = 750            // 画布逻辑宽（含画框底）
-  const PAD_X = 48         // 画框左右留白（页面 .card margin 32，这里放宽到 48）
+  const PAD_X = 32         // 画框左右留白（与页面 .card margin 一致，同上下 FRAME）
   const CARD_PAD = 24      // 卡内边距（.card padding）
   const HEAD_ROW_H = 48    // 标题 + tabs 行高（tabs 胶囊壳高）
   const TAB_PAD = 20       // tab 文本左右内边距（.tab padding）
@@ -104,7 +104,7 @@ function compose(opts, cb) {
   else if (opts.title) headH = HEAD_ROW_H + (opts.subText ? SUB_H : 0) + HEAD_GAP
 
   const CHART_H = opts.chartH || 480
-  const FRAME = 48         // 画框上下留白（上=下）
+  const FRAME = 32         // 画框上下留白（上=下）
   const H = FRAME + 32 + headH + CHART_H + (rows ? LEG_TOP + rows * ROW_H : 0) + 32 + FRAME
 
   // 物理尺寸 = 逻辑 rpx × (rpx→px) × 清晰度倍数（≤3）；每次合成重设尺寸（会重置画布状态）
@@ -283,8 +283,8 @@ function buildTrendPoster(opts, cb) {
 // opts.canvas         屏外 canvas 2d 节点（详情页 #poster-canvas）
 // opts.windowWidth / opts.pixelRatio
 const SHEET_C = {
-  // bg 为卡片外的画布底色（深一档衬出白卡轮廓，同统计海报 TOKENS 的思路）
-  bg: '#e0e0e0', text: '#1a1a1a', text2: '#737373', text3: '#b2b2b2',
+  // bg 与页面底色一致（#ededed），避免海报在详情页预览时与页面底色出现色差（同 TOKENS）
+  bg: '#ededed', text: '#1a1a1a', text2: '#737373', text3: '#b2b2b2',
   cellActive: '#ececec', divider: '#e5e5e5', brand: '#07C160', white: '#ffffff', card: '#ffffff'
 }
 

@@ -8,6 +8,7 @@
 //     时引导看激励视频 → unlock 登记 +1 点 → 自动重试备份。恢复/删除不设墙。
 //     广告拉起失败（审核环境无填充 / 广告位冷启动）时弹窗告知免费放行，put 带
 //     free_fallback 标记走云函数免费通道（每日 ≤2 次限额），备份功能始终可用。
+//     选「看视频解锁」后 7 天内免确认直通：跳过弹层直接拉激励视频（详见 _markSkipAsk）。
 //  6. 激励视频漏斗埋点（fire-and-forget 上报云函数 track，失败静默）：弹层曝光/选择/
 //     完播/中断/免费放行/重试成功各环节，供运营读转化漏斗；不参与任何功能判定。
 // 页面层只做 UI 与流程胶水，数据与判断都收口在本文件。
@@ -28,6 +29,8 @@ const AD_UNIT_ID = 'adunit-78cec41c9a325278' // 激励视频广告位（流量�
 const STATE_KEY = 'qingba_cloud_backup_state' // 家庭级：{ updatedAt, childCount, recordCount }
 const ENT_CACHE_KEY = 'qingba_ent_cache' // 权益缓存：{ t, member, credits, ... }（app 启动预热写入，页面首屏先读，实查后覆盖）
 const ENT_CACHE_TTL = 10 * 60 * 1000 // 缓存时效：10 分钟，超时视为无缓存走实查
+const SKIP_ASK_KEY = 'qingba_unlock_skip_ask' // 看视频意向免确认直通窗口：{ at }（最近一次选看视频/完播时刻）
+const SKIP_ASK_MS = 7 * 24 * 60 * 60 * 1000   // 窗口 7 天：期内点「立即备份」不再弹层直接看视频
 
 function _get(key) {
   try { return storage.get(key) } catch (e) { return '' }
@@ -66,6 +69,27 @@ function _countRecords(json) {
   } catch (e) {
     return 0
   }
+}
+
+// 解锁弹层风险告知文案：按云端快照态分口径，保证对「备份过」的老用户不失真——
+// 云端有快照时不能再说「仅保存在这台手机 / 无法找回」（与页面「数据已有云端快照」
+// 卡片自相矛盾），真正没备份的是上次备份之后的增量。四种口径：
+//   无快照 + 有记录：「已积累 N 条…」（首备用户，现状文案）
+//   无快照 + 无记录：通用文案（现状回落）
+//   有快照 + 增量>0：聚焦增量「上次备份是 X，之后新积累的 M 条…」（M=本机-云端，
+//                     覆盖式快照口径下的未备份条数，缓存经进页 refreshCloudState 刷新）
+//   有快照 + 增量<=0：中性文案不展示数字（跨设备/刚备份过，夸大风险反而显得不可信）
+function _riskText(recordCount) {
+  const st = getCachedState()
+  if (!st || !st.updatedAt) {
+    return recordCount > 0
+      ? `已积累 ${recordCount} 条打卡记录，仅保存在这台手机，换手机或清理微信缓存可能丢失且无法找回`
+      : '打卡数据仅保存在这台手机，换手机或清理微信缓存可能丢失且无法找回'
+  }
+  const delta = recordCount - (st.recordCount | 0)
+  return delta > 0
+    ? `上次备份是${timeText.formatSmart(st.updatedAt)}，之后新积累的 ${delta} 条打卡记录仅保存在这台手机，建议尽快更新云端快照`
+    : `上次备份是${timeText.formatSmart(st.updatedAt)}，此后的打卡变动尚未备份到云端，建议尽快更新快照`
 }
 
 // ===== base64（Uint8Array ↔ string）：小程序无 btoa/atob，自实现，不依赖已停维护的 wx 转换 API =====
@@ -282,19 +306,68 @@ function _doUpload(json, hooks, retried, freeFallback) {
 // 注意：showModal 的 confirmText 真机最多 4 个字符（iOS 超限直接 fail），
 // 文案不能超 4 字，且必须带 fail 兜底——否则弹窗失败会静默无反馈并卡住页面忙碌态
 // 无权益时的引导：优先交由页面弹「解锁选择」自定义弹层（hooks.onNeedUnlock，
-// 4.5.0 会员中心上线后弹层含「看视频 / 开通会员 / 暂不」三动作，showModal 只装得下两个），
+// 弹层「看视频 / 暂不」两动作 + 会员卡点击跳会员中心，showModal 只装得下两个动作），
 // 页面经 handle(choice) 回传：'ad'=看视频续跑广告流程，'buy'=开通会员（跳页后由
-// 用户返回重按备份，不自动续跑），其余=放弃；未传 hook 的调用回落系统 showModal（confirmText
-// 真机最多 4 字符且必须带 fail 兜底，否则弹窗失败静默卡住忙碌态）。
+// 用户返回重按备份，不自动续跑），其余=放弃；未传 hook 的调用回落系统 showModal
+// （confirmText 真机最多 4 字符且必须带 fail 兜底，否则弹窗失败静默卡住忙碌态）。
 // 弹层各环节上报漏斗埋点：曝光 offer_show → 选择 offer_ad / offer_buy / offer_cancel；
 // 回调第二参 info.recordCount 为快照记录数，供弹层痛点文案（「已积累 N 条打卡记录」）
+
+// 选「看视频解锁」→ 7 天免确认直通：点「看视频解锁」（意向表达）即记录时刻，窗口内
+// 再点「立即备份」不再弹层、直接拉激励视频。意向优先于结果——看不看完广告是用户的
+// 事，选过看视频就说明偏好是「看视频换备份」，直通是顺水推舟（点「立即备份」本身
+// 也是强意图）；中途关闭广告同样不清窗，否则「选了没看完 → 又弹层再选一次」的重复
+// 摩擦反复出现；「暂不」则是拒绝信号，不参与窗口（跳过弹层违背意愿、还杀掉弹层的
+// 二次转化）。记录/失效口径：
+//   记录 = 弹层 / showModal 选「看视频解锁」（无论广告结局：完播、中途关闭、拉起失败、
+//          登记失败，意向已表达）；直通期完整看完（ad_ended）续期
+//   失效 = 仅 7 天自然过期；成为会员 / 点数恢复后 NEED_ENTITLEMENT 不触发，状态闲置；
+//          直通中途关闭广告不清窗——偏好未变，下次点「立即备份」仍是知情主动触发，
+//          恢复弹层不提供任何新决策点，只剩多点一次「暂不」的摩擦
+function _markSkipAsk() { _set(SKIP_ASK_KEY, { at: Date.now() }) }
+function _inSkipAskWindow() {
+  const s = _get(SKIP_ASK_KEY)
+  return !!(s && s.at && Date.now() - s.at < SKIP_ASK_MS)
+}
+
+// 免确认直通（返回 true = 本函数已处理完本次流程，调用方直接 return；false = 回落弹层）：
+// 权益缓存缺失 / 超时回落弹层（次数态不可判，宁可多问一次）；今日次数已满提示后结束、
+// 不再弹层（硬拉广告会被云函数日上限拒绝白看，弹层又会「说次数用完还问看不看」自相矛盾）；
+// 广告流程与弹层 'ad' 通道一致
+function _runDirectAd(json, hooks) {
+  const ent = getCachedEntitlement()
+  if (!ent) return false
+  if (ent.dailyLimit > 0 && (ent.dailyEarned | 0) >= ent.dailyLimit) {
+    _track('offer_skip_full')
+    wx.showToast({ title: '今日解锁次数已用完', icon: 'none' })
+    if (hooks.onDone) hooks.onDone({ ok: false, cancelled: true })
+    return true
+  }
+  _track('offer_direct_ad')
+  _runRewardedAd({
+    onRewarded: () => _doUpload(json, hooks, 1),
+    onBroken: () => {
+      // 中途关闭不清窗（口径见 _markSkipAsk）：本次结束，下次点「立即备份」仍直通
+      if (hooks.onDone) hooks.onDone({ ok: false })
+    },
+    onError: () => {
+      if (hooks.onDone) hooks.onDone({ ok: false })
+    },
+    onUnavailable: () => _offerFreeFallback(json, hooks)
+  })
+  return true
+}
+
 function _offerAdUnlock(json, hooks) {
   const recordCount = _countRecords(json)
+  // 窗口内优先直通（含今日已满的提示结束）；仅权益缓存缺失时回落弹层
+  if (_inSkipAskWindow() && _runDirectAd(json, hooks)) return
   if (hooks && typeof hooks.onNeedUnlock === 'function') {
     _track('offer_show')
     hooks.onNeedUnlock((choice) => {
       if (choice === 'ad') {
         _track('offer_ad')
+        _markSkipAsk() // 意向准入：无论广告结局，7 天内点「立即备份」直通不再弹层
         _runRewardedAd({
           onRewarded: () => _doUpload(json, hooks, 1),
           onBroken: () => {
@@ -307,17 +380,16 @@ function _offerAdUnlock(json, hooks) {
         })
       } else {
         _track(choice === 'buy' ? 'offer_buy' : 'offer_cancel')
+        // 暂不不参与直通窗口（拒绝信号不清不记，口径见 _markSkipAsk）
         if (hooks.onDone) hooks.onDone({ ok: false, cancelled: true })
       }
-    }, { recordCount })
+    }, { recordCount, riskText: _riskText(recordCount) })
     return
   }
   _track('offer_show')
   wx.showModal({
     title: '解锁云备份',
-    content: recordCount > 0
-      ? `已积累 ${recordCount} 条打卡记录，仅保存在这台手机，换手机或清理微信缓存可能丢失。看一段短视频即可免费备份到云端；开通会员不限次。`
-      : '打卡数据仅保存在这台手机，换手机或清理微信缓存可能丢失。看一段短视频即可免费备份到云端；开通会员不限次。',
+    content: _riskText(recordCount) + '。看一段短视频即可免费备份到云端；开通会员不限次。',
     confirmText: '看视频',
     cancelText: '暂不',
     success: (r) => {
@@ -327,6 +399,7 @@ function _offerAdUnlock(json, hooks) {
         return
       }
       _track('offer_ad')
+      _markSkipAsk() // 意向准入：无论广告结局，7 天内点「立即备份」直通不再弹层
       _runRewardedAd({
         onRewarded: () => _doUpload(json, hooks, 1),
         onBroken: () => {
@@ -404,6 +477,7 @@ function _runRewardedAd(hooks) {
         const ur = ures && ures.result
         if (ur && ur.ok) {
           _track('ad_ended') // 完整观看且登记成功（+1 点）
+          _markSkipAsk() // 完整看完刷新窗口（准入已在选「看视频解锁」时记录，这里为直通期续期）
           // 不关 loading：文案直接从「解锁中...」过渡为「备份上传中...」，
           // 与紧随的重试备份无缝衔接（避免解锁/上传两次 loading 闪断）
           wx.showLoading({ title: '备份上传中...', mask: true })
@@ -490,6 +564,50 @@ function getCachedEntitlement() {
 function warmupEntitlement() {
   if (!isCloudAvailable()) return
   getEntitlement(() => {})
+}
+
+// 开发调试：切换会员态（仅开发版 / 体验版，设置页「开发者工具」用）
+// 走 dev 函数的 devSetMember 直接改 entitlements_dev 的 membership，结构与正式发货一致，
+// 所以备份闸门、自动备份、会员中心全按真实会员路径走；正式版在此直接拒绝，
+// 加上正式函数本就没有该 action，双保险挡住线上权益数据被误改
+function devSetMember(member, callback) {
+  const done = (r) => { if (typeof callback === 'function') callback(r) }
+  if (!isCloudAvailable()) {
+    done({ ok: false, code: 'NO_CLOUD', message: '云开发不可用（wx.cloud 未初始化）' })
+    return
+  }
+  if (_funcName() !== 'cloudBackup_dev') {
+    done({ ok: false, code: 'NOT_DEV', message: '当前不是开发版 / 体验版，不调用 dev 函数' })
+    return
+  }
+  wx.cloud.callFunction({
+    name: 'cloudBackup_dev',
+    data: { action: 'devSetMember', member: !!member },
+    success: (res) => {
+      const r = res && res.result
+      if (!(r && r.ok)) {
+        // 失败原因原样上抛：BAD_ACTION=云函数未部署新版，SERVER_ERROR=执行报错，
+        // NO_DOC=权益文档更新未命中。只显示「切换失败」会让人无从排查
+        console.error('[devSetMember] 云端返回失败', res)
+        done({
+          ok: false,
+          code: (r && r.code) || 'NO_RESULT',
+          message: (r && r.message) || '云函数没有返回有效结果'
+        })
+        return
+      }
+      getEntitlement(() => {}) // 实查覆盖权益缓存，会员中心 / 数据管理页首屏即刻翻转
+      done({ ok: true, member: !!member })
+    },
+    fail: (err) => {
+      console.error('[devSetMember] 调用失败', err)
+      done({
+        ok: false,
+        code: 'CALL_FAIL',
+        message: (err && err.errMsg) || '云函数调用失败'
+      })
+    }
+  })
 }
 
 // 从云端恢复：拉取快照 → backup.importFromText 走「确认弹窗 + 覆盖式落库」全流程
@@ -1000,6 +1118,7 @@ module.exports = {
   getEntitlement,
   getCachedEntitlement,
   warmupEntitlement,
+  devSetMember,
   uploadToCloud,
   restoreFromCloud,
   deleteFromCloud,

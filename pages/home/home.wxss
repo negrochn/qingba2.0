@@ -442,17 +442,23 @@
   font-weight: 600;
 }
 
-/* ③ 2×2 指标卡 */
+/* ③ 2×2 指标卡
+   兼容性说明：不使用 flex gap / calc(% - rpx) 混算——旧内核（老版 X5、低版本 WKWebView）
+   解析失败会导致 flex 声明作废、卡片退化为内容宽度，逐个换行变成竖排列表。
+   改为：home-cell 定宽 50% + 自身 8rpx 内边距充当间隙，home-grid 负 margin 抵消四周边缘。 */
 .home-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 16rpx;
+  margin: -8rpx;
   padding: 0 32rpx;
+}
+.home-cell {
+  width: 50%;
+  padding: 8rpx;
+  box-sizing: border-box;
 }
 .home-stat {
   position: relative;
-  flex: 1 1 calc(50% - 8rpx);
-  min-width: calc(50% - 8rpx);
   box-sizing: border-box;
   background: var(--card);
   border-radius: 16rpx;

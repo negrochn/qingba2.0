@@ -7,10 +7,6 @@ page {
   background: var(--bg);
 }
 
-/* 去掉分组标题后，页面顶部要自己顶上留白（原由 .weui-cells__title 的 padding-top 提供）。
-   按项目约定走父容器 padding，而非给 .weui-cells 加 margin */
-.container { padding-top: 32rpx; }
-
 /* 注：原先的 .bf-custom（自定义资源尾标）已删除 ——
    改两列 picker 后资源名只能渲染纯文本，「自定义」标记改为拼在名字里（见 editRecord.js 的 _itemLabel） */
 

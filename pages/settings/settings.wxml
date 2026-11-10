@@ -78,6 +78,14 @@
   <block wx:if="{{showDevTools}}">
     <view class="weui-cells__title">开发者工具</view>
     <view class="weui-cells">
+      <!-- 会员态切换：直写云端 dev 集合的 membership，切完即与真实会员/非会员同链路 -->
+      <view class="weui-cell">
+        <view class="weui-cell__bd">
+          <view class="weui-cell__bd_text">永久会员</view>
+          <view class="weui-cell__desc">切换测试账号的会员态（dev 集合，不影响线上）</view>
+        </view>
+        <switch checked="{{devIsMember}}" bindchange="onDevMemberChange" color="#07c160" />
+      </view>
       <view class="weui-cell weui-cell_access" bindtap="onStressTest">
         <view class="weui-cell__bd">压力测试</view>
         <view class="weui-cell__ft">

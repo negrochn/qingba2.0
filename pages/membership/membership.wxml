@@ -1,9 +1,11 @@
 <view class="container {{fontClass}} {{darkClass}}">
 
-  <!-- 会员状态卡：会员=身份确认（不可点）；非会员=开通入口（整行可点） -->
+  <!-- 会员状态卡：纯身份展示（会员=已开通确认，非会员=价格展示），不可点——
+       开通动作唯一入口归下方「开通永久会员」按钮，同一屏不留两个触发同一动作的入口；
+       也不套 weui-cell_access 箭头：箭头承诺「进入下一层」，点开其实是支付流程 -->
   <view class="weui-cells__title">会员状态</view>
   <view class="weui-cells">
-    <view class="weui-cell {{isMember ? '' : 'weui-cell_access'}}" bindtap="goBuy">
+    <view class="weui-cell">
       <view class="weui-cell__bd">
         <view class="weui-cell__bd_text">永久会员</view>
         <view class="weui-cell__desc">{{isMember ? '权益已全部生效，感谢支持' : '一次买断 · 自动备份 · 云备份不限次'}}</view>
@@ -11,7 +13,6 @@
       <view class="weui-cell__ft">
         <text class="ms-tag" wx:if="{{isMember}}">已开通</text>
         <text class="ms-price" wx:if="{{!isMember && entReady}}">¥9.9</text>
-        <text class="iconfont icon-right" wx:if="{{!isMember}}"></text>
       </view>
     </view>
   </view>
