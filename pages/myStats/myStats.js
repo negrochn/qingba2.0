@@ -91,7 +91,7 @@ Page({
     stageName: '',
     dist: { scope: 'all', periodLabel: '', canNext: false, top: null, tail: [] },
     dex: null,                          // 我的图鉴（卡6）：decoBox.collection() 聚合结果
-    dexStrip: { items: [], more: 0 }    // 精简橱窗：已收集图标 + 未收集 +N
+    dexStrip: { items: [], more: 0, collapsed: false }    // 精简橱窗：已收集图标 +（>8 个时折叠出的）+N 格
   },
 
   onLoad() {
@@ -517,14 +517,16 @@ Page({
 
   // ===== 我的图鉴（卡6 精简橱窗，完整分组列表在 pages/decoDex 详情页）=====
 
-  // 橱窗数据：一行封顶——最多展示前 7 个已收集图标，末格固定「+N」（N = 未展示的其余款数，
-  // 含未展示的已收集 + 全部未收集）；明细进详情页看
+  // 橱窗数据：已收集 ≤ 8 个 → 全部平铺、不出现「+N」格；> 8 个 → 前 7 个图标 + 末格
+  // 「+N」（N = 已收集但未展示的款数 = 已收集数 − 7）；明细进详情页看
   _refreshDex() {
     const dex = decoBox.collection()
     const items = []
     dex.groups.forEach(g => g.slots.forEach(s => { if (s.got) items.push(s) }))
-    items.length = Math.min(items.length, 7)
-    this.setData({ dex, dexStrip: { items, more: dex.total - items.length } })
+    const collapsed = items.length > 8
+    const more = collapsed ? items.length - 7 : 0
+    if (collapsed) items.length = 7
+    this.setData({ dex, dexStrip: { items, more, collapsed } })
   },
 
   // 整卡可点：进图鉴详情页
@@ -1062,15 +1064,28 @@ _renderDist() {
 
   // ---- 分组投入对比（雷达图，旧「数据统计」页同款图形，随本页替代后应反馈加回） ----
 
-  // 雷达图的分组轴集合：当前阶段显示的分组 ∪ 记录里出现过的分组
-  // - 前者让轴数「按阶段动态」（熏听开关关闭时该轴不出现）
-  // - 后者兜住官方分组调整后的历史数据：那部分时长仍写在记录里，
-  //   若只按当前分组取轴，会「有数据但没轴」而画不出来
+  // 雷达图的分组轴集合：只保留有投入（有效分钟 > 0）的分组，避免大量零值空轴撑场面。
+  // 候选仍是「当前阶段显示的分组 ∪ 记录里出现过的分组」——后者兜住官方分组调整后的
+  // 历史数据（若只按当前分组取轴，会「有数据但没轴」而画不出来）；
+  // 熏听轴依旧随设置页开关出现（关闭时不在候选里）。
+  // 有数据的组不足 3 个时按 主线绘本/分级/动画 顺序补齐到 3 轴（雷达至少 3 轴才成形，
+  // 补的轴允许零值；全零时 _renderRing 照旧画「暂无记录」占位）
   _ringAxisKeys() {
     const stageId = this._selStageId
-    const keys = stageId ? resources.getStageGroupKeys(stageId).slice() : []
-    ;(this._ringData || []).forEach(d => {
-      if (d && d.key && keys.indexOf(d.key) < 0) keys.push(d.key)
+    const valByKey = {}
+    ;(this._ringData || []).forEach(d => { if (d && d.key) valByKey[d.key] = d.value })
+    const candidate = stageId ? resources.getStageGroupKeys(stageId).slice() : []
+    Object.keys(valByKey).forEach(k => {
+      if (candidate.indexOf(k) < 0) candidate.push(k)
+    })
+    const keys = candidate.filter(k => (valByKey[k] || 0) > 0)
+    ;[
+      'main_picture_books',    // 主线绘本
+      'main_graded_readers',   // 主线分级
+      'main_animations'        // 主线动画
+    ].forEach(k => {
+      if (keys.length >= 3) return
+      if (keys.indexOf(k) < 0) keys.push(k)
     })
     return keys
   },

@@ -445,12 +445,16 @@
 /* ③ 2×2 指标卡
    兼容性说明：不使用 flex gap / calc(% - rpx) 混算——旧内核（老版 X5、低版本 WKWebView）
    解析失败会导致 flex 声明作废、卡片退化为内容宽度，逐个换行变成竖排列表。
-   改为：home-cell 定宽 50% + 自身 8rpx 内边距充当间隙，home-grid 负 margin 抵消四周边缘。 */
+   改为：home-cell 定宽 50% + 自身 8rpx 内边距充当间隙，home-grid 负 margin 只抵消上下边缘。
+   ⚠️ 横向不可用负 margin（曾用 margin: -8rpx 四边抵消 + padding 0 32rpx）：块级盒子按
+   「父宽 − 两侧负 margin」定宽，grid 会被撑到视口 + 16rpx，页面横向溢出——真机左右滑动
+   时整页可被拖动并短暂弹出横向滚动条。左右留白改由 padding 0 24rpx 承担
+   （24 + cell 自身 8 = 页面边距 32），卡片几何位置不变。 */
 .home-grid {
   display: flex;
   flex-wrap: wrap;
-  margin: -8rpx;
-  padding: 0 32rpx;
+  margin: -8rpx 0;
+  padding: 0 24rpx;
 }
 .home-cell {
   width: 50%;

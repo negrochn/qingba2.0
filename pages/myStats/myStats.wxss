@@ -289,7 +289,7 @@ page { background: var(--bg); }
   color: var(--text2);
 }
 
-/* ===== 卡6 我的图鉴：精简橱窗——一行最多 8 格（7 已收集图标 + 1 个「+N」未展示格），
+/* ===== 卡6 我的图鉴：精简橱窗——已收集 ≤8 全部平铺；>8 折叠为 7 个图标 + 1 个「+N」格，
    格壳与详情页列表图标列（pages/decoDex 的 .dex-hd）同款：灰底 + 分隔线灰框 + 16rpx 圆角 ===== */
 .dex-progress {
   font-size: calc(28rpx * var(--fs, 1));
@@ -309,8 +309,7 @@ page { background: var(--bg); }
 }
 .dex-chip-icon { width: 60rpx; height: 60rpx; }
 .dex-chip-more {
-  font-size: calc(24rpx * var(--fs, 1));
-  font-weight: 600;
+  font-size: calc(30rpx * var(--fs, 1));
   color: var(--text3);
 }
 .dex-empty {

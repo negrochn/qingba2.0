@@ -106,10 +106,12 @@ page {
   padding-right: 8rpx;
 }
 
-/* 时长输入框：宽 160rpx（原 120rpx，再宽会让资源名放不下最长的素材名）、
+/* 时长输入框：宽 200rpx（120 → 160 → 200，两轮扩宽都是改善热区/视觉；
+   资源名有 ellipsis 兜底，长名字更早截断省略号，不会破版——
+   已按最长素材名普遍不超过 10 字的现实放宽了当年「再宽放不下」的顾虑）、
    高 88rpx（项目「可点项最小热区」口径，与 .cell-input / .form-field 同值） */
 .bf-dur-input {
-  width: 160rpx;
+  width: 200rpx;
   height: 88rpx;
   text-align: right;
   font-size: calc(34rpx * var(--fs, 1));

@@ -1,18 +1,14 @@
 <view class="container {{fontClass}} {{darkClass}}">
-  <!-- 头部：始终显示，含月份选择器（标题由导航栏承担，与设置页一致） -->
-  <view class="section-head">
-    <view class="overview-right">
-      <text class="overview-year">{{yearText}}</text>
-      <!-- 月份选择：原生 picker（mode="date" + fields="month"）即系统年月滚轮，
-           与补录 / 编辑页的取向一致，省掉一整套自绘弹层与遮罩；
-           start / end 把范围锁在「今年 -3 年 1 月」到「当前月」，不可选未来 -->
-      <picker mode="date" fields="month" value="{{curYm}}" start="{{minYm}}" end="{{maxYm}}" bindchange="onMonthChange">
-        <view class="overview-picker">
-          <text class="overview-month">{{monthDisplay}}</text>
-          <text class="overview-arrow">▾</text>
-        </view>
-      </picker>
-    </view>
+  <!-- 头部：阶段选择器（与我的统计页同款，全页按所选阶段展示）+ 阶段摘要 + 补录入口 -->
+  <view class="section-head" wx:if="{{stageNames.length}}">
+    <picker mode="selector" range="{{stageNames}}" value="{{stageIndex}}" bindchange="onStageChange">
+      <view class="stage-picker">
+        <text class="stage-picker-name">{{stageName || "选择阶段"}}</text>
+        <text class="stage-picker-arrow">▾</text>
+      </view>
+    </picker>
+    <!-- 该阶段摘要：共 X 天 · Y 条 · 累计 Z（熏听折算口径，与我的统计页一致） -->
+    <view class="record-summary" wx:if="{{summary}}">{{summary}}</view>
     <view class="overview-add" bindtap="goBackfill">
       <text class="overview-add-icon">＋</text>
       <text>补录</text>
@@ -53,7 +49,7 @@
               </view>
               <view class="record-line2">
                 <view class="record-tags">
-                  <text class="weui-tag tag-stage">{{r.stageName}}</text>
+                  <!-- 页面已按阶段筛选，行内不再重复展示阶段名 -->
                   <text class="weui-tag tag-group-{{r.groupKey}}">{{r.groupLabel}}</text>
                   <text class="weui-tag record-backfill" wx:if="{{r.backfilled}}">补录</text>
                   <text class="weui-tag record-remark" wx:if="{{r.remark}}">{{r.remark}}</text>
@@ -73,7 +69,7 @@
 
   <view class="empty-wrap" wx:else>
     <view class="empty-icon">📖</view>
-    <view class="empty-text">当前路线本月暂无打卡记录</view>
-    <view class="empty-hint">打卡与记录跟随当前路线展示，切换路线请到「我的」设置</view>
+    <view class="empty-text">该阶段暂无打卡记录</view>
+    <view class="empty-hint">可切换上方阶段查看其他阶段，或在右上角补录</view>
   </view>
 </view>

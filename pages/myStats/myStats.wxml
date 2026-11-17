@@ -165,19 +165,19 @@
     </view>
   </view>
 
-  <!-- ===== 卡6 我的图鉴：精简橱窗——已收集图标条 +「+N」未收集，完整分组列表进二级页（pages/decoDex） ===== -->
+  <!-- ===== 卡6 我的图鉴：精简橱窗——已收集 ≤8 全平铺，>8 折叠为前 7 个 +「+N」，完整分组列表进二级页（pages/decoDex） ===== -->
   <view class="card" wx:if="{{dex}}" bindtap="onDexTap">
     <view class="card-head">
       <text class="card-title">我的图鉴</text>
       <text class="dex-progress">{{dex.got}}/{{dex.total}}</text>
     </view>
 
-    <!-- 已收集图标平铺（收集格壳与详情页列表同款），末尾 +N 未收集格 -->
-    <view class="dex-strip">
+    <!-- 已收集图标平铺（收集格壳与详情页列表同款）；超过 8 个才折叠出末尾「+N」格 -->
+    <view class="dex-strip" wx:if="{{dexStrip.items.length}}">
       <view class="dex-chip" wx:for="{{dexStrip.items}}" wx:for-item="s" wx:key="f">
         <image class="dex-chip-icon" src="/images/deco/{{s.f}}.png" mode="aspectFit" />
       </view>
-      <view class="dex-chip">
+      <view class="dex-chip" wx:if="{{dexStrip.collapsed}}">
         <text class="dex-chip-more">+{{dexStrip.more}}</text>
       </view>
     </view>

@@ -7,13 +7,12 @@ const SWIPE_W = 300
 Page({
   data: {
     records: [],
-    // 当前月
-    curYm: '',           // 'YYYY-MM'
-    monthDisplay: '',    // '8月'
-    yearText: '',        // '2026年'
-    // 月份选择器（原生 picker：mode="date" + fields="month"）
-    minYm: '',           // 最早可选月份 'YYYY-MM'
-    maxYm: '',           // 最晚可选月份（当前月）
+    // 阶段选择器（与我的统计页同款：全页按所选阶段展示）
+    stageOptions: [],    // [{ stage_id, stage_name }]
+    stageNames: [],      // picker 的 range
+    stageIndex: 0,
+    stageName: '',
+    summary: '',         // 该阶段摘要：共 X 天 · Y 条 · 累计 Z
     // 滑动状态
     _touchStartX: 0,
     _touchStartY: 0,
@@ -25,24 +24,17 @@ Page({
   onLoad() {
     const app = getApp()
     if (app && app.applyFontLevel) app.applyFontLevel(this)
-
-    const now = new Date()
-    const y = now.getFullYear()
-
-    this.setData({
-      curYm: this._toYm(now),
-      // 原生年月滚轮的可选范围：今年 -3 年 1 月 ~ 当前月。
-      // 上限锁当前月 = 不可选未来；下限避免像不设 start 那样从 1900 年一路滚过来
-      minYm: `${y - 3}-01`,
-      maxYm: this._toYm(now)
-    })
+    this._initStageOptions()
     // 列表数据统一由 onShow 加载，避免首屏重复计算两次
   },
 
   onShow() {
     const app = getApp()
     if (app && app.applyFontLevel) app.applyFontLevel(this)
-
+    // 路线可能在设置页被切换：整体重建选择器与选中态（myStats 同款）
+    if (this._loadedRouteId !== checkin.getCurrentRouteId()) {
+      this._initStageOptions()
+    }
     this._refresh()
   },
 
@@ -51,28 +43,75 @@ Page({
     return share.appMessage('records')
   },
 
-  // 加载所选月份记录，按时间倒序
-  _refresh() {
-    const ym = this.data.curYm || this._toYm(new Date())
-    // 不用数组解构：增强编译会生成 @swc/runtime/_array_with_holes 依赖，部分工具版本解析不到会报错
-    const ymParts = ym.split('-').map(Number)
-    const y = ymParts[0]
-    const m = ymParts[1]
+  // ===== 阶段选择（与我的统计页同款：全页按所选阶段展示） =====
+  // 默认选中当前阶段；未设当前阶段时退到首个有数据的阶段，再退到第一个
+  _initStageOptions() {
+    this._loadedRouteId = checkin.getCurrentRouteId()
+    const stageOptions = (checkin.getCurrentRoute().stages || []).map(x => ({
+      stage_id: x.stage_id,
+      stage_name: x.stage_name
+    }))
+    let idx = -1
+    const cur = checkin.getCurrentStage()
+    if (cur) idx = stageOptions.findIndex(x => x.stage_id === cur.id)
+    if (idx < 0) {                          // 当前阶段无数据：取首个有数据的阶段
+      const all = checkin.getAll()
+      const hasData = {}
+      for (const day in all) {
+        const list = all[day]
+        if (!Array.isArray(list)) continue
+        for (const r of list) { if (r && r.stageId) hasData[r.stageId] = true }
+      }
+      idx = stageOptions.findIndex(x => hasData[x.stage_id])
+    }
+    if (idx < 0) idx = 0
+    const sel = stageOptions[idx] || null
+    this._selStageId = sel ? sel.stage_id : ''
+    this.setData({
+      stageOptions,
+      stageNames: stageOptions.map(x => x.stage_name),
+      stageIndex: idx,
+      stageName: sel ? sel.stage_name : ''
+    })
+  },
 
-    // 按当前路线过滤（记录页只展示当前路线的打卡，想看另一条路线去设置切换）。
-    // 记录不加路线字段，用路线的 stage_id 集合判断：两路线命名空间隔离，不会误伤，
-    // 已存记录零迁移。补录/编辑落库同理只写 stageId。
-    const routeStageIds = {}
-    ;(checkin.getCurrentRoute().stages || []).forEach(s => { routeStageIds[s.stage_id] = true })
-    const monthRecords = checkin.getByMonth(ym).filter(r => r && routeStageIds[r.stageId])
-    monthRecords.sort((a, b) => b.timestamp - a.timestamp)
-    const records = monthRecords.map(r => {
+  onStageChange(e) {
+    const idx = Number(e.detail.value)
+    const opts = this.data.stageOptions || []
+    if (!opts[idx] || opts[idx].stage_id === this._selStageId) return
+    this._selStageId = opts[idx].stage_id
+    this.setData({ stageIndex: idx, stageName: opts[idx].stage_name })
+    this._refresh()
+  },
+
+  // 加载所选阶段的记录，按时间倒序，并汇总摘要（共 X 天 · Y 条 · 累计 Z）
+  _refresh() {
+    const selId = this._selStageId
+    // 记录不加路线字段、自带 stageId 快照，按它过滤即天然限定在当前路线
+    // （两路线 stage_id 命名空间隔离，不会串数据），已存记录零迁移
+    const all = checkin.getAll()
+    const rows = []
+    const daySet = {}
+    let count = 0
+    let totalMinutes = 0
+    for (const day in all) {
+      const list = all[day]
+      if (!Array.isArray(list)) continue
+      for (const r of list) {
+        if (!r || r.stageId !== selId) continue
+        daySet[day] = true
+        count += 1
+        totalMinutes += checkin.effectiveMinutes(r)
+        rows.push(r)
+      }
+    }
+    rows.sort((a, b) => b.timestamp - a.timestamp)
+    const records = rows.map(r => {
       // 熏听记录：主数值仍是原始时长，后面跟一个系数标记（×0.5 / ×0.8 / 不计入），
       // 与打卡弹窗单位旁的标记同一套语汇；折算后的具体数值由统计 / 阶段进度体现
       const factor = typeof r.factor === 'number' ? r.factor : 1
       return {
         id: r.id,
-        stageName: r.stageName,
         groupKey: r.groupKey,
         groupLabel: r.groupLabel,
         resourceName: r.resourceName,
@@ -86,28 +125,29 @@ Page({
         _anim: false
       }
     })
+    // 摘要口径与我的统计页一致：时长按熏听折算后的有效时长（仅到小时，1 位小数）
+    const summary = count
+      ? `${count} 条 · ${Object.keys(daySet).length} 天 · ${this._fmtHours(totalMinutes)}`
+      : ''
 
-    this.setData({
-      records,
-      yearText: `${y}年`,
-      monthDisplay: `${m}月`
-    })
+    this.setData({ records, summary })
   },
 
-  _toYm(d) {
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    return `${y}-${m}`
-  },
-
-  // 与首页一致: 08/31 07:27
+  // 与首页一致: 08/31 07:27；跨年阶段补年份: 2025/08/31 07:27
   _fmtDate(ts) {
     const d = new Date(ts)
     const m = String(d.getMonth() + 1).padStart(2, '0')
     const day = String(d.getDate()).padStart(2, '0')
     const hh = String(d.getHours()).padStart(2, '0')
     const mm = String(d.getMinutes()).padStart(2, '0')
-    return `${m}/${day} ${hh}:${mm}`
+    const md = `${m}/${day} ${hh}:${mm}`
+    return d.getFullYear() === new Date().getFullYear() ? md : `${d.getFullYear()}/${md}`
+  },
+
+  // 分钟 → 小时文案：整点不带小数，否则保留 1 位（82 → 1.4，60 → 1，45 → 0.8）
+  _fmtHours(minutes) {
+    const h = Math.round((Number(minutes) || 0) / 6) / 10
+    return `${Number.isInteger(h) ? h : h.toFixed(1)}小时`
   },
 
   // ===== 补录 =====
@@ -116,37 +156,15 @@ Page({
     wx.navigateTo({ url: '/pages/backfill/backfill' })
   },
 
-  // 补录页返回回调：切到补录月份并刷新，让新记录立即可见
-  // （yearText / monthDisplay 由 _refresh 依据 curYm 回填）
+  // 补录页返回回调：切到补录记录所属阶段并刷新，让新记录立即可见
   applyBackfill(opt) {
-    const day = opt && opt.day ? String(opt.day) : ''
-    // 传进来的是 'YYYY-MM-DD'，只取年月前缀。
-    // 旧实现的正则多写了结尾锚点（/^(\d{4})-(\d{2})$/），对 'YYYY-MM-DD' 永远匹配不上，
-    // 于是除了「补录当月」以外都不会自动切月
-    const m = /^(\d{4})-(\d{2})/.exec(day)
-    if (m) {
-      const ym = `${m[1]}-${m[2]}`
-      // 只在本页可选范围内切月（原生 picker 的 start / end 之外选不中）
-      if (ym >= this.data.minYm && ym <= this.data.maxYm) {
-        this.setData({ curYm: ym })
-      }
+    const stageId = opt && opt.stageId ? String(opt.stageId) : ''
+    const opts = this.data.stageOptions || []
+    const idx = opts.findIndex(x => x.stage_id === stageId)
+    if (idx >= 0 && idx !== this.data.stageIndex) {
+      this._selStageId = stageId
+      this.setData({ stageIndex: idx, stageName: opts[idx].stage_name })
     }
-    this._refresh()
-  },
-
-  // ===== 月份选择（原生 picker：mode="date" + fields="month"）=====
-  // 与补录页 / 编辑页同一取向：用系统年月滚轮，省掉一整套自绘弹层、遮罩与确认按钮；
-  // 代价是系统弹层不吃 `dm-*` / `--fs`（外观与字号跟随系统）
-  // 可选范围由 wxml 的 start / end 锁定，这里再防御一次
-  onMonthChange(e) {
-    const ym = e.detail.value || ''
-    if (!/^\d{4}-\d{2}$/.test(ym)) return
-    if (ym > this._toYm(new Date())) {
-      wx.showToast({ title: '不能选择未来月份', icon: 'none' })
-      return
-    }
-    if (ym === this.data.curYm) return
-    this.setData({ curYm: ym })
     this._refresh()
   },
 

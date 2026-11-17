@@ -1,4 +1,4 @@
-/* 打卡记录详情页：复用首页记录列表 + 月份选择器样式（支持深色模式） */
+/* 打卡记录详情页：复用首页记录列表 + 阶段选择器样式（支持深色模式） */
 
 page {
   background: var(--bg);
@@ -40,36 +40,42 @@ page {
   color: var(--text2);
 }
 
-/* 月份选择器（头部右侧，与首页一致） */
-.overview-right {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-}
-
-.overview-year {
-  font-size: calc(28rpx * var(--fs, 1));
-  color: var(--text2);
-}
-
-.overview-picker {
+/* 阶段选择器（头部左侧，与我的统计页同款；阶段名过长时省略号截断） */
+.stage-picker {
   display: flex;
   align-items: center;
   gap: 8rpx;
   padding: 8rpx 16rpx;
   background: var(--cell-active);
   border-radius: 8rpx;
+  max-width: 460rpx;
 }
 
-.overview-month {
+.stage-picker-name {
   font-size: calc(28rpx * var(--fs, 1));
   color: var(--text2);
   font-weight: 500;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-.overview-arrow {
+.stage-picker-arrow {
   font-size: calc(28rpx * var(--fs, 1));
   color: var(--text3);
+}
+
+/* 该阶段摘要（共 X 天 · Y 条 · 累计 Z）：紧随阶段选择器之后左对齐排布，
+   flex:1 占满中间空隙，空间不足时省略号截断 */
+.record-summary {
+  flex: 1;
+  min-width: 0;
+  margin: 0 16rpx;
+  font-size: calc(26rpx * var(--fs, 1));
+  color: var(--text3);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* ===== 滑动删除 ===== */

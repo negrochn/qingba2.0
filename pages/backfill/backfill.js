@@ -405,18 +405,18 @@ Page({
     }
 
     wx.showToast({ title: `已补录 ${res.count} 条`, icon: 'success' })
-    this._backToList(d.dateStr)
+    this._backToList(d.dateStr, d.selectedStageId)
   },
 
-  // 返回记录页并让它切到补录月份（回调 records.applyBackfill），新记录立即可见
-  _backToList(day) {
+  // 返回记录页并让它切到补录记录所属阶段（回调 records.applyBackfill），新记录立即可见
+  _backToList(day, stageId) {
     const pages = getCurrentPages()
     const prev = pages.length >= 2 ? pages[pages.length - 2] : null
     setTimeout(() => {
       wx.navigateBack({
         success: () => {
           if (prev && typeof prev.applyBackfill === 'function') {
-            prev.applyBackfill({ day })
+            prev.applyBackfill({ day, stageId })
           }
         }
       })
